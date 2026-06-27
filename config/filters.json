@@ -1,0 +1,6 @@
+{
+  "includeKeywords": ["intern", "internship", "trainee", "software", "developer", "engineer", "data", "machine learning", "ml", "web", "frontend", "backend", "sde", "analyst"],
+  "excludeKeywords": ["senior", "staff", "principal", "manager", "lead "],
+  "locations": ["india", "bengaluru", "bangalore", "hyderabad", "pune", "mumbai", "delhi", "gurgaon", "gurugram", "noida", "chennai", "remote"],
+  "internshipOnly": true
+}

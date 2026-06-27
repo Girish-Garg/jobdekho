@@ -1,0 +1,8 @@
+{
+  "providers": [
+    { "provider": "greenhouse", "slug": "REPLACE_WITH_GREENHOUSE_SLUG" },
+    { "provider": "lever", "slug": "REPLACE_WITH_LEVER_SLUG" }
+  ],
+  "companies": ["amazon", "microsoft", "google", "ey"],
+  "boards": ["internshala"]
+}
