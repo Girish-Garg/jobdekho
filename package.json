@@ -1,0 +1,15 @@
+{
+  "name": "jobdekho",
+  "private": true,
+  "type": "module",
+  "workspaces": ["packages/*", "apps/*"],
+  "scripts": {
+    "test": "vitest run",
+    "scrape": "node apps/scraper/src/index.js",
+    "db:push": "drizzle-kit push"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.0",
+    "drizzle-kit": "^0.28.0"
+  }
+}
