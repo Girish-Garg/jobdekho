@@ -5,9 +5,17 @@ import { isNewToday } from '../lib/time.js';
 import PostingRow from './PostingRow.jsx';
 
 // Postings feed. Refetches when filters change; status edits apply optimistically.
+const SORTS = [
+  ['newest', 'Newest posted'],
+  ['oldest', 'Oldest posted'],
+  ['added', 'Recently added'],
+  ['company', 'Company A-Z'],
+];
+
 export default function PostingsView({ filters }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [sort, setSort] = useState('newest');
 
   useEffect(() => {
     let alive = true;
@@ -31,7 +39,7 @@ export default function PostingsView({ filters }) {
     }
   }
 
-  const sorted = sortPostings(rows);
+  const sorted = sortPostings(rows, sort);
   const freshCount = sorted.filter((p) => isNewToday(p.firstSeenAt)).length;
 
   return (
@@ -44,6 +52,18 @@ export default function PostingsView({ filters }) {
             {freshCount ? ` - ${freshCount} new today` : ''}
           </p>
         </div>
+        <label className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-muted">
+          Sort
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+            className="rounded-md border border-line bg-paper px-2 py-1.5 text-xs normal-case tracking-normal text-ink outline-none focus:border-ink"
+          >
+            {SORTS.map(([v, l]) => (
+              <option key={v} value={v}>{l}</option>
+            ))}
+          </select>
+        </label>
       </div>
       {loading ? (
         <p className="px-6 py-10 font-mono text-sm text-muted">Fetching postings...</p>
