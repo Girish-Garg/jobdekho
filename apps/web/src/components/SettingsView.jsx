@@ -5,7 +5,7 @@ import NotifyForm from './NotifyForm.jsx';
 import SaveBar from './SaveBar.jsx';
 
 const F0 = { includeKeywords: [], excludeKeywords: [], locations: [] };
-const N0 = { channel: 'none', telegramChatId: null, email: null, enabled: true };
+const N0 = { channel: 'none', telegramChatId: null, enabled: true };
 
 export default function SettingsView() {
   const [filters, setFilters] = useState(F0);

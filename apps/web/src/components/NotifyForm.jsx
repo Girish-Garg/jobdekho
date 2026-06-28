@@ -1,4 +1,4 @@
-const CHANNELS = ['none', 'telegram', 'email'];
+const CHANNELS = ['none', 'telegram'];
 
 // Notification preferences sub-form. Controlled by SettingsView.
 export default function NotifyForm({ prefs, setPrefs }) {
@@ -28,9 +28,6 @@ export default function NotifyForm({ prefs, setPrefs }) {
 
       {prefs.channel === 'telegram' && (
         <TextField label="Telegram chat id" value={prefs.telegramChatId} onChange={(v) => set('telegramChatId', v)} />
-      )}
-      {prefs.channel === 'email' && (
-        <TextField label="Email address" value={prefs.email} onChange={(v) => set('email', v)} />
       )}
 
       <label className="flex items-center gap-2 text-sm">

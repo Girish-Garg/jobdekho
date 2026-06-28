@@ -61,7 +61,7 @@ describe('api client', () => {
     expect(get).toHaveBeenCalledWith('/api/notifications', expect.objectContaining({ credentials: 'include' }));
 
     const put = mockFetch(null, 204);
-    await putNotifications({ channel: 'email', enabled: true });
+    await putNotifications({ channel: 'telegram', telegramChatId: 'chat1', enabled: true });
     expect(put.mock.calls[0][1].method).toBe('PUT');
   });
 
