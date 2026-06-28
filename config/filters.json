@@ -1,6 +1,20 @@
 {
-  "includeKeywords": ["intern", "internship", "trainee", "software", "developer", "engineer", "data", "machine learning", "ml", "web", "frontend", "backend", "sde", "analyst"],
-  "excludeKeywords": ["senior", "staff", "principal", "manager", "lead "],
+  "includeKeywords": [
+    "software", "developer", "web develop", "web design", "frontend", "front end",
+    "backend", "back end", "full stack", "fullstack", "app develop", "mobile develop",
+    "android", "ios develop", "flutter", "kotlin", "mern", "react", "angular", "vue",
+    "node.js", "nodejs", "javascript", "typescript", "python", "django", "flask",
+    "java developer", "php", ".net", "wordpress", "programming", "programmer",
+    "computer science", "data science", "data analyst", "data analytics", "analytics",
+    "machine learning", "deep learning", "artificial intelligence", "data engineer",
+    "devops", "cloud comput", "sde", "qa automation", "test automation", "database",
+    "sql", "ui/ux", "game develop"
+  ],
+  "excludeKeywords": [
+    "senior", "staff", "principal", "manager", "lead ", "content writ", "social media",
+    "graphic design", "video editing", "photography", "business development",
+    "human resource", "recruitment", "tele calling", "telecalling", "sales executive"
+  ],
   "locations": ["india", "bengaluru", "bangalore", "hyderabad", "pune", "mumbai", "delhi", "gurgaon", "gurugram", "noida", "chennai", "remote"],
   "internshipOnly": true
 }
