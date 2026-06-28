@@ -5,6 +5,7 @@
   "workspaces": ["packages/*", "apps/*"],
   "scripts": {
     "start": "node apps/server/src/server.js",
+    "dev:web": "npm -w @jobdekho/web run dev",
     "test": "vitest run",
     "scrape": "node apps/scraper/src/index.js",
     "db:push": "drizzle-kit push",

@@ -4,6 +4,8 @@ import { createUserStore } from '@jobdekho/db/users.js'
 import { createDashboardStore } from './api/store.js'
 import { buildApp } from './app.js'
 
+try { process.loadEnvFile() } catch {}
+
 const config = loadConfig()
 const db = createDb(config.databaseUrl)
 const dashboardStore = createDashboardStore(db)

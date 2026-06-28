@@ -9,6 +9,8 @@ import { runAdapters } from './runner.js'
 import { runPipeline } from './pipeline.js'
 import { notifyUsers } from './notify-users.js'
 
+try { process.loadEnvFile() } catch {}
+
 const read = (name) => JSON.parse(readFileSync(new URL(`../../../config/${name}`, import.meta.url)))
 
 function buildSenders() {
