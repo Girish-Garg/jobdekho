@@ -4,6 +4,7 @@
   "type": "module",
   "workspaces": ["packages/*", "apps/*"],
   "scripts": {
+    "start": "node apps/server/src/server.js",
     "test": "vitest run",
     "scrape": "node apps/scraper/src/index.js",
     "db:push": "drizzle-kit push"
