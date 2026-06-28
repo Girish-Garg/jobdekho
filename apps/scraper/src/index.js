@@ -19,8 +19,8 @@ function buildSenders() {
   const smtpPass = process.env.SMTP_PASS
   const smtpFrom = process.env.SMTP_FROM
 
-  const telegram = (token)
-    ? (chatId, text) => sendTelegram({ token, chatId }, text).catch(() => {})
+  const telegram = token
+    ? (chatId, text) => sendTelegram({ token, chatId }, text).catch(() => ({ ok: false }))
     : null
 
   const emailTransport = (smtpHost && smtpUser && smtpPass)
@@ -28,10 +28,10 @@ function buildSenders() {
     : null
 
   const email = emailTransport
-    ? (to, text) => sendEmail({ to, subject: 'New JobDekho matches', text }, emailTransport).catch(() => {})
+    ? (to, text) => sendEmail({ to, from: smtpFrom, subject: 'New JobDekho matches', text }, emailTransport)
     : null
 
-  return { telegram, email, smtpFrom }
+  return { telegram, email }
 }
 
 async function main() {
@@ -49,8 +49,8 @@ async function main() {
 
   const { telegram, email } = buildSenders()
   const senders = {
-    telegram: telegram || (() => {}),
-    email: email || (() => {}),
+    telegram: telegram || (() => ({ ok: false })),
+    email: email || (() => ({ ok: false })),
   }
   const users = await listUsersForNotify(db)
   const perUser = await notifyUsers(summary.freshPostings, { users, defaultRules: rules, senders })

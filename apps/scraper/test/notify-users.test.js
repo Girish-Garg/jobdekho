@@ -33,8 +33,8 @@ const users = [
 describe('notifyUsers', () => {
   it('sends only to matching users on the right channel', async () => {
     const senders = {
-      telegram: vi.fn(async () => {}),
-      email: vi.fn(async () => {}),
+      telegram: vi.fn(async () => ({ ok: true })),
+      email: vi.fn(async () => ({ ok: true })),
     }
     const summary = await notifyUsers(freshPostings, { users, defaultRules, senders })
 
@@ -55,8 +55,25 @@ describe('notifyUsers', () => {
     expect(senders.email).toHaveBeenCalledWith('user@example.com', expect.stringContaining('Software Intern'))
   })
 
+  it('reports sent:false when sender returns ok:false (unconfigured channel)', async () => {
+    const senders = {
+      telegram: vi.fn(async () => ({ ok: false })),
+      email: vi.fn(async () => ({ ok: false })),
+    }
+    const summary = await notifyUsers(freshPostings, { users, defaultRules, senders })
+
+    const tgEntry = summary.find((s) => s.userId === 'tg-user')
+    expect(tgEntry).toMatchObject({ userId: 'tg-user', sent: false, count: 1 })
+
+    const emailEntry = summary.find((s) => s.userId === 'email-user')
+    expect(emailEntry).toMatchObject({ userId: 'email-user', sent: false, count: 1 })
+  })
+
   it('returns all users in summary even if none match', async () => {
-    const senders = { telegram: vi.fn(), email: vi.fn() }
+    const senders = {
+      telegram: vi.fn(async () => ({ ok: true })),
+      email: vi.fn(async () => ({ ok: true })),
+    }
     const summary = await notifyUsers([], { users, defaultRules, senders })
     expect(summary).toHaveLength(users.length)
     expect(summary.every((s) => s.sent === false && s.count === 0)).toBe(true)

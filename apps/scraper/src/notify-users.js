@@ -16,11 +16,11 @@ export async function notifyUsers(freshPostings, { users, defaultRules, senders 
     }
     const text = formatBatch(matches)
     if (prefs.channel === 'telegram' && prefs.telegramChatId) {
-      await senders.telegram(prefs.telegramChatId, text)
-      summary.push({ userId, sent: true, count: matches.length })
+      const result = await senders.telegram(prefs.telegramChatId, text)
+      summary.push({ userId, sent: !!result?.ok, count: matches.length })
     } else if (prefs.channel === 'email' && prefs.email) {
-      await senders.email(prefs.email, text)
-      summary.push({ userId, sent: true, count: matches.length })
+      const result = await senders.email(prefs.email, text)
+      summary.push({ userId, sent: !!result?.ok, count: matches.length })
     } else {
       summary.push({ userId, sent: false, count: matches.length })
     }
