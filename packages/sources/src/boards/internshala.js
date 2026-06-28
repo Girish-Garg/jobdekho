@@ -1,6 +1,17 @@
 import { load } from 'cheerio'
 
 const LISTING = 'https://internshala.com/internships/computer-science,programming,data-science-internship/'
+const DAY = 86400000
+
+export function parsePostedAt(text, now = Date.now()) {
+  const t = (text || '').toLowerCase()
+  if (/hour|today|just now/.test(t)) return new Date(now).toISOString()
+  if (/yesterday/.test(t)) return new Date(now - DAY).toISOString()
+  const m = t.match(/(\d+)\s*(day|week|month)s?\s*ago/)
+  if (!m) return null
+  const mult = m[2] === 'week' ? 7 : m[2] === 'month' ? 30 : 1
+  return new Date(now - Number(m[1]) * mult * DAY).toISOString()
+}
 
 export function parseInternshala(html) {
   const $ = load(html)
@@ -20,7 +31,7 @@ export function parseInternshala(html) {
       url: href.startsWith('http') ? href : `https://internshala.com${href}`,
       description: card.find('.internship_meta').text().replace(/\s+/g, ' ').trim(),
       tags: ['internship'],
-      postedAt: null,
+      postedAt: parsePostedAt(card.find('.status-success, .status-info').text()),
     })
   })
   return out

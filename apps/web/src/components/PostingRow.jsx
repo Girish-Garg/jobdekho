@@ -37,7 +37,7 @@ export default function PostingRow({ posting, onStatus }) {
           {posting.company}
           {posting.location ? ` - ${posting.location}` : ''}
           {' - '}
-          {posting.source} - {relativeDay(posting.firstSeenAt)}
+          {posting.source} - {relativeDay(posting.postedAt || posting.firstSeenAt)}
         </p>
         {posting.descriptionSnippet && (
           <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-ink/80">
