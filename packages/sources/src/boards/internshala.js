@@ -31,7 +31,7 @@ export function parseInternshala(html) {
       url: href.startsWith('http') ? href : `https://internshala.com${href}`,
       description: card.find('.internship_meta').text().replace(/\s+/g, ' ').trim(),
       tags: ['internship'],
-      postedAt: parsePostedAt(card.find('.status-success, .status-info').text()),
+      postedAt: parsePostedAt(card.find('[class*="status"]').text()),
     })
   })
   return out
