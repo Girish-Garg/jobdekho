@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, jsonb, integer, primaryKey } from 'drizzle-orm/pg-core'
+import { pgTable, text, timestamp, jsonb, integer, primaryKey, boolean } from 'drizzle-orm/pg-core'
 
 export const postings = pgTable('postings', {
   id: text('id').primaryKey(),
@@ -37,3 +37,20 @@ export const userPostings = pgTable('user_postings', {
   status: text('status').notNull(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (t) => ({ pk: primaryKey({ columns: [t.userId, t.postingId] }) }))
+
+export const userFilters = pgTable('user_filters', {
+  userId: text('user_id').primaryKey(),
+  includeKeywords: text('include_keywords').array().notNull().default([]),
+  excludeKeywords: text('exclude_keywords').array().notNull().default([]),
+  locations: text('locations').array().notNull().default([]),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+export const notificationPrefs = pgTable('notification_prefs', {
+  userId: text('user_id').primaryKey(),
+  channel: text('channel').notNull().default('none'),
+  telegramChatId: text('telegram_chat_id'),
+  email: text('email'),
+  enabled: boolean('enabled').notNull().default(true),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
