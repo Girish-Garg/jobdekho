@@ -13,7 +13,8 @@
   "excludeKeywords": [
     "senior", "staff", "principal", "manager", "lead ", "content writ", "social media",
     "graphic design", "video editing", "photography", "business development",
-    "human resource", "recruitment", "tele calling", "telecalling", "sales executive"
+    "human resource", "recruitment", "tele calling", "telecalling", "sales executive",
+    "marketing", "sales development", "sales representative", "finance intern", "accounting", "operations intern"
   ],
   "locations": ["india", "bengaluru", "bangalore", "hyderabad", "pune", "mumbai", "delhi", "gurgaon", "gurugram", "noida", "chennai", "remote"],
   "internshipOnly": true
