@@ -23,6 +23,14 @@ export function normalizeFilters(input) {
 
 // Postings
 
+export function applyStatusFilter(rows, status) {
+  const normalized = rows.map((r) => ({ ...r, status: r.status ?? null }))
+  if (status === undefined) {
+    return normalized
+  }
+  return normalized.filter((r) => r.status === status)
+}
+
 export async function listPostingsForUser(db, userId, { source, q, status } = {}) {
   const conditions = []
   if (source) conditions.push(eq(postings.source, source))
@@ -40,10 +48,7 @@ export async function listPostingsForUser(db, userId, { source, q, status } = {}
       and(eq(userPostings.postingId, postings.id), eq(userPostings.userId, userId)))
     .where(conditions.length ? and(...conditions) : undefined)
     .orderBy(desc(postings.firstSeenAt))
-  if (status !== undefined && status !== null) {
-    return rows.filter((r) => r.status === status)
-  }
-  return rows.map((r) => ({ ...r, status: r.status ?? null }))
+  return applyStatusFilter(rows, status)
 }
 
 export async function setPostingStatus(db, userId, postingId, status) {
