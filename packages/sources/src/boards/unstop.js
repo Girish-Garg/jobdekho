@@ -1,5 +1,3 @@
-const API = 'https://unstop.com/api/public/opportunity/search-result?opportunity=internships&per_page=30'
-
 function stipend(d) {
   if (!d) return null
   const a = d.min_salary
@@ -14,6 +12,14 @@ function place(d) {
   return d?.type === 'wfh' || d?.type === 'online' ? 'Remote' : ''
 }
 
+function experience(d) {
+  if (!d || (!d.min_experience && !d.max_experience)) return 'Fresher'
+  if (d.min_experience && d.max_experience && d.min_experience !== d.max_experience) {
+    return `${d.min_experience}-${d.max_experience} years`
+  }
+  return `${d.max_experience || d.min_experience} years`
+}
+
 export function mapUnstop(item) {
   return {
     externalId: String(item.id),
@@ -26,21 +32,27 @@ export function mapUnstop(item) {
     postedAt: item.updated_at || null,
     stipend: item.isPaid === false ? 'Unpaid' : stipend(item.jobDetail),
     duration: null,
+    experience: experience(item.jobDetail),
   }
 }
+
+const apiUrl = (opp, page) =>
+  `https://unstop.com/api/public/opportunity/search-result?opportunity=${opp}&per_page=30&page=${page}`
 
 export function unstop() {
   return {
     name: 'unstop',
     async fetch(http) {
       const out = []
-      for (let page = 1; page <= 3; page++) {
-        try {
-          const res = await http(`${API}&page=${page}`, { headers: { Accept: 'application/json' } })
-          const data = await res.json()
-          for (const it of data?.data?.data || []) out.push(mapUnstop(it))
-        } catch {
-          // skip a failed page; the rest still run
+      for (const opp of ['internships', 'jobs']) {
+        for (let page = 1; page <= 3; page++) {
+          try {
+            const res = await http(apiUrl(opp, page), { headers: { Accept: 'application/json' } })
+            const data = await res.json()
+            for (const it of data?.data?.data || []) out.push(mapUnstop(it))
+          } catch {
+            // skip a failed page; the rest still run
+          }
         }
       }
       return out

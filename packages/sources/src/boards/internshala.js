@@ -36,6 +36,7 @@ export function parseInternshala(html) {
       postedAt: parsePostedAt(card.find('[class*="status"]').text()),
       stipend: card.find('.ic-16-money').first().parent().text().replace(/\s+/g, ' ').trim() || null,
       duration: card.find('.ic-16-calendar').first().parent().text().replace(/\s+/g, ' ').trim() || null,
+      experience: 'Fresher',
     })
   })
   return out

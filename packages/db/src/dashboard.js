@@ -43,7 +43,7 @@ export async function listPostingsForUser(db, userId, { source, q, status } = {}
       id: postings.id, source: postings.source, company: postings.company,
       title: postings.title, location: postings.location, url: postings.url,
       descriptionSnippet: postings.descriptionSnippet, tags: postings.tags,
-      stipend: postings.stipend, duration: postings.duration,
+      stipend: postings.stipend, duration: postings.duration, experience: postings.experience,
       postedAt: postings.postedAt, firstSeenAt: postings.firstSeenAt,
       status: userPostings.status,
     })

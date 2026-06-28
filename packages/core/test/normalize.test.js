@@ -6,7 +6,7 @@ describe('normalize', () => {
     externalId: 7, title: '  SDE Intern ', company: ' Acme ',
     location: 'Remote', url: 'https://x/y',
     description: 'Build   things\n\nfast', tags: ['eng'], postedAt: '2026-06-01',
-    stipend: '₹ 10,000 /month', duration: '3 Months',
+    stipend: '₹ 10,000 /month', duration: '3 Months', experience: 'Fresher',
   }
   it('produces a canonical posting with id and trimmed fields', () => {
     const p = normalize(raw, 'greenhouse:acme')
@@ -18,6 +18,7 @@ describe('normalize', () => {
     expect(p.id).toMatch(/^[0-9a-f]{16}$/)
     expect(p.stipend).toBe('₹ 10,000 /month')
     expect(p.duration).toBe('3 Months')
+    expect(p.experience).toBe('Fresher')
   })
   it('fills safe defaults for missing optional fields', () => {
     const p = normalize({ externalId: '1', title: 'T', company: 'C', url: 'u' }, 's')
@@ -26,5 +27,6 @@ describe('normalize', () => {
     expect(p.postedAt).toBeNull()
     expect(p.stipend).toBeNull()
     expect(p.duration).toBeNull()
+    expect(p.experience).toBeNull()
   })
 })

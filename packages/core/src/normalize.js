@@ -17,5 +17,6 @@ export function normalize(raw, source) {
     postedAt: raw.postedAt || null,
     stipend: raw.stipend ?? null,
     duration: raw.duration ?? null,
+    experience: raw.experience ?? null,
   }
 }

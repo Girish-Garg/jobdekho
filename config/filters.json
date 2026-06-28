@@ -17,5 +17,5 @@
     "marketing", "sales development", "sales representative", "finance intern", "accounting", "operations intern"
   ],
   "locations": ["india", "bengaluru", "bangalore", "hyderabad", "pune", "mumbai", "delhi", "gurgaon", "gurugram", "noida", "chennai", "remote"],
-  "internshipOnly": true
+  "internshipOnly": false
 }

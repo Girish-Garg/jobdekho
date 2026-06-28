@@ -23,10 +23,19 @@ describe('mapUnstop', () => {
     expect(r.stipend).toBe('Rs 8000 - 12000')
     expect(r.description).toContain('Python')
     expect(r.tags).toEqual(['internship'])
+    expect(r.experience).toBe('Fresher')
   })
   it('uses listed locations when present and marks unpaid', () => {
     const r = mapUnstop({ id: 1, isPaid: false, jobDetail: { type: 'onsite', locations: [{ name: 'Pune' }] } })
     expect(r.location).toBe('Pune')
     expect(r.stipend).toBe('Unpaid')
+  })
+  it('maps experience range when min and max differ', () => {
+    const r = mapUnstop({ id: 2, jobDetail: { min_experience: 2, max_experience: 4 } })
+    expect(r.experience).toBe('2-4 years')
+  })
+  it('returns Fresher when no experience fields present', () => {
+    const r = mapUnstop({ id: 3, jobDetail: {} })
+    expect(r.experience).toBe('Fresher')
   })
 })
