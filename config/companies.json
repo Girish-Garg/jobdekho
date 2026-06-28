@@ -22,6 +22,8 @@
     { "provider": "greenhouse", "slug": "stripe" },
     { "provider": "lever", "slug": "meesho" },
     { "provider": "lever", "slug": "netomi" },
+    { "provider": "lever", "slug": "cred" },
+    { "provider": "lever", "slug": "paytm" },
     { "provider": "ashby", "slug": "vanta" },
     { "provider": "ashby", "slug": "clipboard" },
     { "provider": "ashby", "slug": "posthog" },

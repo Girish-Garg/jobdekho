@@ -1,4 +1,4 @@
-const URL = 'https://www.amazon.jobs/en/search.json?category=internship&result_limit=200&sort=recent'
+const URL = 'https://www.amazon.jobs/en/search.json?loc_query=India&result_limit=100&sort=recent'
 
 export function amazon() {
   return {
@@ -15,6 +15,7 @@ export function amazon() {
         description: j.description_short || '',
         tags: [j.job_category].filter(Boolean),
         postedAt: j.posted_date || null,
+        type: 'job',
       }))
     },
   }
