@@ -1,5 +1,23 @@
 import { describe, it, expect } from 'vitest'
-import { normalizePrefs, normalizeFilters, applyStatusFilter } from '@jobdekho/db/dashboard.js'
+import { normalizePrefs, normalizeFilters, applyStatusFilter, escapeLike } from '@jobdekho/db/dashboard.js'
+
+describe('escapeLike', () => {
+  it('leaves plain strings unchanged', () => {
+    expect(escapeLike('react')).toBe('react')
+  })
+  it('escapes percent signs', () => {
+    expect(escapeLike('50%')).toBe('50\\%')
+  })
+  it('escapes underscores', () => {
+    expect(escapeLike('foo_bar')).toBe('foo\\_bar')
+  })
+  it('escapes backslashes', () => {
+    expect(escapeLike('a\\b')).toBe('a\\\\b')
+  })
+  it('escapes all special chars together', () => {
+    expect(escapeLike('%_\\')).toBe('\\%\\_\\\\')
+  })
+})
 
 describe('normalizePrefs', () => {
   it('fills all defaults when called with empty object', () => {

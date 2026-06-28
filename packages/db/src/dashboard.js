@@ -23,6 +23,10 @@ export function normalizeFilters(input) {
 
 // Postings
 
+export function escapeLike(s) {
+  return s.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_')
+}
+
 export function applyStatusFilter(rows, status) {
   const normalized = rows.map((r) => ({ ...r, status: r.status ?? null }))
   if (status === undefined) {
@@ -34,7 +38,7 @@ export function applyStatusFilter(rows, status) {
 export async function listPostingsForUser(db, userId, { source, q, status } = {}) {
   const conditions = []
   if (source) conditions.push(eq(postings.source, source))
-  if (q) conditions.push(or(ilike(postings.title, `%${q}%`), ilike(postings.company, `%${q}%`)))
+  if (q) { const eq_ = escapeLike(q); conditions.push(or(ilike(postings.title, `%${eq_}%`), ilike(postings.company, `%${eq_}%`))) }
   const rows = await db
     .select({
       id: postings.id, source: postings.source, company: postings.company,
