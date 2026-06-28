@@ -5,10 +5,11 @@ import { microsoft } from './companies/microsoft.js'
 import { google } from './companies/google.js'
 import { ey } from './companies/ey.js'
 import { internshala } from './boards/internshala.js'
+import { unstop } from './boards/unstop.js'
 
 const PROVIDERS = { greenhouse, lever }
 const COMPANIES = { amazon, microsoft, google, ey }
-const BOARDS = { internshala }
+const BOARDS = { internshala, unstop }
 
 export function buildAdapters(config) {
   const adapters = []

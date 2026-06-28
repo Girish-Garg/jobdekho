@@ -1,6 +1,8 @@
 import { load } from 'cheerio'
 
-const LISTING = 'https://internshala.com/internships/computer-science,programming,data-science-internship/'
+const CATEGORIES = ['computer-science', 'web-development', 'data-science', 'machine-learning', 'mobile-app-development', 'artificial-intelligence']
+const PAGES = 2
+const pageUrl = (cat, p) => `https://internshala.com/internships/${cat}-internship${p > 1 ? `/page-${p}` : ''}/`
 const DAY = 86400000
 
 export function parsePostedAt(text, now = Date.now()) {
@@ -43,8 +45,18 @@ export function internshala() {
   return {
     name: 'internshala',
     async fetch(http) {
-      const res = await http(LISTING, { headers: { Accept: 'text/html' } })
-      return parseInternshala(await res.text())
+      const out = []
+      for (const cat of CATEGORIES) {
+        for (let p = 1; p <= PAGES; p++) {
+          try {
+            const res = await http(pageUrl(cat, p), { headers: { Accept: 'text/html' } })
+            out.push(...parseInternshala(await res.text()))
+          } catch {
+            // skip a failed category page; the rest still run
+          }
+        }
+      }
+      return out
     },
   }
 }
