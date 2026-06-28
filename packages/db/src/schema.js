@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, jsonb, integer } from 'drizzle-orm/pg-core'
+import { pgTable, text, timestamp, jsonb, integer, primaryKey } from 'drizzle-orm/pg-core'
 
 export const postings = pgTable('postings', {
   id: text('id').primaryKey(),
@@ -21,3 +21,19 @@ export const runs = pgTable('runs', {
   sourceResults: jsonb('source_results').notNull(),
   newCount: integer('new_count').notNull().default(0),
 })
+
+export const users = pgTable('users', {
+  id: text('id').primaryKey(),
+  googleId: text('google_id').notNull().unique(),
+  email: text('email').notNull(),
+  name: text('name'),
+  avatarUrl: text('avatar_url'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
+export const userPostings = pgTable('user_postings', {
+  userId: text('user_id').notNull(),
+  postingId: text('posting_id').notNull(),
+  status: text('status').notNull(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+}, (t) => ({ pk: primaryKey({ columns: [t.userId, t.postingId] }) }))
