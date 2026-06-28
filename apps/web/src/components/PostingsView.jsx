@@ -41,6 +41,7 @@ export default function PostingsView({ filters }) {
   }
 
   let filtered = rows;
+  if (filters.type) filtered = filtered.filter((r) => r.type === filters.type);
   if (filters.minStipend) filtered = filtered.filter((r) => stipendAmount(r.stipend) >= Number(filters.minStipend));
   if (filters.maxExp !== '') filtered = filtered.filter((r) => experienceYears(r.experience) <= Number(filters.maxExp));
   if (filters.maxMonths) {

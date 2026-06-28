@@ -19,6 +19,15 @@ export default function PostingRow({ posting, onStatus }) {
     >
       <div className="min-w-0">
         <div className="flex items-center gap-2">
+          {(posting.type ?? 'internship') === 'job' ? (
+            <span className="rounded-sm bg-ink px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider text-paper">
+              Job
+            </span>
+          ) : (
+            <span className="rounded-sm border border-line px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider text-muted">
+              Internship
+            </span>
+          )}
           {fresh && (
             <span className="rounded-sm bg-ember px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider text-paper">
               New

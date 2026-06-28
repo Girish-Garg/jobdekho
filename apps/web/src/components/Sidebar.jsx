@@ -1,4 +1,5 @@
 const STATUSES = [['', 'All'], ['new', 'New'], ['saved', 'Saved'], ['applied', 'Applied'], ['dismissed', 'Dismissed']];
+const TYPES = [['', 'All'], ['internship', 'Internship'], ['job', 'Job']];
 const SEL = 'w-full rounded-md border border-line bg-paper px-3 py-2 text-sm outline-none focus:border-ink';
 const INP = SEL;
 
@@ -18,6 +19,16 @@ export default function Sidebar({ view, setView, filters, setFilters }) {
         </Field>
         <Field label="Source">
           <input value={filters.source} onChange={set('source')} placeholder="any source" className={INP} />
+        </Field>
+        <Field label="Type">
+          <div className="flex flex-wrap gap-1.5">
+            {TYPES.map(([v, l]) => (
+              <button key={v} onClick={() => setFilters({ ...filters, type: v })}
+                className={`rounded-full border px-3 py-1 text-xs transition ${filters.type === v ? 'border-ink bg-ink text-paper' : 'border-line text-muted hover:border-ink hover:text-ink'}`}>
+                {l}
+              </button>
+            ))}
+          </div>
         </Field>
         <Field label="Status">
           <div className="flex flex-wrap gap-1.5">
