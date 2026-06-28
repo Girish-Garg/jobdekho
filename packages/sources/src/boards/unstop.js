@@ -20,7 +20,7 @@ function experience(d) {
   return `${d.max_experience || d.min_experience} years`
 }
 
-export function mapUnstop(item) {
+export function mapUnstop(item, type = 'internship') {
   return {
     externalId: String(item.id),
     title: item.title || '',
@@ -29,6 +29,7 @@ export function mapUnstop(item) {
     url: item.seo_url || item.public_url || '',
     description: (item.required_skills || []).map((t) => t.skill_name || t.skill || '').filter(Boolean).join(', '),
     tags: ['internship'],
+    type,
     postedAt: item.updated_at || null,
     stipend: item.isPaid === false ? 'Unpaid' : stipend(item.jobDetail),
     duration: null,
@@ -49,7 +50,7 @@ export function unstop() {
           try {
             const res = await http(apiUrl(opp, page), { headers: { Accept: 'application/json' } })
             const data = await res.json()
-            for (const it of data?.data?.data || []) out.push(mapUnstop(it))
+            for (const it of data?.data?.data || []) out.push(mapUnstop(it, opp === 'jobs' ? 'job' : 'internship'))
           } catch {
             // skip a failed page; the rest still run
           }

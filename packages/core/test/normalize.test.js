@@ -28,5 +28,10 @@ describe('normalize', () => {
     expect(p.stipend).toBeNull()
     expect(p.duration).toBeNull()
     expect(p.experience).toBeNull()
+    expect(p.type).toBe('internship')
+  })
+  it('passes type through when provided', () => {
+    const p = normalize({ externalId: '1', title: 'T', company: 'C', url: 'u', type: 'job' }, 's')
+    expect(p.type).toBe('job')
   })
 })

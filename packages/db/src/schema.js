@@ -16,6 +16,7 @@ export const postings = pgTable('postings', {
   postedAt: timestamp('posted_at'),
   firstSeenAt: timestamp('first_seen_at').notNull().defaultNow(),
   status: text('status').notNull().default('new'),
+  type: text('type'),
 })
 
 export const runs = pgTable('runs', {

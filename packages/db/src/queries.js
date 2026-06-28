@@ -8,6 +8,7 @@ export function toRow(p) {
     descriptionSnippet: p.descriptionSnippet, tags: p.tags,
     postedAt: p.postedAt ? new Date(p.postedAt) : null,
     stipend: p.stipend ?? null, duration: p.duration ?? null, experience: p.experience ?? null,
+    type: p.type ?? 'internship',
   }
 }
 

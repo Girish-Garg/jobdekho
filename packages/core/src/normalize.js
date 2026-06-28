@@ -18,5 +18,6 @@ export function normalize(raw, source) {
     stipend: raw.stipend ?? null,
     duration: raw.duration ?? null,
     experience: raw.experience ?? null,
+    type: raw.type ?? 'internship',
   }
 }

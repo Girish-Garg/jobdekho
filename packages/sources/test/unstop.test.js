@@ -23,6 +23,7 @@ describe('mapUnstop', () => {
     expect(r.stipend).toBe('Rs 8000 - 12000')
     expect(r.description).toContain('Python')
     expect(r.tags).toEqual(['internship'])
+    expect(r.type).toBe('internship')
     expect(r.experience).toBe('Fresher')
   })
   it('uses listed locations when present and marks unpaid', () => {
@@ -37,5 +38,9 @@ describe('mapUnstop', () => {
   it('returns Fresher when no experience fields present', () => {
     const r = mapUnstop({ id: 3, jobDetail: {} })
     expect(r.experience).toBe('Fresher')
+  })
+  it('sets type to job when passed as second argument', () => {
+    const r = mapUnstop(item, 'job')
+    expect(r.type).toBe('job')
   })
 })

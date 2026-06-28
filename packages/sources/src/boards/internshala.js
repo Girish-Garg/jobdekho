@@ -17,7 +17,7 @@ export function parsePostedAt(text, now = Date.now()) {
   return new Date(now - Number(m[1]) * mult * DAY).toISOString()
 }
 
-export function parseInternshala(html) {
+export function parseInternshala(html, type = 'internship') {
   const $ = load(html)
   const out = []
   $('.individual_internship').each((_, el) => {
@@ -35,6 +35,7 @@ export function parseInternshala(html) {
       url: href.startsWith('http') ? href : `https://internshala.com${href}`,
       description: card.find('.internship_meta').text().replace(/\s+/g, ' ').trim(),
       tags: ['internship'],
+      type,
       postedAt: parsePostedAt(card.find('[class*="status"]').text()),
       stipend: card.find('.ic-16-money').first().parent().text().replace(/\s+/g, ' ').trim() || null,
       duration: card.find('.ic-16-calendar').first().parent().text().replace(/\s+/g, ' ').trim() || null,
@@ -50,12 +51,12 @@ export function internshala() {
     async fetch(http) {
       const out = []
       const targets = []
-      for (const c of INTERN_CATS) for (let p = 1; p <= PAGES; p++) targets.push(internUrl(c, p))
-      for (const c of JOB_CATS) for (let p = 1; p <= PAGES; p++) targets.push(jobUrl(c, p))
-      for (const url of targets) {
+      for (const c of INTERN_CATS) for (let p = 1; p <= PAGES; p++) targets.push([internUrl(c, p), 'internship'])
+      for (const c of JOB_CATS) for (let p = 1; p <= PAGES; p++) targets.push([jobUrl(c, p), 'job'])
+      for (const [url, type] of targets) {
         try {
           const res = await http(url, { headers: { Accept: 'text/html' } })
-          out.push(...parseInternshala(await res.text()))
+          out.push(...parseInternshala(await res.text(), type))
         } catch {
           // skip a failed page; the rest still run
         }

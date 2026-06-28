@@ -21,12 +21,17 @@ describe('parseInternshala', () => {
     expect(r.location).toBe('Bangalore')
     expect(r.url).toBe('https://internshala.com/internship/detail/web-dev-900')
     expect(r.tags).toEqual(['internship'])
+    expect(r.type).toBe('internship')
     expect(typeof r.postedAt).toBe('string')
     expect(r.stipend).toContain('8,000')
     expect(r.duration).toContain('3 Months')
   })
   it('skips cards missing id or title', () => {
     expect(parseInternshala('<div class="individual_internship"></div>')).toEqual([])
+  })
+  it('sets type to job when passed as second argument', () => {
+    const [r] = parseInternshala(html, 'job')
+    expect(r.type).toBe('job')
   })
 })
 

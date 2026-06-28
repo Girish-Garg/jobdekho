@@ -45,6 +45,7 @@ export async function listPostingsForUser(db, userId, { source, q, status } = {}
       descriptionSnippet: postings.descriptionSnippet, tags: postings.tags,
       stipend: postings.stipend, duration: postings.duration, experience: postings.experience,
       postedAt: postings.postedAt, firstSeenAt: postings.firstSeenAt,
+      type: postings.type,
       status: userPostings.status,
     })
     .from(postings)
