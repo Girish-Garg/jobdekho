@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { getPostings, setStatus } from '../api.js';
 import { sortPostings } from '../lib/sortPostings.js';
 import { isNewToday } from '../lib/time.js';
-import { stipendAmount, durationMonths } from '../lib/meta.js';
+import { stipendAmount, durationMonths, experienceYears } from '../lib/meta.js';
 import PostingRow from './PostingRow.jsx';
 
 // Postings feed. Refetches when filters change; status edits apply optimistically.
@@ -42,6 +42,7 @@ export default function PostingsView({ filters }) {
 
   let filtered = rows;
   if (filters.minStipend) filtered = filtered.filter((r) => stipendAmount(r.stipend) >= Number(filters.minStipend));
+  if (filters.maxExp !== '') filtered = filtered.filter((r) => experienceYears(r.experience) <= Number(filters.maxExp));
   if (filters.maxMonths) {
     const max = Number(filters.maxMonths);
     filtered = filtered.filter((r) => durationMonths(r.duration) > 0 && durationMonths(r.duration) <= max);

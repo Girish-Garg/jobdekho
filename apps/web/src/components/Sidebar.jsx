@@ -1,10 +1,6 @@
-const STATUSES = [
-  ['', 'All'],
-  ['new', 'New'],
-  ['saved', 'Saved'],
-  ['applied', 'Applied'],
-  ['dismissed', 'Dismissed'],
-];
+const STATUSES = [['', 'All'], ['new', 'New'], ['saved', 'Saved'], ['applied', 'Applied'], ['dismissed', 'Dismissed']];
+const SEL = 'w-full rounded-md border border-line bg-paper px-3 py-2 text-sm outline-none focus:border-ink';
+const INP = SEL;
 
 // Left rail: section nav + the live posting filters.
 export default function Sidebar({ view, setView, filters, setFilters }) {
@@ -16,47 +12,25 @@ export default function Sidebar({ view, setView, filters, setFilters }) {
         <NavItem active={view === 'postings'} onClick={() => setView('postings')}>Postings</NavItem>
         <NavItem active={view === 'settings'} onClick={() => setView('settings')}>Settings</NavItem>
       </div>
-
       <div className={view === 'postings' ? 'flex flex-col gap-5' : 'hidden'}>
         <Field label="Keyword">
-          <input
-            value={filters.q}
-            onChange={set('q')}
-            placeholder="frontend, data, intern"
-            className="w-full rounded-md border border-line bg-paper px-3 py-2 text-sm outline-none focus:border-ink"
-          />
+          <input value={filters.q} onChange={set('q')} placeholder="frontend, data, intern" className={INP} />
         </Field>
         <Field label="Source">
-          <input
-            value={filters.source}
-            onChange={set('source')}
-            placeholder="any source"
-            className="w-full rounded-md border border-line bg-paper px-3 py-2 text-sm outline-none focus:border-ink"
-          />
+          <input value={filters.source} onChange={set('source')} placeholder="any source" className={INP} />
         </Field>
         <Field label="Status">
           <div className="flex flex-wrap gap-1.5">
             {STATUSES.map(([v, l]) => (
-              <button
-                key={v}
-                onClick={() => setFilters({ ...filters, status: v })}
-                className={`rounded-full border px-3 py-1 text-xs transition ${
-                  filters.status === v
-                    ? 'border-ink bg-ink text-paper'
-                    : 'border-line text-muted hover:border-ink hover:text-ink'
-                }`}
-              >
+              <button key={v} onClick={() => setFilters({ ...filters, status: v })}
+                className={`rounded-full border px-3 py-1 text-xs transition ${filters.status === v ? 'border-ink bg-ink text-paper' : 'border-line text-muted hover:border-ink hover:text-ink'}`}>
                 {l}
               </button>
             ))}
           </div>
         </Field>
         <Field label="Min stipend">
-          <select
-            value={filters.minStipend}
-            onChange={set('minStipend')}
-            className="w-full rounded-md border border-line bg-paper px-3 py-2 text-sm outline-none focus:border-ink"
-          >
+          <select value={filters.minStipend} onChange={set('minStipend')} className={SEL}>
             <option value="">Any</option>
             <option value="1">Paid only</option>
             <option value="5000">Rs 5,000+</option>
@@ -64,12 +38,18 @@ export default function Sidebar({ view, setView, filters, setFilters }) {
             <option value="15000">Rs 15,000+</option>
           </select>
         </Field>
+        <Field label="Max experience">
+          <select value={filters.maxExp} onChange={set('maxExp')} className={SEL}>
+            <option value="">Any</option>
+            <option value="0">Fresher</option>
+            <option value="1">1 year</option>
+            <option value="2">2 years</option>
+            <option value="3">3 years</option>
+            <option value="5">5 years</option>
+          </select>
+        </Field>
         <Field label="Max duration">
-          <select
-            value={filters.maxMonths}
-            onChange={set('maxMonths')}
-            className="w-full rounded-md border border-line bg-paper px-3 py-2 text-sm outline-none focus:border-ink"
-          >
+          <select value={filters.maxMonths} onChange={set('maxMonths')} className={SEL}>
             <option value="">Any</option>
             <option value="1">1 month</option>
             <option value="2">2 months</option>

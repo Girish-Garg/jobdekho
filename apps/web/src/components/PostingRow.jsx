@@ -33,7 +33,7 @@ export default function PostingRow({ posting, onStatus }) {
             {posting.title}
           </a>
         </div>
-        {(posting.duration || posting.stipend) && (
+        {(posting.duration || posting.stipend || posting.experience) && (
           <div className="mt-1.5 flex gap-1.5">
             {posting.duration && (
               <span className="rounded-sm border border-line px-1.5 py-0.5 font-mono text-[10px] text-muted">
@@ -43,6 +43,11 @@ export default function PostingRow({ posting, onStatus }) {
             {posting.stipend && (
               <span className="rounded-sm border border-line px-1.5 py-0.5 font-mono text-[10px] text-muted">
                 {posting.stipend}
+              </span>
+            )}
+            {posting.experience && (
+              <span className="rounded-sm border border-line px-1.5 py-0.5 font-mono text-[10px] text-muted">
+                {posting.experience}
               </span>
             )}
           </div>

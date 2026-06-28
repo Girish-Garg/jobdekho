@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { stipendAmount, durationMonths } from '../src/lib/meta.js'
+import { stipendAmount, durationMonths, experienceYears } from '../src/lib/meta.js'
 
 describe('stipendAmount', () => {
   it('parses amount with commas', () => {
@@ -10,6 +10,21 @@ describe('stipendAmount', () => {
   })
   it('returns 0 for null', () => {
     expect(stipendAmount(null)).toBe(0)
+  })
+})
+
+describe('experienceYears', () => {
+  it('returns 0 for Fresher', () => {
+    expect(experienceYears('Fresher')).toBe(0)
+  })
+  it('returns first number for range', () => {
+    expect(experienceYears('2-4 years')).toBe(2)
+  })
+  it('returns number for single value', () => {
+    expect(experienceYears('5 years')).toBe(5)
+  })
+  it('returns 0 for null', () => {
+    expect(experienceYears(null)).toBe(0)
   })
 })
 

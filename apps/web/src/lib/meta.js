@@ -6,6 +6,12 @@ export function stipendAmount(text) {
   return m ? Number(m[0]) : 0
 }
 
+export function experienceYears(text) {
+  if (!text || text === 'Fresher') return 0
+  const m = text.match(/\d+/)
+  return m ? Number(m[0]) : 0
+}
+
 export function durationMonths(text) {
   if (!text) return 0
   const lower = text.toLowerCase()
