@@ -6,17 +6,18 @@ export function greenhouse({ slug }) {
   return {
     name: `greenhouse:${slug}`,
     async fetch(http) {
-      const res = await http(`https://boards-api.greenhouse.io/v1/boards/${slug}/jobs?content=true`)
+      const res = await http(`https://boards-api.greenhouse.io/v1/boards/${slug}/jobs?content=false`)
       const data = await res.json()
       return (data.jobs || []).map((j) => ({
         externalId: String(j.id),
         title: j.title,
-        company: slug,
+        company: slug.charAt(0).toUpperCase() + slug.slice(1),
         location: j.location?.name || '',
         url: j.absolute_url,
         description: stripHtml(j.content || ''),
         tags: (j.departments || []).map((d) => d.name),
         postedAt: j.updated_at || null,
+        type: 'job',
       }))
     },
   }

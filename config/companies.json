@@ -1,5 +1,15 @@
 {
-  "providers": [],
+  "providers": [
+    { "provider": "greenhouse", "slug": "gitlab" },
+    { "provider": "greenhouse", "slug": "phonepe" },
+    { "provider": "greenhouse", "slug": "mongodb" },
+    { "provider": "greenhouse", "slug": "postman" },
+    { "provider": "greenhouse", "slug": "vercel" },
+    { "provider": "greenhouse", "slug": "groww" },
+    { "provider": "greenhouse", "slug": "webflow" },
+    { "provider": "greenhouse", "slug": "elastic" },
+    { "provider": "greenhouse", "slug": "netlify" }
+  ],
   "companies": [],
   "boards": ["internshala", "unstop"]
 }

@@ -13,6 +13,7 @@ export function lever({ slug }) {
         description: j.descriptionPlain || '',
         tags: [j.categories?.team, j.categories?.commitment].filter(Boolean),
         postedAt: j.createdAt ? new Date(j.createdAt).toISOString() : null,
+        type: 'job',
       }))
     },
   }
