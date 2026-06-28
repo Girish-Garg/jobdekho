@@ -152,12 +152,12 @@ describe('GET /api/notifications', () => {
     const cookie = await signedCookie(app)
     const res = await app.inject({ method: 'GET', url: '/api/notifications', headers: { cookie } })
     expect(res.statusCode).toBe(200)
-    expect(res.json()).toEqual({ channel: 'none', telegramChatId: null, email: null, enabled: true })
+    expect(res.json()).toEqual({ channel: 'none', telegramChatId: null, enabled: true })
   })
 
   it('returns user prefs when available', async () => {
     const store = makeFakeStore()
-    store.getNotificationPrefs.mockResolvedValue({ channel: 'telegram', telegramChatId: '123', email: null, enabled: true })
+    store.getNotificationPrefs.mockResolvedValue({ channel: 'telegram', telegramChatId: '123', enabled: true })
     const app = makeApp(store)
     const cookie = await signedCookie(app)
     const res = await app.inject({ method: 'GET', url: '/api/notifications', headers: { cookie } })
@@ -177,7 +177,7 @@ describe('PUT /api/notifications', () => {
     const store = makeFakeStore()
     const app = makeApp(store)
     const cookie = await signedCookie(app)
-    const prefs = { channel: 'email', telegramChatId: null, email: 'a@b.c', enabled: true }
+    const prefs = { channel: 'telegram', telegramChatId: 'chat123', enabled: true }
     const res = await app.inject({
       method: 'PUT', url: '/api/notifications',
       headers: { cookie, 'content-type': 'application/json' },

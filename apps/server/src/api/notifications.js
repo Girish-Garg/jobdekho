@@ -1,4 +1,4 @@
-const DEFAULTS = { channel: 'none', telegramChatId: null, email: null, enabled: true }
+const DEFAULTS = { channel: 'none', telegramChatId: null, enabled: true }
 
 export async function notificationsRoutes(app) {
   app.get('/api/notifications', { preHandler: app.requireAuth }, async (request) => {
