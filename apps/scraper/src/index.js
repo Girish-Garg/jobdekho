@@ -5,7 +5,6 @@ import { buildAdapters } from '@jobdekho/sources/registry.js'
 import { createDb } from '@jobdekho/db/client.js'
 import { listUsersForNotify } from '@jobdekho/db/dashboard-prefs.js'
 import { sendTelegram } from '@jobdekho/notify/telegram.js'
-import { sendEmail, createTransport } from '@jobdekho/notify/email.js'
 import { runAdapters } from './runner.js'
 import { runPipeline } from './pipeline.js'
 import { notifyUsers } from './notify-users.js'
@@ -14,24 +13,12 @@ const read = (name) => JSON.parse(readFileSync(new URL(`../../../config/${name}`
 
 function buildSenders() {
   const token = process.env.TELEGRAM_BOT_TOKEN
-  const smtpHost = process.env.SMTP_HOST
-  const smtpUser = process.env.SMTP_USER
-  const smtpPass = process.env.SMTP_PASS
-  const smtpFrom = process.env.SMTP_FROM
 
   const telegram = token
     ? (chatId, text) => sendTelegram({ token, chatId }, text).catch(() => ({ ok: false }))
-    : null
+    : () => ({ ok: false })
 
-  const emailTransport = (smtpHost && smtpUser && smtpPass)
-    ? createTransport({ host: smtpHost, auth: { user: smtpUser, pass: smtpPass } })
-    : null
-
-  const email = emailTransport
-    ? (to, text) => sendEmail({ to, from: smtpFrom, subject: 'New JobDekho matches', text }, emailTransport)
-    : null
-
-  return { telegram, email }
+  return { telegram }
 }
 
 async function main() {
@@ -47,11 +34,7 @@ async function main() {
   console.log(`Done. ${summary.fresh} new of ${summary.total} relevant.`)
   for (const r of ran.results) console.log(`  ${r.name}: ${r.ok ? r.count : 'FAIL ' + r.error}`)
 
-  const { telegram, email } = buildSenders()
-  const senders = {
-    telegram: telegram || (() => ({ ok: false })),
-    email: email || (() => ({ ok: false })),
-  }
+  const senders = buildSenders()
   const users = await listUsersForNotify(db)
   const perUser = await notifyUsers(summary.freshPostings, { users, defaultRules: rules, senders })
   for (const s of perUser) {

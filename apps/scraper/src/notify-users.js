@@ -18,9 +18,6 @@ export async function notifyUsers(freshPostings, { users, defaultRules, senders 
     if (prefs.channel === 'telegram' && prefs.telegramChatId) {
       const result = await senders.telegram(prefs.telegramChatId, text)
       summary.push({ userId, sent: !!result?.ok, count: matches.length })
-    } else if (prefs.channel === 'email' && prefs.email) {
-      const result = await senders.email(prefs.email, text)
-      summary.push({ userId, sent: !!result?.ok, count: matches.length })
     } else {
       summary.push({ userId, sent: false, count: matches.length })
     }

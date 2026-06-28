@@ -1,1 +1,1 @@
-{ "name": "@jobdekho/notify", "version": "0.0.0", "type": "module", "exports": { "./*": "./src/*" }, "dependencies": { "nodemailer": "^6.9.0" } }
+{ "name": "@jobdekho/notify", "version": "0.0.0", "type": "module", "exports": { "./*": "./src/*" } }
