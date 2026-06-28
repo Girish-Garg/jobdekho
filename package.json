@@ -7,7 +7,9 @@
     "start": "node apps/server/src/server.js",
     "test": "vitest run",
     "scrape": "node apps/scraper/src/index.js",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "build": "npm -w @jobdekho/web run build",
+    "heroku-postbuild": "npm -w @jobdekho/web run build"
   },
   "devDependencies": {
     "vitest": "^2.1.0",
