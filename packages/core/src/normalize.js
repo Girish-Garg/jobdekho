@@ -15,5 +15,7 @@ export function normalize(raw, source) {
     descriptionSnippet: (raw.description || '').replace(/\s+/g, ' ').trim().slice(0, SNIPPET_MAX),
     tags: raw.tags || [],
     postedAt: raw.postedAt || null,
+    stipend: raw.stipend ?? null,
+    duration: raw.duration ?? null,
   }
 }
