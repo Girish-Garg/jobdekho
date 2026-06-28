@@ -7,6 +7,7 @@ export function toRow(p) {
     company: p.company, location: p.location, url: p.url,
     descriptionSnippet: p.descriptionSnippet, tags: p.tags,
     postedAt: p.postedAt ? new Date(p.postedAt) : null,
+    stipend: p.stipend ?? null, duration: p.duration ?? null,
   }
 }
 

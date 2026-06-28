@@ -10,6 +10,8 @@ export const postings = pgTable('postings', {
   url: text('url').notNull(),
   descriptionSnippet: text('description_snippet').notNull().default(''),
   tags: text('tags').array().notNull().default([]),
+  stipend: text('stipend'),
+  duration: text('duration'),
   postedAt: timestamp('posted_at'),
   firstSeenAt: timestamp('first_seen_at').notNull().defaultNow(),
   status: text('status').notNull().default('new'),
