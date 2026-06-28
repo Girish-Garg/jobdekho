@@ -19,7 +19,8 @@ describe('runPipeline', () => {
       sendTelegram: vi.fn(async (_t, text) => { sent.push(text); return { ok: true } }),
     }
     const out = await runPipeline({ items, results: [] }, { db: {}, rules, telegram: {}, runId: 'r1', ports })
-    expect(out).toEqual({ total: 1, fresh: 1 })
+    expect(out).toMatchObject({ total: 1, fresh: 1 })
+    expect(out.freshPostings).toHaveLength(1)
     expect(ports.upsertPostings.mock.calls[0][1]).toHaveLength(1)
     expect(sent[0]).toContain('Software Intern')
     expect(ports.recordRun.mock.calls[0][1]).toMatchObject({ id: 'r1', newCount: 1 })

@@ -16,5 +16,5 @@ export async function runPipeline({ items, results }, { db, rules, telegram, run
   await ports.upsertPostings(db, all)
   for (const group of chunk(fresh, BATCH)) await ports.sendTelegram(telegram, formatBatch(group))
   await ports.recordRun(db, { id: runId, sourceResults: results, newCount: fresh.length })
-  return { total: all.length, fresh: fresh.length }
+  return { total: all.length, fresh: fresh.length, freshPostings: fresh }
 }
