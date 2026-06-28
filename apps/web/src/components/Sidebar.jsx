@@ -51,22 +51,38 @@ export default function Sidebar({ view, setView, filters, setFilters }) {
             ))}
           </div>
         </Field>
+        <Field label="Paid only">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={filters.paidOnly}
+              onChange={(e) => setFilters({ ...filters, paidOnly: e.target.checked })}
+              className="accent-ink"
+            />
+            <span className="text-sm text-ink">Paid internships only</span>
+          </label>
+        </Field>
+        <Field label="Max duration">
+          <select
+            value={filters.maxMonths}
+            onChange={set('maxMonths')}
+            className="w-full rounded-md border border-line bg-paper px-3 py-2 text-sm outline-none focus:border-ink"
+          >
+            <option value="">Any</option>
+            <option value="1">1 month</option>
+            <option value="2">2 months</option>
+            <option value="3">3 months</option>
+            <option value="6">6 months</option>
+          </select>
+        </Field>
       </div>
     </nav>
   );
 }
 
 function NavItem({ active, onClick, children }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`rounded-md px-3 py-2 text-left text-sm font-medium transition ${
-        active ? 'bg-ink text-paper' : 'text-muted hover:bg-paper hover:text-ink'
-      }`}
-    >
-      {children}
-    </button>
-  );
+  const cls = `rounded-md px-3 py-2 text-left text-sm font-medium transition ${active ? 'bg-ink text-paper' : 'text-muted hover:bg-paper hover:text-ink'}`
+  return <button onClick={onClick} className={cls}>{children}</button>
 }
 
 function Field({ label, children }) {
@@ -75,5 +91,5 @@ function Field({ label, children }) {
       <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted">{label}</span>
       {children}
     </label>
-  );
+  )
 }

@@ -33,6 +33,20 @@ export default function PostingRow({ posting, onStatus }) {
             {posting.title}
           </a>
         </div>
+        {(posting.duration || posting.stipend) && (
+          <div className="mt-1.5 flex gap-1.5">
+            {posting.duration && (
+              <span className="rounded-sm border border-line px-1.5 py-0.5 font-mono text-[10px] text-muted">
+                {posting.duration}
+              </span>
+            )}
+            {posting.stipend && (
+              <span className="rounded-sm border border-line px-1.5 py-0.5 font-mono text-[10px] text-muted">
+                {posting.stipend}
+              </span>
+            )}
+          </div>
+        )}
         <p className="mt-1 truncate font-mono text-xs text-muted">
           {posting.company}
           {posting.location ? ` - ${posting.location}` : ''}

@@ -4,7 +4,7 @@ import Topbar from './Topbar.jsx';
 import PostingsView from './PostingsView.jsx';
 import SettingsView from './SettingsView.jsx';
 
-const EMPTY = { source: '', q: '', status: '' };
+const EMPTY = { source: '', q: '', status: '', paidOnly: false, maxMonths: '' };
 
 // Full-viewport app frame: fixed sidebar + topbar, scrolling main region.
 export default function Shell({ user, onLogout }) {

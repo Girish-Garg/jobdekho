@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getPostings, setStatus } from '../api.js';
 import { sortPostings } from '../lib/sortPostings.js';
 import { isNewToday } from '../lib/time.js';
+import { stipendAmount, durationMonths } from '../lib/meta.js';
 import PostingRow from './PostingRow.jsx';
 
 // Postings feed. Refetches when filters change; status edits apply optimistically.
@@ -20,7 +21,7 @@ export default function PostingsView({ filters }) {
   useEffect(() => {
     let alive = true;
     setLoading(true);
-    getPostings(filters)
+    getPostings({ q: filters.q, source: filters.source, status: filters.status })
       .then((data) => alive && setRows(data))
       .catch(() => alive && setRows([]))
       .finally(() => alive && setLoading(false));
@@ -39,8 +40,14 @@ export default function PostingsView({ filters }) {
     }
   }
 
-  const sorted = sortPostings(rows, sort);
-  const freshCount = sorted.filter((p) => isNewToday(p.firstSeenAt)).length;
+  let filtered = rows;
+  if (filters.paidOnly) filtered = filtered.filter((r) => stipendAmount(r.stipend) > 0);
+  if (filters.maxMonths) {
+    const max = Number(filters.maxMonths);
+    filtered = filtered.filter((r) => durationMonths(r.duration) > 0 && durationMonths(r.duration) <= max);
+  }
+  const sorted = sortPostings(filtered, sort);
+  const freshCount = rows.filter((p) => isNewToday(p.firstSeenAt)).length;
 
   return (
     <section>
