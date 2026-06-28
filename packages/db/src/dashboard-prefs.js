@@ -23,8 +23,8 @@ export async function upsertUserFilters(db, userId, filters) {
 export async function getNotificationPrefs(db, userId) {
   const rows = await db.select().from(notificationPrefs).where(eq(notificationPrefs.userId, userId))
   if (!rows[0]) return null
-  const { channel, telegramChatId, email, enabled } = rows[0]
-  return normalizePrefs({ channel, telegramChatId, email, enabled })
+  const { channel, telegramChatId, enabled } = rows[0]
+  return normalizePrefs({ channel, telegramChatId, enabled })
 }
 
 export async function upsertNotificationPrefs(db, userId, prefs) {

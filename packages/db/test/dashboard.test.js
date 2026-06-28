@@ -24,7 +24,6 @@ describe('normalizePrefs', () => {
     const p = normalizePrefs({})
     expect(p.channel).toBe('none')
     expect(p.telegramChatId).toBeNull()
-    expect(p.email).toBeNull()
     expect(p.enabled).toBe(true)
   })
   it('preserves provided values over defaults', () => {
@@ -32,7 +31,6 @@ describe('normalizePrefs', () => {
     expect(p.channel).toBe('telegram')
     expect(p.telegramChatId).toBe('123')
     expect(p.enabled).toBe(false)
-    expect(p.email).toBeNull()
   })
   it('handles null input gracefully', () => {
     const p = normalizePrefs(null)

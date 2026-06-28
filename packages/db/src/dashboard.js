@@ -7,7 +7,6 @@ export function normalizePrefs(input) {
   return {
     channel: src.channel ?? 'none',
     telegramChatId: src.telegramChatId ?? null,
-    email: src.email ?? null,
     enabled: src.enabled ?? true,
   }
 }

@@ -50,7 +50,6 @@ export const notificationPrefs = pgTable('notification_prefs', {
   userId: text('user_id').primaryKey(),
   channel: text('channel').notNull().default('none'),
   telegramChatId: text('telegram_chat_id'),
-  email: text('email'),
   enabled: boolean('enabled').notNull().default(true),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
