@@ -1,8 +1,10 @@
 import { load } from 'cheerio'
 
-const CATEGORIES = ['computer-science', 'web-development', 'data-science', 'machine-learning', 'mobile-app-development', 'artificial-intelligence']
+const INTERN_CATS = ['computer-science', 'web-development', 'data-science', 'machine-learning', 'mobile-app-development', 'artificial-intelligence']
+const JOB_CATS = ['software-development', 'web-development', 'data-science', 'mobile-app-development']
 const PAGES = 2
-const pageUrl = (cat, p) => `https://internshala.com/internships/${cat}-internship${p > 1 ? `/page-${p}` : ''}/`
+const internUrl = (cat, p) => `https://internshala.com/internships/${cat}-internship${p > 1 ? `/page-${p}` : ''}/`
+const jobUrl = (cat, p) => `https://internshala.com/jobs/${cat}-jobs${p > 1 ? `/page-${p}` : ''}/`
 const DAY = 86400000
 
 export function parsePostedAt(text, now = Date.now()) {
@@ -36,7 +38,7 @@ export function parseInternshala(html) {
       postedAt: parsePostedAt(card.find('[class*="status"]').text()),
       stipend: card.find('.ic-16-money').first().parent().text().replace(/\s+/g, ' ').trim() || null,
       duration: card.find('.ic-16-calendar').first().parent().text().replace(/\s+/g, ' ').trim() || null,
-      experience: 'Fresher',
+      experience: card.find('.ic-16-briefcase').first().parent().text().replace(/\s+/g, ' ').trim() || 'Fresher',
     })
   })
   return out
@@ -47,14 +49,15 @@ export function internshala() {
     name: 'internshala',
     async fetch(http) {
       const out = []
-      for (const cat of CATEGORIES) {
-        for (let p = 1; p <= PAGES; p++) {
-          try {
-            const res = await http(pageUrl(cat, p), { headers: { Accept: 'text/html' } })
-            out.push(...parseInternshala(await res.text()))
-          } catch {
-            // skip a failed category page; the rest still run
-          }
+      const targets = []
+      for (const c of INTERN_CATS) for (let p = 1; p <= PAGES; p++) targets.push(internUrl(c, p))
+      for (const c of JOB_CATS) for (let p = 1; p <= PAGES; p++) targets.push(jobUrl(c, p))
+      for (const url of targets) {
+        try {
+          const res = await http(url, { headers: { Accept: 'text/html' } })
+          out.push(...parseInternshala(await res.text()))
+        } catch {
+          // skip a failed page; the rest still run
         }
       }
       return out
