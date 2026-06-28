@@ -1,7 +1,14 @@
 // Slim top strip: wordmark, current user, sign-out.
-export default function Topbar({ user }) {
+import { logout } from '../api.js';
+
+export default function Topbar({ user, onLogout }) {
   const name = user?.name || user?.email || 'Account';
   const initial = name.slice(0, 1).toUpperCase();
+
+  async function handleLogout() {
+    await logout();
+    onLogout?.();
+  }
 
   return (
     <header className="flex h-full items-center justify-between border-b border-line bg-panel px-5">
@@ -14,11 +21,13 @@ export default function Topbar({ user }) {
         <span className="grid h-8 w-8 place-items-center rounded-full bg-ink font-mono text-xs text-paper">
           {initial}
         </span>
-        <form action="/auth/logout" method="post">
-          <button className="rounded-full border border-line px-3 py-1.5 text-sm text-muted transition hover:border-ink hover:text-ink">
-            Log out
-          </button>
-        </form>
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="rounded-full border border-line px-3 py-1.5 text-sm text-muted transition hover:border-ink hover:text-ink"
+        >
+          Log out
+        </button>
       </div>
     </header>
   );

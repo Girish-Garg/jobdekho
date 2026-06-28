@@ -42,3 +42,7 @@ export function getNotifications() {
 export function putNotifications(p) {
   return req('/api/notifications', { method: 'PUT', body: JSON.stringify(p) });
 }
+
+export function logout() {
+  return fetch('/auth/logout', { method: 'POST', credentials: 'include' });
+}

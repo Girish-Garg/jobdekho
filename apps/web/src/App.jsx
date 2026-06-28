@@ -14,8 +14,9 @@ export default function App() {
 
   if (state.status === 'loading') return <Splash label="Loading your board" />;
   if (state.status === 'error') return <Splash label="The server is unreachable. Try again shortly." />;
+  const handleLogout = () => setState({ status: 'out', user: null });
   if (state.status === 'out') return <Login />;
-  return <Shell user={state.user} />;
+  return <Shell user={state.user} onLogout={handleLogout} />;
 }
 
 function Splash({ label }) {
