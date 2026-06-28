@@ -1,8 +1,8 @@
 import nodemailer from 'nodemailer'
 
-export async function sendEmail({ to, subject, text }, transport) {
+export async function sendEmail({ to, from, subject, text }, transport) {
   try {
-    await transport.sendMail({ to, subject, text })
+    await transport.sendMail({ to, from, subject, text })
     return { ok: true }
   } catch {
     return { ok: false }
