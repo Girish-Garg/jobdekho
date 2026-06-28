@@ -8,6 +8,8 @@ const html = `
   <div class="row-1-item internship_meta"><span class="item_link internship_item_location"><a>Bangalore</a></span></div>
   <div class="internship_meta">3 Months</div>
   <div class="status-success"><i></i><span>2 days ago</span></div>
+  <div><i class="ic-16-money"></i><span>&#8377; 8,000 /month</span></div>
+  <div><i class="ic-16-calendar"></i><span>3 Months</span></div>
 </div>`
 
 describe('parseInternshala', () => {
@@ -20,6 +22,8 @@ describe('parseInternshala', () => {
     expect(r.url).toBe('https://internshala.com/internship/detail/web-dev-900')
     expect(r.tags).toEqual(['internship'])
     expect(typeof r.postedAt).toBe('string')
+    expect(r.stipend).toContain('8,000')
+    expect(r.duration).toContain('3 Months')
   })
   it('skips cards missing id or title', () => {
     expect(parseInternshala('<div class="individual_internship"></div>')).toEqual([])

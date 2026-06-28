@@ -32,6 +32,8 @@ export function parseInternshala(html) {
       description: card.find('.internship_meta').text().replace(/\s+/g, ' ').trim(),
       tags: ['internship'],
       postedAt: parsePostedAt(card.find('[class*="status"]').text()),
+      stipend: card.find('.ic-16-money').first().parent().text().replace(/\s+/g, ' ').trim() || null,
+      duration: card.find('.ic-16-calendar').first().parent().text().replace(/\s+/g, ' ').trim() || null,
     })
   })
   return out
