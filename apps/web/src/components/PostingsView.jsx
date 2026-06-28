@@ -41,7 +41,7 @@ export default function PostingsView({ filters }) {
   }
 
   let filtered = rows;
-  if (filters.paidOnly) filtered = filtered.filter((r) => stipendAmount(r.stipend) > 0);
+  if (filters.minStipend) filtered = filtered.filter((r) => stipendAmount(r.stipend) >= Number(filters.minStipend));
   if (filters.maxMonths) {
     const max = Number(filters.maxMonths);
     filtered = filtered.filter((r) => durationMonths(r.duration) > 0 && durationMonths(r.duration) <= max);

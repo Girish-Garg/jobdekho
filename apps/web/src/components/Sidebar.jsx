@@ -51,16 +51,18 @@ export default function Sidebar({ view, setView, filters, setFilters }) {
             ))}
           </div>
         </Field>
-        <Field label="Paid only">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={filters.paidOnly}
-              onChange={(e) => setFilters({ ...filters, paidOnly: e.target.checked })}
-              className="accent-ink"
-            />
-            <span className="text-sm text-ink">Paid internships only</span>
-          </label>
+        <Field label="Min stipend">
+          <select
+            value={filters.minStipend}
+            onChange={set('minStipend')}
+            className="w-full rounded-md border border-line bg-paper px-3 py-2 text-sm outline-none focus:border-ink"
+          >
+            <option value="">Any</option>
+            <option value="1">Paid only</option>
+            <option value="5000">Rs 5,000+</option>
+            <option value="10000">Rs 10,000+</option>
+            <option value="15000">Rs 15,000+</option>
+          </select>
         </Field>
         <Field label="Max duration">
           <select

@@ -7,7 +7,7 @@ const item = {
   organisation: { name: 'Acme' },
   jobDetail: { type: 'wfh', min_salary: 8000, max_salary: 12000, locations: [] },
   seo_url: 'https://unstop.com/internships/x-123',
-  required_skills: [{ name: 'Python' }, { name: 'Django' }],
+  required_skills: [{ skill_name: 'Python' }, { skill_name: 'Django' }],
   updated_at: '2026-06-28T00:00:00Z',
   isPaid: true,
 }

@@ -21,7 +21,7 @@ export function mapUnstop(item) {
     company: item.organisation?.name || '',
     location: place(item.jobDetail),
     url: item.seo_url || item.public_url || '',
-    description: (item.required_skills || item.tags || []).map((t) => t.name || t).join(', '),
+    description: (item.required_skills || []).map((t) => t.skill_name || t.skill || '').filter(Boolean).join(', '),
     tags: ['internship'],
     postedAt: item.updated_at || null,
     stipend: item.isPaid === false ? 'Unpaid' : stipend(item.jobDetail),
