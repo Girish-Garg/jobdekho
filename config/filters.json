@@ -14,8 +14,9 @@
     "senior", "staff", "principal", "manager", "lead ", "content writ", "social media",
     "graphic design", "video editing", "photography", "business development",
     "human resource", "recruitment", "tele calling", "telecalling", "sales executive",
-    "marketing", "sales development", "sales representative", "finance intern", "accounting", "operations intern"
+    "marketing", "sales development", "sales representative", "finance intern", "accounting", "operations intern",
+    "director", "head of", "vice president", "architect"
   ],
-  "locations": ["india", "bengaluru", "bangalore", "hyderabad", "pune", "mumbai", "delhi", "gurgaon", "gurugram", "noida", "chennai", "remote"],
+  "locations": ["india", "bengaluru", "bangalore", "hyderabad", "pune", "mumbai", "delhi", "gurgaon", "gurugram", "noida", "chennai", "kolkata", "ahmedabad", "jaipur"],
   "internshipOnly": false
 }
