@@ -12,6 +12,10 @@ export function clearSession(reply) {
 }
 
 export function currentUser(request) {
+  // Set only when DEV_AUTH_USER_ID is present outside production. Every request
+  // then runs as that user, so both requireAuth and /auth/me see a session.
+  const dev = request.server.devUser
+  if (dev) return dev
   const token = request.cookies?.[COOKIE]
   if (!token) return null
   try {

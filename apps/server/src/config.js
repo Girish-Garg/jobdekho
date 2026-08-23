@@ -1,5 +1,6 @@
 export function loadConfig(env = process.env) {
-  if (env.NODE_ENV === 'production' && !env.SESSION_SECRET) {
+  const production = env.NODE_ENV === 'production'
+  if (production && !env.SESSION_SECRET) {
     throw new Error('SESSION_SECRET is required in production')
   }
   return {
@@ -9,5 +10,10 @@ export function loadConfig(env = process.env) {
     baseUrl: env.BASE_URL || 'http://localhost:3000',
     databaseUrl: env.DATABASE_URL,
     port: Number(env.PORT || 3000),
+    // Local-only sign-in bypass, used so the UI can be driven without Google.
+    // Forced to null in production, so setting the variable on a deployed box
+    // does nothing. That is the whole reason this is a flag and not an edit to
+    // the auth check itself.
+    devUserId: production ? null : env.DEV_AUTH_USER_ID || null,
   }
 }

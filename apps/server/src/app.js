@@ -1,4 +1,5 @@
 import Fastify from 'fastify'
+import multipart from '@fastify/multipart'
 import cookie from '@fastify/cookie'
 import jwt from '@fastify/jwt'
 import { fileURLToPath } from 'node:url'
@@ -12,11 +13,20 @@ import { registerStatic } from './static.js'
 const __dir = dirname(fileURLToPath(import.meta.url))
 const DEFAULT_DIST = resolve(__dir, '../../web/dist')
 
+// Loud on purpose: an unauthenticated server should never start quietly.
+function devUser(config) {
+  if (!config.devUserId) return null
+  console.warn(`AUTH BYPASS ACTIVE - every request runs as user ${config.devUserId}`)
+  return { sub: config.devUserId, email: 'dev@localhost', name: 'Dev session', avatarUrl: null }
+}
+
 export function buildApp({ config, userStore, fetchProfile, dashboardStore, distDir = DEFAULT_DIST, logger = false }) {
   const app = Fastify({ logger })
   app.register(cookie)
+  app.register(multipart)
   app.register(jwt, { secret: config.sessionSecret })
   app.decorate('requireAuth', requireAuth)
+  app.decorate('devUser', devUser(config))
   if (dashboardStore) app.decorate('dashboard', dashboardStore)
   registerGoogleAuth(app, { config, userStore, fetchProfile })
   app.register(authRoutes)
