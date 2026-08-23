@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { createHttp } from '@jobdekho/sources/http.js'
+import { createHttp, redactUrl } from '@jobdekho/sources/http.js'
 
 describe('createHttp', () => {
   it('sets a User-Agent and returns the response on 2xx', async () => {
@@ -13,5 +13,46 @@ describe('createHttp', () => {
     const fetchImpl = vi.fn(async () => ({ ok: false, status: 503 }))
     const http = createHttp({ fetchImpl })
     await expect(http('https://x')).rejects.toThrow(/503/)
+  })
+
+  // A thrown error's URL is stored in runs.source_results and printed to the
+  // CI log, so a keyed adapter's credentials must never survive into it.
+  it('redacts credentials out of the URL in a thrown error', async () => {
+    const fetchImpl = vi.fn(async () => ({ ok: false, status: 400 }))
+    const http = createHttp({ fetchImpl })
+    const url = 'https://api.adzuna.com/v1/api/jobs/in/search/1?app_id=abc123&app_key=secretvalue&what=dev'
+    await expect(http(url)).rejects.toThrow(/app_id=REDACTED/)
+    await expect(http(url)).rejects.toThrow(/app_key=REDACTED/)
+    await expect(http(url)).rejects.not.toThrow(/abc123|secretvalue/)
+  })
+})
+
+describe('redactUrl', () => {
+  it('redacts known credential-looking params case-insensitively', () => {
+    const url = 'https://x/y?Token=abc&API_KEY=def&Secret=ghi&password=jkl&foo=bar'
+    const out = redactUrl(url)
+    expect(out).toContain('Token=REDACTED')
+    expect(out).toContain('API_KEY=REDACTED')
+    expect(out).toContain('Secret=REDACTED')
+    expect(out).toContain('password=REDACTED')
+    expect(out).toContain('foo=bar')
+  })
+
+  it('leaves a URL with no credential-looking params untouched', () => {
+    expect(redactUrl('https://x/y?what=developer&page=1')).toBe('https://x/y?what=developer&page=1')
+  })
+
+  // "_" is a word character, so a \b-anchored pattern never matched these two,
+  // which are the commonest spellings a keyed API uses.
+  it('redacts a secret whose name is joined by an underscore', () => {
+    expect(redactUrl('https://x/y?access_token=abc')).toBe('https://x/y?access_token=REDACTED')
+    expect(redactUrl('https://x/y?client_secret=abc')).toBe('https://x/y?client_secret=REDACTED')
+    expect(redactUrl('https://x/y?apiKey=abc')).toBe('https://x/y?apiKey=REDACTED')
+  })
+
+  // A bare substring test would redact both of these for containing "key" or
+  // "id", losing the part of the error that says what was actually requested.
+  it('keeps a param that merely contains a credential word', () => {
+    expect(redactUrl('https://x/y?keywords=react&job_id=55')).toBe('https://x/y?keywords=react&job_id=55')
   })
 })

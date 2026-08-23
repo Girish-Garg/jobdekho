@@ -6,6 +6,10 @@ const fixture = [{
   categories: { location: 'Remote', team: 'Data', commitment: 'Internship' },
   hostedUrl: 'https://jobs.lever.co/acme/xyz',
   descriptionPlain: 'Analyze data', createdAt: 1718000000000,
+  lists: [
+    { text: 'Requirements', content: '<ul><li>Pursuing a B.Tech</li><li>2+ years Python</li></ul>' },
+    { text: 'Nice to have', content: '<ul><li>SQL</li></ul>' },
+  ],
 }]
 const http = async () => ({ json: async () => fixture })
 
@@ -18,6 +22,26 @@ describe('lever adapter', () => {
     expect(raw.url).toBe('https://jobs.lever.co/acme/xyz')
     expect(raw.tags).toEqual(['Data', 'Internship'])
     expect(typeof raw.postedAt).toBe('string')
+  })
+
+  // descriptionPlain alone is only the intro; degree and experience
+  // requirements live in the lists array and the classifier needs both.
+  it('folds the lists array into the description', async () => {
+    const [raw] = await lever({ slug: 'acme' }).fetch(http)
+    expect(raw.description).toContain('Analyze data')
+    expect(raw.description).toContain('B.Tech')
+    expect(raw.description).toContain('2+ years Python')
+    expect(raw.description).toContain('SQL')
+    expect(raw.description).not.toContain('<ul>')
+    expect(raw.description).not.toContain('<li>')
+  })
+
+  it('tolerates a posting with no lists array', async () => {
+    const noLists = async () => ({
+      json: async () => [{ id: 'a', text: 'Engineer', descriptionPlain: 'Build things' }],
+    })
+    const [raw] = await lever({ slug: 'acme' }).fetch(noLists)
+    expect(raw.description).toBe('Build things')
   })
 
   // type is derived from level in core/normalize.js; the commitment field is a

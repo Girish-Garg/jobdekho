@@ -19,7 +19,11 @@ export function greenhouse({ slug }) {
         url: j.absolute_url,
         description: stripHtml(j.content || ''),
         tags: (j.departments || []).map((d) => d.name),
-        postedAt: toIso(j.updated_at),
+        // updated_at moves every time a recruiter edits the posting, which
+        // made "Newest posted" show stale roles that got a typo fix as new.
+        // first_published is the real publish date; it is missing on some
+        // older boards, so updated_at is still the fallback.
+        postedAt: toIso(j.first_published || j.updated_at),
       }))
     },
   }

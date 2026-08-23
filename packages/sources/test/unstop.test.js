@@ -24,6 +24,7 @@ describe('mapUnstop', () => {
     expect(r.description).toContain('Python')
     expect(r.tags).toEqual(['internship'])
     expect(r.type).toBe('internship')
+    expect(r.level).toBe('internship')
     expect(r.experience).toBe('Fresher')
   })
   it('uses listed locations when present and marks unpaid', () => {
@@ -42,5 +43,14 @@ describe('mapUnstop', () => {
   it('sets type to job when passed as second argument', () => {
     const r = mapUnstop(item, 'job')
     expect(r.type).toBe('job')
+    expect(r.tags).toEqual(['job'])
+  })
+
+  // Titles here are bare skill names ("Python Developer"), so only the
+  // listing category can tell a job apart from an internship; unlike the
+  // internship branch, a job must not carry an inferred level.
+  it('leaves level unset for a job so the title-based classifier decides', () => {
+    const r = mapUnstop(item, 'job')
+    expect(r.level).toBeUndefined()
   })
 })

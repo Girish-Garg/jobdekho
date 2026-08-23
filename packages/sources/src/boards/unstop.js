@@ -28,8 +28,11 @@ export function mapUnstop(item, type = 'internship') {
     location: place(item.jobDetail),
     url: item.seo_url || item.public_url || '',
     description: (item.required_skills || []).map((t) => t.skill_name || t.skill || '').filter(Boolean).join(', '),
-    tags: ['internship'],
+    tags: [type],
     type,
+    // The listing category is authoritative here, same as Internshala: Unstop
+    // titles are bare skill names, so a title-based inference cannot see it.
+    ...(type === 'internship' ? { level: 'internship' } : {}),
     postedAt: item.updated_at || null,
     stipend: item.isPaid === false ? 'Unpaid' : stipend(item.jobDetail),
     duration: null,

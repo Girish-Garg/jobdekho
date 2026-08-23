@@ -6,7 +6,8 @@ const fixture = {
     id: 5, title: 'Software Engineering Intern',
     location: { name: 'Bengaluru, India' },
     absolute_url: 'https://boards.greenhouse.io/acme/jobs/5',
-    content: '<p>Build &amp; ship. Pursuing a B.Tech.</p>', updated_at: '2026-06-10T00:00:00Z',
+    content: '<p>Build &amp; ship. Pursuing a B.Tech.</p>',
+    first_published: '2026-05-01T00:00:00Z', updated_at: '2026-06-10T00:00:00Z',
     departments: [{ name: 'Engineering' }],
   }],
 }
@@ -49,5 +50,22 @@ describe('greenhouse adapter', () => {
     const [raw] = await greenhouse({ slug: 'acme' }).fetch(http)
     expect(raw.type).toBeUndefined()
     expect(raw.level).toBeUndefined()
+  })
+
+  // updated_at moves on every recruiter edit, which reset an old posting to
+  // "posted today" and corrupted the default newest-first sort.
+  it('prefers first_published over updated_at', async () => {
+    const [raw] = await greenhouse({ slug: 'acme' }).fetch(http)
+    expect(raw.postedAt).toBe('2026-05-01T00:00:00.000Z')
+  })
+
+  it('falls back to updated_at when first_published is absent', async () => {
+    const noFirstPublished = async () => ({
+      json: async () => ({
+        jobs: [{ ...fixture.jobs[0], first_published: undefined }],
+      }),
+    })
+    const [raw] = await greenhouse({ slug: 'acme' }).fetch(noFirstPublished)
+    expect(raw.postedAt).toBe('2026-06-10T00:00:00.000Z')
   })
 })
