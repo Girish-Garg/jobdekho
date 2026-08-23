@@ -1,93 +1,119 @@
-import { degreeRank } from './degree.js'
-import { LEVELS, levelRank } from './level.js'
+import { LEVELS } from './level.js'
 import { normalizeProfile, levelsForYears } from './profile.js'
+import {
+  TITLE_CREDIT, BODY_CREDIT, skillRegex, titleFit, levelFit, degreeFit, titleTokens,
+} from './fit-dimensions.js'
 
-// A skill in the title is evidence about the role. The same word in the body
-// is often boilerplate ("we use React somewhere"), so it counts for far less.
+// Fit is a percentage, not an accumulating tally. The tally it replaced scored
+// 1485 real postings onto 22 distinct values, with 45% of the feed sharing one
+// of them, so two thirds of a "recommended" feed was really just ordered by
+// date. A percentage built from continuous dimensions separates rows that a
+// sum of fixed bonuses could not tell apart.
 //
-// levelGap is a penalty, not a missing bonus. With a bonus alone, a Lead role
-// matching two skills outscored a well-suited entry role matching one, and the
-// feed recommended jobs a one-year candidate cannot get. Being wrong about
-// seniority has to cost, and cost more the further off it is.
-export const WEIGHTS = { titleSkill: 8, bodySkill: 2, levelFit: 6, levelGap: -5, degreeFit: 4 }
+// The weights are a claim about what makes a job worth reading: what it is
+// built with, what it is called, whether you can get it, and whether you are
+// allowed to apply.
+export const WEIGHTS = { skills: 45, titles: 25, level: 20, degree: 10 }
 
-// Distance from the nearest level the seeker suits, in rungs.
-export function levelDistance(level, wanted) {
-  if (!wanted.length) return 0
-  const at = levelRank(level || 'mid')
-  return Math.min(...wanted.map((w) => Math.abs(at - levelRank(w))))
-}
-
-export function levelScore(level, wanted) {
-  if (!wanted.length) return 0
-  const gap = levelDistance(level, wanted)
-  return gap === 0 ? WEIGHTS.levelFit : WEIGHTS.levelGap * gap
-}
-
-// Every rung's score for a given profile, so SQL can emit one lookup CASE
-// instead of reimplementing the distance arithmetic.
-export function levelScoreTable(wanted) {
-  return Object.fromEntries(LEVELS.map((l) => [l, levelScore(l, wanted)]))
-}
-
-const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-
-// Bare substring matching let the skill "c" score every posting and "java"
-// claim JavaScript roles, so a skill only counts at word boundaries. \b fails
-// on skills that start or end in symbols (c++, .net), so the boundary is only
-// asserted on the edges that are word characters: ".net" still hits "asp.net"
-// and "c++" still hits "C++ Developer".
-//
-// JS and Postgres spell a boundary differently, (?<!\w) against \y, but WHICH
-// edges get one is the rule that has to stay identical or the SQL mirror in
-// packages/db/src/posting-score.js ranks differently from this. The decision
-// lives here and both callers read it rather than restating it.
-export function skillPatternSource(skill, lead, tail) {
-  return (/^\w/.test(skill) ? lead : '') + escapeRe(skill) + (/\w$/.test(skill) ? tail : '')
-}
-
-function skillPattern(skill) {
-  return new RegExp(skillPatternSource(skill, '(?<!\\w)', '(?!\\w)'))
-}
-
-// This is the single source of truth for the ranking. The SQL in
-// packages/db/src/posting-score.js mirrors it so that sorting can happen before
-// LIMIT; it reads the weights, the level table and skillPatternSource from
-// here so the two cannot disagree about what counts as a match.
-export function scorePosting(posting, profile) {
+// A dimension the profile says nothing about is dropped rather than scored
+// zero. Scoring it zero would punish an incomplete profile with a low ceiling:
+// somebody who listed skills but no target titles could never clear 75.
+export function dimensionWeights(profile) {
   const p = normalizeProfile(profile)
+  const active = {
+    skills: p.skills.length > 0,
+    titles: p.titles.length > 0,
+    level: p.years !== null,
+    degree: true,
+  }
+  const weights = Object.fromEntries(
+    Object.entries(WEIGHTS).map(([k, w]) => [k, active[k] ? w : 0]),
+  )
+  const total = Object.values(weights).reduce((a, b) => a + b, 0)
+  return { ...weights, total }
+}
+
+// Rarity per skill, defaulting to 1 so the score degrades to unweighted rather
+// than to zero when nobody has measured the corpus yet.
+const weightOf = (idf, skill) => idf[skill] ?? 1
+
+export function skillFit(posting, skills, idf = {}) {
   const title = String(posting.title || '').toLowerCase()
-  const body = String(posting.descriptionSnippet || '').toLowerCase()
+  const body = String(posting.descriptionText || posting.descriptionSnippet || '').toLowerCase()
+  const matched = []
+  const mentioned = []
+  let earned = 0
+  let available = 0
+  for (const skill of skills) {
+    const weight = weightOf(idf, skill)
+    available += weight
+    const re = skillRegex(skill)
+    if (re.test(title)) {
+      earned += weight * TITLE_CREDIT
+      matched.push(skill)
+    } else if (re.test(body)) {
+      earned += weight * BODY_CREDIT
+      mentioned.push(skill)
+    }
+  }
+  // Dividing by the whole profile is what makes this coverage rather than a
+  // count: three skills out of four is a better fit than three out of twenty.
+  return { value: available ? earned / available : 0, matched, mentioned }
+}
 
-  const patterns = p.skills.map((s) => [s, skillPattern(s)])
-  const inTitle = patterns.filter(([, re]) => re.test(title)).map(([s]) => s)
-  const inBody = patterns.filter(([, re]) => !re.test(title) && re.test(body)).map(([s]) => s)
+// Every rung's level fit, so the SQL mirror can emit one lookup CASE instead of
+// reimplementing the distance curve.
+export function levelFitTable(wanted) {
+  return Object.fromEntries(LEVELS.map((l) => [l, levelFit(l, wanted)]))
+}
 
+// The single source of truth for the ranking. packages/db/src/posting-score.js
+// mirrors it as SQL so that ordering happens across the whole matching set
+// before LIMIT, and reads the weights and tables from here so the two cannot
+// drift apart on what counts as a match.
+export function scorePosting(posting, profile, idf = {}) {
+  const p = normalizeProfile(profile)
+  const w = dimensionWeights(p)
+  const skills = skillFit(posting, p.skills, idf)
+  const titles = titleFit(posting.title, p.titles)
   const wanted = levelsForYears(p.years)
-  const level = levelScore(posting.level || 'mid', wanted)
-  const reachable = degreeRank(posting.degreeMin || 'none') <= degreeRank(p.degree)
+  const level = levelFit(posting.level || 'mid', wanted)
+  const reachable = degreeFit(posting.degreeMin, p.degree) === 1
 
-  const score = inTitle.length * WEIGHTS.titleSkill
-    + inBody.length * WEIGHTS.bodySkill
-    + level
-    + (reachable ? WEIGHTS.degreeFit : 0)
+  const earned = w.skills * skills.value + w.titles * titles
+    + w.level * level + w.degree * (reachable ? 1 : 0)
 
   return {
-    score, matched: inTitle, mentioned: inBody, reachable,
-    levelFit: level > 0,
-    levelGap: levelDistance(posting.level || 'mid', wanted),
+    fit: w.total ? Math.round((100 * earned) / w.total) : 0,
+    matched: skills.matched,
+    mentioned: skills.mentioned,
+    titleFit: titles,
+    levelFit: level,
+    reachable,
   }
 }
 
-// Why a posting was recommended, in the user's words rather than a number. An
-// opaque score is not trustworthy enough to sort a job hunt by.
-export function explainScore(posting, profile) {
-  const { matched, mentioned, levelFit, levelGap, reachable, score } = scorePosting(posting, profile)
+// Why a posting ranked where it did, in the user's words rather than a number.
+// An opaque score is not trustworthy enough to sort a job hunt by, and two of
+// these are warnings, which is why the UI labels the block fit rather than
+// recommendation.
+export function explainScore(posting, profile, idf = {}) {
+  const { fit, matched, mentioned, titleFit: title, levelFit: level, reachable } =
+    scorePosting(posting, profile, idf)
   const reasons = []
   if (matched.length) reasons.push(`matches ${matched.join(', ')}`)
   else if (mentioned.length) reasons.push(`mentions ${mentioned.join(', ')}`)
-  if (levelFit) reasons.push('suits your experience')
-  else if (levelGap > 1) reasons.push('well outside your experience')
+  if (title >= 0.5) reasons.push('close to a title you want')
+  if (level === 1) reasons.push('suits your experience')
+  else if (level <= 0.2) reasons.push('well outside your experience')
   if (!reachable) reasons.push('needs a higher degree than you listed')
-  return { score, reasons }
+  return { fit, reasons }
+}
+
+// An empty profile scores every posting alike, so ranking by it would only
+// shuffle the feed. Titles count here as well as skills and years: a profile
+// naming only a target title is still something to rank against.
+export function canRank(profile) {
+  const p = normalizeProfile(profile)
+  return p.skills.length > 0 || p.years !== null || titleTokens(p.titles.join(' ')).length > 0
 }

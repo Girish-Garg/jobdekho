@@ -7,6 +7,13 @@ import { classifyWorkMode } from './work-mode.js'
 
 const SNIPPET_MAX = 280
 
+// The snippet is what a card and the overlay show, so it stays short. The
+// ranking needs far more than an opening paragraph: skills are named in the
+// requirements, which sit well past 280 characters, and matching against the
+// snippet alone meant only 3% of postings matched a skill at all. This is the
+// text the scorer reads, and it is never sent to the browser.
+const TEXT_MAX = 4000
+
 export function normalize(raw, source) {
   // A missing externalId used to stringify to "undefined", so every such row
   // from a source hashed to the SAME id and silently overwrote the others.
@@ -34,6 +41,7 @@ export function normalize(raw, source) {
     location,
     url: raw.url || '',
     descriptionSnippet: description.slice(0, SNIPPET_MAX),
+    descriptionText: description.slice(0, TEXT_MAX),
     tags,
     postedAt: raw.postedAt || null,
     stipend: raw.stipend ?? null,
