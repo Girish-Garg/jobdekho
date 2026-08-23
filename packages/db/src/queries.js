@@ -6,7 +6,7 @@ import { postings, runs } from './schema.js'
 // second is the conflict key. Without this refresh an adapter fix could never
 // reach rows already stored, so a parser bug was permanent.
 const REFRESHABLE = [
-  'title', 'company', 'location', 'url', 'descriptionSnippet', 'tags',
+  'title', 'company', 'location', 'url', 'descriptionSnippet', 'descriptionText', 'tags',
   'stipend', 'duration', 'experience', 'postedAt',
   'level', 'degreeMin', 'degreeRequired', 'workMode', 'type',
   'stipendMin', 'currency', 'durationMonths', 'experienceYears', 'groupKey',
@@ -20,7 +20,11 @@ export function toRow(p) {
   return {
     id: p.id, source: p.source, externalId: p.externalId, title: p.title,
     company: p.company, location: p.location, url: p.url,
-    descriptionSnippet: p.descriptionSnippet, tags: p.tags,
+    descriptionSnippet: p.descriptionSnippet,
+    // Null rather than '' when a source predates the field, so "never stored"
+    // stays distinguishable from "the posting really had no description".
+    descriptionText: p.descriptionText ?? null,
+    tags: p.tags,
     postedAt: p.postedAt ? new Date(p.postedAt) : null,
     stipend: p.stipend ?? null, duration: p.duration ?? null, experience: p.experience ?? null,
     level, degreeMin: p.degreeMin ?? 'none', degreeRequired: p.degreeRequired ?? false,
@@ -50,11 +54,11 @@ export function refreshSet(columns = REFRESHABLE) {
 }
 
 // Postgres rejects a statement with more than 65535 bind parameters, and
-// toRow() emits 24 columns per row. A single scrape used to fit in one insert
+// toRow() emits 25 columns per row. A single scrape used to fit in one insert
 // when there were only a handful of sources, but at ~90 boards a run can
-// easily clear the 65535/24 ≈ 2730-row ceiling, and Postgres fails that whole
+// easily clear the 65535/25 ≈ 2621-row ceiling, and Postgres fails that whole
 // statement, so the run loses every row rather than just the overflow. 500
-// rows/batch (12000 params) stays well clear of the cap even if toRow grows
+// rows/batch (12500 params) stays well clear of the cap even if toRow grows
 // more columns later, without needing to be retuned on every schema change.
 const UPSERT_BATCH_SIZE = 500
 

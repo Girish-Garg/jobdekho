@@ -22,6 +22,12 @@ describe('migrate', () => {
     expect(STATEMENTS).toContain('alter table postings add column if not exists currency text')
   })
 
+  // Nullable and unbackfilled by design: the full text was never stored, so
+  // only a re-scrape can fill it and old rows must be allowed to stay NULL.
+  it('adds the description_text column the ranking scores against', () => {
+    expect(STATEMENTS).toContain('alter table postings add column if not exists description_text text')
+  })
+
   // Built DESC NULLS LAST to match orderFor()'s "newest" clause exactly, since
   // that is the fallback sort for most page loads.
   it('indexes posted_at to match the default "newest" sort ordering', () => {

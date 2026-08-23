@@ -1,8 +1,23 @@
 import { eq, and, isNotNull } from 'drizzle-orm'
 import { userFilters, notificationPrefs } from './schema.js'
-import { normalizeFilters, normalizePrefs } from './dashboard.js'
 
 // Filters
+
+export function normalizeFilters(input) {
+  const src = input ?? {}
+  return {
+    includeKeywords: src.includeKeywords ?? [],
+    excludeKeywords: src.excludeKeywords ?? [],
+    locations: src.locations ?? [],
+    levels: src.levels ?? [],
+    sources: src.sources ?? [], excludedSources: src.excludedSources ?? [],
+    workModes: src.workModes ?? [],
+    maxDegree: src.maxDegree ?? null,
+    minStipend: src.minStipend ?? null,
+    maxDurationMonths: src.maxDurationMonths ?? null,
+    maxExperienceYears: src.maxExperienceYears ?? null,
+  }
+}
 
 export async function getUserFilters(db, userId) {
   const rows = await db.select().from(userFilters).where(eq(userFilters.userId, userId))
@@ -18,6 +33,15 @@ export async function upsertUserFilters(db, userId, filters) {
 }
 
 // Notification prefs
+
+export function normalizePrefs(input) {
+  const src = input ?? {}
+  return {
+    channel: src.channel ?? 'none',
+    telegramChatId: src.telegramChatId ?? null,
+    enabled: src.enabled ?? true,
+  }
+}
 
 export async function getNotificationPrefs(db, userId) {
   const rows = await db.select().from(notificationPrefs).where(eq(notificationPrefs.userId, userId))

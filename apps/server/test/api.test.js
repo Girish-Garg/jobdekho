@@ -34,9 +34,12 @@ async function signedCookie(app) {
   return `session=${token}`
 }
 
+// The no-options request now defaults to the ranked sort, so it carries the
+// profile the fake store serves and an unset fit floor.
 const NO_OPTS = {
   source: undefined, sources: undefined, excludedSources: undefined,
-  q: undefined, status: undefined, sort: undefined, profile: undefined,
+  q: undefined, status: undefined, sort: 'match',
+  profile: { skills: ['react'], years: 2, degree: 'bachelors' }, minFit: undefined,
   levels: undefined, workModes: undefined, maxDegree: undefined,
   minStipend: undefined, maxDurationMonths: undefined, maxExperienceYears: undefined,
   includeStale: false, limit: undefined, offset: undefined,
@@ -149,10 +152,26 @@ describe('GET /api/postings forwards every option', () => {
     expect(opts.maxExperienceYears).toBe('2')
   })
 
-  it('passes a known sort and ignores an unknown one', async () => {
+  it('passes a known sort through', async () => {
     const store = makeFakeStore()
     expect((await optsFor(store, '/api/postings?sort=company')).sort).toBe('company')
-    expect((await optsFor(store, '/api/postings?sort=nonsense')).sort).toBeUndefined()
+  })
+
+  // Recommended is the default, and unknown sorts land on it too, so a stale
+  // bookmarked URL still returns results instead of erroring.
+  it('defaults to the match sort, for no sort and for an unknown one', async () => {
+    const store = makeFakeStore()
+    expect((await optsFor(store, '/api/postings')).sort).toBe('match')
+    expect((await optsFor(store, '/api/postings?sort=nonsense')).sort).toBe('match')
+  })
+
+  it('passes an in-range minFit and drops anything off the 0-100 scale', async () => {
+    const store = makeFakeStore()
+    expect((await optsFor(store, '/api/postings?minFit=60')).minFit).toBe(60)
+    expect((await optsFor(store, '/api/postings?minFit=0')).minFit).toBe(0)
+    expect((await optsFor(store, '/api/postings?minFit=101')).minFit).toBeUndefined()
+    expect((await optsFor(store, '/api/postings?minFit=-5')).minFit).toBeUndefined()
+    expect((await optsFor(store, '/api/postings?minFit=high')).minFit).toBeUndefined()
   })
 
   it('reads includeStale as a boolean', async () => {
@@ -161,10 +180,14 @@ describe('GET /api/postings forwards every option', () => {
     expect((await optsFor(store, '/api/postings')).includeStale).toBe(false)
   })
 
-  // The profile is only fetched for the sort that needs it.
-  it('loads the profile only for the match sort', async () => {
+  // The profile is only fetched for the sort that needs it - which the
+  // default now is, so a bare request loads it too.
+  it('loads the profile only for the match sort, including by default', async () => {
     const store = makeFakeStore()
     await optsFor(store, '/api/postings?sort=match')
+    expect(store.getProfile).toHaveBeenCalled()
+    store.getProfile.mockClear()
+    await optsFor(store, '/api/postings')
     expect(store.getProfile).toHaveBeenCalled()
     store.getProfile.mockClear()
     await optsFor(store, '/api/postings?sort=newest')

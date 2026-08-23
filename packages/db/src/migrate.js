@@ -19,6 +19,10 @@ export const STATEMENTS = [
   'alter table postings add column if not exists group_key text',
   'alter table postings add column if not exists last_seen_at timestamp',
   'alter table postings add column if not exists currency text',
+  // No backfill is possible: the snippet is a 280-character truncation and the
+  // rest of the text was thrown away at scrape time, so only a re-scrape can
+  // fill this. Rows that stay NULL score their skills against the snippet.
+  'alter table postings add column if not exists description_text text',
   'create index if not exists postings_group_key_idx on postings (group_key)',
   'create index if not exists postings_last_seen_idx on postings (last_seen_at)',
   // "newest" is the fallback sort whenever no sort is requested or an unknown

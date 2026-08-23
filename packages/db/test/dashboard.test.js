@@ -1,17 +1,24 @@
 import { describe, it, expect } from 'vitest'
-import {
-  normalizePrefs, normalizeFilters, applyStatusFilter, listPostingsForUser,
-} from '@jobdekho/db/dashboard.js'
+import { applyStatusFilter, listPostingsForUser } from '@jobdekho/db/dashboard.js'
+import { normalizePrefs, normalizeFilters } from '@jobdekho/db/dashboard-prefs.js'
 
 // Records the chain calls listPostingsForUser makes and resolves to `rows`.
+// A ranked call issues the rarity scan first, so `columns` keeps the LAST
+// non-empty selection (the ranked page's) and `selects` keeps them all.
 function fakeDb(rows = []) {
-  const calls = { limit: undefined, offset: undefined, columns: undefined, where: undefined }
+  const calls = {
+    limit: undefined, offset: undefined, columns: undefined, where: undefined,
+    wheres: [], selects: [],
+  }
   const chain = {
     // Only the inner select names columns; the outer one reads the subquery.
-    select: (columns) => { if (columns) calls.columns = columns; return chain },
+    select: (columns) => {
+      if (columns) { calls.columns = columns; calls.selects.push(columns) }
+      return chain
+    },
     from: () => chain,
     leftJoin: () => chain,
-    where: (w) => { calls.where = calls.where ?? w; return chain },
+    where: (w) => { calls.where = calls.where ?? w; calls.wheres.push(w); return chain },
     orderBy: (o) => { calls.orderBy = o; return chain },
     // The real query ranks in a subquery, so .as() closes the inner select and
     // the outer one starts again from .select().
@@ -229,5 +236,90 @@ describe('listPostingsForUser', () => {
     expect(await listPostingsForUser(db2, 'u1', { status: 'saved' })).toEqual([
       { id: '2', status: 'saved', groupCount: 1, matchScore: 0 },
     ])
+  })
+})
+
+describe('listPostingsForUser when ranking', () => {
+  const profile = { skills: ['react'], years: 0 }
+  const row = {
+    id: '1', title: 'React Developer', level: 'entry', degreeMin: 'none',
+    descriptionSnippet: 'short', descriptionText: 'we use react daily', status: undefined,
+  }
+
+  it('adds fit and reasons to each posting, computed by core', async () => {
+    const { db } = fakeDb([{ ...row }])
+    const [posting] = await listPostingsForUser(db, 'u1', { sort: 'match', profile })
+    // Skills, level and degree all fit perfectly, and titles were never stated,
+    // so the incomplete profile still reaches 100 rather than being capped.
+    expect(posting.fit).toBe(100)
+    expect(posting.reasons).toContain('matches react')
+  })
+
+  // 4000 characters times a page of rows must not ride to the browser just to
+  // justify a number - the reasons already carry the justification.
+  it('never lets descriptionText survive into a returned posting', async () => {
+    const { db } = fakeDb([{ ...row }, { ...row, id: '2', descriptionText: null }])
+    const postings = await listPostingsForUser(db, 'u1', { sort: 'match', profile })
+    for (const p of postings) expect('descriptionText' in p).toBe(false)
+  })
+
+  it('selects descriptionText for scoring only when ranking is active', async () => {
+    const ranked = fakeDb()
+    await listPostingsForUser(ranked.db, 'u1', { sort: 'match', profile })
+    expect(ranked.calls.columns).toHaveProperty('descriptionText')
+    const unranked = fakeDb()
+    await listPostingsForUser(unranked.db, 'u1')
+    expect(unranked.calls.columns).not.toHaveProperty('descriptionText')
+  })
+
+  it('issues the rarity scan before the page query, and only when ranking', async () => {
+    const ranked = fakeDb()
+    await listPostingsForUser(ranked.db, 'u1', { sort: 'match', profile })
+    expect(Object.keys(ranked.calls.selects[0])).toEqual(['total', 'df0'])
+    const unranked = fakeDb()
+    await listPostingsForUser(unranked.db, 'u1')
+    expect(unranked.calls.selects.some((s) => 'df0' in s)).toBe(false)
+  })
+
+  it('leaves unranked postings without fit or reasons', async () => {
+    const { db } = fakeDb([{ ...row }])
+    const [posting] = await listPostingsForUser(db, 'u1')
+    expect('fit' in posting).toBe(false)
+    expect('reasons' in posting).toBe(false)
+  })
+})
+
+// group:false and includeStale:true silence every other condition, so any
+// WHERE that remains can only have come from the fit floor.
+describe('the minFit floor', () => {
+  const bare = { group: false, includeStale: true, minFit: 60 }
+  const gates = (calls) => calls.wheres.filter(Boolean)
+
+  it('filters the ranked feed on the outer select', async () => {
+    const { db, calls } = fakeDb()
+    await listPostingsForUser(db, 'u1', { ...bare, sort: 'match', profile: { skills: ['react'] } })
+    expect(gates(calls)).toHaveLength(1)
+  })
+
+  // Without ranking every row "scores" zero, so honouring the floor would
+  // empty the feed rather than filter it.
+  it('is ignored when ranking is off, and when the profile cannot rank', async () => {
+    const plain = fakeDb()
+    await listPostingsForUser(plain.db, 'u1', { ...bare })
+    expect(gates(plain.calls)).toHaveLength(0)
+    const empty = fakeDb()
+    await listPostingsForUser(empty.db, 'u1', { ...bare, sort: 'match', profile: {} })
+    expect(gates(empty.calls)).toHaveLength(0)
+  })
+
+  it('treats zero and junk as no floor at all', async () => {
+    const zero = fakeDb()
+    await listPostingsForUser(zero.db, 'u1',
+      { ...bare, minFit: 0, sort: 'match', profile: { skills: ['react'] } })
+    expect(gates(zero.calls)).toHaveLength(0)
+    const junk = fakeDb()
+    await listPostingsForUser(junk.db, 'u1',
+      { ...bare, minFit: 'high', sort: 'match', profile: { skills: ['react'] } })
+    expect(gates(junk.calls)).toHaveLength(0)
   })
 })

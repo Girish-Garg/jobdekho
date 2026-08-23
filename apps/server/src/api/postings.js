@@ -33,18 +33,28 @@ export function parseCount(raw) {
   return Number.isFinite(n) && n >= 0 ? Math.trunc(n) : undefined
 }
 
+// The floor is only meaningful on the fit's own 0-100 scale; anything outside
+// it is a mangled or stale URL and is dropped like every other bad enum.
+export function parseMinFit(raw) {
+  const n = parseCount(raw)
+  return n !== undefined && n <= 100 ? n : undefined
+}
+
 export async function postingsRoutes(app) {
   app.get('/api/postings', { preHandler: app.requireAuth }, async (request) => {
     const q = request.query
     let status
     if (q.status === 'new') status = null
     else if (q.status !== undefined) status = q.status
-    const sort = SORTS.includes(q.sort) ? q.sort : undefined
+    // Recommended is what the feed is for, so it is what no sort at all asks
+    // for. Unknown values land on it too, keeping stale bookmarks working.
+    const sort = SORTS.includes(q.sort) ? q.sort : 'match'
     const postings = await app.dashboard.listPostingsForUser(request.user.sub, {
       q: q.q, source: q.source, status, sort,
       // "Recommended" needs the profile, which the client should not have to
       // send back on every request. Loaded only for that sort.
       profile: sort === 'match' ? await app.dashboard.getProfile(request.user.sub) : undefined,
+      minFit: parseMinFit(q.minFit),
       sources: parseSources(q.sources),
       excludedSources: parseSources(q.excludedSources),
       levels: parseLevels(q.levels),

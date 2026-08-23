@@ -9,6 +9,9 @@ export const postings = pgTable('postings', {
   location: text('location').notNull().default(''),
   url: text('url').notNull(),
   descriptionSnippet: text('description_snippet').notNull().default(''),
+  // What the ranking matches skills against - requirements sit well past the
+  // 280-character display snippet. NULL until a re-scrape on rows predating it.
+  descriptionText: text('description_text'),
   tags: text('tags').array().notNull().default([]),
   stipend: text('stipend'),
   duration: text('duration'),

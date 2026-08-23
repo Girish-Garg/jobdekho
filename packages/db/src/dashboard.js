@@ -1,33 +1,13 @@
-import { eq, and, desc, count, sql } from 'drizzle-orm'
+import { eq, and, gte, desc, count, sql } from 'drizzle-orm'
+import { idfWeights } from '@jobdekho/core/fit-dimensions.js'
+import { normalizeProfile } from '@jobdekho/core/profile.js'
 import { postings, userPostings } from './schema.js'
 import { postingConditions, clampPage } from './posting-filters.js'
+import { toNumber } from './posting-measures.js'
 import { orderFor, groupCountColumn, groupRankColumn } from './posting-order.js'
 import { scoreColumn, canRank } from './posting-score.js'
-
-export function normalizePrefs(input) {
-  const src = input ?? {}
-  return {
-    channel: src.channel ?? 'none',
-    telegramChatId: src.telegramChatId ?? null,
-    enabled: src.enabled ?? true,
-  }
-}
-
-export function normalizeFilters(input) {
-  const src = input ?? {}
-  return {
-    includeKeywords: src.includeKeywords ?? [],
-    excludeKeywords: src.excludeKeywords ?? [],
-    locations: src.locations ?? [],
-    levels: src.levels ?? [],
-    sources: src.sources ?? [], excludedSources: src.excludedSources ?? [],
-    workModes: src.workModes ?? [],
-    maxDegree: src.maxDegree ?? null,
-    minStipend: src.minStipend ?? null,
-    maxDurationMonths: src.maxDurationMonths ?? null,
-    maxExperienceYears: src.maxExperienceYears ?? null,
-  }
-}
+import { skillDocFreq } from './skill-doc-freq.js'
+import { withFit } from './posting-fit.js'
 
 export function applyStatusFilter(rows, status) {
   const normalized = rows.map((r) => ({ ...r, status: r.status ?? null }))
@@ -54,12 +34,21 @@ export async function listPostingsForUser(db, userId, opts = {}) {
   // An empty profile scores every row alike, so fall back to normal ordering.
   const ranks = opts.sort === 'match' && canRank(opts.profile)
   const sort = ranks ? 'match' : (opts.sort === 'match' ? 'newest' : opts.sort)
+  // Rarity comes from a cached corpus scan; without it ranking runs unweighted.
+  const { docFreq, totalDocs } = ranks
+    ? await skillDocFreq(db, normalizeProfile(opts.profile).skills)
+    : { docFreq: {}, totalDocs: 0 }
+  const idf = idfWeights(docFreq, totalDocs)
   const ranked = db
     .select({
       ...POSTING_COLUMNS,
+      // The reasons on a card must be computed against the same text the SQL
+      // scored, so a ranked page carries it - and only a ranked page, because
+      // an unranked one would pay 4000 characters a row for nothing.
+      ...(ranks ? { descriptionText: postings.descriptionText } : {}),
       groupCount: groupCountColumn.as('group_count'),
       groupRank: groupRankColumn.as('group_rank'),
-      matchScore: (ranks ? scoreColumn(opts.profile) : sql`0`).as('match_score'),
+      matchScore: (ranks ? scoreColumn(opts.profile, idf) : sql`0`).as('match_score'),
     })
     .from(postings)
     .leftJoin(userPostings,
@@ -67,10 +56,17 @@ export async function listPostingsForUser(db, userId, opts = {}) {
     .where(conditions.length ? and(...conditions) : undefined)
     .as('ranked')
 
+  const gate = []
+  if (opts.group !== false) gate.push(eq(ranked.groupRank, 1))
+  // The floor only means anything against a real score. Unranked, every row
+  // "scores" zero, so applying it would empty the feed rather than filter it.
+  const minFit = ranks ? toNumber(opts.minFit) : null
+  if (minFit) gate.push(gte(ranked.matchScore, minFit))
   let query = db.select().from(ranked)
-  if (opts.group !== false) query = query.where(eq(ranked.groupRank, 1))
+  if (gate.length) query = query.where(and(...gate))
   const rows = await query.orderBy(...orderFor(sort, ranked)).limit(limit).offset(offset)
-  return applyStatusFilter(rows.map(toPosting), opts.status)
+  const page = rows.map((row) => toPosting(ranks ? withFit(row, opts.profile, idf) : row))
+  return applyStatusFilter(page, opts.status)
 }
 
 // group_rank is query scaffolding; no window value means a group of one.

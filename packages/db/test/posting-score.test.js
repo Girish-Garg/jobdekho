@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { PgDialect } from 'drizzle-orm/pg-core'
-import { WEIGHTS, levelScoreTable, skillPatternSource } from '@jobdekho/core/score.js'
+import { WEIGHTS, dimensionWeights, levelFitTable } from '@jobdekho/core/score.js'
+import { TITLE_CREDIT, BODY_CREDIT, skillPatternSource } from '@jobdekho/core/fit-dimensions.js'
 import { levelsForYears } from '@jobdekho/core/profile.js'
 import { scoreColumn, canRank } from '@jobdekho/db/posting-score.js'
 
@@ -25,59 +26,50 @@ describe('canRank', () => {
   it('ranks on years alone, including zero', () => {
     expect(canRank({ years: 0 })).toBe(true)
   })
+
+  // A profile naming only a target title is still something to rank against.
+  it('ranks on titles alone', () => {
+    expect(canRank({ titles: ['backend engineer'] })).toBe(true)
+  })
+
+  it('refuses the empty profile shape the API actually returns', () => {
+    expect(canRank({ skills: [], titles: [], locations: [], years: null, degree: 'none' })).toBe(false)
+  })
 })
 
-describe('scoreColumn', () => {
+describe('scoreColumn skills', () => {
   it('emits one CASE branch per profile skill rather than one for the whole list', () => {
-    const { sql, params } = render(scoreColumn({ skills: ['react', 'node', 'python'] }))
+    const { sql } = render(scoreColumn({ skills: ['react', 'node', 'python'] }))
     // Each skill's branch checks title first, then body: two regex tests per skill.
     expect((sql.match(/~\*/g) || []).length).toBe(6)
-    expect(params.filter((p) => p === WEIGHTS.titleSkill)).toHaveLength(3)
-    expect(params.filter((p) => p === WEIGHTS.bodySkill)).toHaveLength(3)
   })
 
-  // Mutating the shared constant and checking the rendered SQL follows it is
-  // what actually distinguishes "reads WEIGHTS" from "copied the numbers in" -
-  // a hardcoded 8 would not move when WEIGHTS.titleSkill does.
-  it('reads titleSkill and bodySkill from core.WEIGHTS instead of a hardcoded copy', () => {
-    const originalTitle = WEIGHTS.titleSkill
-    const originalBody = WEIGHTS.bodySkill
-    WEIGHTS.titleSkill = 991
-    WEIGHTS.bodySkill = 992
-    try {
-      const { params } = render(scoreColumn({ skills: ['react'] }))
-      expect(params).toContain(991)
-      expect(params).toContain(992)
-    } finally {
-      WEIGHTS.titleSkill = originalTitle
-      WEIGHTS.bodySkill = originalBody
-    }
+  // Core reads descriptionText and falls back to the snippet when a row
+  // predates the column, so the SQL has to coalesce the same pair or the two
+  // scorers disagree on every un-rescraped row.
+  it('scores the body as description_text with the snippet as fallback', () => {
+    const { sql } = render(scoreColumn({ skills: ['react'] }))
+    expect(sql).toContain('coalesce("postings"."description_text", "postings"."description_snippet")')
   })
 
-  it('reads degreeFit from core.WEIGHTS instead of a hardcoded copy', () => {
-    const original = WEIGHTS.degreeFit
-    WEIGHTS.degreeFit = 777
-    try {
-      const { params } = render(scoreColumn({}))
-      expect(params).toContain(777)
-    } finally {
-      WEIGHTS.degreeFit = original
-    }
+  // With no rarity data every skill weighs 1, so the branch values ARE the
+  // credits and the denominator is the skill count: unweighted, not zero.
+  it('binds the title and body credits core owns, per skill', () => {
+    const { params } = render(scoreColumn({ skills: ['react', 'node'] }))
+    expect(params.filter((p) => p === 1 * TITLE_CREDIT).length).toBeGreaterThanOrEqual(2)
+    expect(params.filter((p) => p === 1 * BODY_CREDIT)).toHaveLength(2)
+    expect(params).toContain(2)
   })
 
-  // The lookup CASE has to contain exactly the points core's levelScoreTable
-  // computes for this profile's years, or the two scorers rank differently
-  // the moment someone tunes the level curve in one place only.
-  it('builds the level lookup from core.levelScoreTable rather than reimplementing the rungs', () => {
-    const wanted = levelsForYears(2)
-    const table = levelScoreTable(wanted)
-    const { params } = render(scoreColumn({ years: 2 }))
-    for (const points of Object.values(table)) expect(params).toContain(points)
-  })
-
-  it('adds no level branch when years is unstated, since nothing is ruled in or out', () => {
-    const { sql } = render(scoreColumn({}))
-    expect(sql.toLowerCase()).not.toContain('coalesce("level"')
+  // Coverage, not a count: the denominator is every profile skill's weight,
+  // matched or not, exactly as skillFit() divides.
+  it('scales each skill by its rarity weight and divides by the weight total', () => {
+    const idf = { react: 2, node: 1.5 }
+    const { params } = render(scoreColumn({ skills: ['react', 'node'] }, idf))
+    expect(params).toContain(2 * TITLE_CREDIT)
+    expect(params).toContain(2 * BODY_CREDIT)
+    expect(params).toContain(1.5 * TITLE_CREDIT)
+    expect(params).toContain(3.5)
   })
 
   // The pattern has to come from core rather than be rebuilt here, or this SQL
@@ -104,19 +96,94 @@ describe('scoreColumn', () => {
   it('escapes regex metacharacters inside a skill', () => {
     const { params } = render(scoreColumn({ skills: ['100% remote'] }))
     expect(params).toContain('\\y100% remote\\y')
-    expect(params.some((p) => String(p).includes('c++'))).toBe(false)
   })
 })
 
-// An empty profile is exactly what canRank exists to catch, and it was letting
-// one through: normalizeProfile turned the API's null years into 0, so a user
-// with nothing saved got the feed reordered around a phantom fresher profile.
-describe('canRank on the profile the API actually returns', () => {
-  it('refuses to rank a profile with no skills and no stated years', () => {
-    expect(canRank({ skills: [], titles: [], locations: [], years: null, degree: 'none' })).toBe(false)
+describe('scoreColumn titles', () => {
+  it('emits one hit test per title token and divides by that title token count', () => {
+    const { sql, params } = render(scoreColumn({ titles: ['senior backend engineer'] }))
+    expect((sql.match(/~\*/g) || []).length).toBe(2)
+    expect(params).toContain('\\ybackend\\y')
+    expect(params).toContain('\\yengineer\\y')
+    expect(params).toContain(2)
   })
 
-  it('still ranks a profile that states zero years', () => {
-    expect(canRank({ skills: [], years: 0 })).toBe(true)
+  // Level is its own dimension; leaving "senior" in the tokens would let one
+  // signal count twice. Core's tokeniser decides, this pins the SQL follows.
+  it('drops seniority words because level is scored separately', () => {
+    const { params } = render(scoreColumn({ titles: ['senior backend engineer'] }))
+    expect(params).not.toContain('\\ysenior\\y')
+  })
+
+  // The best single alternative decides, exactly like titleFit()'s max.
+  it('takes GREATEST over several target titles, but not over one', () => {
+    const two = render(scoreColumn({ titles: ['backend engineer', 'data analyst'] }))
+    expect(two.sql).toContain('greatest(')
+    const one = render(scoreColumn({ titles: ['backend engineer'] }))
+    expect(one.sql).not.toContain('greatest(')
+  })
+
+  // A title of nothing but stop words has no tokens to match, so no SQL is
+  // emitted for it - but the titles weight stays in the denominator, exactly
+  // as titleFit() returning 0 leaves the dimension active in JS.
+  it('emits no title expression when every token is a stop word, keeping the weight', () => {
+    const { sql, params } = render(scoreColumn({ titles: ['senior'] }))
+    expect((sql.match(/~\*/g) || []).length).toBe(0)
+    expect(params).toContain(WEIGHTS.titles + WEIGHTS.degree)
+  })
+})
+
+describe('scoreColumn level and degree', () => {
+  // The lookup CASE has to contain exactly the fits core's levelFitTable
+  // computes for this profile's years, or the two scorers rank differently
+  // the moment someone tunes the level curve in one place only.
+  it('builds the level lookup from core.levelFitTable rather than reimplementing the rungs', () => {
+    const table = levelFitTable(levelsForYears(2))
+    const { params } = render(scoreColumn({ years: 2 }))
+    for (const [level, fit] of Object.entries(table)) {
+      expect(params).toContain(level)
+      expect(params).toContain(fit)
+    }
+  })
+
+  it('adds no level branch when years is unstated, since nothing is ruled in or out', () => {
+    const { sql } = render(scoreColumn({ skills: ['react'] }))
+    expect(sql.toLowerCase()).not.toContain('coalesce("postings"."level"')
+  })
+})
+
+describe('scoreColumn composition', () => {
+  // Mutating the shared constant and checking the rendered SQL follows it is
+  // what actually distinguishes "reads WEIGHTS" from "copied the numbers in" -
+  // a hardcoded 45 would not move when WEIGHTS.skills does.
+  it('reads the dimension weights from core.WEIGHTS instead of a hardcoded copy', () => {
+    const original = { ...WEIGHTS }
+    Object.assign(WEIGHTS, { skills: 991, titles: 992, level: 993, degree: 994 })
+    try {
+      const { params } = render(scoreColumn({ skills: ['react'], titles: ['analyst'], years: 2 }))
+      expect(params).toContain(991)
+      expect(params).toContain(992)
+      expect(params).toContain(993)
+      expect(params).toContain(994)
+    } finally {
+      Object.assign(WEIGHTS, original)
+    }
+  })
+
+  // An incomplete profile divides by only the dimensions it has, so it can
+  // still span 0-100 instead of being capped by what it never stated.
+  it('divides by the same dimension total core computes for this profile', () => {
+    const skillsOnly = { skills: ['react'] }
+    expect(render(scoreColumn(skillsOnly)).params).toContain(dimensionWeights(skillsOnly).total)
+    const full = { skills: ['react'], titles: ['analyst'], years: 2 }
+    expect(render(scoreColumn(full)).params).toContain(dimensionWeights(full).total)
+  })
+
+  // Integer division would floor every fraction to zero; the cast on each
+  // denominator is what keeps 2 matched skills out of 3 from scoring as 0.
+  it('casts every denominator to float8 and rounds to a 0-100 integer', () => {
+    const { sql } = render(scoreColumn({ skills: ['react'], titles: ['data analyst'] }))
+    expect(sql.startsWith('round(100 * (')).toBe(true)
+    expect((sql.match(/::float8/g) || []).length).toBeGreaterThanOrEqual(3)
   })
 })

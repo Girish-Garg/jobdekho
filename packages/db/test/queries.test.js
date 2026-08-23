@@ -50,6 +50,12 @@ describe('toRow', () => {
     expect(toRow({ ...base, currency: 'USD' }).currency).toBe('USD')
     expect(toRow({ ...base }).currency).toBeNull()
   })
+  // The scorer reads this text; a row from before the column reads NULL, which
+  // is distinguishable from a posting that truly had no description.
+  it('passes descriptionText through, and defaults it to null when absent', () => {
+    expect(toRow({ ...base, descriptionText: 'full body text' }).descriptionText).toBe('full body text')
+    expect(toRow({ ...base }).descriptionText).toBeNull()
+  })
 })
 
 describe('refreshSet', () => {
@@ -73,6 +79,14 @@ describe('refreshSet', () => {
   // core learned to) has to be correctable the same way every other field is.
   it('refreshes currency', () => {
     expect(Object.keys(refreshSet())).toContain('currency')
+  })
+
+  // Old rows carry NULL and only a re-scrape can fill them, so the upsert has
+  // to refresh this or the ranking would stay snippet-blind forever.
+  it('refreshes descriptionText', () => {
+    expect(Object.keys(refreshSet())).toContain('descriptionText')
+    const sql = refreshSet(['descriptionText']).descriptionText
+    expect(JSON.stringify(sql)).toContain('excluded.description_text')
   })
 
   // The schema property is camelCase but the excluded reference has to name the
@@ -100,7 +114,7 @@ describe('upsertPostings', () => {
   })
 
   // Postgres caps bind parameters per statement, so a scrape big enough to
-  // blow past it (~2800+ rows at 24 columns each) has to be split into several
+  // blow past it (~2600+ rows at 25 columns each) has to be split into several
   // inserts rather than sent as one, or the whole run's data is rejected at once.
   it('splits a large batch into multiple statements', async () => {
     const batches = []
