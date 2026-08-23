@@ -19,4 +19,21 @@ describe('lever adapter', () => {
     expect(raw.tags).toEqual(['Data', 'Internship'])
     expect(typeof raw.postedAt).toBe('string')
   })
+
+  // type is derived from level in core/normalize.js; the commitment field is a
+  // real platform signal, so level is set from it.
+  it('does not hardcode type and reads level from commitment', async () => {
+    const [raw] = await lever({ slug: 'acme' }).fetch(http)
+    expect(raw.type).toBeUndefined()
+    expect(raw.level).toBe('internship')
+  })
+
+  it('leaves level unset for a full-time commitment', async () => {
+    const fullTime = async () => ({
+      json: async () => [{ id: 'a', text: 'Engineer', categories: { commitment: 'Full-time' } }],
+    })
+    const [raw] = await lever({ slug: 'acme' }).fetch(fullTime)
+    expect(raw.level).toBeUndefined()
+    expect(raw.postedAt).toBeNull()
+  })
 })

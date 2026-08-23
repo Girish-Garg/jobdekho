@@ -1,3 +1,6 @@
+import { internLevel } from './employment-type.js'
+import { toIso } from '../iso-date.js'
+
 export function lever({ slug }) {
   return {
     name: `lever:${slug}`,
@@ -12,8 +15,8 @@ export function lever({ slug }) {
         url: j.hostedUrl,
         description: j.descriptionPlain || '',
         tags: [j.categories?.team, j.categories?.commitment].filter(Boolean),
-        postedAt: j.createdAt ? new Date(j.createdAt).toISOString() : null,
-        type: 'job',
+        postedAt: toIso(j.createdAt),
+        ...internLevel(j.categories?.commitment),
       }))
     },
   }

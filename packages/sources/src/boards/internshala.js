@@ -17,6 +17,19 @@ export function parsePostedAt(text, now = Date.now()) {
   return new Date(now - Number(m[1]) * mult * DAY).toISOString()
 }
 
+// Every value on a card is anchored to its own icon. Reading the icon's parent
+// is what keeps the fields apart: the surrounding .internship_meta block repeats
+// the title, location, stipend and duration ahead of the description text.
+const flat = (node) => node.text().replace(/\s+/g, ' ').trim()
+
+const iconText = (card, icon) => {
+  const holder = card.find(icon).first().parent()
+  // Job cards carry the same value twice, in a .desktop span and a .mobile one,
+  // so reading the holder printed every salary twice. The mobile copy is the
+  // complete one: it keeps the "/year" unit the desktop span leaves off.
+  return flat(holder.children('.mobile')) || flat(holder)
+}
+
 export function parseInternshala(html, type = 'internship') {
   const $ = load(html)
   const out = []
@@ -31,15 +44,19 @@ export function parseInternshala(html, type = 'internship') {
       externalId: String(id),
       title,
       company: card.find('.company-name').first().text().trim(),
-      location: card.find('.internship_item_location').first().text().trim(),
+      // Roughly half of all cards are work-from-home, and those carry a home
+      // icon instead of a map pin. Reading only the pin left them locationless.
+      location: iconText(card, '.ic-16-map-pin') || iconText(card, '.ic-16-home'),
       url: href.startsWith('http') ? href : `https://internshala.com${href}`,
-      description: card.find('.internship_meta').text().replace(/\s+/g, ' ').trim(),
-      tags: ['internship'],
-      type,
-      postedAt: parsePostedAt(card.find('[class*="status"]').text()),
-      stipend: card.find('.ic-16-money').first().parent().text().replace(/\s+/g, ' ').trim() || null,
-      duration: card.find('.ic-16-calendar').first().parent().text().replace(/\s+/g, ' ').trim() || null,
-      experience: card.find('.ic-16-briefcase').first().parent().text().replace(/\s+/g, ' ').trim() || 'Fresher',
+      description: iconText(card, '.ic-16-assignment'),
+      tags: [type],
+      // The listing category is authoritative here. Internshala titles are bare
+      // skill names ("React Native Development"), so inference cannot see it.
+      ...(type === 'internship' ? { level: 'internship' } : {}),
+      postedAt: parsePostedAt(iconText(card, '.ic-16-reschedule')),
+      stipend: iconText(card, '.ic-16-money') || null,
+      duration: iconText(card, '.ic-16-calendar') || null,
+      experience: iconText(card, '.ic-16-briefcase') || 'Fresher',
     })
   })
   return out

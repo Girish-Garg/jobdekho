@@ -1,3 +1,13 @@
+import { stripHtml } from '../html.js'
+import { internLevel } from './employment-type.js'
+import { toIso } from '../iso-date.js'
+
+// descriptionPlain is the documented field; the HTML variant is the fallback
+// for boards that only publish the rich body.
+function body(j) {
+  return j.descriptionPlain ? String(j.descriptionPlain) : stripHtml(j.descriptionHtml || j.description)
+}
+
 export function ashby({ slug }) {
   return {
     name: `ashby:${slug}`,
@@ -10,10 +20,10 @@ export function ashby({ slug }) {
         company: slug.charAt(0).toUpperCase() + slug.slice(1),
         location: j.location || '',
         url: j.jobUrl || j.applyUrl || '',
-        description: '',
+        description: body(j),
         tags: [j.department, j.team].filter(Boolean),
-        postedAt: j.publishedAt || null,
-        type: 'job',
+        postedAt: toIso(j.publishedAt),
+        ...internLevel(j.employmentType),
       }))
     },
   }
