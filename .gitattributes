@@ -1,0 +1,6 @@
+# Git stores every text file with LF. Without this, core.autocrlf decides per
+# machine, and a Windows checkout warns on every staged file and can commit CRLF.
+* text=auto eol=lf
+
+# Lockfiles and fixtures are compared byte for byte, so never touch them.
+package-lock.json -diff
