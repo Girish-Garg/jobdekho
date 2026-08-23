@@ -17,7 +17,11 @@
     "business development", "human resource", "recruitment", "tele calling", "telecalling",
     "sales executive", "marketing", "sales development", "sales representative",
     "finance intern", "accounting", "operations intern", "sales engineer",
-    "mechanical", "civil engineer", "electrical engineer", "chemical engineer"
+    "mechanical", "civil engineer", "electrical engineer", "chemical engineer",
+    "campus ambassador", "campus representative", "brand ambassador",
+    "seo executive", "seo intern", "seo manager", "seo special",
+    "canva", "photo edit", "retouch", "hr intern", "sales director", "sales manager",
+    "partner sales", "sales intelligence", "bdr", "sdr"
   ],
   "locations": ["india", "bengaluru", "bangalore", "hyderabad", "pune", "mumbai", "delhi", "gurgaon", "gurugram", "noida", "chennai", "kolkata", "ahmedabad", "jaipur"],
   "levels": [],

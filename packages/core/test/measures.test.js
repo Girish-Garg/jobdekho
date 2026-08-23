@@ -43,6 +43,22 @@ describe('stipendMonthly', () => {
     expect(stipendMonthly(null)).toBeNull()
     expect(stipendMonthly('Competitive')).toBeNull()
   })
+
+  // An hourly rate is neither yearly nor monthly. Read as a monthly figure it
+  // put every contract and US listing at the bottom of a pay sort: "$14/hour"
+  // stored as 14 rupees a month.
+  it('scales an hourly rate to a month', () => {
+    expect(stipendMonthly('$14/hour')).toBe(190400)
+    expect(stipendMonthly('$17/hr')).toBe(231200)
+    expect(stipendMonthly('$120 - $170 /hour')).toBe(1632000)
+  })
+
+  // The rupee and lakh paths must not be disturbed by the hourly branch.
+  it('still reads the rupee cases it always did', () => {
+    expect(stipendMonthly('6 LPA')).toBe(50000)
+    expect(stipendMonthly('Rs 10,000 - 15,000 /month')).toBe(10000)
+    expect(stipendMonthly('Unpaid')).toBe(0)
+  })
 })
 
 describe('experienceYears', () => {

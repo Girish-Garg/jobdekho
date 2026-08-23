@@ -16,9 +16,16 @@ const SIGNS = [
   ['GBP', /£|\bgbp\b|\bpounds?\b/i],
 ]
 
+// 4,76,000 is Indian digit grouping, and no dollar figure is ever written that
+// way. Some Indian boards still prefix a plain rupee amount with "$", so the
+// grouping has to outrank the symbol: read as USD, one such posting converted
+// to 404 LPA and topped every pay sort in the feed.
+const INDIAN_GROUPING = /\d{1,2},\d{2},\d{3}/
+
 // Indian boards quote bare numbers, so a text naming no currency reads as INR.
 export function detectCurrency(text) {
   const s = String(text || '')
+  if (INDIAN_GROUPING.test(s)) return 'INR'
   for (const [code, re] of SIGNS) if (re.test(s)) return code
   return 'INR'
 }

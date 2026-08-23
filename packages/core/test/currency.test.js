@@ -24,6 +24,20 @@ describe('detectCurrency', () => {
   it('does not read currency codes out of ordinary words', () => {
     expect(detectCurrency('Europe relocation, 2 years')).toBe('INR')
   })
+
+  // Seen live on a real board: a rupee salary written in Indian grouping but
+  // prefixed with "$". Read as dollars it converted to 404 LPA and sat at the
+  // top of every pay sort.
+  it('reads Indian digit grouping as rupees whatever symbol precedes it', () => {
+    expect(detectCurrency('$ 4,76,000 - 6,16,000 /year')).toBe('INR')
+    expect(detectCurrency('4,76,000 /year')).toBe('INR')
+  })
+
+  // Western grouping is three digits after the comma, so it must not be read
+  // as Indian just for having one.
+  it('leaves a western-grouped dollar figure as dollars', () => {
+    expect(detectCurrency('$45,000 - $50,000')).toBe('USD')
+  })
 })
 
 describe('INR_PER', () => {

@@ -14,6 +14,12 @@ const LAKHS = /\blpa\b|\blakh/i
 // "M" of "6 Months" cannot inflate a number.
 const SCALE = { k: 1e3, m: 1e6 }
 
+// "$14/hour" is not 14 a month. Contract and US listings quote an hourly rate,
+// and reading it as a monthly figure buried every one of them at the bottom of
+// a pay sort. A full-time month is about 160 working hours.
+const HOURLY = /\/\s?h(?:ou)?r\b|per hour|hourly|\bp\.?h\.?\b/i
+const HOURS_PER_MONTH = 160
+
 // Normalised to monthly rupees so a yearly salary and a monthly internship
 // stipend answer the same question. A range yields its LOW end, which is the
 // only figure actually guaranteed. null means unknown, 0 means explicitly unpaid.
@@ -24,10 +30,14 @@ export function stipendMonthly(text) {
   if (!m) return null
   let value = Number(m[1]) * (SCALE[(m[2] || '').toLowerCase()] || 1)
   if (LAKHS.test(text) && value < 1000) value *= 100000
+  const currency = detectCurrency(text)
+  // Checked before the yearly rule: an hourly rate is neither yearly nor
+  // monthly, and the "no stated period means yearly" fallback below would
+  // otherwise divide it by twelve.
+  if (HOURLY.test(text)) return Math.round(value * HOURS_PER_MONTH * INR_PER[currency])
   // Foreign boards quote annual salaries even when they never say so; Indian
   // boards quote bare numbers as monthly stipends. So a foreign figure with no
   // stated period reads as yearly, and a bare rupee figure stays monthly.
-  const currency = detectCurrency(text)
   if (YEARLY.test(text) || (currency !== 'INR' && !MONTHLY.test(text))) value /= 12
   return Math.round(value * INR_PER[currency])
 }
