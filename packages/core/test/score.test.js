@@ -23,6 +23,18 @@ describe('normalizeProfile', () => {
     expect(normalizeProfile({ degree: 'bootcamp' }).degree).toBe('none')
   })
 
+  // GET /api/profile returns null for a year count nobody entered, and a
+  // cleared form field sends "". Number() turns both into 0, which read as a
+  // zero-year fresher and put "well outside your experience" on every senior
+  // posting. Zero itself is a real answer and has to survive.
+  it('keeps an unstated number of years unstated', () => {
+    expect(normalizeProfile({ years: null }).years).toBeNull()
+    expect(normalizeProfile({ years: undefined }).years).toBeNull()
+    expect(normalizeProfile({ years: '' }).years).toBeNull()
+    expect(normalizeProfile({ years: 0 }).years).toBe(0)
+    expect(normalizeProfile({ years: '4' }).years).toBe(4)
+  })
+
   // A long SQL statement is the cost of an unbounded skill list.
   it('caps the skill list', () => {
     const many = Array.from({ length: 60 }, (_, i) => `skill${i}`)

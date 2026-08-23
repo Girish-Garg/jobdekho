@@ -107,3 +107,16 @@ describe('scoreColumn', () => {
     expect(params.some((p) => String(p).includes('c++'))).toBe(false)
   })
 })
+
+// An empty profile is exactly what canRank exists to catch, and it was letting
+// one through: normalizeProfile turned the API's null years into 0, so a user
+// with nothing saved got the feed reordered around a phantom fresher profile.
+describe('canRank on the profile the API actually returns', () => {
+  it('refuses to rank a profile with no skills and no stated years', () => {
+    expect(canRank({ skills: [], titles: [], locations: [], years: null, degree: 'none' })).toBe(false)
+  })
+
+  it('still ranks a profile that states zero years', () => {
+    expect(canRank({ skills: [], years: 0 })).toBe(true)
+  })
+})

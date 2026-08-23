@@ -13,9 +13,17 @@ const clean = (list) => [...new Set(
 // long. A resume listing 40 skills is mostly listing noise anyway.
 const MAX_SKILLS = 25
 
+// Number(null) and Number('') are both 0, so an unstated number of years read
+// as a zero-year fresher rather than as unknown. GET /api/profile returns null
+// for a year count nobody has entered, and a cleared form field sends "", so
+// this was the common case, not an edge one: every senior posting came back
+// "well outside your experience", and canRank judged a wholly empty profile
+// rankable, which is the exact case it exists to catch. Only a value that is
+// actually there is allowed to become a number.
 export function normalizeProfile(input) {
   const src = input ?? {}
-  const years = Number(src.years)
+  const stated = src.years !== null && src.years !== undefined && src.years !== ''
+  const years = stated ? Number(src.years) : NaN
   return {
     skills: clean(src.skills).slice(0, MAX_SKILLS),
     years: Number.isFinite(years) && years >= 0 ? years : null,
