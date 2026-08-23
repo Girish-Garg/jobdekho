@@ -1,8 +1,8 @@
 import { sql, inArray } from 'drizzle-orm'
-import { WEIGHTS, levelScoreTable } from '@jobdekho/core/score.js'
+import { WEIGHTS, levelScoreTable, skillPatternSource } from '@jobdekho/core/score.js'
 import { normalizeProfile, levelsForYears } from '@jobdekho/core/profile.js'
 import { postings } from './schema.js'
-import { escapeLike, allowedDegrees } from './posting-filters.js'
+import { allowedDegrees } from './posting-filters.js'
 
 // Mirrors scorePosting() in @jobdekho/core/score.js. It exists as SQL because
 // ranking has to happen across the whole matching set before LIMIT, exactly
@@ -12,26 +12,26 @@ import { escapeLike, allowedDegrees } from './posting-filters.js'
 // posting-score.test.js covers what it can without a live database: that the
 // WEIGHTS and levelScoreTable values are read from core rather than copied
 // here, that one CASE branch is emitted per profile skill, that canRank gates
-// an empty profile, and that skill strings are safely escaped for LIKE. It
-// does NOT verify that this SQL and scorePosting() produce the same score on
-// a real row - that equivalence needs a live database and a fake connection
-// would only prove the mock behaves as scripted, not that the two scorers
-// agree, so it stays unverified until someone runs it against real data.
-// It also cannot catch a matching-rule change made on one side only: this SQL
-// matches a skill by substring ILIKE, so if the JS side's rule for what counts
-// as a match ever moves away from plain substring, the two will silently
-// disagree until someone notices.
+// an empty profile, and that a skill's pattern comes from core. It does NOT
+// verify that this SQL and scorePosting() produce the same score on a real
+// row - that equivalence needs a live database and a fake connection would
+// only prove the mock behaves as scripted, not that the two scorers agree, so
+// it stays unverified until someone runs it against real data.
 export function scoreColumn(profile) {
   const p = normalizeProfile(profile)
   const parts = []
 
   // One CASE per skill, title before body, so a skill in both counts once at
   // the higher weight rather than twice.
+  // ~* rather than ILIKE: a substring match let the skill "c" score every
+  // posting and "java" claim JavaScript roles. \y is Postgres's word boundary,
+  // and skillPatternSource decides which edges get one so that "c++" and
+  // ".net" still match, exactly as the JS scorer does.
   for (const skill of p.skills) {
-    const like = `%${escapeLike(skill)}%`
+    const pattern = skillPatternSource(skill, '\\y', '\\y')
     parts.push(sql`case
-      when ${postings.title} ilike ${like} then ${WEIGHTS.titleSkill}
-      when ${postings.descriptionSnippet} ilike ${like} then ${WEIGHTS.bodySkill}
+      when ${postings.title} ~* ${pattern} then ${WEIGHTS.titleSkill}
+      when ${postings.descriptionSnippet} ~* ${pattern} then ${WEIGHTS.bodySkill}
       else 0 end`)
   }
 

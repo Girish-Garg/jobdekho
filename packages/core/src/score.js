@@ -37,18 +37,23 @@ const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 // on skills that start or end in symbols (c++, .net), so the boundary is only
 // asserted on the edges that are word characters: ".net" still hits "asp.net"
 // and "c++" still hits "C++ Developer".
+//
+// JS and Postgres spell a boundary differently, (?<!\w) against \y, but WHICH
+// edges get one is the rule that has to stay identical or the SQL mirror in
+// packages/db/src/posting-score.js ranks differently from this. The decision
+// lives here and both callers read it rather than restating it.
+export function skillPatternSource(skill, lead, tail) {
+  return (/^\w/.test(skill) ? lead : '') + escapeRe(skill) + (/\w$/.test(skill) ? tail : '')
+}
+
 function skillPattern(skill) {
-  const lead = /^\w/.test(skill) ? '(?<!\\w)' : ''
-  const tail = /\w$/.test(skill) ? '(?!\\w)' : ''
-  return new RegExp(lead + escapeRe(skill) + tail)
+  return new RegExp(skillPatternSource(skill, '(?<!\\w)', '(?!\\w)'))
 }
 
 // This is the single source of truth for the ranking. The SQL in
 // packages/db/src/posting-score.js mirrors it so that sorting can happen before
-// LIMIT, and an integration test asserts the two agree on real rows.
-// NOTE: that SQL still matches skills with ilike '%skill%', so it has not yet
-// picked up the word-boundary treatment above - the two drift on short skills
-// until it does.
+// LIMIT; it reads the weights, the level table and skillPatternSource from
+// here so the two cannot disagree about what counts as a match.
 export function scorePosting(posting, profile) {
   const p = normalizeProfile(profile)
   const title = String(posting.title || '').toLowerCase()

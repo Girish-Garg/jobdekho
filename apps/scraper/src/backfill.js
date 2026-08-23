@@ -6,6 +6,7 @@ import { classifyLevel } from '@jobdekho/core/level.js'
 import { classifyWorkMode } from '@jobdekho/core/work-mode.js'
 import { makeGroupKey } from '@jobdekho/core/posting.js'
 import { stipendMonthly, experienceYears, durationMonths } from '@jobdekho/core/measures.js'
+import { detectCurrency } from '@jobdekho/core/currency.js'
 import { cleanSnippet, cleanStipend, levelFromUrl } from './repair.js'
 
 const POOL = 16
@@ -35,6 +36,10 @@ export function reclassify(row) {
     workMode: classifyWorkMode(row.location, row.tags || []),
     groupKey: makeGroupKey(row.title, row.company),
     stipendMin: stipendMonthly(stipend),
+    // Rows stored before the currency fix hold a dollar salary parsed as
+    // rupees, so stipendMin is being recomputed anyway; the unit it came from
+    // has to be recorded alongside it or the card shows rupees for a US role.
+    currency: stipend ? detectCurrency(stipend) : null,
     durationMonths: durationMonths(row.duration),
     experienceYears: experienceYears(row.experience),
     level,

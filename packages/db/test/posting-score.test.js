@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { PgDialect } from 'drizzle-orm/pg-core'
-import { WEIGHTS, levelScoreTable } from '@jobdekho/core/score.js'
+import { WEIGHTS, levelScoreTable, skillPatternSource } from '@jobdekho/core/score.js'
 import { levelsForYears } from '@jobdekho/core/profile.js'
 import { scoreColumn, canRank } from '@jobdekho/db/posting-score.js'
 
@@ -30,8 +30,8 @@ describe('canRank', () => {
 describe('scoreColumn', () => {
   it('emits one CASE branch per profile skill rather than one for the whole list', () => {
     const { sql, params } = render(scoreColumn({ skills: ['react', 'node', 'python'] }))
-    // Each skill's branch checks title first, then body: two ilike tests per skill.
-    expect((sql.match(/ilike/g) || []).length).toBe(6)
+    // Each skill's branch checks title first, then body: two regex tests per skill.
+    expect((sql.match(/~\*/g) || []).length).toBe(6)
     expect(params.filter((p) => p === WEIGHTS.titleSkill)).toHaveLength(3)
     expect(params.filter((p) => p === WEIGHTS.bodySkill)).toHaveLength(3)
   })
@@ -80,20 +80,30 @@ describe('scoreColumn', () => {
     expect(sql.toLowerCase()).not.toContain('coalesce("level"')
   })
 
-  // % and _ are LIKE wildcards. A skill containing one has to be escaped or it
-  // would match far more postings than the literal skill name.
-  it('escapes a literal percent sign inside a skill', () => {
-    const { params } = render(scoreColumn({ skills: ['100% remote'] }))
-    expect(params).toContain('%100\\% remote%')
+  // The pattern has to come from core rather than be rebuilt here, or this SQL
+  // and scorePosting() drift on what counts as a match. A substring match was
+  // the old rule, and under it the skill "c" scored every posting in the table.
+  it('binds the pattern core builds, bounded on both word-character edges', () => {
+    const { params } = render(scoreColumn({ skills: ['react'] }))
+    expect(params).toContain(skillPatternSource('react', '\\y', '\\y'))
+    expect(params).toContain('\\yreact\\y')
   })
 
-  // These characters are regex metacharacters but not LIKE ones, so they need
-  // no escaping - the point is only that they pass through as literal
-  // parameter values rather than breaking the query or being interpreted.
-  it('passes skills with regex-special characters through as literal LIKE patterns', () => {
+  // A boundary on a symbol edge could never match: "c++" is followed by a
+  // space, and \y needs a word to non-word transition to fire. Core decides
+  // which edges get one; this pins that the SQL side gets the same answer.
+  it('leaves the boundary off an edge that is not a word character', () => {
     const { params } = render(scoreColumn({ skills: ['c++', '.net', 'node.js'] }))
-    expect(params).toContain('%c++%')
-    expect(params).toContain('%.net%')
-    expect(params).toContain('%node.js%')
+    expect(params).toContain('\\yc\\+\\+')
+    expect(params).toContain('\\.net\\y')
+    expect(params).toContain('\\ynode\\.js\\y')
+  })
+
+  // Unescaped, the "+" of "c++" is a quantifier and the "." of ".net" matches
+  // any character, so both would match far more than the literal skill.
+  it('escapes regex metacharacters inside a skill', () => {
+    const { params } = render(scoreColumn({ skills: ['100% remote'] }))
+    expect(params).toContain('\\y100% remote\\y')
+    expect(params.some((p) => String(p).includes('c++'))).toBe(false)
   })
 })

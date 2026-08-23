@@ -49,7 +49,7 @@ describe('reclassify', () => {
     })).toEqual({
       descriptionSnippet: 'PhD in Statistics', stipend: undefined, workMode: 'onsite',
       groupKey: 'senior data scientist|acme',
-      stipendMin: null, durationMonths: null, experienceYears: null,
+      stipendMin: null, currency: null, durationMonths: null, experienceYears: null,
       level: 'senior', type: 'job',
     })
   })
@@ -60,8 +60,17 @@ describe('reclassify', () => {
       duration: '6 Months', experience: 'Fresher',
     })
     expect(out.stipendMin).toBe(25000)
+    expect(out.currency).toBe('INR')
     expect(out.durationMonths).toBe(6)
     expect(out.experienceYears).toBe(0)
+  })
+
+  // Rows stored before the currency fix hold a dollar salary that was parsed
+  // as rupees, so the backfill is the only thing that can correct them.
+  it('records the currency a foreign salary was quoted in', () => {
+    const out = reclassify({ title: 'X', company: 'C', stipend: '$60k - $80k /year' })
+    expect(out.currency).toBe('USD')
+    expect(out.stipendMin).toBe(425000)
   })
 
   // Internshala titles are bare skill names, so the stored level came from the
@@ -101,7 +110,7 @@ describe('reclassify', () => {
     expect(reclassify({ title: 'Backend Engineer', company: 'C', descriptionSnippet: '' })).toEqual({
       descriptionSnippet: '', stipend: undefined, workMode: 'onsite',
       groupKey: 'backend engineer|c',
-      stipendMin: null, durationMonths: null, experienceYears: null,
+      stipendMin: null, currency: null, durationMonths: null, experienceYears: null,
       level: 'mid', type: 'job',
     })
   })
