@@ -28,10 +28,24 @@ describe('normalize', () => {
     expect(p.stipend).toBeNull()
     expect(p.duration).toBeNull()
     expect(p.experience).toBeNull()
+    expect(p.type).toBe('job')
+  })
+  it('classifies level and degree, and derives type from level', () => {
+    const p = normalize(raw, 'greenhouse:acme')
+    expect(p.level).toBe('internship')
+    expect(p.type).toBe('internship')
+    expect(p.degreeMin).toBe('none')
+    expect(p.degreeRequired).toBe(false)
+  })
+  it('prefers a level the source already knows', () => {
+    const p = normalize({ externalId: '1', title: 'Engineer', company: 'C', url: 'u', level: 'internship' }, 's')
+    expect(p.level).toBe('internship')
     expect(p.type).toBe('internship')
   })
-  it('passes type through when provided', () => {
-    const p = normalize({ externalId: '1', title: 'T', company: 'C', url: 'u', type: 'job' }, 's')
-    expect(p.type).toBe('job')
+  it('reads a degree floor from the body past the snippet cutoff', () => {
+    const body = `${'padding '.repeat(60)}requires an MS or PhD in Computer Science`
+    const p = normalize({ externalId: '1', title: 'Scientist', company: 'C', url: 'u', description: body }, 's')
+    expect(p.descriptionSnippet.length).toBe(280)
+    expect(p.degreeMin).toBe('masters')
   })
 })
