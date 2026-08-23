@@ -7,8 +7,7 @@ import { normalizeFilters, normalizePrefs } from './dashboard.js'
 export async function getUserFilters(db, userId) {
   const rows = await db.select().from(userFilters).where(eq(userFilters.userId, userId))
   if (!rows[0]) return null
-  const { includeKeywords, excludeKeywords, locations } = rows[0]
-  return normalizeFilters({ includeKeywords, excludeKeywords, locations })
+  return normalizeFilters(rows[0])
 }
 
 export async function upsertUserFilters(db, userId, filters) {

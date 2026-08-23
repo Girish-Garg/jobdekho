@@ -17,6 +17,17 @@ export const postings = pgTable('postings', {
   firstSeenAt: timestamp('first_seen_at').notNull().defaultNow(),
   status: text('status').notNull().default('new'),
   type: text('type'),
+  level: text('level'),
+  degreeMin: text('degree_min'),
+  workMode: text('work_mode'),
+  stipendMin: integer('stipend_min'),
+  durationMonths: integer('duration_months'),
+  experienceYears: integer('experience_years'),
+  groupKey: text('group_key'),
+  // Refreshed on every upsert. A posting the adapters stop returning is almost
+  // certainly closed, and this is the only way to notice.
+  lastSeenAt: timestamp('last_seen_at'),
+  degreeRequired: boolean('degree_required'),
 })
 
 export const runs = pgTable('runs', {
@@ -42,11 +53,34 @@ export const userPostings = pgTable('user_postings', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (t) => ({ pk: primaryKey({ columns: [t.userId, t.postingId] }) }))
 
+// One resume per user, reduced to the fields the ranking reads. resumeText is
+// kept so the extraction can be re-run after tuning it, without asking for the
+// file again. It is the one place a resume's raw content lives.
+export const userProfiles = pgTable('user_profiles', {
+  userId: text('user_id').primaryKey(),
+  skills: text('skills').array().notNull().default([]),
+  titles: text('titles').array().notNull().default([]),
+  locations: text('locations').array().notNull().default([]),
+  years: integer('years'),
+  degree: text('degree'),
+  resumeText: text('resume_text'),
+  resumeName: text('resume_name'),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
 export const userFilters = pgTable('user_filters', {
   userId: text('user_id').primaryKey(),
   includeKeywords: text('include_keywords').array().notNull().default([]),
   excludeKeywords: text('exclude_keywords').array().notNull().default([]),
   locations: text('locations').array().notNull().default([]),
+  levels: text('levels').array().notNull().default([]),
+  sources: text('sources').array().notNull().default([]),
+  excludedSources: text('excluded_sources').array().notNull().default([]),
+  workModes: text('work_modes').array().notNull().default([]),
+  maxDegree: text('max_degree'),
+  minStipend: integer('min_stipend'),
+  maxDurationMonths: integer('max_duration_months'),
+  maxExperienceYears: integer('max_experience_years'),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
 
