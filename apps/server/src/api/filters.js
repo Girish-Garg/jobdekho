@@ -4,6 +4,7 @@ import { resolve, dirname } from 'node:path'
 import { LEVELS } from '@jobdekho/core/level.js'
 import { DEGREES } from '@jobdekho/core/degree.js'
 import { WORK_MODES } from '@jobdekho/core/work-mode.js'
+import { filtersBodySchema } from './schemas.js'
 
 const __dir = dirname(fileURLToPath(import.meta.url))
 const FILTERS_PATH = resolve(__dir, '../../../../config/filters.json')
@@ -57,7 +58,9 @@ export async function filtersRoutes(app) {
     return loadDefaults()
   })
 
-  app.put('/api/filters', { preHandler: app.requireAuth }, async (request, reply) => {
+  app.put('/api/filters', {
+    preHandler: app.requireAuth, schema: filtersBodySchema,
+  }, async (request, reply) => {
     await app.dashboard.upsertUserFilters(request.user.sub, coerceFilters(request.body))
     reply.code(204).send()
   })

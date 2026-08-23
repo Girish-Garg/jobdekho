@@ -202,6 +202,16 @@ describe('GET /api/postings sources filter', () => {
   })
 })
 
+async function patchStatus(store, body) {
+  const app = makeApp(store)
+  const cookie = await signedCookie(app)
+  return app.inject({
+    method: 'PATCH', url: '/api/postings/p1',
+    headers: { cookie, 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+}
+
 describe('PATCH /api/postings/:id', () => {
   it('returns 401 without cookie', async () => {
     const app = makeApp(makeFakeStore()); await app.ready()
@@ -220,6 +230,44 @@ describe('PATCH /api/postings/:id', () => {
     })
     expect(res.statusCode).toBe(204)
     expect(store.setPostingStatus).toHaveBeenCalledWith('u1', 'p1', 'applied')
+  })
+
+  it.each(['saved', 'applied', 'dismissed'])('accepts the real status "%s"', async (status) => {
+    const store = makeFakeStore()
+    const res = await patchStatus(store, { status })
+    expect(res.statusCode).toBe(204)
+    expect(store.setPostingStatus).toHaveBeenCalledWith('u1', 'p1', status)
+  })
+
+  // Clicking an active Save button again clears it. That is a real request
+  // shape, not a missing field, so null has to reach the store as null.
+  it('clears the status when sent null', async () => {
+    const store = makeFakeStore()
+    const res = await patchStatus(store, { status: null })
+    expect(res.statusCode).toBe(204)
+    expect(store.setPostingStatus).toHaveBeenCalledWith('u1', 'p1', null)
+  })
+
+  it('rejects a status outside the real vocabulary', async () => {
+    const store = makeFakeStore()
+    const res = await patchStatus(store, { status: 'archived' })
+    expect(res.statusCode).toBe(400)
+    expect(res.json().error).toBeTruthy()
+    expect(store.setPostingStatus).not.toHaveBeenCalled()
+  })
+
+  it('rejects a body with no status field', async () => {
+    const res = await patchStatus(makeFakeStore(), {})
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('returns 400 instead of 500 for a request with no body', async () => {
+    const store = makeFakeStore()
+    const app = makeApp(store)
+    const cookie = await signedCookie(app)
+    const res = await app.inject({ method: 'PATCH', url: '/api/postings/p1', headers: { cookie } })
+    expect(res.statusCode).toBe(400)
+    expect(store.setPostingStatus).not.toHaveBeenCalled()
   })
 })
 
@@ -306,6 +354,22 @@ describe('PUT /api/filters', () => {
     expect(saved.locations).toEqual([])
     expect(saved.minStipend).toBeNull()
   })
+
+  it('rejects a non-object body before it reaches coerceFilters', async () => {
+    const store = makeFakeStore()
+    const { res } = await putFilters(store, ['not', 'an', 'object'])
+    expect(res.statusCode).toBe(400)
+    expect(store.upsertUserFilters).not.toHaveBeenCalled()
+  })
+
+  it('returns 400 instead of 500 for a request with no body', async () => {
+    const store = makeFakeStore()
+    const app = makeApp(store)
+    const cookie = await signedCookie(app)
+    const res = await app.inject({ method: 'PUT', url: '/api/filters', headers: { cookie } })
+    expect(res.statusCode).toBe(400)
+    expect(store.upsertUserFilters).not.toHaveBeenCalled()
+  })
 })
 
 describe('GET /api/notifications', () => {
@@ -336,6 +400,17 @@ describe('GET /api/notifications', () => {
 })
 
 describe('PUT /api/notifications', () => {
+  async function putNotifications(store, body) {
+    const app = makeApp(store)
+    const cookie = await signedCookie(app)
+    const res = await app.inject({
+      method: 'PUT', url: '/api/notifications',
+      headers: { cookie, 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    return res
+  }
+
   it('returns 401 without cookie', async () => {
     const app = makeApp(makeFakeStore()); await app.ready()
     const res = await app.inject({ method: 'PUT', url: '/api/notifications', body: {} })
@@ -354,5 +429,133 @@ describe('PUT /api/notifications', () => {
     })
     expect(res.statusCode).toBe(204)
     expect(store.upsertNotificationPrefs).toHaveBeenCalledWith('u1', prefs)
+  })
+
+  it.each(['none', 'telegram'])('accepts the real channel "%s"', async (channel) => {
+    const store = makeFakeStore()
+    const res = await putNotifications(store, { channel, telegramChatId: null, enabled: true })
+    expect(res.statusCode).toBe(204)
+    expect(store.upsertNotificationPrefs).toHaveBeenCalled()
+  })
+
+  // email was deliberately removed from this project. It must stay rejected.
+  it('rejects a channel outside none/telegram, including email', async () => {
+    const store = makeFakeStore()
+    const res = await putNotifications(store, { channel: 'email' })
+    expect(res.statusCode).toBe(400)
+    expect(store.upsertNotificationPrefs).not.toHaveBeenCalled()
+  })
+
+  it('rejects a non-boolean enabled value', async () => {
+    const store = makeFakeStore()
+    const res = await putNotifications(store, { enabled: 'yes' })
+    expect(res.statusCode).toBe(400)
+    expect(store.upsertNotificationPrefs).not.toHaveBeenCalled()
+  })
+
+  it('accepts a null telegramChatId', async () => {
+    const store = makeFakeStore()
+    const res = await putNotifications(store, { channel: 'none', telegramChatId: null, enabled: false })
+    expect(res.statusCode).toBe(204)
+    expect(store.upsertNotificationPrefs).toHaveBeenCalledWith('u1',
+      { channel: 'none', telegramChatId: null, enabled: false })
+  })
+
+  it('returns 400 instead of 500 for a request with no body', async () => {
+    const store = makeFakeStore()
+    const app = makeApp(store)
+    const cookie = await signedCookie(app)
+    const res = await app.inject({ method: 'PUT', url: '/api/notifications', headers: { cookie } })
+    expect(res.statusCode).toBe(400)
+    expect(store.upsertNotificationPrefs).not.toHaveBeenCalled()
+  })
+})
+
+describe('PUT /api/profile', () => {
+  async function putProfile(store, body) {
+    const app = makeApp(store)
+    const cookie = await signedCookie(app)
+    return app.inject({
+      method: 'PUT', url: '/api/profile',
+      headers: { cookie, 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+  }
+
+  it('returns 401 without cookie', async () => {
+    const app = makeApp(makeFakeStore()); await app.ready()
+    const res = await app.inject({ method: 'PUT', url: '/api/profile', body: {} })
+    expect(res.statusCode).toBe(401)
+  })
+
+  it('calls upsertProfile and returns its result', async () => {
+    const store = makeFakeStore()
+    store.upsertProfile.mockResolvedValue({ skills: ['react'], years: 2 })
+    const res = await putProfile(store, { skills: ['react'], years: 2 })
+    expect(res.statusCode).toBe(200)
+    expect(res.json()).toEqual({ skills: ['react'], years: 2 })
+    expect(store.upsertProfile).toHaveBeenCalledWith('u1', { skills: ['react'], years: 2 })
+  })
+
+  it('rejects a non-object body before it reaches normalizeProfile', async () => {
+    const store = makeFakeStore()
+    const res = await putProfile(store, 'not an object')
+    expect(res.statusCode).toBe(400)
+    expect(store.upsertProfile).not.toHaveBeenCalled()
+  })
+
+  it('returns 400 instead of 500 for a request with no body', async () => {
+    const store = makeFakeStore()
+    const app = makeApp(store)
+    const cookie = await signedCookie(app)
+    const res = await app.inject({ method: 'PUT', url: '/api/profile', headers: { cookie } })
+    expect(res.statusCode).toBe(400)
+    expect(store.upsertProfile).not.toHaveBeenCalled()
+  })
+})
+
+// A DB error message can name real columns and constraints. The client only
+// ever gets to see that a 5xx happened, never why.
+describe('the global error handler', () => {
+  it('hides a thrown 5xx error behind a generic message', async () => {
+    const store = makeFakeStore()
+    store.setPostingStatus.mockRejectedValue(
+      new Error('column "status" violates check constraint "user_postings_status_check"'))
+    const app = makeApp(store)
+    const cookie = await signedCookie(app)
+    const res = await app.inject({
+      method: 'PATCH', url: '/api/postings/p1',
+      headers: { cookie, 'content-type': 'application/json' },
+      body: JSON.stringify({ status: 'saved' }),
+    })
+    expect(res.statusCode).toBe(500)
+    expect(res.json()).toEqual({ error: 'internal server error' })
+    expect(res.body).not.toMatch(/check constraint/)
+  })
+
+  it('still returns 401 unchanged for an unauthenticated request', async () => {
+    const app = makeApp(makeFakeStore()); await app.ready()
+    const res = await app.inject({ method: 'GET', url: '/api/postings' })
+    expect(res.statusCode).toBe(401)
+    expect(res.json()).toEqual({ error: 'unauthorized' })
+  })
+
+  it('still returns 404 unchanged for an unknown route', async () => {
+    const app = makeApp(makeFakeStore()); await app.ready()
+    const res = await app.inject({ method: 'GET', url: '/api/nope' })
+    expect(res.statusCode).toBe(404)
+  })
+
+  it('keeps a schema validation message specific enough to name the field', async () => {
+    const store = makeFakeStore()
+    const app = makeApp(store)
+    const cookie = await signedCookie(app)
+    const res = await app.inject({
+      method: 'PATCH', url: '/api/postings/p1',
+      headers: { cookie, 'content-type': 'application/json' },
+      body: JSON.stringify({ status: 'archived' }),
+    })
+    expect(res.statusCode).toBe(400)
+    expect(res.json().error).toMatch(/status/)
   })
 })

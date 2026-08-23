@@ -20,6 +20,21 @@ function devUser(config) {
   return { sub: config.devUserId, email: 'dev@localhost', name: 'Dev session', avatarUrl: null }
 }
 
+// A thrown DB or programming error can name real columns and constraints, so
+// only the log gets the real message. A 4xx (including Fastify's own schema
+// validation errors) already carries a message a client needs to fix its
+// request, so only 5xx gets rewritten here. The shape stays { error } either
+// way, matching every hand-written error response in this API.
+function handleError(error, request, reply) {
+  const status = error.statusCode ?? 500
+  if (status < 500) {
+    reply.code(status).send({ error: error.message })
+    return
+  }
+  request.log.error(error)
+  reply.code(500).send({ error: 'internal server error' })
+}
+
 export function buildApp({ config, userStore, fetchProfile, dashboardStore, distDir = DEFAULT_DIST, logger = false }) {
   const app = Fastify({ logger })
   app.register(cookie)
@@ -32,5 +47,6 @@ export function buildApp({ config, userStore, fetchProfile, dashboardStore, dist
   app.register(authRoutes)
   app.register(apiRoutes)
   app.register(registerStatic, { distDir })
+  app.setErrorHandler(handleError)
   return app
 }

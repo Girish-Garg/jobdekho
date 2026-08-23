@@ -1,6 +1,7 @@
 import { filterFromProfile } from '@jobdekho/core/profile.js'
 import { pdfToText } from '../resume/text.js'
 import { extractProfile } from '../resume/extract.js'
+import { profileBodySchema } from './schemas.js'
 
 // A resume is a few pages of text. Anything larger is not a resume.
 const MAX_BYTES = 5 * 1024 * 1024
@@ -11,7 +12,7 @@ export async function profileRoutes(app) {
 
   // Editing by hand is the primary path, not a fallback: extraction gets things
   // wrong and the profile drives the ranking, so it has to be correctable.
-  app.put('/api/profile', { preHandler: app.requireAuth }, async (request) =>
+  app.put('/api/profile', { preHandler: app.requireAuth, schema: profileBodySchema }, async (request) =>
     app.dashboard.upsertProfile(request.user.sub, request.body ?? {}))
 
   app.delete('/api/profile', { preHandler: app.requireAuth }, async (request, reply) => {

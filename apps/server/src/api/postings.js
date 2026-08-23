@@ -2,6 +2,7 @@ import { LEVELS } from '@jobdekho/core/level.js'
 import { DEGREES } from '@jobdekho/core/degree.js'
 import { WORK_MODES } from '@jobdekho/core/work-mode.js'
 import { SORTS } from '@jobdekho/db/posting-order.js'
+import { postingStatusSchema } from './schemas.js'
 
 // Unknown values are dropped rather than rejected: a stale bookmarked URL
 // should still return results.
@@ -64,7 +65,9 @@ export async function postingsRoutes(app) {
     sources: await app.dashboard.listSources(),
   }))
 
-  app.patch('/api/postings/:id', { preHandler: app.requireAuth }, async (request, reply) => {
+  app.patch('/api/postings/:id', {
+    preHandler: app.requireAuth, schema: postingStatusSchema,
+  }, async (request, reply) => {
     const { id } = request.params
     const { status } = request.body
     await app.dashboard.setPostingStatus(request.user.sub, id, status)
