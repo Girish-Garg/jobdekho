@@ -9,6 +9,8 @@
     "test": "vitest run",
     "scrape": "node apps/scraper/src/index.js",
     "db:push": "drizzle-kit push",
+    "db:migrate": "node packages/db/src/migrate.js",
+    "db:backfill": "node apps/scraper/src/backfill.js",
     "build": "npm -w @jobdekho/web run build",
     "heroku-postbuild": "npm -w @jobdekho/web run build"
   },

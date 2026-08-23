@@ -1,9 +1,9 @@
-import { defineConfig, configDefaults } from 'vitest/config'
+import { defineConfig } from 'vitest/config'
 
+// Suites are defined per environment in vitest.workspace.js; this file only
+// points at it so `vitest run` picks up both projects.
 export default defineConfig({
   test: {
-    include: ['**/test/**/*.test.js'],
-    exclude: [...configDefaults.exclude, '**/.claude/**', 'apps/web/**'],
-    environment: 'node',
+    workspace: './vitest.workspace.js',
   },
 })
