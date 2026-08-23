@@ -5,9 +5,10 @@ import PostingsView from './PostingsView.jsx';
 vi.mock('../api.js', () => ({
   getPostings: vi.fn(async () => []),
   setStatus: vi.fn(async () => null),
+  getProfile: vi.fn(async () => null),
 }));
 
-import { getPostings, setStatus } from '../api.js';
+import { getPostings, setStatus, getProfile } from '../api.js';
 
 const EMPTY = {
   excludedSources: [], levels: [], workModes: [], q: '', status: '',
@@ -166,6 +167,72 @@ describe('PostingsView grid', () => {
     render(<PostingsView filters={EMPTY} />);
     expect(await screen.findByText('Nothing matches these filters yet.')).toBeInTheDocument();
     expect(screen.queryByTestId('posting-grid')).not.toBeInTheDocument();
+  });
+});
+
+describe('PostingsView recommended sort', () => {
+  const PROFILE = {
+    skills: ['react'], titles: [], locations: [], years: 1, degree: 'none', resumeName: null,
+  };
+  const pickRecommended = () =>
+    fireEvent.change(screen.getByLabelText(/sort/i), { target: { value: 'match' } });
+
+  it('asks the server for the match ordering', async () => {
+    getPostings.mockResolvedValue([row()]);
+    render(<PostingsView filters={EMPTY} onOpenProfile={() => {}} />);
+    await waitFor(() => expect(getPostings).toHaveBeenCalledTimes(1));
+    pickRecommended();
+    await waitFor(() =>
+      expect(getPostings).toHaveBeenLastCalledWith(expect.objectContaining({ sort: 'match' })),
+    );
+  });
+
+  // The server quietly falls back to newest ordering with no profile, so the
+  // UI is the only place that can say the list is not really ranked.
+  it('says so when there is no profile, and points at the profile section', async () => {
+    getPostings.mockResolvedValue([row()]);
+    const onOpenProfile = vi.fn();
+    render(<PostingsView filters={EMPTY} onOpenProfile={onOpenProfile} />);
+    await waitFor(() => expect(getPostings).toHaveBeenCalled());
+    pickRecommended();
+
+    expect(await screen.findByText(/needs a profile/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Set up your profile' }));
+    expect(onOpenProfile).toHaveBeenCalled();
+  });
+
+  it('never fetches the profile or shows the notice on other sorts', async () => {
+    render(<PostingsView filters={EMPTY} onOpenProfile={() => {}} />);
+    await waitFor(() => expect(getPostings).toHaveBeenCalled());
+    expect(getProfile).not.toHaveBeenCalled();
+    expect(screen.queryByText(/needs a profile/i)).not.toBeInTheDocument();
+  });
+
+  it('shows the match reasons in the overlay, not on the card', async () => {
+    getProfile.mockResolvedValue(PROFILE);
+    getPostings.mockResolvedValue([row({ title: 'React Engineer', level: 'entry' })]);
+    render(<PostingsView filters={EMPTY} onOpenProfile={() => {}} />);
+    expect(await screen.findByText('React Engineer')).toBeInTheDocument();
+    pickRecommended();
+    expect(await screen.findByText('React Engineer')).toBeInTheDocument();
+    await waitFor(() => expect(getProfile).toHaveBeenCalled());
+
+    // The card stays a scan unit; the reasons live in the overlay.
+    expect(screen.queryByText(/matches react/)).not.toBeInTheDocument();
+    fireEvent.click(card('React Engineer'));
+    expect(await screen.findByText(/matches react/)).toBeInTheDocument();
+    expect(screen.getByText(/suits your experience/)).toBeInTheDocument();
+  });
+
+  it('keeps the reasons out of the overlay on other sorts', async () => {
+    getProfile.mockResolvedValue(PROFILE);
+    getPostings.mockResolvedValue([row({ title: 'React Engineer', level: 'entry' })]);
+    render(<PostingsView filters={EMPTY} onOpenProfile={() => {}} />);
+    expect(await screen.findByText('React Engineer')).toBeInTheDocument();
+
+    fireEvent.click(card('React Engineer'));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.queryByText(/matches react/)).not.toBeInTheDocument();
   });
 });
 

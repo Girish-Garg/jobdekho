@@ -18,6 +18,7 @@ export default function Topbar({ user, view, setView, onLogout, q = '', onSearch
         <span className="hidden font-display text-lg font-extrabold tracking-tight sm:inline">JobDekho</span>
         <nav className="flex items-center gap-1">
           <NavItem active={view === 'postings'} onClick={() => setView?.('postings')}>Postings</NavItem>
+          <NavItem active={view === 'profile'} onClick={() => setView?.('profile')}>Profile</NavItem>
           <NavItem active={view === 'settings'} onClick={() => setView?.('settings')}>Settings</NavItem>
         </nav>
       </div>

@@ -33,6 +33,16 @@ export const DEGREE_OPTIONS = [
   ['phd', 'PhD'],
 ];
 
+// The profile stores the degree the seeker holds, so unlike the filter ceiling
+// above there is no "any": not holding a degree is the real value 'none', not
+// an unset field.
+export const PROFILE_DEGREE_OPTIONS = [
+  ['none', 'No degree'],
+  ['bachelors', "Bachelor's"],
+  ['masters', "Master's"],
+  ['phd', 'PhD'],
+];
+
 const DEGREE_NAMES = { bachelors: "Bachelor's", masters: "Master's", phd: 'PhD' };
 
 // Unknown levels fall back to mid, matching levelRank() in core.

@@ -4,6 +4,7 @@ import { EMPTY_FILTERS, toFilterState } from '../lib/savedFilters.js';
 import FilterBar from './FilterBar.jsx';
 import Topbar from './Topbar.jsx';
 import PostingsView from './PostingsView.jsx';
+import ProfileView from './ProfileView.jsx';
 import SettingsView from './SettingsView.jsx';
 
 // Full-viewport app frame: topbar, filter bar, scrolling main region. The
@@ -37,7 +38,13 @@ export default function Shell({ user, onLogout }) {
       />
       {postings && <FilterBar filters={filters} setFilters={setFilters} />}
       <main className="min-h-0 flex-1 overflow-y-auto">
-        {postings ? <PostingsView filters={filters} /> : <SettingsView />}
+        {postings ? (
+          <PostingsView filters={filters} onOpenProfile={() => setView('profile')} />
+        ) : view === 'profile' ? (
+          <ProfileView />
+        ) : (
+          <SettingsView />
+        )}
       </main>
     </div>
   );

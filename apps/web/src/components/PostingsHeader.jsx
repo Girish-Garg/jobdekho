@@ -1,5 +1,6 @@
 const SORTS = [
   ['newest', 'Newest posted'],
+  ['match', 'Recommended'],
   ['oldest', 'Oldest posted'],
   ['added', 'Recently added'],
   ['company', 'Company A-Z'],

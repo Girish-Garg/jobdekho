@@ -1,14 +1,25 @@
 // Tiny fetch client. Every call sends the session cookie.
-const base = { credentials: 'include', headers: { 'content-type': 'application/json' } };
 
 async function req(url, opts = {}) {
-  const res = await fetch(url, { ...base, ...opts });
+  // The JSON content-type only goes on calls that actually send JSON: a
+  // FormData body needs the browser to write the multipart boundary into the
+  // header itself, and a bodyless POST that claims to carry JSON is a 400 at
+  // the server's parser.
+  const headers = typeof opts.body === 'string' ? { 'content-type': 'application/json' } : undefined;
+  const res = await fetch(url, { credentials: 'include', headers, ...opts });
   if (res.status === 401) {
     const err = new Error('unauthorized');
     err.status = 401;
     throw err;
   }
-  if (!res.ok) throw new Error(`${opts.method || 'GET'} ${url} -> ${res.status}`);
+  if (!res.ok) {
+    // The resume 422s and the apply-filter 400 carry messages written to be
+    // shown to the user verbatim, so prefer the server's words to a status line.
+    const body = await res.json().catch(() => null);
+    const err = new Error(body?.error || `${opts.method || 'GET'} ${url} -> ${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
   return res.status === 204 ? null : res.json();
 }
 
@@ -45,6 +56,28 @@ export function getNotifications() {
 
 export function putNotifications(p) {
   return req('/api/notifications', { method: 'PUT', body: JSON.stringify(p) });
+}
+
+export function getProfile() {
+  return req('/api/profile');
+}
+
+export function putProfile(p) {
+  return req('/api/profile', { method: 'PUT', body: JSON.stringify(p) });
+}
+
+export function deleteProfile() {
+  return req('/api/profile', { method: 'DELETE' });
+}
+
+export function uploadResume(file) {
+  const form = new FormData();
+  form.append('file', file);
+  return req('/api/profile/resume', { method: 'POST', body: form });
+}
+
+export function applyProfileFilter() {
+  return req('/api/profile/apply-filter', { method: 'POST' });
 }
 
 export function logout() {

@@ -10,6 +10,7 @@ vi.mock('../api.js', () => ({
   setStatus: vi.fn(async () => null),
   getNotifications: vi.fn(async () => ({ channel: 'none' })),
   putNotifications: vi.fn(async () => null),
+  getProfile: vi.fn(async () => null),
   logout: vi.fn(async () => {}),
 }));
 
@@ -147,5 +148,16 @@ describe('Shell layout', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Postings' }));
     });
     expect(screen.getByLabelText('Keyword')).toBeInTheDocument();
+  });
+
+  it('reaches the profile section from the nav', async () => {
+    await mount();
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Profile' }));
+    });
+    expect(screen.getByRole('heading', { name: 'Profile' })).toBeInTheDocument();
+    // The profile is not part of the feed, so the search and filters go away.
+    expect(screen.queryByLabelText('Keyword')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Level' })).not.toBeInTheDocument();
   });
 });

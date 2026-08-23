@@ -69,4 +69,17 @@ describe('Topbar navigation', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
     expect(setView).toHaveBeenCalledWith('settings');
   });
+
+  // Profile is its own section, not part of Settings: Settings is delivery,
+  // the profile drives ranking.
+  it('reaches the profile section and marks it current', () => {
+    const setView = vi.fn();
+    const { rerender } = render(<Topbar user={{}} view="postings" setView={setView} onLogout={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Profile' }));
+    expect(setView).toHaveBeenCalledWith('profile');
+
+    rerender(<Topbar user={{}} view="profile" setView={setView} onLogout={() => {}} />);
+    expect(screen.getByRole('button', { name: 'Profile' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('button', { name: 'Postings' })).not.toHaveAttribute('aria-current');
+  });
 });
