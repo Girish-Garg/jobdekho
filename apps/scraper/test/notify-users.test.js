@@ -83,6 +83,39 @@ describe('notifyUsers', () => {
     expect(senders.telegram).toHaveBeenCalledWith('chat123', expect.stringContaining('Software Intern'))
   })
 
+  // A single MAX_ALERTS-sized message can exceed Telegram's 4096 char limit,
+  // which used to get the whole alert silently rejected for that user.
+  it('splits one user\'s alert across multiple telegram sends when it would overflow the limit', async () => {
+    const big = (i) => ({
+      id: String(i), title: `Software Engineer ${'X'.repeat(100)} ${i}`, company: 'Acme Corp International',
+      location: 'Remote', url: `u${i}`, descriptionSnippet: 'software', tags: [],
+    })
+    const many = Array.from({ length: 30 }, (_, i) => big(i))
+    const senders = { telegram: vi.fn(async () => ({ ok: true })) }
+    const [entry] = await notifyUsers(many, { users: [users[0]], defaultRules, senders })
+
+    expect(entry).toMatchObject({ userId: 'tg-user', sent: true, count: 30 })
+    expect(senders.telegram.mock.calls.length).toBeGreaterThan(1)
+    for (const [, text] of senders.telegram.mock.calls) expect(text.length).toBeLessThanOrEqual(4096)
+    // Every posting still reaches the user, split across sends rather than dropped.
+    const sentTitles = senders.telegram.mock.calls.map(([, text]) => text).join('\n')
+    expect(sentTitles).toContain('Software Engineer')
+  })
+
+  it('reports sent:false if any split message fails to send', async () => {
+    const big = (i) => ({
+      id: String(i), title: `Software Engineer ${'X'.repeat(100)} ${i}`, company: 'Acme Corp International',
+      location: 'Remote', url: `u${i}`, descriptionSnippet: 'software', tags: [],
+    })
+    const many = Array.from({ length: 30 }, (_, i) => big(i))
+    let call = 0
+    const senders = { telegram: vi.fn(async () => (++call === 1 ? { ok: true } : { ok: false })) }
+    const [entry] = await notifyUsers(many, { users: [users[0]], defaultRules, senders })
+
+    expect(senders.telegram.mock.calls.length).toBeGreaterThan(1)
+    expect(entry).toMatchObject({ sent: false, count: 30 })
+  })
+
   it('returns all users in summary even if none match', async () => {
     const senders = {
       telegram: vi.fn(async () => ({ ok: true })),

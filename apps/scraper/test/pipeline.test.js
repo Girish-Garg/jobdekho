@@ -47,4 +47,29 @@ describe('runPipeline', () => {
     expect(ports.recordRun.mock.calls[0][1]).toMatchObject({ newCount: 100 })
     expect(sent.at(-1)).toContain('70 more')
   })
+
+  // Batching used to be a fixed count of 10 postings per message, which could
+  // still overflow Telegram's 4096 char limit for long titles. Packing by the
+  // formatted length instead means the number of sends tracks the real size.
+  it('splits into multiple telegram sends when postings are long enough to overflow one message', async () => {
+    const long = Array.from({ length: 30 }, (_, i) => ({
+      source: 's',
+      raw: {
+        externalId: String(i), title: `Software Engineer ${'X'.repeat(100)} ${i}`,
+        company: 'Acme Corp International', url: `u${i}`, location: 'Remote',
+      },
+    }))
+    const sent = []
+    const ports = {
+      getExistingIds: vi.fn(async () => new Set()),
+      upsertPostings: vi.fn(async () => {}),
+      recordRun: vi.fn(async () => {}),
+      sendTelegram: vi.fn(async (_t, text) => { sent.push(text); return { ok: true } }),
+    }
+    const open = { includeKeywords: ['software'], excludeKeywords: [], locations: ['remote'] }
+    await runPipeline({ items: long, results: [] }, { db: {}, rules: open, telegram: {}, runId: 'r3', ports })
+
+    expect(sent.length).toBeGreaterThan(1)
+    for (const text of sent) expect(text.length).toBeLessThanOrEqual(4096)
+  })
 })

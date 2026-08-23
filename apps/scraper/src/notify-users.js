@@ -1,5 +1,5 @@
 import { filter } from '@jobdekho/core/filter.js'
-import { formatBatch, formatOverflow, MAX_ALERTS } from '@jobdekho/notify/format.js'
+import { formatBatch, formatOverflow, packBatches, MAX_ALERTS } from '@jobdekho/notify/format.js'
 
 export async function notifyUsers(freshPostings, { users, defaultRules, senders }) {
   const summary = []
@@ -14,12 +14,19 @@ export async function notifyUsers(freshPostings, { users, defaultRules, senders 
     }
     const shown = matches.slice(0, MAX_ALERTS)
     const overflow = matches.length - shown.length
-    const text = overflow > 0
-      ? `${formatBatch(shown)}\n\n${formatOverflow(overflow)}`
-      : formatBatch(shown)
     if (prefs.channel === 'telegram' && prefs.telegramChatId) {
-      const result = await senders.telegram(prefs.telegramChatId, text)
-      summary.push({ userId, sent: !!result?.ok, count: matches.length })
+      // One message per MAX_ALERTS postings blew past Telegram's 4096 char
+      // limit and got the whole alert rejected, silently, for every user.
+      let sent = true
+      for (const group of packBatches(shown)) {
+        const result = await senders.telegram(prefs.telegramChatId, formatBatch(group))
+        if (!result?.ok) sent = false
+      }
+      if (overflow > 0) {
+        const result = await senders.telegram(prefs.telegramChatId, formatOverflow(overflow))
+        if (!result?.ok) sent = false
+      }
+      summary.push({ userId, sent, count: matches.length })
     } else {
       summary.push({ userId, sent: false, count: matches.length })
     }
