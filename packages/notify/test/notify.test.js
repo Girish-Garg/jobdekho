@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { formatPosting, formatBatch, chunk } from '@jobdekho/notify/format.js'
+import { formatPosting, formatBatch, formatOverflow, chunk } from '@jobdekho/notify/format.js'
 import { sendTelegram } from '@jobdekho/notify/telegram.js'
 
 const post = { title: 'SDE Intern', company: 'Acme', location: 'Remote', url: 'https://x/1' }
@@ -13,6 +13,16 @@ describe('format', () => {
   })
   it('chunks arrays', () => {
     expect(chunk([1, 2, 3], 2)).toEqual([[1, 2], [3]])
+  })
+  it('tags the level when it is worth calling out', () => {
+    expect(formatPosting({ ...post, level: 'staff' })).toContain('[staff]')
+    expect(formatPosting({ ...post, level: 'mid' })).not.toContain('[mid]')
+  })
+  it('states the remainder when the batch is capped', () => {
+    expect(formatOverflow(70)).toContain('70 more')
+  })
+  it('joins a batch without em dashes', () => {
+    expect(formatBatch([post, post])).not.toContain('—')
   })
 })
 
