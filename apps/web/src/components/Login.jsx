@@ -5,12 +5,13 @@ export default function Login() {
       <div className="w-full max-w-md">
         <p className="font-mono text-xs uppercase tracking-[0.3em] text-ember">JobDekho</p>
         <h1 className="mt-4 font-display text-5xl font-extrabold leading-[0.95] tracking-tight">
-          Every internship,
+          Every opening,
           <br />
           before everyone else.
         </h1>
         <p className="mt-5 max-w-sm text-[15px] leading-relaxed text-muted">
           A quiet board that watches the sources you care about and surfaces what is new today.
+          Internship through executive, filtered to the roles you can actually get.
         </p>
         <a
           href="/auth/google"

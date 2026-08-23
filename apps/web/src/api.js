@@ -23,6 +23,10 @@ export function getPostings(params = {}) {
   return req(`/api/postings${qs ? `?${qs}` : ''}`).then((d) => d.postings);
 }
 
+export function getSources() {
+  return req('/api/sources').then((d) => d.sources);
+}
+
 export function setStatus(id, status) {
   return req(`/api/postings/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) });
 }

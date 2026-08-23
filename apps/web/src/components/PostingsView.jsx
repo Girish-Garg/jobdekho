@@ -1,86 +1,58 @@
-import { useEffect, useState } from 'react';
-import { getPostings, setStatus } from '../api.js';
-import { sortPostings } from '../lib/sortPostings.js';
+import { useRef, useState } from 'react';
 import { isNewToday } from '../lib/time.js';
-import { stipendAmount, durationMonths, experienceYears } from '../lib/meta.js';
-import PostingRow from './PostingRow.jsx';
-
-// Postings feed. Refetches when filters change; status edits apply optimistically.
-const SORTS = [
-  ['newest', 'Newest posted'],
-  ['oldest', 'Oldest posted'],
-  ['added', 'Recently added'],
-  ['company', 'Company A-Z'],
-];
+import { usePostingsFeed } from '../lib/usePostingsFeed.js';
+import PostingsHeader from './PostingsHeader.jsx';
+import PostingGrid from './PostingGrid.jsx';
+import PostingDialog from './PostingDialog.jsx';
 
 export default function PostingsView({ filters }) {
-  const [rows, setRows] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [sort, setSort] = useState('newest');
+  const { rows, loading, more, loadMore, onStatus } = usePostingsFeed(filters, sort);
+  const [openId, setOpenId] = useState(null);
+  // Focus has to land back on the exact card that opened the overlay, and the
+  // card is not remounted, so the element itself is the cheapest handle.
+  const openerRef = useRef(null);
 
-  useEffect(() => {
-    let alive = true;
-    setLoading(true);
-    getPostings({ q: filters.q, source: filters.source, status: filters.status })
-      .then((data) => alive && setRows(data))
-      .catch(() => alive && setRows([]))
-      .finally(() => alive && setLoading(false));
-    return () => {
-      alive = false;
-    };
-  }, [filters]);
+  const opened = rows.find((row) => row.id === openId) || null;
 
-  async function onStatus(id, status) {
-    const prev = rows;
-    setRows(rows.map((r) => (r.id === id ? { ...r, status } : r)));
-    try {
-      await setStatus(id, status);
-    } catch {
-      setRows(prev);
-    }
+  function openCard(posting, element) {
+    openerRef.current = element;
+    setOpenId(posting.id);
   }
 
-  let filtered = rows;
-  if (filters.type) filtered = filtered.filter((r) => r.type === filters.type);
-  if (filters.minStipend) filtered = filtered.filter((r) => stipendAmount(r.stipend) >= Number(filters.minStipend));
-  if (filters.maxExp !== '') filtered = filtered.filter((r) => experienceYears(r.experience) <= Number(filters.maxExp));
-  if (filters.maxMonths) {
-    const max = Number(filters.maxMonths);
-    filtered = filtered.filter((r) => durationMonths(r.duration) > 0 && durationMonths(r.duration) <= max);
+  function closeCard() {
+    setOpenId(null);
+    openerRef.current?.focus();
   }
-  const sorted = sortPostings(filtered, sort);
-  const freshCount = rows.filter((p) => isNewToday(p.firstSeenAt)).length;
 
   return (
     <section>
-      <div className="flex items-baseline justify-between border-b border-line px-6 py-5">
-        <div>
-          <h2 className="font-display text-2xl font-extrabold tracking-tight">Postings</h2>
-          <p className="mt-1 font-mono text-xs text-muted">
-            {rows.length} listed
-            {freshCount ? ` - ${freshCount} new today` : ''}
-          </p>
-        </div>
-        <label className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-muted">
-          Sort
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value)}
-            className="rounded-md border border-line bg-paper px-2 py-1.5 text-xs normal-case tracking-normal text-ink outline-none focus:border-ink"
-          >
-            {SORTS.map(([v, l]) => (
-              <option key={v} value={v}>{l}</option>
-            ))}
-          </select>
-        </label>
+      <PostingsHeader
+        shown={rows.length}
+        fresh={rows.filter((p) => isNewToday(p.firstSeenAt)).length}
+        sort={sort}
+        setSort={setSort}
+      />
+      <div className="px-6 py-5">
+        {loading ? (
+          <p className="py-10 font-mono text-sm text-muted">Fetching postings...</p>
+        ) : rows.length === 0 ? (
+          <p className="py-10 font-mono text-sm text-muted">Nothing matches these filters yet.</p>
+        ) : (
+          <PostingGrid postings={rows} onOpen={openCard} />
+        )}
+        {!loading && more && (
+          <div className="pt-6">
+            <button
+              onClick={loadMore}
+              className="rounded-full border border-line px-5 py-2 font-mono text-xs text-muted transition hover:border-ink hover:text-ink"
+            >
+              Load more
+            </button>
+          </div>
+        )}
       </div>
-      {loading ? (
-        <p className="px-6 py-10 font-mono text-sm text-muted">Fetching postings...</p>
-      ) : sorted.length === 0 ? (
-        <p className="px-6 py-10 font-mono text-sm text-muted">Nothing matches these filters yet.</p>
-      ) : (
-        sorted.map((p) => <PostingRow key={p.id} posting={p} onStatus={onStatus} />)
-      )}
+      {opened && <PostingDialog posting={opened} onClose={closeCard} onStatus={onStatus} />}
     </section>
   );
 }

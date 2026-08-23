@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { getMe, getPostings, setStatus, putFilters, getNotifications, putNotifications } from './api.js';
+import { getMe, getPostings, getSources, setStatus, putFilters, getNotifications, putNotifications } from './api.js';
 
 function mockFetch(body, status = 200) {
   const fn = vi.fn().mockResolvedValue({
@@ -35,6 +35,35 @@ describe('api client', () => {
     expect(url).toContain('status=new');
     expect(url).not.toContain('source=');
     expect(out).toEqual([{ id: 'a' }]);
+  });
+
+  it('getPostings forwards the level and degree params', async () => {
+    const fetchMock = mockFetch({ postings: [] });
+    await getPostings({ levels: 'mid,senior', maxDegree: 'masters' });
+    const url = fetchMock.mock.calls[0][0];
+    expect(url).toContain('levels=mid%2Csenior');
+    expect(url).toContain('maxDegree=masters');
+  });
+
+  it('getPostings omits an empty levels string', async () => {
+    const fetchMock = mockFetch({ postings: [] });
+    await getPostings({ q: 'react', levels: '', maxDegree: '' });
+    const url = fetchMock.mock.calls[0][0];
+    expect(url).not.toContain('levels=');
+    expect(url).not.toContain('maxDegree=');
+  });
+
+  it('getPostings forwards a comma-separated sources list', async () => {
+    const fetchMock = mockFetch({ postings: [] });
+    await getPostings({ sources: 'lever,ashby' });
+    expect(fetchMock.mock.calls[0][0]).toContain('sources=lever%2Cashby');
+  });
+
+  it('getSources unwraps the source list', async () => {
+    const fetchMock = mockFetch({ sources: [{ name: 'lever', count: 12 }] });
+    const out = await getSources();
+    expect(fetchMock).toHaveBeenCalledWith('/api/sources', expect.objectContaining({ credentials: 'include' }));
+    expect(out).toEqual([{ name: 'lever', count: 12 }]);
   });
 
   it('setStatus PATCHes the posting with a JSON body', async () => {

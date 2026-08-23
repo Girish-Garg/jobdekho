@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { getFilters, putFilters, getNotifications, putNotifications } from '../api.js';
+import { getFilters, getNotifications, putNotifications } from '../api.js';
+import { mergeSave } from '../lib/savedFilters.js';
 import TagInput from './TagInput.jsx';
 import NotifyForm from './NotifyForm.jsx';
 import SaveBar from './SaveBar.jsx';
@@ -24,11 +25,11 @@ export default function SettingsView() {
       <p className="mt-1 font-mono text-xs text-muted">Tune which new postings get sent to you. The feed below always shows every tech posting collected; these keywords pick which ones you are notified about.</p>
 
       <div className="mt-8 grid gap-10 lg:grid-cols-2">
-        <Block title="Notification filters" hint="Keywords and locations applied to your alerts (not a re-scrape).">
+        <Block title="Notification filters" hint="Keywords and locations applied to your alerts (not a re-scrape). Level and degree live on the Postings filter bar, under More filters.">
           <TagInput label="Include keywords" values={filters.includeKeywords} onChange={setF('includeKeywords')} />
           <TagInput label="Exclude keywords" values={filters.excludeKeywords} onChange={setF('excludeKeywords')} />
           <TagInput label="Locations" values={filters.locations} onChange={setF('locations')} />
-          <SaveBar onSave={() => putFilters(filters)} />
+          <SaveBar onSave={() => mergeSave(pickKeywords(filters))} />
         </Block>
 
         <Block title="Notifications" hint="Where new matches are delivered.">
@@ -38,6 +39,11 @@ export default function SettingsView() {
       </div>
     </section>
   );
+}
+
+// This surface owns only the keyword side; mergeSave carries the rest through.
+function pickKeywords({ includeKeywords, excludeKeywords, locations }) {
+  return { includeKeywords, excludeKeywords, locations };
 }
 
 function Block({ title, hint, children }) {
