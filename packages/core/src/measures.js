@@ -1,3 +1,5 @@
+import { detectCurrency, INR_PER } from './currency.js'
+
 // Sources publish pay, tenure and experience as free text in incompatible
 // units. These turn each into one comparable number so the database can filter
 // and sort on them, instead of the browser guessing over whatever page it
@@ -5,7 +7,12 @@
 
 // "6 LPA" means lakhs per annum, so a small number carries a 100000 multiplier.
 const YEARLY = /year|annum|\bp\.?\s?a\.?\b|\blpa\b|\/\s?yr/i
+const MONTHLY = /month|\/\s?mo\b|stipend/i
 const LAKHS = /\blpa\b|\blakh/i
+
+// "$60k" is 60000, not 60. Only a suffix glued to the digits counts, so the
+// "M" of "6 Months" cannot inflate a number.
+const SCALE = { k: 1e3, m: 1e6 }
 
 // Normalised to monthly rupees so a yearly salary and a monthly internship
 // stipend answer the same question. A range yields its LOW end, which is the
@@ -13,12 +20,16 @@ const LAKHS = /\blpa\b|\blakh/i
 export function stipendMonthly(text) {
   if (!text) return null
   if (/unpaid|no stipend/i.test(text)) return 0
-  const nums = String(text).replace(/,/g, '').match(/\d+(?:\.\d+)?/g)
-  if (!nums) return null
-  let value = Number(nums[0])
+  const m = String(text).replace(/,/g, '').match(/(\d+(?:\.\d+)?)([km])?/i)
+  if (!m) return null
+  let value = Number(m[1]) * (SCALE[(m[2] || '').toLowerCase()] || 1)
   if (LAKHS.test(text) && value < 1000) value *= 100000
-  if (YEARLY.test(text)) value /= 12
-  return Math.round(value)
+  // Foreign boards quote annual salaries even when they never say so; Indian
+  // boards quote bare numbers as monthly stipends. So a foreign figure with no
+  // stated period reads as yearly, and a bare rupee figure stays monthly.
+  const currency = detectCurrency(text)
+  if (YEARLY.test(text) || (currency !== 'INR' && !MONTHLY.test(text))) value /= 12
+  return Math.round(value * INR_PER[currency])
 }
 
 export function experienceYears(text) {

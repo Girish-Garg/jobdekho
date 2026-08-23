@@ -37,6 +37,26 @@ describe('normalize', () => {
     expect(p.degreeMin).toBe('none')
     expect(p.degreeRequired).toBe(false)
   })
+  // The unstop adapter marks internships via `type` without ever setting
+  // `level`; deriving type from level alone filed them all as jobs.
+  it('honours a source-declared type', () => {
+    const p = normalize({ externalId: '1', title: 'Web Development', company: 'C', url: 'u', type: 'internship' }, 'unstop')
+    expect(p.type).toBe('internship')
+  })
+  // "undefined" as an externalId hashed every such row to the same id, so each
+  // one silently overwrote the last.
+  it('returns null for a row with no externalId', () => {
+    expect(normalize({ title: 'T', company: 'C', url: 'u' }, 's')).toBeNull()
+    expect(normalize({ externalId: '', title: 'T', company: 'C', url: 'u' }, 's')).toBeNull()
+    expect(normalize({ externalId: 0, title: 'T', company: 'C', url: 'u' }, 's')?.externalId).toBe('0')
+  })
+  it('records the quoted currency alongside the INR-monthly figure', () => {
+    const p = normalize({ externalId: '1', title: 'T', company: 'C', url: 'u', stipend: '$60k - $80k /year' }, 's')
+    expect(p.currency).toBe('USD')
+    expect(p.stipendMin).toBe(425000)
+    expect(normalize(raw, 'greenhouse:acme').currency).toBe('INR')
+    expect(normalize({ externalId: '1', title: 'T', company: 'C', url: 'u' }, 's').currency).toBeNull()
+  })
   it('prefers a level the source already knows', () => {
     const p = normalize({ externalId: '1', title: 'Engineer', company: 'C', url: 'u', level: 'internship' }, 's')
     expect(p.level).toBe('internship')

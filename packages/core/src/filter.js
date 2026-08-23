@@ -1,18 +1,7 @@
 import { classifyLevel } from './level.js'
 import { degreeRank } from './degree.js'
-
-const REMOTE_RE = /remote|work from home|wfh|worldwide|anywhere|global/i
-// Region-locked-to-a-foreign-place remote (an Indian cannot apply). India/APAC are not here.
-const FOREIGN_RE = /united states|\busa?\b|americas|canada|europe|emea|united kingdom|\buk\b|ireland|latam|brazil|mexico|germany|france|spain|netherlands|poland|portugal|singapore|australia|philippines|japan/i
-
-// A posting is reachable if it is in India, or genuinely global-remote (not locked to a foreign region).
-function locationOk(location, rules) {
-  const loc = (location || '').toLowerCase()
-  if (loc === '') return true
-  if ((rules.locations ?? []).some((l) => loc.includes(l.toLowerCase()))) return true
-  if (REMOTE_RE.test(loc) && !FOREIGN_RE.test(loc)) return true
-  return false
-}
+import { locationOk } from './location.js'
+import { measuresOk } from './measure-rules.js'
 
 // An empty or missing list means "no preference", so every level passes.
 // `internshipOnly` is the pre-taxonomy spelling of `levels: ['internship']`.
@@ -36,16 +25,42 @@ function degreeOk(posting, rules) {
   return degreeRank(posting.degreeMin || 'none') <= degreeRank(rules.maxDegree)
 }
 
-// An empty include list means "no keyword restriction", matching how an empty
-// `levels` means "any level". Without this a user who clears their keywords
-// would silently match nothing instead of everything.
-export function filter(posting, rules) {
-  const hay = `${posting.title} ${posting.descriptionSnippet} ${posting.tags.join(' ')}`.toLowerCase()
+// Rows predating the taxonomy carry no work mode and read as onsite, matching
+// NULL_WORK_MODE in packages/db/src/posting-filters.js.
+function workModeOk(posting, rules) {
+  if (!rules.workModes?.length) return true
+  return rules.workModes.includes(posting.workMode || 'onsite')
+}
+
+function sourceOk(posting, rules) {
+  if (rules.sources?.length && !rules.sources.includes(posting.source)) return false
+  return !(rules.excludedSources ?? []).includes(posting.source)
+}
+
+// Include keywords search the whole posting, but exclude keywords only the
+// title and tags: "marketing" is meant to kill Marketing Intern roles, not a
+// Software Engineer whose body mentions the marketing website.
+function keywordsOk(posting, rules) {
+  const title = `${posting.title} ${posting.tags.join(' ')}`.toLowerCase()
+  const hay = `${title} ${posting.descriptionSnippet}`.toLowerCase()
   const include = rules.includeKeywords ?? []
   const exclude = rules.excludeKeywords ?? []
+  // An empty include list means "no keyword restriction", matching how an
+  // empty `levels` means "any level". Without this a user who clears their
+  // keywords would silently match nothing instead of everything.
   if (include.length && !include.some((k) => hay.includes(k.toLowerCase()))) return false
-  if (exclude.some((k) => hay.includes(k.toLowerCase()))) return false
-  if (!levelOk(posting, rules)) return false
-  if (!degreeOk(posting, rules)) return false
-  return locationOk(posting.location, rules)
+  return !exclude.some((k) => title.includes(k.toLowerCase()))
+}
+
+export function filter(posting, rules) {
+  // normalize() returns null for rows it cannot identify; dropping them here
+  // keeps the pipeline's map-then-filter contract without a crash mid-run.
+  if (!posting) return false
+  return keywordsOk(posting, rules)
+    && levelOk(posting, rules)
+    && degreeOk(posting, rules)
+    && workModeOk(posting, rules)
+    && sourceOk(posting, rules)
+    && measuresOk(posting, rules)
+    && locationOk(posting.location, rules)
 }

@@ -74,4 +74,85 @@ describe('filter keyword edges', () => {
   it('treats an empty include list as no restriction', () => {
     expect(filter({ ...base, title: 'Blacksmith' }, { includeKeywords: [], excludeKeywords: [], locations: ['india'] })).toBe(true)
   })
+
+  // "marketing" is meant to kill Marketing Intern roles, not a software role
+  // whose body mentions the marketing website.
+  it('applies exclude keywords to the title and tags, not the body', () => {
+    const r = { ...open, excludeKeywords: ['marketing'] }
+    expect(filter({ ...base, descriptionSnippet: 'Build the marketing website platform' }, r)).toBe(true)
+    expect(filter({ ...base, title: 'Marketing Intern' }, r)).toBe(false)
+    expect(filter({ ...base, tags: ['marketing'] }, r)).toBe(false)
+  })
+})
+
+describe('filter locations', () => {
+  it('matches configured locations on whole words only', () => {
+    expect(filter({ ...base, location: 'Indianapolis, Indiana' }, rules)).toBe(false)
+  })
+
+  // /api/profile/apply-filter writes [] for most users; reading that as
+  // "remote only" silently emptied their alerts.
+  it('treats an empty locations list as no preference', () => {
+    const anywhere = { includeKeywords: [], excludeKeywords: [], locations: [] }
+    expect(filter(base, anywhere)).toBe(true)
+    expect(filter({ ...base, location: 'Berlin, Germany' }, anywhere)).toBe(true)
+  })
+
+  // The old foreign denylist passed any country it had not heard of.
+  it('rejects remote locked to an unreachable place', () => {
+    expect(filter({ ...base, location: 'Remote (London)' }, rules)).toBe(false)
+    expect(filter({ ...base, location: 'Remote - Argentina' }, rules)).toBe(false)
+    expect(filter({ ...base, location: 'Remote - Israel' }, rules)).toBe(false)
+  })
+
+  it('keeps remote naming India, a reachable region, or no place at all', () => {
+    expect(filter({ ...base, location: 'Remote - India' }, rules)).toBe(true)
+    expect(filter({ ...base, location: 'Remote (Worldwide)' }, rules)).toBe(true)
+    expect(filter({ ...base, location: 'Remote, APAC' }, rules)).toBe(true)
+    expect(filter({ ...base, location: 'Fully remote' }, rules)).toBe(true)
+  })
+})
+
+// The dashboard saves these rules and the notifier passes them straight in;
+// ignoring them alerted "Remote only, 25k+" users about onsite unpaid roles.
+// Null handling mirrors packages/db/src/posting-measures.js exactly.
+describe('filter saved rules', () => {
+  const p = { ...base, workMode: 'onsite', stipendMin: 10000, durationMonths: 6, experienceYears: null, source: 'internshala' }
+
+  it('honours workModes, reading a missing mode as onsite', () => {
+    expect(filter(p, { ...open, workModes: ['remote'] })).toBe(false)
+    expect(filter(p, { ...open, workModes: ['onsite', 'remote'] })).toBe(true)
+    expect(filter({ ...p, workMode: undefined }, { ...open, workModes: ['onsite'] })).toBe(true)
+    expect(filter(p, { ...open, workModes: [] })).toBe(true)
+  })
+
+  it('fails a pay floor when the pay is below it or unstated', () => {
+    expect(filter(p, { ...open, minStipend: 25000 })).toBe(false)
+    expect(filter({ ...p, stipendMin: 30000 }, { ...open, minStipend: 25000 })).toBe(true)
+    expect(filter({ ...p, stipendMin: null }, { ...open, minStipend: 25000 })).toBe(false)
+  })
+
+  it('fails a duration ceiling when the duration is over it or unstated', () => {
+    expect(filter(p, { ...open, maxDurationMonths: 3 })).toBe(false)
+    expect(filter(p, { ...open, maxDurationMonths: 6 })).toBe(true)
+    expect(filter({ ...p, durationMonths: null }, { ...open, maxDurationMonths: 6 })).toBe(false)
+  })
+
+  // An unstated requirement is not a barrier, so null passes this one.
+  it('passes an experience ceiling when the requirement is unstated', () => {
+    expect(filter(p, { ...open, maxExperienceYears: 1 })).toBe(true)
+    expect(filter({ ...p, experienceYears: 3 }, { ...open, maxExperienceYears: 1 })).toBe(false)
+    expect(filter({ ...p, experienceYears: 1 }, { ...open, maxExperienceYears: 1 })).toBe(true)
+  })
+
+  it('honours source restrictions', () => {
+    expect(filter(p, { ...open, sources: ['internshala'] })).toBe(true)
+    expect(filter(p, { ...open, sources: ['unstop'] })).toBe(false)
+    expect(filter(p, { ...open, excludedSources: ['internshala'] })).toBe(false)
+    expect(filter(p, { ...open, sources: [], excludedSources: [] })).toBe(true)
+  })
+
+  it('drops the null a failed normalize returns', () => {
+    expect(filter(null, open)).toBe(false)
+  })
 })

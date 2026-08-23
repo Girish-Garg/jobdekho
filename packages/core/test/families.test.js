@@ -59,6 +59,31 @@ describe('expandQuery', () => {
   })
 })
 
+describe('expansion tightening', () => {
+  // "design" matched inside "web design" and dragged in backend, php and
+  // wordpress. Containment is now anchored to the term's start, so it falls
+  // through to a literal search, which finds designer titles precisely.
+  it('does not let a term suffix word claim a family', () => {
+    expect(expandQuery('design')).toBeNull()
+  })
+
+  // "ion" matched inside "application develop", "automation engineer" and
+  // three more families' terms - 48 terms from three letters.
+  it('does not match containment mid-word', () => {
+    expect(expandQuery('ion')).toBeNull()
+  })
+
+  // A single-technology query places its family but should not borrow
+  // neighbours: a python search was returning Kotlin and Flutter via `near`.
+  it('does not borrow neighbours for a single-technology query', () => {
+    const terms = expandQuery('python')
+    expect(has(terms, 'python develop')).toBe(true)
+    expect(has(terms, 'kotlin')).toBe(false)
+    expect(has(terms, 'flutter')).toBe(false)
+    expect(has(terms, 'react')).toBe(false)
+  })
+})
+
 describe('expansion breadth', () => {
   // A bare "engineer" term matched Data Engineer and Network Support Engineer
   // alike and pulled half the corpus into every search.

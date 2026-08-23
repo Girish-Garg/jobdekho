@@ -30,16 +30,33 @@ export function levelScoreTable(wanted) {
   return Object.fromEntries(LEVELS.map((l) => [l, levelScore(l, wanted)]))
 }
 
+const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+// Bare substring matching let the skill "c" score every posting and "java"
+// claim JavaScript roles, so a skill only counts at word boundaries. \b fails
+// on skills that start or end in symbols (c++, .net), so the boundary is only
+// asserted on the edges that are word characters: ".net" still hits "asp.net"
+// and "c++" still hits "C++ Developer".
+function skillPattern(skill) {
+  const lead = /^\w/.test(skill) ? '(?<!\\w)' : ''
+  const tail = /\w$/.test(skill) ? '(?!\\w)' : ''
+  return new RegExp(lead + escapeRe(skill) + tail)
+}
+
 // This is the single source of truth for the ranking. The SQL in
 // packages/db/src/posting-score.js mirrors it so that sorting can happen before
 // LIMIT, and an integration test asserts the two agree on real rows.
+// NOTE: that SQL still matches skills with ilike '%skill%', so it has not yet
+// picked up the word-boundary treatment above - the two drift on short skills
+// until it does.
 export function scorePosting(posting, profile) {
   const p = normalizeProfile(profile)
   const title = String(posting.title || '').toLowerCase()
   const body = String(posting.descriptionSnippet || '').toLowerCase()
 
-  const inTitle = p.skills.filter((s) => title.includes(s))
-  const inBody = p.skills.filter((s) => !title.includes(s) && body.includes(s))
+  const patterns = p.skills.map((s) => [s, skillPattern(s)])
+  const inTitle = patterns.filter(([, re]) => re.test(title)).map(([s]) => s)
+  const inBody = patterns.filter(([, re]) => !re.test(title) && re.test(body)).map(([s]) => s)
 
   const wanted = levelsForYears(p.years)
   const level = levelScore(posting.level || 'mid', wanted)

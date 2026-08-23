@@ -50,27 +50,42 @@ const FAMILIES = {
 
 const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
-// A short query is matched inside a term ("web dev" reaches "web develop"), and
-// a term is matched inside a longer query at a word boundary. The boundary is
-// what stops "ai" matching "email" or "qa" matching "aqua".
+// 'full': the query names a term outright ("sde", "data scientist"), or
+// abbreviates one past its first word ("web dev" for "web develop"). 'weak':
+// the query is a term's leading word ("python" hitting "python develop"),
+// which places the family but is too narrow to borrow neighbours - a python
+// search was returning Kotlin and Flutter through `near`. Containment used to
+// match anywhere inside a term, which let "design" drag in the whole web
+// family through "web design" and "ion" light up five families; anchoring it
+// to the term's start is what the boundary rule here means.
 function hits(query, term) {
-  if (query.length >= 3 && term.includes(query)) return true
-  return new RegExp(`\\b${escape(term)}`).test(query)
+  if (new RegExp(`\\b${escape(term)}`).test(query)) return 'full'
+  if (query.length >= 3 && term.startsWith(query)) {
+    return query.length > term.split(' ')[0].length ? 'full' : 'weak'
+  }
+  return null
 }
+
+const matchStrength = (q, name) => FAMILIES[name].terms
+  .reduce((best, t) => (best === 'full' ? best : hits(q, t) || best), null)
 
 export function familiesFor(query) {
   const q = String(query || '').toLowerCase().trim()
   if (q.length < 2) return []
-  return Object.keys(FAMILIES).filter((name) => FAMILIES[name].terms.some((t) => hits(q, t)))
+  return Object.keys(FAMILIES).filter((name) => matchStrength(q, name))
 }
 
 // null means the query belongs to no family, so the caller should fall back to
 // a literal search. Expanding an unrecognised word would return nothing.
 export function expandQuery(query) {
-  const matched = familiesFor(query)
+  const q = String(query || '').toLowerCase().trim()
+  const matched = familiesFor(q)
   if (!matched.length) return null
   const names = new Set(matched)
-  for (const m of matched) for (const n of FAMILIES[m].near) names.add(n)
+  for (const m of matched) {
+    if (matchStrength(q, m) !== 'full') continue
+    for (const n of FAMILIES[m].near) names.add(n)
+  }
   const terms = new Set()
   for (const n of names) for (const t of FAMILIES[n].terms) terms.add(t)
   return [...terms]

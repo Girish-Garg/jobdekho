@@ -8,10 +8,17 @@ const BACHELORS = /\b(bachelor'?s?|b\.?tech|b\.?sc|b\.?c\.?a|under-?grad(?:uate)
 // "PhD preferred", "or equivalent experience" - a nice-to-have, not a gate.
 const SOFT = /\b(preferred|nice to have|a plus|bonus|desirable|ideally|or equivalent|equivalent experience|equivalent practical)\b/i
 
+// "Currently pursuing a B.Tech" wants a student, who by definition does not
+// hold the degree yet. The floor stays at none rather than merely un-required:
+// the posting asks for less than a completed degree, and a bachelors floor
+// would hide it from the exact audience it was written for.
+const STUDENT = /\b(?:pursuing|working towards?|enrolled in)\b[^.]{0,60}?\b(?:degree|graduation|bachelor|master|under-?grad(?:uate)?|b\.?\s?tech|m\.?\s?tech|b\.?sc|m\.?sc|bca|mca|mba)\b|\b(?:final|pre-?final|penultimate)[ -]year\b|\bcurrently (?:enrolled|studying)\b/i
+
 // A posting listing "BS/MS/PhD in CS" is reachable with a bachelor's, so the
 // floor is the LOWEST degree named, not the highest.
 export function classifyDegree(title = '', description = '') {
   const text = `${title} ${description}`
+  if (STUDENT.test(text)) return { degreeMin: 'none', degreeRequired: false }
   let degreeMin = 'none'
   if (BACHELORS.test(text)) degreeMin = 'bachelors'
   else if (MASTERS.test(text)) degreeMin = 'masters'

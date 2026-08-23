@@ -25,6 +25,17 @@ describe('classifyDegree', () => {
     expect(classifyDegree('Scientist', 'PhD in Physics').degreeRequired).toBe(true)
   })
 
+  // A student posting asks for less than a completed degree, so a bachelors
+  // floor would exclude the exact audience it was written for.
+  it('keeps the floor at none for postings aimed at students', () => {
+    expect(classifyDegree('SWE Intern', 'currently pursuing an undergraduate degree')).toEqual({
+      degreeMin: 'none', degreeRequired: false,
+    })
+    expect(classifyDegree('Intern', 'working towards a B.Tech in CS').degreeMin).toBe('none')
+    expect(classifyDegree('Intern', 'final year students may apply').degreeMin).toBe('none')
+    expect(classifyDegree('Intern', 'must be currently enrolled at a university').degreeMin).toBe('none')
+  })
+
   it('does not read the word "be" as a B.E. degree', () => {
     expect(classifyDegree('Developer', 'You will be responsible for the API').degreeMin).toBe('none')
   })

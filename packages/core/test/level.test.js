@@ -38,7 +38,24 @@ describe('classifyLevel', () => {
   it('falls back to years of experience in the body', () => {
     expect(classifyLevel('Backend Developer', 'We want 7 years of experience')).toBe('senior')
     expect(classifyLevel('Backend Developer', 'Looking for 2-4 years')).toBe('mid')
+    expect(classifyLevel('Backend Developer', 'experience: 5 years')).toBe('senior')
+    expect(classifyLevel('Backend Developer', '3 yrs exp')).toBe('mid')
     expect(classifyLevel('Backend Developer', 'no numbers here')).toBe('mid')
+  })
+
+  // Company prose mentions years too; only requirement-shaped years count.
+  it('ignores years that are not an experience requirement', () => {
+    expect(classifyLevel('Software Engineer', 'We were founded 12 years ago and build tools.')).toBe('mid')
+    expect(classifyLevel('Software Engineer', 'Our product is 3 years old.')).toBe('mid')
+  })
+
+  it('does not read a body mention of interns as an internship', () => {
+    expect(classifyLevel('Software Engineer', 'You will mentor our interns.')).toBe('mid')
+  })
+
+  it('does not read a team number as a rank', () => {
+    expect(classifyLevel('Software Engineer - Team 1')).toBe('mid')
+    expect(classifyLevel('SDE - Group 2')).toBe('mid')
   })
 
   it('prefers a source-declared level over inference', () => {

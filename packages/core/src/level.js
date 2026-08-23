@@ -8,18 +8,30 @@ const SENIOR_WORD = /\b(senior|snr|sr)\b/i
 const SENIOR_ROLE = /\b(lead|manager|supervisor)\b/i
 const ENTRY = /\b(graduate|new ?grad|fresher|junior|jr|associate|entry[ -]level|campus|rotational|early career)\b/i
 
+// A body mention of interns is usually about colleagues ("you will mentor our
+// interns"), so only the programme itself counts as a description-level signal.
+const BODY_INTERNSHIP = /\b(internship|traineeship|apprenticeship|intern (?:programme|program|position|role|opportunity)|(?:as|hiring|seeking) an? intern)\b/i
+
 // Trailing rank marker: "Software Engineer II", "SDE 3", "Analyst IV".
 const RANK = /\b(i{1,3}|iv|v|[1-5])\s*$/i
+// "Team 1" is a group name, not a rung: without this, every "X - Team 1"
+// title read as entry level.
+const NOT_RANK = /\b(team|group|squad|pod|unit|shift|batch|track|req)\s*#?\s*(i{1,3}|iv|v|[1-5])\s*$/i
 const RANK_LEVEL = {
   i: 'entry', 1: 'entry', ii: 'mid', 2: 'mid', iii: 'senior',
   3: 'senior', iv: 'staff', 4: 'staff', v: 'staff', 5: 'staff',
 }
 
-// Years of experience, read from the body only when the title carries no marker.
-const YEARS = /(\d{1,2})\s*\+?\s*(?:to|-)?\s*\d{0,2}\s*(?:years?|yrs?)/i
+// Prose mentions years too ("we were founded 12 years ago"), which used to set
+// seniority. A number only counts when it reads as a requirement: a range or a
+// plus ("2-4 years", "5+ years"), or the word experience next to it.
+const YEARS_RANGE = /(\d{1,2})\s*(?:\+|(?:to|-)\s*\d{1,2})\s*(?:years?|yrs?)\b/i
+const YEARS_AFTER = /(\d{1,2})\s*(?:years?|yrs?)\.?\s*(?:of\s+)?(?:experience|exp\b|in\b)/i
+const YEARS_BEFORE = /(?:experience|exp)\s*(?::|of)?\s*(\d{1,2})\s*(?:years?|yrs?)/i
 
 function fromYears(text) {
-  const m = YEARS.exec(text || '')
+  const s = text || ''
+  const m = YEARS_RANGE.exec(s) || YEARS_AFTER.exec(s) || YEARS_BEFORE.exec(s)
   if (!m) return null
   const n = Number(m[1])
   if (n <= 1) return 'entry'
@@ -40,8 +52,8 @@ export function classifyLevel(title = '', description = '') {
   if (ENTRY.test(t)) return 'entry'
   if (SENIOR_ROLE.test(t)) return 'senior'
   const rank = RANK.exec(t)
-  if (rank) return RANK_LEVEL[rank[1].toLowerCase()]
-  if (INTERNSHIP.test(description)) return 'internship'
+  if (rank && !NOT_RANK.test(t)) return RANK_LEVEL[rank[1].toLowerCase()]
+  if (BODY_INTERNSHIP.test(description)) return 'internship'
   // Some boards put the range in the title itself, e.g. "Firmware Engineer(5-7 years)".
   return fromYears(t) || fromYears(description) || 'mid'
 }

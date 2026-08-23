@@ -82,6 +82,24 @@ describe('scorePosting', () => {
   it('scores an empty profile at zero rather than crashing', () => {
     expect(scorePosting(posting(), {}).score).toBe(WEIGHTS.degreeFit)
   })
+
+  // Substring matching let the skill "c" score every posting that contained
+  // the letter, and "java" claim JavaScript roles.
+  it('matches skills at word boundaries only', () => {
+    const s = scorePosting(posting({ title: 'Product Manager' }), { skills: ['c', 'r', 'go'] })
+    expect(s.matched).toEqual([])
+    expect(s.mentioned).toEqual([])
+    expect(scorePosting(posting({ title: 'JavaScript Developer' }), { skills: ['java'] }).matched).toEqual([])
+    expect(scorePosting(posting({ title: 'Java Developer' }), { skills: ['java'] }).matched).toEqual(['java'])
+  })
+
+  // Skills legitimately carry regex metacharacters, and their symbol edges
+  // must not demand a word boundary that cannot exist there.
+  it('matches skills that contain symbols', () => {
+    expect(scorePosting(posting({ title: 'C++ Developer' }), { skills: ['c++'] }).matched).toEqual(['c++'])
+    expect(scorePosting(posting({ title: 'ASP.NET Engineer' }), { skills: ['.net'] }).matched).toEqual(['.net'])
+    expect(scorePosting(posting({ title: 'Node.js Developer' }), { skills: ['node.js'] }).matched).toEqual(['node.js'])
+  })
 })
 
 describe('levelScore', () => {

@@ -1,0 +1,34 @@
+import { describe, it, expect } from 'vitest'
+import { detectCurrency, INR_PER } from '@jobdekho/core/currency.js'
+
+describe('detectCurrency', () => {
+  it('reads symbols and codes', () => {
+    expect(detectCurrency('₹ 10,000 /month')).toBe('INR')
+    expect(detectCurrency('Rs. 15,000')).toBe('INR')
+    expect(detectCurrency('6 LPA')).toBe('INR')
+    expect(detectCurrency('$60k - $80k /year')).toBe('USD')
+    expect(detectCurrency('70,000 USD')).toBe('USD')
+    expect(detectCurrency('€45,000')).toBe('EUR')
+    expect(detectCurrency('55,000 EUR')).toBe('EUR')
+    expect(detectCurrency('£40,000')).toBe('GBP')
+    expect(detectCurrency('40,000 GBP')).toBe('GBP')
+  })
+
+  // Indian boards quote bare numbers, so unnamed means rupees.
+  it('defaults to INR when no currency is named', () => {
+    expect(detectCurrency('10,000 - 15,000 /month')).toBe('INR')
+    expect(detectCurrency('')).toBe('INR')
+  })
+
+  // "Europe" is a place, "years" contains "rs": neither names a currency.
+  it('does not read currency codes out of ordinary words', () => {
+    expect(detectCurrency('Europe relocation, 2 years')).toBe('INR')
+  })
+})
+
+describe('INR_PER', () => {
+  it('anchors rupees at one and prices the majors above it', () => {
+    expect(INR_PER.INR).toBe(1)
+    for (const code of ['USD', 'EUR', 'GBP']) expect(INR_PER[code]).toBeGreaterThan(1)
+  })
+})
