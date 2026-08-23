@@ -7,16 +7,19 @@
     "java developer", "php", ".net", "wordpress", "programming", "programmer",
     "computer science", "data science", "data analyst", "data analytics", "analytics",
     "machine learning", "deep learning", "artificial intelligence", "data engineer",
-    "devops", "cloud comput", "sde", "qa automation", "test automation", "database",
-    "sql", "ui/ux", "game develop", "engineer", "engineering"
+    "devops", "site reliability", "platform engineer", "infrastructure", "security engineer",
+    "cloud comput", "sde", "qa automation", "test automation", "database",
+    "sql", "ui/ux", "game develop", "engineer", "engineering", "architect",
+    "technical program", "product manager", "research scientist"
   ],
   "excludeKeywords": [
-    "senior", "staff", "principal", "manager", "lead ", "content writ", "social media",
-    "graphic design", "video editing", "photography", "business development",
-    "human resource", "recruitment", "tele calling", "telecalling", "sales executive",
-    "marketing", "sales development", "sales representative", "finance intern", "accounting", "operations intern",
-    "director", "head of", "vice president", "architect", "mechanical", "civil engineer", "electrical engineer", "chemical engineer", "sales engineer"
+    "content writ", "social media", "graphic design", "video editing", "photography",
+    "business development", "human resource", "recruitment", "tele calling", "telecalling",
+    "sales executive", "marketing", "sales development", "sales representative",
+    "finance intern", "accounting", "operations intern", "sales engineer",
+    "mechanical", "civil engineer", "electrical engineer", "chemical engineer"
   ],
   "locations": ["india", "bengaluru", "bangalore", "hyderabad", "pune", "mumbai", "delhi", "gurgaon", "gurugram", "noida", "chennai", "kolkata", "ahmedabad", "jaipur"],
-  "internshipOnly": false
+  "levels": [],
+  "maxDegree": null
 }
