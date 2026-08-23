@@ -20,7 +20,7 @@ const users = [
   },
   {
     userId: 'no-match-user',
-    filters: { includeKeywords: ['chef'], excludeKeywords: [], locations: ['remote'] },
+    filters: { includeKeywords: ['astronaut'], excludeKeywords: [], locations: ['remote'] },
     prefs: { channel: 'telegram', telegramChatId: 'chat456', enabled: true },
   },
   {
@@ -42,7 +42,7 @@ describe('notifyUsers', () => {
     expect(tgEntry).toMatchObject({ userId: 'tg-user', sent: true, count: 1 })
     expect(senders.telegram).toHaveBeenCalledWith('chat123', expect.stringContaining('Software Intern'))
 
-    // no-match-user filter (chef) doesn't match either posting
+    // no-match-user filter (astronaut) doesn't match either posting
     const noMatch = summary.find((s) => s.userId === 'no-match-user')
     expect(noMatch).toMatchObject({ userId: 'no-match-user', sent: false, count: 0 })
     expect(senders.telegram).not.toHaveBeenCalledWith('chat456', expect.anything())
@@ -60,6 +60,27 @@ describe('notifyUsers', () => {
 
     const tgEntry = summary.find((s) => s.userId === 'tg-user')
     expect(tgEntry).toMatchObject({ userId: 'tg-user', sent: false, count: 1 })
+  })
+
+  it('delivers non-internship roles to users who saved a filter', async () => {
+    const senders = { telegram: vi.fn(async () => ({ ok: true })) }
+    const seniorRole = {
+      id: '3', title: 'Senior Software Engineer', company: 'Acme', location: 'Remote',
+      url: 'u3', descriptionSnippet: 'build software', tags: [], level: 'senior',
+    }
+    const [entry] = await notifyUsers([seniorRole], { users: [users[0]], defaultRules, senders })
+    expect(entry).toMatchObject({ userId: 'tg-user', sent: true, count: 1 })
+  })
+
+  it('honours a saved level preference', async () => {
+    const senders = { telegram: vi.fn(async () => ({ ok: true })) }
+    const internOnly = [{
+      ...users[0],
+      filters: { includeKeywords: ['software'], excludeKeywords: [], locations: ['remote'], levels: ['internship'] },
+    }]
+    const [entry] = await notifyUsers(freshPostings, { users: internOnly, defaultRules, senders })
+    expect(entry.count).toBe(1)
+    expect(senders.telegram).toHaveBeenCalledWith('chat123', expect.stringContaining('Software Intern'))
   })
 
   it('returns all users in summary even if none match', async () => {
