@@ -30,3 +30,16 @@ export const DURATION_RANGES = [
   ['3', 'Max 3 months'],
   ['6', 'Max 6 months'],
 ];
+
+// Fit is the server's 0-100 score of a posting against the profile, but the
+// scale tops out low in practice: measured on 1485 postings, nothing scored
+// above 63, because a perfect score needs every dimension perfect and real
+// postings never are. So the rungs sit where the feed actually thins - about
+// a third of it clears 30, the strongest few percent clear 45 - and they are
+// words, not numbers, so recalibrating them later cannot turn the copy into
+// a lie.
+export const FIT_RANGES = [
+  ['', 'Any'],
+  ['30', 'Good fit'],
+  ['45', 'Strong fit'],
+];

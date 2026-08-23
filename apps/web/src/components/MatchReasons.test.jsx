@@ -2,48 +2,28 @@ import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import MatchReasons from './MatchReasons.jsx';
 
-// Deliberately unmocked: this component exists to put @jobdekho/core's
-// explainScore in front of the user, so the test exercises the real one.
-const posting = (over) => ({
-  title: 'React Developer',
-  descriptionSnippet: 'TypeScript everywhere.',
-  level: 'entry',
-  degreeMin: 'none',
-  ...over,
-});
-
-const profile = (over) => ({
-  skills: ['react'], titles: [], locations: [], years: 1, degree: 'none', ...over,
-});
-
+// The reasons are rendered verbatim from the server, which scores the full
+// description. This suite used to run @jobdekho/core's explainScore in the
+// browser; that recomputation is exactly the drift the component now avoids.
 describe('MatchReasons', () => {
-  it('says what matched, in words rather than a score', () => {
-    render(<MatchReasons posting={posting()} profile={profile()} />);
-    expect(screen.getByText(/matches react/)).toBeInTheDocument();
-    expect(screen.getByText(/suits your experience/)).toBeInTheDocument();
+  it('renders the server phrases under the fit label', () => {
+    render(<MatchReasons reasons={['matches react, typescript', 'suits your experience']} />);
+    expect(screen.getByText('Fit')).toBeInTheDocument();
+    expect(screen.getByText('matches react, typescript / suits your experience')).toBeInTheDocument();
   });
 
-  it('warns when the posting is out of reach instead of flattering it', () => {
-    render(
-      <MatchReasons
-        posting={posting({ title: 'Chief Architect', level: 'executive', degreeMin: 'phd' })}
-        profile={profile({ skills: [], years: 0 })}
-      />,
-    );
+  it('passes a warning through unsoftened', () => {
+    render(<MatchReasons reasons={['well outside your experience']} />);
     expect(screen.getByText(/well outside your experience/)).toBeInTheDocument();
-    expect(screen.getByText(/needs a higher degree than you listed/)).toBeInTheDocument();
   });
 
-  // A mid role one rung off a null-years profile: core normalizes JSON null
-  // years to 0, so entry roles would still "suit". One rung is close enough
-  // to draw no comment either way, so this holds even if core changes that.
-  it('renders nothing when there is nothing to say', () => {
-    const { container } = render(
-      <MatchReasons
-        posting={posting({ title: 'Accountant', descriptionSnippet: '', level: 'mid' })}
-        profile={profile({ skills: [], years: null })}
-      />,
-    );
+  it('renders nothing when the server had nothing to say', () => {
+    const { container } = render(<MatchReasons reasons={[]} />);
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it('renders nothing for an unranked posting, which carries no reasons field', () => {
+    const { container } = render(<MatchReasons />);
     expect(container).toBeEmptyDOMElement();
   });
 });

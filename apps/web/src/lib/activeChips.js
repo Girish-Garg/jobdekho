@@ -1,5 +1,5 @@
 import { LEVEL_OPTIONS, STATUS_OPTIONS, WORK_MODE_OPTIONS, DEGREE_OPTIONS } from './taxonomy.js';
-import { STIPEND_RANGES, EXPERIENCE_RANGES, DURATION_RANGES } from './ranges.js';
+import { STIPEND_RANGES, EXPERIENCE_RANGES, DURATION_RANGES, FIT_RANGES } from './ranges.js';
 
 const CEILINGS = [
   ['maxDegree', DEGREE_OPTIONS],
@@ -27,6 +27,9 @@ export function activeChips(filters = {}) {
 
   if (filters.q) chips.push(chip('q', `Search: ${filters.q}`, { q: '' }, 'search'));
 
+  if (filters.minFit) {
+    chips.push(chip('minFit', labelOf(FIT_RANGES, filters.minFit), { minFit: '' }));
+  }
   for (const value of levels) {
     chips.push(chip(`level-${value}`, labelOf(LEVEL_OPTIONS, value), { levels: without(levels, value) }));
   }

@@ -5,7 +5,7 @@ import ProfileEmptyState from './ProfileEmptyState.jsx';
 describe('ProfileEmptyState', () => {
   it('explains what the profile is for, not just that it is missing', () => {
     render(<ProfileEmptyState onStart={() => {}} />);
-    expect(screen.getByText(/recommended sort/i)).toBeInTheDocument();
+    expect(screen.getByText(/best fit ranking/i)).toBeInTheDocument();
     expect(screen.getByText(/notification filter/i)).toBeInTheDocument();
   });
 

@@ -18,6 +18,9 @@ export default function PostingCard({ posting, onOpen }) {
   const mode = MODE_WORD[posting.workMode];
   const tone = levelTone(posting.level);
   const others = (posting.groupCount || 1) - 1;
+  // Only a ranked feed carries the field, and 0 is a real score, so this is a
+  // presence check rather than truthiness.
+  const ranked = Number.isInteger(posting.fit);
 
   return (
     <button
@@ -33,13 +36,17 @@ export default function PostingCard({ posting, onOpen }) {
         {/* The word sits in its own colour, so the edge never has to be decoded. */}
         <span className={`${LABEL} ${tone.text}`}>{levelLabel(posting.level)}</span>
         {mode && <span className={`${LABEL} text-muted`}>/ {mode}</span>}
-        {status && <span className={`${LABEL} ml-auto text-ink`}>{status}</span>}
+        {/* The number the default order sorts by. It carries its unit because
+            a bare integer in this row could be days, applicants or pay. Ink,
+            not ember: the accent belongs to "new today" alone. */}
+        {ranked && <span className={`${LABEL} tnum ml-auto shrink-0 text-ink`}>{posting.fit} fit</span>}
+        {status && <span className={`${LABEL} ${ranked ? '' : 'ml-auto'} text-ink`}>{status}</span>}
         {/* Ember reads against six level hues by shape, not just colour: it is
             the only filled chip on the card, and it says what it means. */}
         {fresh && (
           <span
             aria-label="New today"
-            className={`${LABEL} shrink-0 rounded-sm bg-ember px-1 py-0.5 text-paper ${status ? '' : 'ml-auto'}`}
+            className={`${LABEL} shrink-0 rounded-sm bg-ember px-1 py-0.5 text-paper ${status || ranked ? '' : 'ml-auto'}`}
           >
             New
           </span>

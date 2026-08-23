@@ -1,4 +1,5 @@
 import { LEVEL_OPTIONS, STATUS_OPTIONS, WORK_MODE_OPTIONS } from '../lib/taxonomy.js';
+import { FIT_RANGES } from '../lib/ranges.js';
 import { useSources } from '../lib/useSources.js';
 import { levelPillTone } from '../lib/levelColor.js';
 import { activeChips } from '../lib/activeChips.js';
@@ -31,6 +32,16 @@ export default function FilterBar({ filters, setFilters }) {
       {/* One line at every width the grid is usable at; wrapping only kicks in
           on a phone, where the alternative is scrolling the page sideways. */}
       <div className="flex flex-wrap items-center gap-2">
+        {/* Fit leads the row: it is the axis the default order sorts by, so
+            its floor reads before the taxonomy refinements. Single-select like
+            Status - one floor at a time, a second would just shadow the first. */}
+        <Dropdown label="Fit" count={filters.minFit ? 1 : 0}>
+          <PillGroup
+            options={FIT_RANGES}
+            selected={[filters.minFit]}
+            onPick={(v) => patch('minFit', v)}
+          />
+        </Dropdown>
         <Dropdown label="Level" count={filters.levels.length}>
           <PillGroup
             options={LEVEL_OPTIONS}

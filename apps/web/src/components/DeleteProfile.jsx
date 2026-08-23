@@ -37,7 +37,7 @@ export default function DeleteProfile({ onDeleted }) {
   return (
     <div className="flex flex-wrap items-center gap-3">
       <p className="text-sm text-ink">
-        Removes the profile and the stored resume text. Recommended goes back to newest first.
+        Removes the profile and the stored resume text. Best fit goes back to newest first.
       </p>
       <button
         type="button"

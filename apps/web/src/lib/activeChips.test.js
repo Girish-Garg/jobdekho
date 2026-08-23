@@ -27,6 +27,11 @@ describe('activeChips', () => {
     expect(labels({ ...EMPTY_FILTERS, q: 'react' })).toEqual(['Search: react']);
   });
 
+  it('reuses the pill copy for the fit floor', () => {
+    expect(labels({ ...EMPTY_FILTERS, minFit: '30' })).toEqual(['Good fit']);
+    expect(labels({ ...EMPTY_FILTERS, minFit: '45' })).toEqual(['Strong fit']);
+  });
+
   it('collapses the exclusions into one counted chip', () => {
     expect(labels({ ...EMPTY_FILTERS, excludedSources: ['a', 'b', 'c'] })).toEqual(['3 sources excluded']);
     expect(labels({ ...EMPTY_FILTERS, excludedSources: ['a'] })).toEqual(['1 source excluded']);
@@ -47,6 +52,7 @@ describe('activeChips', () => {
     const chips = activeChips({
       ...EMPTY_FILTERS,
       q: 'go',
+      minFit: '30',
       levels: ['senior'],
       workModes: ['remote'],
       excludedSources: ['lever'],
@@ -54,6 +60,7 @@ describe('activeChips', () => {
     });
     expect(chips.map((c) => c.remove)).toEqual([
       'Remove search filter',
+      'Remove Good fit filter',
       'Remove Senior filter',
       'Remove Remote filter',
       'Remove source exclusions filter',
@@ -86,9 +93,10 @@ describe('activeChips removal patches', () => {
   });
 
   it('blanks the scalar fields', () => {
-    const filters = { ...EMPTY_FILTERS, q: 'x', status: 'saved', maxExp: '2' };
+    const filters = { ...EMPTY_FILTERS, q: 'x', status: 'saved', maxExp: '2', minFit: '45' };
     expect(patchFor(filters, 'Search: x')).toEqual({ q: '' });
     expect(patchFor(filters, 'Saved')).toEqual({ status: '' });
     expect(patchFor(filters, 'Max 2 years')).toEqual({ maxExp: '' });
+    expect(patchFor(filters, 'Strong fit')).toEqual({ minFit: '' });
   });
 });

@@ -1,11 +1,10 @@
-import { explainScore } from '@jobdekho/core/score.js';
-
-// The score itself stays off screen: reasons are what make a ranking worth
-// trusting, and some of them ("well outside your experience") are warnings,
-// which is why the label says fit rather than recommended.
-export default function MatchReasons({ posting, profile }) {
-  const { reasons } = explainScore(posting, profile);
-  if (!reasons.length) return null;
+// The phrases are the server's, verbatim: it scores the full description, and
+// a reason recomputed here against the snippet could disagree with the very
+// ranking it is explaining. Reasons are what make the score worth trusting,
+// and some of them ("well outside your experience") are warnings, which is
+// why the label says fit rather than recommended.
+export default function MatchReasons({ reasons }) {
+  if (!reasons?.length) return null;
 
   return (
     <div className="rounded-md bg-paper px-3 py-2">

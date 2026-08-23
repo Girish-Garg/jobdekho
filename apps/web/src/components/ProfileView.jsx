@@ -39,7 +39,7 @@ export default function ProfileView() {
     <section className="px-8 py-8">
       <h2 className="font-display text-2xl font-extrabold tracking-tight">Profile</h2>
       <p className="mt-1 font-mono text-xs text-muted">
-        What the Recommended sort ranks postings against. It can also seed your notification filter, but only when you say so.
+        What the Best fit ranking scores postings against. It can also seed your notification filter, but only when you say so.
       </p>
 
       {profile === undefined ? (

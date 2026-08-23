@@ -8,14 +8,14 @@ export const PAGE = 100;
 // Every filter and the sort key are the server's job. Narrowing or ordering the
 // loaded page instead would only ever touch the first 100 of a few thousand
 // rows, which silently answered the wrong question.
-export function usePostingsFeed(filters, sort = 'newest') {
+export function usePostingsFeed(filters, sort = 'match') {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [more, setMore] = useState(false);
 
   // Depend on the individual fields, not the filters object: a new object
   // identity every render would refetch on every keystroke elsewhere.
-  const { q, status, maxDegree, minStipend, includeStale } = filters;
+  const { q, status, maxDegree, minStipend, includeStale, minFit } = filters;
   const maxExperienceYears = filters.maxExp;
   const maxDurationMonths = filters.maxMonths;
   const levels = (filters.levels || []).join(',');
@@ -23,7 +23,7 @@ export function usePostingsFeed(filters, sort = 'newest') {
   const excludedSources = (filters.excludedSources || []).join(',');
   const query = {
     q, excludedSources, status, levels, workModes, maxDegree,
-    minStipend, maxExperienceYears, maxDurationMonths, sort, includeStale,
+    minStipend, maxExperienceYears, maxDurationMonths, sort, includeStale, minFit,
   };
 
   useEffect(() => {
@@ -38,7 +38,7 @@ export function usePostingsFeed(filters, sort = 'newest') {
     };
   }, [
     q, excludedSources, status, levels, workModes, maxDegree,
-    minStipend, maxExperienceYears, maxDurationMonths, sort, includeStale,
+    minStipend, maxExperienceYears, maxDurationMonths, sort, includeStale, minFit,
   ]);
 
   async function loadMore() {

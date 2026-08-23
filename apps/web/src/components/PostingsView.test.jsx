@@ -1,18 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, within, act } from '@testing-library/react';
 import PostingsView from './PostingsView.jsx';
 
 vi.mock('../api.js', () => ({
   getPostings: vi.fn(async () => []),
   setStatus: vi.fn(async () => null),
-  getProfile: vi.fn(async () => null),
 }));
 
-import { getPostings, setStatus, getProfile } from '../api.js';
+import { getPostings, setStatus } from '../api.js';
 
 const EMPTY = {
   excludedSources: [], levels: [], workModes: [], q: '', status: '',
-  maxDegree: '', minStipend: '', maxMonths: '', maxExp: '',
+  maxDegree: '', minStipend: '', maxMonths: '', maxExp: '', minFit: '',
 };
 
 const row = (over) => ({
@@ -35,6 +34,33 @@ const card = (name) => screen.getByRole('button', { name: new RegExp(name) });
 beforeEach(() => vi.clearAllMocks());
 
 describe('PostingsView server-side filters', () => {
+  // The feed opens personalised; the server's default is match too, but the
+  // select needs to show the order the list actually has.
+  it('asks for the best-fit ordering on the very first request', async () => {
+    render(<PostingsView filters={EMPTY} />);
+    await waitFor(() => expect(getPostings).toHaveBeenCalled());
+    expect(getPostings).toHaveBeenCalledWith(expect.objectContaining({ sort: 'match' }));
+  });
+
+  it('sends the fit floor as minFit', async () => {
+    render(<PostingsView filters={{ ...EMPTY, minFit: '30' }} />);
+    await waitFor(() => expect(getPostings).toHaveBeenCalled());
+    expect(getPostings).toHaveBeenCalledWith(expect.objectContaining({ minFit: '30' }));
+  });
+
+  // The whole point of fit-as-a-filter: another sort reorders the matches, it
+  // does not widen the feed back out.
+  it('keeps the fit floor in the request when the sort changes to newest', async () => {
+    render(<PostingsView filters={{ ...EMPTY, minFit: '45' }} />);
+    await waitFor(() => expect(getPostings).toHaveBeenCalled());
+    fireEvent.change(screen.getByLabelText(/sort/i), { target: { value: 'newest' } });
+    await waitFor(() =>
+      expect(getPostings).toHaveBeenLastCalledWith(
+        expect.objectContaining({ sort: 'newest', minFit: '45' }),
+      ),
+    );
+  });
+
   it('sends levels comma-separated and maxDegree as query params', async () => {
     render(<PostingsView filters={{ ...EMPTY, levels: ['mid', 'staff'], maxDegree: 'masters' }} />);
     await waitFor(() => expect(getPostings).toHaveBeenCalled());
@@ -126,6 +152,14 @@ describe('PostingsView refetch triggers', () => {
     await Promise.resolve();
     expect(getPostings).toHaveBeenCalledTimes(1);
   });
+
+  it('refetches when the fit floor changes', async () => {
+    const { rerender } = render(<PostingsView filters={EMPTY} />);
+    await waitFor(() => expect(getPostings).toHaveBeenCalledTimes(1));
+
+    rerender(<PostingsView filters={{ ...EMPTY, minFit: '30' }} />);
+    await waitFor(() => expect(getPostings).toHaveBeenCalledTimes(2));
+  });
 });
 
 describe('PostingsView measure filters go to the server', () => {
@@ -170,69 +204,123 @@ describe('PostingsView grid', () => {
   });
 });
 
-describe('PostingsView recommended sort', () => {
-  const PROFILE = {
-    skills: ['react'], titles: [], locations: [], years: 1, degree: 'none', resumeName: null,
-  };
-  const pickRecommended = () =>
-    fireEvent.change(screen.getByLabelText(/sort/i), { target: { value: 'match' } });
+describe('PostingsView best-fit ranking', () => {
+  const pickSort = (value) =>
+    fireEvent.change(screen.getByLabelText(/sort/i), { target: { value } });
 
-  it('asks the server for the match ordering', async () => {
+  it('lets another sort replace the match ordering', async () => {
     getPostings.mockResolvedValue([row()]);
     render(<PostingsView filters={EMPTY} onOpenProfile={() => {}} />);
     await waitFor(() => expect(getPostings).toHaveBeenCalledTimes(1));
-    pickRecommended();
+    pickSort('company');
     await waitFor(() =>
-      expect(getPostings).toHaveBeenLastCalledWith(expect.objectContaining({ sort: 'match' })),
+      expect(getPostings).toHaveBeenLastCalledWith(expect.objectContaining({ sort: 'company' })),
     );
   });
 
-  // The server quietly falls back to newest ordering with no profile, so the
-  // UI is the only place that can say the list is not really ranked.
-  it('says so when there is no profile, and points at the profile section', async () => {
+  // The server quietly falls back to newest ordering when it has nothing to
+  // rank against, and it says so by omitting fit from the rows. Reading that
+  // omission is what also catches a profile that exists but has nothing
+  // rankable in it - a case a profile fetch could never tell apart.
+  it('says so on load when the rows come back unranked, and points at the profile section', async () => {
     getPostings.mockResolvedValue([row()]);
     const onOpenProfile = vi.fn();
     render(<PostingsView filters={EMPTY} onOpenProfile={onOpenProfile} />);
-    await waitFor(() => expect(getPostings).toHaveBeenCalled());
-    pickRecommended();
 
     expect(await screen.findByText(/needs a profile/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Set up your profile' }));
     expect(onOpenProfile).toHaveBeenCalled();
   });
 
-  it('never fetches the profile or shows the notice on other sorts', async () => {
+  // With no fit floor, only the best-fit order claims a ranking, so leaving
+  // it takes the banner away too.
+  it('drops the notice when the user leaves the best-fit order', async () => {
+    getPostings.mockResolvedValue([row()]);
     render(<PostingsView filters={EMPTY} onOpenProfile={() => {}} />);
-    await waitFor(() => expect(getPostings).toHaveBeenCalled());
-    expect(getProfile).not.toHaveBeenCalled();
+    expect(await screen.findByText(/needs a profile/i)).toBeInTheDocument();
+
+    pickSort('newest');
+    await waitFor(() => expect(screen.queryByText(/needs a profile/i)).not.toBeInTheDocument());
+  });
+
+  // The server ignores minFit when it has no profile to score against, so a
+  // set floor under any sort is a claim the feed does not honour. Without the
+  // banner the control would just visibly do nothing.
+  it('keeps the notice under a non-match sort while a fit floor is set', async () => {
+    getPostings.mockResolvedValue([row()]);
+    render(<PostingsView filters={{ ...EMPTY, minFit: '30' }} onOpenProfile={() => {}} />);
+    expect(await screen.findByText(/needs a profile/i)).toBeInTheDocument();
+
+    pickSort('newest');
+    expect(await screen.findByText(/needs a profile/i)).toBeInTheDocument();
+    expect(screen.getByText(/fit filter/i)).toBeInTheDocument();
+  });
+
+  it('never shows the notice when the rows came back ranked, floor or not', async () => {
+    getPostings.mockResolvedValue([row({ fit: 58 })]);
+    render(<PostingsView filters={{ ...EMPTY, minFit: '30' }} onOpenProfile={() => {}} />);
+    expect(await screen.findByText('Engineer')).toBeInTheDocument();
+    expect(screen.queryByText(/needs a profile/i)).not.toBeInTheDocument();
+
+    pickSort('newest');
+    expect(await screen.findByText('Engineer')).toBeInTheDocument();
     expect(screen.queryByText(/needs a profile/i)).not.toBeInTheDocument();
   });
 
-  it('shows the match reasons in the overlay, not on the card', async () => {
-    getProfile.mockResolvedValue(PROFILE);
-    getPostings.mockResolvedValue([row({ title: 'React Engineer', level: 'entry' })]);
+  // rows are empty while the first page is in flight, so the banner has
+  // nothing to read yet and must stay down - a banner that blinks on every
+  // load would be worse than the gap it closes.
+  it('keeps the banner down while the first page loads, then reads the rows', async () => {
+    let deliver;
+    getPostings.mockReturnValueOnce(new Promise((resolve) => { deliver = resolve; }));
+    render(<PostingsView filters={{ ...EMPTY, minFit: '30' }} onOpenProfile={() => {}} />);
+
+    expect(screen.getByText('Fetching postings...')).toBeInTheDocument();
+    expect(screen.queryByText(/needs a profile/i)).not.toBeInTheDocument();
+
+    await act(async () => deliver([row()]));
+    expect(await screen.findByText(/needs a profile/i)).toBeInTheDocument();
+  });
+
+  // An empty page cannot say whether the server ranked, and the no-matches
+  // copy already owns that state: a profile banner on top would fire for
+  // anyone whose filters simply matched nothing.
+  it('keeps the banner down when nothing matched', async () => {
+    getPostings.mockResolvedValue([]);
+    render(<PostingsView filters={{ ...EMPTY, minFit: '45' }} onOpenProfile={() => {}} />);
+
+    expect(await screen.findByText('Nothing matches these filters yet.')).toBeInTheDocument();
+    expect(screen.queryByText(/needs a profile/i)).not.toBeInTheDocument();
+  });
+
+  it('shows the server reasons in the overlay, not on the card', async () => {
+    getPostings.mockResolvedValue([
+      row({ title: 'React Engineer', fit: 58, reasons: ['matches react, typescript', 'suits your experience'] }),
+    ]);
     render(<PostingsView filters={EMPTY} onOpenProfile={() => {}} />);
     expect(await screen.findByText('React Engineer')).toBeInTheDocument();
-    pickRecommended();
-    expect(await screen.findByText('React Engineer')).toBeInTheDocument();
-    await waitFor(() => expect(getProfile).toHaveBeenCalled());
 
     // The card stays a scan unit; the reasons live in the overlay.
     expect(screen.queryByText(/matches react/)).not.toBeInTheDocument();
     fireEvent.click(card('React Engineer'));
-    expect(await screen.findByText(/matches react/)).toBeInTheDocument();
+    expect(await screen.findByText(/matches react, typescript/)).toBeInTheDocument();
     expect(screen.getByText(/suits your experience/)).toBeInTheDocument();
   });
 
-  it('keeps the reasons out of the overlay on other sorts', async () => {
-    getProfile.mockResolvedValue(PROFILE);
-    getPostings.mockResolvedValue([row({ title: 'React Engineer', level: 'entry' })]);
+  // Ranking is a dimension now, not a mode: the reasons ride each posting, so
+  // they survive a sort change instead of vanishing with the old Recommended
+  // sort. Newest now means "my matches, newest first".
+  it('keeps the reasons in the overlay under the newest sort', async () => {
+    getPostings.mockResolvedValue([
+      row({ title: 'React Engineer', fit: 58, reasons: ['matches react, typescript'] }),
+    ]);
     render(<PostingsView filters={EMPTY} onOpenProfile={() => {}} />);
+    expect(await screen.findByText('React Engineer')).toBeInTheDocument();
+    pickSort('newest');
     expect(await screen.findByText('React Engineer')).toBeInTheDocument();
 
     fireEvent.click(card('React Engineer'));
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.queryByText(/matches react/)).not.toBeInTheDocument();
+    expect(await screen.findByText(/matches react/)).toBeInTheDocument();
   });
 });
 

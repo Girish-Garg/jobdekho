@@ -32,9 +32,13 @@ export function toSavedFilters(filters) {
   };
 }
 
-// The keyword, the status and the stale toggle are per-session rather than
-// persisted, so the blank bar is the blank saved filter plus those three.
-export const EMPTY_FILTERS = { ...toFilterState(), q: '', status: '', includeStale: false };
+// The keyword, the status, the stale toggle and the fit floor are per-session
+// rather than persisted, so the blank bar is the blank saved filter plus those
+// four. minFit stays unsaved on purpose: the saved filter also drives the
+// Telegram alerts, and the notifier cannot score a posting against the
+// profile, so persisting a fit floor would promise a cut the alerts never
+// make.
+export const EMPTY_FILTERS = { ...toFilterState(), q: '', status: '', includeStale: false, minFit: '' };
 
 // One saved filter backs both the filter bar and Settings, so a write from
 // either surface has to carry the other's keys through untouched.

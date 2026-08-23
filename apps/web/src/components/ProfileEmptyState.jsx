@@ -5,7 +5,7 @@ export default function ProfileEmptyState({ onStart }) {
     <div className="flex max-w-xl flex-col items-start gap-4 border-t border-line pt-8">
       <h3 className="font-display text-lg font-bold tracking-tight">No profile yet</h3>
       <p className="text-sm leading-relaxed text-muted">
-        Your profile is what the Recommended sort on Postings ranks against: the
+        Your profile is what the Best fit ranking on Postings scores against: the
         skills, target titles, experience and degree you bring. Upload a resume
         above and the fields fill themselves in, or write them yourself. Once it
         is saved you can also use it to seed your notification filter.

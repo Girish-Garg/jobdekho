@@ -1,6 +1,9 @@
+// Best fit leads because it is the default. It is named for the axis it
+// orders by, like the others: "Recommended" claimed the whole feed, and now
+// that fit is also a filter the sort is just one dimension of it.
 const SORTS = [
+  ['match', 'Best fit'],
   ['newest', 'Newest posted'],
-  ['match', 'Recommended'],
   ['oldest', 'Oldest posted'],
   ['added', 'Recently added'],
   ['company', 'Company A-Z'],

@@ -116,7 +116,10 @@ describe('toSavedFilters', () => {
 });
 
 describe('EMPTY_FILTERS', () => {
-  it('carries every field the bar reads, including the session-only two', () => {
+  // minFit is session-only on purpose: the saved filter also drives the
+  // Telegram alerts, and the notifier cannot apply a fit floor, so saving one
+  // would promise a cut the alerts never make.
+  it('carries every field the bar reads, including the session-only ones', () => {
     expect(EMPTY_FILTERS).toEqual({
       excludedSources: [],
       levels: [],
@@ -128,6 +131,7 @@ describe('EMPTY_FILTERS', () => {
       q: '',
       status: '',
       includeStale: false,
+      minFit: '',
     });
   });
 });

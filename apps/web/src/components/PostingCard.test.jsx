@@ -83,6 +83,33 @@ describe('PostingCard new-today mark', () => {
   });
 });
 
+describe('PostingCard fit score', () => {
+  it('shows the score with its unit when the feed is ranked', () => {
+    render(<PostingCard posting={{ ...base, fit: 78 }} onOpen={() => {}} />);
+    expect(screen.getByText('78 fit')).toBeInTheDocument();
+  });
+
+  // 0 is a real score on a ranked feed, so a truthiness check would hide
+  // exactly the postings the number is most useful on.
+  it('shows a zero score rather than dropping it', () => {
+    render(<PostingCard posting={{ ...base, fit: 0 }} onOpen={() => {}} />);
+    expect(screen.getByText('0 fit')).toBeInTheDocument();
+  });
+
+  it('leaves no fit slot on an unranked feed', () => {
+    render(<PostingCard posting={base} onOpen={() => {}} />);
+    expect(screen.queryByText(/fit/)).not.toBeInTheDocument();
+  });
+
+  // Ember stays the one accent on the card, so the score cannot borrow it.
+  it('never carries the ember accent', () => {
+    const { container } = render(<PostingCard posting={{ ...base, fit: 91 }} onOpen={() => {}} />);
+    const ember = container.querySelectorAll('.bg-ember, .text-ember');
+    expect(ember).toHaveLength(1);
+    expect(ember[0]).toHaveAttribute('aria-label', 'New today');
+  });
+});
+
 describe('PostingCard level label', () => {
   // The label carries its own rung colour, so the left edge never has to be
   // decoded. It stays plain text: a filled badge on every card would shout.

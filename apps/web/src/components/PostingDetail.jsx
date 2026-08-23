@@ -26,7 +26,7 @@ function detailRows(posting) {
   ].filter(([, value]) => value);
 }
 
-export default function PostingDetail({ posting, profile, onClose, onStatus }) {
+export default function PostingDetail({ posting, onClose, onStatus }) {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-start gap-4">
@@ -46,9 +46,9 @@ export default function PostingDetail({ posting, profile, onClose, onStatus }) {
         </button>
       </div>
 
-      {/* Only under the Recommended sort, when a profile came down with the
-          feed. The card stays a scan unit; the room for "why" is here. */}
-      {profile && <MatchReasons posting={posting} profile={profile} />}
+      {/* Whenever the server ranked the feed, whatever the sort. The card
+          stays a scan unit; the room for "why" is here. */}
+      <MatchReasons reasons={posting.reasons} />
 
       <dl className="grid grid-cols-2 gap-x-6 gap-y-3 border-y border-line py-4 sm:grid-cols-3">
         {detailRows(posting).map(([label, value, tone]) => (
