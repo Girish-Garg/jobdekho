@@ -18,8 +18,25 @@ export const STATEMENTS = [
   'alter table postings add column if not exists experience_years integer',
   'alter table postings add column if not exists group_key text',
   'alter table postings add column if not exists last_seen_at timestamp',
+  'alter table postings add column if not exists currency text',
   'create index if not exists postings_group_key_idx on postings (group_key)',
   'create index if not exists postings_last_seen_idx on postings (last_seen_at)',
+  // "newest" is the fallback sort whenever no sort is requested or an unknown
+  // one is passed (see orderFor in posting-order.js), so most page loads pay
+  // this ORDER BY. Built DESC NULLS LAST to match that clause exactly - a
+  // plain ascending index stores NULLS LAST but reverses to NULLS FIRST when
+  // scanned backward for DESC, so it would not satisfy this ordering as directly.
+  // The window functions in listPostingsForUser share this same ordering
+  // (postedAt desc, id desc) for their partition, so a scan in this index's
+  // order can also feed that computation instead of a separate full sort.
+  'create index if not exists postings_posted_at_idx on postings (posted_at desc nulls last)',
+  // source is an equality/IN filter on a column with roughly one value per
+  // board (~90 and climbing), so it is selective enough to be worth the write
+  // cost - unlike level/degree_min/work_mode, which top out at 3-6 values and
+  // would prune too little of the table to earn an index scan over a seq scan.
+  // listSources() also groups by this column for the per-source counts shown
+  // in the UI, which the same index speeds up.
+  'create index if not exists postings_source_idx on postings (source)',
   // Rows predating last_seen_at would otherwise read as "no evidence" forever
   // and never age out, even though a scrape has since run without returning
   // them. Seeding from first_seen_at lets the real stale ones expire on time.

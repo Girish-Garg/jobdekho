@@ -21,6 +21,10 @@ export const postings = pgTable('postings', {
   degreeMin: text('degree_min'),
   workMode: text('work_mode'),
   stipendMin: integer('stipend_min'),
+  // The unit stipendMin was converted FROM. stipendMin itself is always
+  // normalized to INR/month for comparison, so this is display-only context
+  // ("$60k - $80k" should still say USD even though it sorts as rupees).
+  currency: text('currency'),
   durationMonths: integer('duration_months'),
   experienceYears: integer('experience_years'),
   groupKey: text('group_key'),

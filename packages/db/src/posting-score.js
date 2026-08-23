@@ -7,8 +7,20 @@ import { escapeLike, allowedDegrees } from './posting-filters.js'
 // Mirrors scorePosting() in @jobdekho/core/score.js. It exists as SQL because
 // ranking has to happen across the whole matching set before LIMIT, exactly
 // like the sort does. The JS version stays the source of truth for the weights
-// and for the explanation shown on a card; posting-score.test.js asserts the
-// two agree on real rows so they cannot drift apart unnoticed.
+// and for the explanation shown on a card.
+//
+// posting-score.test.js covers what it can without a live database: that the
+// WEIGHTS and levelScoreTable values are read from core rather than copied
+// here, that one CASE branch is emitted per profile skill, that canRank gates
+// an empty profile, and that skill strings are safely escaped for LIKE. It
+// does NOT verify that this SQL and scorePosting() produce the same score on
+// a real row - that equivalence needs a live database and a fake connection
+// would only prove the mock behaves as scripted, not that the two scorers
+// agree, so it stays unverified until someone runs it against real data.
+// It also cannot catch a matching-rule change made on one side only: this SQL
+// matches a skill by substring ILIKE, so if the JS side's rule for what counts
+// as a match ever moves away from plain substring, the two will silently
+// disagree until someone notices.
 export function scoreColumn(profile) {
   const p = normalizeProfile(profile)
   const parts = []

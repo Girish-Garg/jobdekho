@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { toRow, refreshSet, upsertPostings } from '@jobdekho/db/queries.js'
+import { postings } from '@jobdekho/db/schema.js'
 
 describe('toRow', () => {
   const base = {
@@ -45,6 +46,10 @@ describe('toRow', () => {
   it('prefers an explicit type over the derived one', () => {
     expect(toRow({ ...base, level: 'entry', type: 'internship' }).type).toBe('internship')
   })
+  it('passes the currency through, and defaults it to null when absent', () => {
+    expect(toRow({ ...base, currency: 'USD' }).currency).toBe('USD')
+    expect(toRow({ ...base }).currency).toBeNull()
+  })
 })
 
 describe('refreshSet', () => {
@@ -62,6 +67,12 @@ describe('refreshSet', () => {
     const keys = Object.keys(refreshSet())
     expect(keys).not.toContain('firstSeenAt')
     expect(keys).not.toContain('id')
+  })
+
+  // A currency detected wrong on first scrape (or not detected at all, before
+  // core learned to) has to be correctable the same way every other field is.
+  it('refreshes currency', () => {
+    expect(Object.keys(refreshSet())).toContain('currency')
   })
 
   // The schema property is camelCase but the excluded reference has to name the
@@ -86,5 +97,52 @@ describe('upsertPostings', () => {
     }
     await upsertPostings(db, [{ id: 'a', tags: [] }])
     expect(conflict.set.title).toBeDefined()
+  })
+
+  // Postgres caps bind parameters per statement, so a scrape big enough to
+  // blow past it (~2800+ rows at 24 columns each) has to be split into several
+  // inserts rather than sent as one, or the whole run's data is rejected at once.
+  it('splits a large batch into multiple statements', async () => {
+    const batches = []
+    const db = {
+      insert: () => ({
+        values: (rows) => { batches.push(rows); return { onConflictDoUpdate: () => {} } },
+      }),
+    }
+    const items = Array.from({ length: 1200 }, (_, i) => ({ id: `p${i}`, tags: [] }))
+    await upsertPostings(db, items)
+    expect(batches.length).toBe(3)
+    expect(batches.map((b) => b.length)).toEqual([500, 500, 200])
+  })
+
+  // Splitting into statements must not drop or duplicate a row, and every
+  // batch must keep the identical conflict/refresh behaviour as a single insert.
+  it('carries every row through across batches with identical conflict behaviour', async () => {
+    const calls = []
+    const db = {
+      insert: () => ({
+        values: (rows) => ({
+          onConflictDoUpdate: (arg) => { calls.push({ rows, conflict: arg }) },
+        }),
+      }),
+    }
+    const items = Array.from({ length: 1200 }, (_, i) => ({ id: `p${i}`, tags: [] }))
+    await upsertPostings(db, items)
+
+    const ids = calls.flatMap((c) => c.rows.map((r) => r.id))
+    expect(ids.length).toBe(1200)
+    expect(new Set(ids).size).toBe(1200)
+
+    for (const { conflict } of calls) {
+      expect(conflict.target).toBe(postings.id)
+      expect(Object.keys(conflict.set)).toEqual(Object.keys(refreshSet()))
+    }
+  })
+
+  it('is a no-op for an empty list even though a single row would still batch once', async () => {
+    let calls = 0
+    const db = { insert: () => { calls += 1; return { values: () => ({ onConflictDoUpdate: () => {} }) } } }
+    await upsertPostings(db, [])
+    expect(calls).toBe(0)
   })
 })

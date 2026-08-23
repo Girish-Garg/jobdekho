@@ -9,7 +9,7 @@ const REFRESHABLE = [
   'title', 'company', 'location', 'url', 'descriptionSnippet', 'tags',
   'stipend', 'duration', 'experience', 'postedAt',
   'level', 'degreeMin', 'degreeRequired', 'workMode', 'type',
-  'stipendMin', 'durationMonths', 'experienceYears', 'groupKey',
+  'stipendMin', 'currency', 'durationMonths', 'experienceYears', 'groupKey',
   // Bumping this on every conflict is what makes staleness detectable: a row
   // whose lastSeenAt stops advancing is no longer being listed anywhere.
   'lastSeenAt',
@@ -26,6 +26,9 @@ export function toRow(p) {
     level, degreeMin: p.degreeMin ?? 'none', degreeRequired: p.degreeRequired ?? false,
     workMode: p.workMode ?? 'onsite',
     stipendMin: p.stipendMin ?? null,
+    // Absent on sources core hasn't classified yet, or on rows built before
+    // this field existed, so it has to default rather than throw.
+    currency: p.currency ?? null,
     durationMonths: p.durationMonths ?? null,
     experienceYears: p.experienceYears ?? null,
     groupKey: p.groupKey ?? null,
@@ -46,12 +49,24 @@ export function refreshSet(columns = REFRESHABLE) {
   return Object.fromEntries(columns.map((c) => [c, sql.raw(`excluded.${postings[c].name}`)]))
 }
 
+// Postgres rejects a statement with more than 65535 bind parameters, and
+// toRow() emits 24 columns per row. A single scrape used to fit in one insert
+// when there were only a handful of sources, but at ~90 boards a run can
+// easily clear the 65535/24 ≈ 2730-row ceiling, and Postgres fails that whole
+// statement, so the run loses every row rather than just the overflow. 500
+// rows/batch (12000 params) stays well clear of the cap even if toRow grows
+// more columns later, without needing to be retuned on every schema change.
+const UPSERT_BATCH_SIZE = 500
+
 export async function upsertPostings(db, items) {
   if (items.length === 0) return
-  await db.insert(postings).values(items.map(toRow)).onConflictDoUpdate({
-    target: postings.id,
-    set: refreshSet(),
-  })
+  for (let i = 0; i < items.length; i += UPSERT_BATCH_SIZE) {
+    const batch = items.slice(i, i + UPSERT_BATCH_SIZE)
+    await db.insert(postings).values(batch.map(toRow)).onConflictDoUpdate({
+      target: postings.id,
+      set: refreshSet(),
+    })
+  }
 }
 
 export async function recordRun(db, { id, sourceResults, newCount }) {
