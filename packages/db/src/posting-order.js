@@ -45,4 +45,18 @@ export const groupRankColumn = sql`
 // those apart. Same coalesce(groupKey, id) fallback as above, and for the same
 // reason - an unkeyed row must be its own group, not fall into one shared
 // partition with every other unkeyed row.
-export const groupSourceCountColumn = sql`count(distinct ${postings.source}) over (partition by coalesce(${postings.groupKey}, ${postings.id}))`
+//
+// Postgres rejects count(distinct x) over (...) outright with 0A000, "DISTINCT
+// is not implemented for window functions", so the count is built out of two
+// dense ranks instead: ranking the sources ascending and descending within the
+// partition and adding the two gives every row the same total, one more than
+// the number of distinct values. Nothing in a fake-db test can catch that
+// rejection, since the SQL is only text until Postgres parses it, which is how
+// the DISTINCT version reached a running server.
+const bySource = (direction) => sql`
+  dense_rank() over (
+    partition by coalesce(${postings.groupKey}, ${postings.id})
+    order by ${postings.source} ${direction}
+  )`
+
+export const groupSourceCountColumn = sql`(${bySource(sql`asc`)} + ${bySource(sql`desc`)} - 1)`
