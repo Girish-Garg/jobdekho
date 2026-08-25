@@ -1,5 +1,5 @@
 import { degreeRank } from './degree.js'
-import { levelRank } from './level.js'
+import { levelRank, LEVELS } from './level.js'
 
 // Each dimension answers the same question on the same scale: how well does
 // this posting satisfy this part of the profile, from 0 to 1. Keeping them
@@ -80,6 +80,12 @@ export function levelFit(level, wanted) {
   const at = levelRank(level || 'mid')
   const gap = Math.min(...wanted.map((w) => Math.abs(at - levelRank(w))))
   return LEVEL_BY_GAP[Math.min(gap, LEVEL_BY_GAP.length - 1)]
+}
+
+// Every rung's level fit, so the SQL mirror can emit one lookup CASE instead
+// of reimplementing the distance curve.
+export function levelFitTable(wanted) {
+  return Object.fromEntries(LEVELS.map((l) => [l, levelFit(l, wanted)]))
 }
 
 export function degreeFit(degreeMin, held) {

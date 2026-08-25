@@ -167,6 +167,40 @@ describe('scorePosting', () => {
   })
 })
 
+describe('scorePosting breakdown', () => {
+  // The breakdown exists so a UI can show why a grade landed where it did,
+  // which only works if the parts genuinely are the whole.
+  it('adds up to the fit it explains', () => {
+    const { fit, breakdown } = scorePosting(posting({ title: 'React Developer' }), profile)
+    expect(Math.round(breakdown.reduce((sum, d) => sum + d.points, 0))).toBe(fit)
+  })
+
+  it('still adds up under rarity weights and a partial profile', () => {
+    const p = { skills: ['python', 'kubernetes'], years: 2 }
+    const idf = { python: 1, kubernetes: 4 }
+    const { fit, breakdown } = scorePosting(posting({ descriptionText: 'python daily' }), p, idf)
+    expect(Math.round(breakdown.reduce((sum, d) => sum + d.points, 0))).toBe(fit)
+  })
+
+  it('reports each dimension as its 0-1 value, weight and points', () => {
+    const { breakdown } = scorePosting(posting({ title: 'React Developer' }), profile)
+    const { total } = dimensionWeights(profile)
+    for (const d of breakdown) {
+      expect(d.value).toBeGreaterThanOrEqual(0)
+      expect(d.value).toBeLessThanOrEqual(1)
+      expect(d.weight).toBe(WEIGHTS[d.dimension])
+      expect(d.points).toBeCloseTo((100 * d.weight * d.value) / total, 10)
+    }
+  })
+
+  // A dropped dimension shown at zero would read as a failed match, when the
+  // truth is that the profile asked nothing of it.
+  it('leaves an unasked dimension out instead of showing it at zero', () => {
+    const { breakdown } = scorePosting(posting(), { skills: ['react'], years: 2 })
+    expect(breakdown.map((d) => d.dimension)).toEqual(['skills', 'level', 'degree'])
+  })
+})
+
 describe('dimensionWeights', () => {
   // Scoring an absent dimension as zero would cap an incomplete profile below
   // 100 forever, which reads as a bad match rather than as a thin profile.
