@@ -27,3 +27,56 @@ describe('MatchReasons', () => {
     expect(container).toBeEmptyDOMElement();
   });
 });
+
+describe('MatchReasons grade and breakdown', () => {
+  const breakdown = [
+    // Shaped exactly as core emits it: weight is the raw 45/25/20, and `max`
+    // is the dimension's ceiling in fit points after renormalising over the
+    // dimensions this profile supports. A fixture carrying weight as a
+    // fraction is what let a display print "32 of 4500" with tests green.
+    { dimension: 'skills', value: 0.62, weight: 45, points: 29.8, max: 48 },
+    { dimension: 'titles', value: 0.5, weight: 25, points: 13.3, max: 27 },
+    { dimension: 'level', value: 1, weight: 20, points: 21.3, max: 21 },
+  ];
+
+  it('shows the grade beside the fit heading', () => {
+    render(<MatchReasons reasons={['matches react']} grade="B" breakdown={breakdown} />);
+    expect(screen.getByText('Fit')).toBeInTheDocument();
+    expect(screen.getByText('Grade B')).toBeInTheDocument();
+  });
+
+  // The profile decides which dimensions exist, so the rows follow the array,
+  // not a fixed four.
+  it('renders one row per dimension the server scored', () => {
+    render(<MatchReasons reasons={['matches react']} grade="B" breakdown={breakdown} />);
+    expect(screen.getAllByRole('listitem')).toHaveLength(3);
+    expect(screen.getByText('Skills')).toBeInTheDocument();
+    expect(screen.getByText('Title')).toBeInTheDocument();
+    expect(screen.getByText('Level')).toBeInTheDocument();
+  });
+
+  // The bars are aria-hidden, so the contribution must survive as plain text:
+  // rounded points against the dimension's own ceiling.
+  it('writes each contribution out as points, not only as a bar width', () => {
+    render(<MatchReasons reasons={['matches react']} grade="B" breakdown={breakdown} />);
+    expect(screen.getByText('30 of 48')).toBeInTheDocument();
+    expect(screen.getByText('13 of 27')).toBeInTheDocument();
+    expect(screen.getByText('21 of 21')).toBeInTheDocument();
+  });
+
+  // A ranked posting can carry a breakdown while the phrase list came back
+  // empty; the block still has something to say.
+  it('still renders when the ranking is present but the phrases are empty', () => {
+    render(<MatchReasons reasons={[]} grade="C" breakdown={breakdown} />);
+    expect(screen.getByText('Grade C')).toBeInTheDocument();
+    expect(screen.getAllByRole('listitem')).toHaveLength(3);
+  });
+
+  it('shows no grade and no bars when the posting came back unranked', () => {
+    const { container } = render(<MatchReasons />);
+    expect(container).toBeEmptyDOMElement();
+    render(<MatchReasons reasons={['matches react']} />);
+    expect(screen.queryByText(/Grade/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('listitem')).not.toBeInTheDocument();
+  });
+});

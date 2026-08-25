@@ -324,6 +324,66 @@ describe('PostingsView best-fit ranking', () => {
   });
 });
 
+describe('PostingsView legitimacy and grade', () => {
+  it('shows the ghost signals in the overlay, not on the card', async () => {
+    getPostings.mockResolvedValue([
+      row({
+        title: 'Ghost Engineer',
+        legitimacy: 'low',
+        ghostSignals: ['no pay stated', 'posted 4 months ago'],
+      }),
+    ]);
+    render(<PostingsView filters={EMPTY} onOpenProfile={() => {}} />);
+    expect(await screen.findByText('Ghost Engineer')).toBeInTheDocument();
+
+    // The card carries the warning; the evidence stays in the overlay.
+    expect(screen.getByText('May not be a live opening')).toBeInTheDocument();
+    expect(screen.queryByText('no pay stated')).not.toBeInTheDocument();
+
+    fireEvent.click(card('Ghost Engineer'));
+    expect(await screen.findByText('no pay stated')).toBeInTheDocument();
+    expect(screen.getByText('posted 4 months ago')).toBeInTheDocument();
+  });
+
+  it('shows the grade and the breakdown with the fit reasons in the overlay', async () => {
+    getPostings.mockResolvedValue([
+      row({
+        title: 'React Engineer',
+        fit: 45,
+        reasons: ['matches react'],
+        grade: 'B',
+        breakdown: [{ dimension: 'skills', value: 0.9, weight: 45, points: 45, max: 50 }],
+        legitimacy: 'high',
+        ghostSignals: [],
+      }),
+    ]);
+    render(<PostingsView filters={EMPTY} onOpenProfile={() => {}} />);
+    expect(await screen.findByText('React Engineer')).toBeInTheDocument();
+
+    // The card already says "45 fit"; a letter next to it would be a second
+    // number competing to mean the same thing.
+    expect(screen.queryByText(/Grade/)).not.toBeInTheDocument();
+
+    fireEvent.click(card('React Engineer'));
+    expect(await screen.findByText('Grade B')).toBeInTheDocument();
+    expect(screen.getByText('Skills')).toBeInTheDocument();
+    expect(screen.getByText('45 of 50')).toBeInTheDocument();
+  });
+
+  it('keeps the grade and breakdown out of the overlay when the feed is unranked', async () => {
+    getPostings.mockResolvedValue([
+      row({ title: 'Engineer', legitimacy: 'high', ghostSignals: [] }),
+    ]);
+    render(<PostingsView filters={EMPTY} onOpenProfile={() => {}} />);
+    expect(await screen.findByText('Engineer')).toBeInTheDocument();
+
+    fireEvent.click(card('Engineer'));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.queryByText(/Grade/)).not.toBeInTheDocument();
+    expect(screen.queryByText('Caution')).not.toBeInTheDocument();
+  });
+});
+
 describe('PostingsView overlay', () => {
   beforeEach(() => getPostings.mockResolvedValue([row({ title: 'Engineer' })]));
 

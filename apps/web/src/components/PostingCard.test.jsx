@@ -110,6 +110,38 @@ describe('PostingCard fit score', () => {
   });
 });
 
+describe('PostingCard legitimacy warning', () => {
+  it('flags a low-legitimacy posting', () => {
+    render(<PostingCard posting={{ ...base, legitimacy: 'low' }} onOpen={() => {}} />);
+    expect(screen.getByText('May not be a live opening')).toBeInTheDocument();
+  });
+
+  it('flags a suspicious posting', () => {
+    render(<PostingCard posting={{ ...base, legitimacy: 'suspicious' }} onOpen={() => {}} />);
+    expect(screen.getByText('May not be a live opening')).toBeInTheDocument();
+  });
+
+  // Most postings are fine, so high and medium show nothing at all: a badge on
+  // every card would be noise, and this one accuses a posting of wasting time.
+  it('says nothing for high or medium legitimacy', () => {
+    for (const legitimacy of ['high', 'medium']) {
+      const { unmount } = render(<PostingCard posting={{ ...base, legitimacy }} onOpen={() => {}} />);
+      expect(screen.queryByText(/live opening/)).not.toBeInTheDocument();
+      unmount();
+    }
+  });
+
+  // A warning is not the accent: ember still belongs to "new today" alone.
+  it('never borrows the ember accent', () => {
+    const { container } = render(
+      <PostingCard posting={{ ...base, legitimacy: 'suspicious' }} onOpen={() => {}} />,
+    );
+    const ember = container.querySelectorAll('.bg-ember, .text-ember');
+    expect(ember).toHaveLength(1);
+    expect(ember[0]).toHaveAttribute('aria-label', 'New today');
+  });
+});
+
 describe('PostingCard level label', () => {
   // The label carries its own rung colour, so the left edge never has to be
   // decoded. It stays plain text: a filled badge on every card would shout.

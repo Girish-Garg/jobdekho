@@ -21,6 +21,9 @@ export default function PostingCard({ posting, onOpen }) {
   // Only a ranked feed carries the field, and 0 is a real score, so this is a
   // presence check rather than truthiness.
   const ranked = Number.isInteger(posting.fit);
+  // Only the two rungs where the ghost signals stack up. High and medium show
+  // nothing: most postings are fine, and a verdict on every card is noise.
+  const doubtful = posting.legitimacy === 'low' || posting.legitimacy === 'suspicious';
 
   return (
     <button
@@ -67,6 +70,11 @@ export default function PostingCard({ posting, onOpen }) {
       {/* mt-auto only on the footer: grid rows stretch to their tallest card, so
           this keeps the rule aligned across a row instead of floating. */}
       <div className="mt-auto flex flex-col gap-1 border-t border-line pt-2 font-mono text-[11px]">
+        {/* A caution about the posting's lifecycle, so it lives with the other
+            posting facts rather than in the signal row, which is full. The
+            phrase describes the posting, never the employer: the evidence is
+            in the overlay. Ink, not ember - a warning is not the accent. */}
+        {doubtful && <span className={`${LABEL} text-ink`}>May not be a live opening</span>}
         <div className="flex items-baseline justify-between gap-2">
           <span className="truncate text-muted">{posting.location || 'Location not listed'}</span>
           {posting.stipend && <span className="tnum shrink-0 text-ink">{posting.stipend}</span>}

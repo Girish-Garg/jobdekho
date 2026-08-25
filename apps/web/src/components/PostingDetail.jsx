@@ -3,6 +3,7 @@ import { levelTone } from '../lib/levelColor.js';
 import { relativeDay } from '../lib/time.js';
 import PostingActions from './PostingActions.jsx';
 import MatchReasons from './MatchReasons.jsx';
+import GhostSignals from './GhostSignals.jsx';
 
 // Only one overlay is ever mounted, so a constant id is enough to name it.
 export const TITLE_ID = 'posting-dialog-title';
@@ -48,7 +49,12 @@ export default function PostingDetail({ posting, onClose, onStatus }) {
 
       {/* Whenever the server ranked the feed, whatever the sort. The card
           stays a scan unit; the room for "why" is here. */}
-      <MatchReasons reasons={posting.reasons} />
+      <MatchReasons reasons={posting.reasons} grade={posting.grade} breakdown={posting.breakdown} />
+
+      {/* Ranked or not: legitimacy is about the posting, not the profile. This
+          list is what the card's warning rests on - shown whenever there is
+          evidence, even when it stayed below the warning's threshold. */}
+      <GhostSignals signals={posting.ghostSignals} />
 
       <dl className="grid grid-cols-2 gap-x-6 gap-y-3 border-y border-line py-4 sm:grid-cols-3">
         {detailRows(posting).map(([label, value, tone]) => (
