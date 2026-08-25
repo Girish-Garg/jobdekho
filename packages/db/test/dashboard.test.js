@@ -202,7 +202,7 @@ describe('listPostingsForUser', () => {
   it('selects groupSourceCount but strips it before it reaches the caller', async () => {
     const { db, calls } = fakeDb([{ id: '1', status: undefined }])
     const [posting] = await listPostingsForUser(db, 'u1')
-    expect(calls.columns).toHaveProperty('groupSourceCount')
+    expect(calls.selects[0]).toHaveProperty('groupSourceCount')
     expect('groupSourceCount' in posting).toBe(false)
   })
 
@@ -263,9 +263,11 @@ describe('listPostingsForUser when ranking', () => {
   it('adds fit and reasons to each posting, computed by core', async () => {
     const { db } = fakeDb([{ ...row }])
     const [posting] = await listPostingsForUser(db, 'u1', { sort: 'match', profile })
-    // Skills, level and degree all fit perfectly, and titles were never stated,
-    // so the incomplete profile still reaches 100 rather than being capped.
-    expect(posting.fit).toBe(100)
+    // Level and degree fit perfectly and titles were never stated, so those
+    // dimensions pay in full. Skills saturate rather than complete: one
+    // matched skill is strong evidence, not proof, so the total sits below
+    // 100 even though nothing here is a mismatch.
+    expect(posting.fit).toBe(47)
     expect(posting.reasons).toContain('matches react')
   })
 
@@ -285,13 +287,18 @@ describe('listPostingsForUser when ranking', () => {
   // Ghost detection's thin-JD signal needs the full text, and that signal has
   // to fire on every feed, so the column can no longer be conditional on
   // whether ranking is active.
-  it('selects descriptionText on every feed, ranked or not', async () => {
-    const ranked = fakeDb()
-    await listPostingsForUser(ranked.db, 'u1', { sort: 'match', profile })
-    expect(ranked.calls.columns).toHaveProperty('descriptionText')
-    const unranked = fakeDb()
-    await listPostingsForUser(unranked.db, 'u1')
-    expect(unranked.calls.columns).toHaveProperty('descriptionText')
+  // Ghost detection reads the description on every feed, ranked or not, but
+  // it is fetched for the page rather than carried through the ranked
+  // subquery: that subquery spans the whole matching set before LIMIT, and
+  // dragging a 4000 character column through it measured 3 to 4 times slower.
+  it('fetches descriptionText for the page, not through the ranked subquery', async () => {
+    for (const opts of [{ sort: 'match', profile }, {}]) {
+      const { db, calls } = fakeDb([{ id: '1', status: undefined }])
+      await listPostingsForUser(db, 'u1', opts)
+      expect(calls.selects[0]).not.toHaveProperty('descriptionText')
+      expect(calls.selects.at(-1)).toHaveProperty('descriptionText')
+      expect(Object.keys(calls.selects.at(-1))).toEqual(['id', 'descriptionText'])
+    }
   })
 
   // legitimacy and ghostSignals need no profile, so an unranked feed still

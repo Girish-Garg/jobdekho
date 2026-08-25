@@ -6,6 +6,7 @@ import { postingConditions, clampPage } from './posting-filters.js'
 import { toNumber } from './posting-measures.js'
 import { orderFor, groupCountColumn, groupRankColumn, groupSourceCountColumn } from './posting-order.js'
 import { scoreColumn, canRank } from './posting-score.js'
+import { attachText } from './page-text.js'
 import { skillDocFreq } from './skill-doc-freq.js'
 import { withFit, withGhost } from './posting-fit.js'
 
@@ -42,10 +43,6 @@ export async function listPostingsForUser(db, userId, opts = {}) {
   const ranked = db
     .select({
       ...POSTING_COLUMNS,
-      // Ghost detection reads this for its thin-JD signal on every feed now,
-      // not only a ranked one; it still never reaches the browser - see
-      // toPosting below and posting-fit.js.
-      descriptionText: postings.descriptionText,
       groupCount: groupCountColumn.as('group_count'),
       groupRank: groupRankColumn.as('group_rank'),
       groupSourceCount: groupSourceCountColumn.as('group_source_count'),
@@ -65,7 +62,10 @@ export async function listPostingsForUser(db, userId, opts = {}) {
   if (minFit) gate.push(gte(ranked.matchScore, minFit))
   let query = db.select().from(ranked)
   if (gate.length) query = query.where(and(...gate))
-  const rows = await query.orderBy(...orderFor(sort, ranked)).limit(limit).offset(offset)
+  const paged = await query.orderBy(...orderFor(sort, ranked)).limit(limit).offset(offset)
+  // Ghost detection reads the description on every feed, ranked or not, so it
+  // is attached after paging rather than carried through the subquery.
+  const rows = await attachText(db, paged)
   const page = rows.map((row) => toPosting(ranks ? withFit(row, opts.profile, idf) : withGhost(row)))
   return applyStatusFilter(page, opts.status)
 }

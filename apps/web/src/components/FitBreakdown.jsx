@@ -2,8 +2,9 @@
 const DIMENSION_WORD = { skills: 'Skills', titles: 'Title', level: 'Level', degree: 'Degree' };
 
 // Each bar is that dimension's own 0-1 value, not a share of 100: the fit
-// total tops out near the low 60s in practice, so a track meaning "out of a
-// hundred" would paint every posting as a failure. "17 of 35" is the same
+// total rarely passes the seventies, because the skills curve approaches its
+// ceiling without reaching it, so a track meaning "out of a hundred" would
+// paint a strong match as a failure. "17 of 35" is the same
 // fact in text, because the bars are data and colour-blind readers and screen
 // readers both need a version that is not a width. Points are rounded for
 // reading, so the rows can drift a point off the card's total; the unrounded

@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { PgDialect } from 'drizzle-orm/pg-core'
 import { WEIGHTS, dimensionWeights, levelFitTable } from '@jobdekho/core/score.js'
 import { TITLE_CREDIT, BODY_CREDIT, skillPatternSource } from '@jobdekho/core/fit-dimensions.js'
+import { HALF_MATCH } from '@jobdekho/core/skill-fit.js'
 import { levelsForYears } from '@jobdekho/core/profile.js'
 import { scoreColumn, canRank } from '@jobdekho/db/posting-score.js'
 
@@ -40,8 +41,10 @@ describe('canRank', () => {
 describe('scoreColumn skills', () => {
   it('emits one CASE branch per profile skill rather than one for the whole list', () => {
     const { sql } = render(scoreColumn({ skills: ['react', 'node', 'python'] }))
-    // Each skill's branch checks title first, then body: two regex tests per skill.
-    expect((sql.match(/~\*/g) || []).length).toBe(6)
+    // Two regex tests per skill, title then body, and the whole sum appears
+    // twice because the saturating curve is m / (m + k) and SQL has no way to
+    // name m once at this level.
+    expect((sql.match(/~\*/g) || []).length).toBe(12)
   })
 
   // Core reads descriptionText and falls back to the snippet when a row
@@ -57,19 +60,20 @@ describe('scoreColumn skills', () => {
   it('binds the title and body credits core owns, per skill', () => {
     const { params } = render(scoreColumn({ skills: ['react', 'node'] }))
     expect(params.filter((p) => p === 1 * TITLE_CREDIT).length).toBeGreaterThanOrEqual(2)
-    expect(params.filter((p) => p === 1 * BODY_CREDIT)).toHaveLength(2)
-    expect(params).toContain(2)
+    expect(params.filter((p) => p === 1 * BODY_CREDIT)).toHaveLength(4)
   })
 
-  // Coverage, not a count: the denominator is every profile skill's weight,
-  // matched or not, exactly as skillFit() divides.
-  it('scales each skill by its rarity weight and divides by the weight total', () => {
+  // Saturating, not coverage: the constant is HALF_MATCH and nothing depends
+  // on how many skills were listed. Dividing by the profile's own weight total
+  // is what capped a 25 skill profile near 60 on every posting.
+  it('scales each skill by its rarity weight and saturates on a constant', () => {
     const idf = { react: 2, node: 1.5 }
     const { params } = render(scoreColumn({ skills: ['react', 'node'] }, idf))
     expect(params).toContain(2 * TITLE_CREDIT)
     expect(params).toContain(2 * BODY_CREDIT)
     expect(params).toContain(1.5 * TITLE_CREDIT)
-    expect(params).toContain(3.5)
+    expect(params).toContain(HALF_MATCH)
+    expect(params).not.toContain(3.5)
   })
 
   // The pattern has to come from core rather than be rebuilt here, or this SQL
@@ -103,8 +107,13 @@ describe('scoreColumn titles', () => {
   it('emits one hit test per title token and divides by that title token count', () => {
     const { sql, params } = render(scoreColumn({ titles: ['senior backend engineer'] }))
     expect((sql.match(/~\*/g) || []).length).toBe(2)
-    expect(params).toContain('\\ybackend\\y')
-    expect(params).toContain('\\yengineer\\y')
+    // Stemmed, and opened but not closed: \yengin matches "engineer" and
+    // "engineering" alike, which is the whole point of matching a stem as a
+    // prefix. A closing \y is what scored "software engineering intern"
+    // against "Software Engineer Intern" at half.
+    expect(params).toContain('\\ybackend')
+    expect(params).toContain('\\yengin')
+    expect(params).not.toContain('\\yengineer\\y')
     expect(params).toContain(2)
   })
 

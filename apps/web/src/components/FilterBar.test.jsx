@@ -132,26 +132,26 @@ describe('FilterBar fit filter', () => {
     const { setFilters } = await setup();
     open('Fit');
     fireEvent.click(screen.getByRole('button', { name: 'Good fit' }));
-    expect(setFilters).toHaveBeenCalledWith(expect.objectContaining({ minFit: '30' }));
+    expect(setFilters).toHaveBeenCalledWith(expect.objectContaining({ minFit: '44' }));
   });
 
   // A second floor would just shadow the first, so the pick replaces like
   // Status rather than stacking like Level.
   it('replaces rather than stacks the floor', async () => {
-    const { setFilters } = await setup({ minFit: '30' });
+    const { setFilters } = await setup({ minFit: '44' });
     open('Fit');
     expect(screen.getByRole('button', { name: 'Good fit' })).toHaveAttribute('aria-pressed', 'true');
     fireEvent.click(screen.getByRole('button', { name: 'Strong fit' }));
-    expect(setFilters).toHaveBeenCalledWith(expect.objectContaining({ minFit: '45' }));
+    expect(setFilters).toHaveBeenCalledWith(expect.objectContaining({ minFit: '62' }));
   });
 
   it('counts an active floor on the closed trigger', async () => {
-    await setup({ minFit: '45' });
+    await setup({ minFit: '62' });
     expect(screen.getByRole('button', { name: 'Fit (1)' })).toBeInTheDocument();
   });
 
   it('surfaces the floor as a chip and removes it from there', async () => {
-    const { setFilters } = await setup({ minFit: '30' });
+    const { setFilters } = await setup({ minFit: '44' });
     expect(screen.getByText('Good fit')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Remove Good fit filter' }));
     expect(setFilters).toHaveBeenCalledWith(expect.objectContaining({ minFit: '' }));

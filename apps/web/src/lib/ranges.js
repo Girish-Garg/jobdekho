@@ -31,15 +31,15 @@ export const DURATION_RANGES = [
   ['6', 'Max 6 months'],
 ];
 
-// Fit is the server's 0-100 score of a posting against the profile, but the
-// scale tops out low in practice: measured on 1485 postings, nothing scored
-// above 63, because a perfect score needs every dimension perfect and real
-// postings never are. So the rungs sit where the feed actually thins - about
-// a third of it clears 30, the strongest few percent clear 45 - and they are
-// words, not numbers, so recalibrating them later cannot turn the copy into
-// a lie.
+// Fit is the server's 0-100 score of a posting against the profile. A perfect
+// score needs every dimension perfect and the skills curve only approaches
+// its ceiling, so the top of the scale stays thin: measured over 1880 live
+// postings the best was 84 and the median 33. The rungs are percentiles of
+// that measurement, not round numbers - a quarter of the feed clears 44 and
+// the strongest twentieth clears 62 - and they are words rather than numbers
+// so a later recalibration cannot turn the copy into a lie.
 export const FIT_RANGES = [
   ['', 'Any'],
-  ['30', 'Good fit'],
-  ['45', 'Strong fit'],
+  ['44', 'Good fit'],
+  ['62', 'Strong fit'],
 ];

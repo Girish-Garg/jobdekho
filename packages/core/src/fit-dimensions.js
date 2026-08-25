@@ -1,5 +1,10 @@
 import { degreeRank } from './degree.js'
 import { levelRank, LEVELS } from './level.js'
+import { stemToken } from './stem.js'
+
+// Re-exported so the SQL mirror in packages/db reads the stemmer through the
+// same module it reads every other matching rule from.
+export { stemToken }
 
 // Each dimension answers the same question on the same scale: how well does
 // this posting satisfy this part of the profile, from 0 to 1. Keeping them
@@ -59,12 +64,12 @@ export function titleTokens(text) {
 // is naming alternatives, and being a perfect fit for one of them is not made
 // worse by the other two.
 export function titleFit(postingTitle, titles) {
-  const hay = new Set(titleTokens(postingTitle))
+  const hay = titleTokens(postingTitle)
   let best = 0
   for (const wanted of titles) {
-    const tokens = titleTokens(wanted)
+    const tokens = titleTokens(wanted).map(stemToken)
     if (!tokens.length) continue
-    const hits = tokens.filter((t) => hay.has(t)).length
+    const hits = tokens.filter((stem) => hay.some((word) => word.startsWith(stem))).length
     best = Math.max(best, hits / tokens.length)
   }
   return best

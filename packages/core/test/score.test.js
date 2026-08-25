@@ -85,14 +85,26 @@ describe('scorePosting', () => {
     expect(best.fit).toBeGreaterThan(worst.fit)
   })
 
-  // Coverage, not a tally. Matching the whole of a small profile says more
-  // about fit than matching one corner of a large one.
-  it('reads a match as a share of the profile, not a tally', () => {
+  // This asserted the opposite until live data showed the opposite was wrong.
+  // Dividing by every listed skill asked whether the job used everything the
+  // candidate knew, so a real 25 skill profile scored 4.3 of 45 on its own
+  // best internship and nothing could clear 60. Breadth is not evidence
+  // against a match, and listing one more skill must not devalue every job.
+  it('does not dilute a match when the profile lists more skills', () => {
     const focused = scorePosting(posting({ title: 'React Developer' }), { skills: ['react'], years: 2 })
-    const diluted = scorePosting(posting({ title: 'React Developer' }), {
+    const broad = scorePosting(posting({ title: 'React Developer' }), {
       skills: ['react', 'go', 'rust', 'scala', 'kotlin', 'swift', 'elixir'], years: 2,
     })
-    expect(focused.fit).toBeGreaterThan(diluted.fit)
+    expect(broad.fit).toBe(focused.fit)
+  })
+
+  // What should separate two postings is how much each matched, which is the
+  // question the ranking exists to answer.
+  it('ranks a posting that matches more above one that matches less', () => {
+    const p = { skills: ['react', 'node', 'python', 'docker'], years: 2 }
+    const many = scorePosting(posting({ title: 'React Node Python Developer' }), p)
+    const few = scorePosting(posting({ title: 'React Developer' }), p)
+    expect(many.fit).toBeGreaterThan(few.fit)
   })
 
   // A rare skill is evidence about the role; one that appears in a third of

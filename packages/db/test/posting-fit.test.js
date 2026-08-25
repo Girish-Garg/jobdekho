@@ -42,7 +42,9 @@ describe('withFit', () => {
 
   it('carries fit, reasons, grade, breakdown, legitimacy and ghostSignals together', () => {
     const posting = withFit(row, profile, {})
-    expect(posting.fit).toBe(100)
+    // Not 100: the skills curve saturates, so a single matched skill is
+    // strong evidence rather than complete evidence.
+    expect(posting.fit).toBe(47)
     expect(posting.reasons).toContain('matches react')
     expect(posting.grade).toBe(gradeFor(posting.fit))
     expect(posting.breakdown.length).toBeGreaterThan(0)

@@ -1,8 +1,9 @@
 import { sql, inArray } from 'drizzle-orm'
 import { dimensionWeights, levelFitTable } from '@jobdekho/core/score.js'
 import {
-  TITLE_CREDIT, BODY_CREDIT, skillPatternSource, titleTokens,
+  TITLE_CREDIT, BODY_CREDIT, skillPatternSource, titleTokens, stemToken,
 } from '@jobdekho/core/fit-dimensions.js'
+import { HALF_MATCH } from '@jobdekho/core/skill-fit.js'
 import { normalizeProfile, levelsForYears } from '@jobdekho/core/profile.js'
 import { postings } from './schema.js'
 import { allowedDegrees } from './posting-filters.js'
@@ -29,21 +30,28 @@ function skillTerm(skills, idf) {
       when ${body} ~* ${pattern} then ${weight * BODY_CREDIT}::float8
       else 0 end`
   })
-  // Dividing by every skill's weight, matched or not, is what makes this
-  // coverage rather than a count - the same denominator skillFit() uses.
-  const available = skills.reduce((sum, skill) => sum + (idf[skill] ?? 1), 0)
-  return sql`(${sql.join(cases, sql` + `)}) / ${available}::float8`
+  // m / (m + HALF_MATCH), the saturating curve skillFit() uses. Dividing by
+  // every listed skill instead would ask whether the job uses everything the
+  // candidate knows, which capped a real 25 skill profile near 60 on every
+  // posting it could see.
+  const earned = sql`(${sql.join(cases, sql` + `)})`
+  return sql`${earned} / (${earned} + ${HALF_MATCH}::float8)`
 }
 
 // GREATEST mirrors titleFit()'s max: three target titles are alternatives,
 // and the best one decides. Token counts are JS constants, so each option is
 // a sum of per-token hits over that title's own token total.
+//
+// Each token is stemmed and matched with an OPENING boundary only. That is
+// the SQL spelling of titleFit()'s prefix test: \yengin matches "engineer"
+// and "engineering" alike, which is why the stem is compared as a prefix on
+// both sides rather than as an equal string.
 function titleTerm(titles) {
   const options = titles.map((wanted) => {
-    const tokens = titleTokens(wanted)
+    const tokens = titleTokens(wanted).map(stemToken)
     if (!tokens.length) return null
-    const hits = tokens.map((token) =>
-      sql`case when ${postings.title} ~* ${skillPatternSource(token, '\\y', '\\y')} then 1 else 0 end`)
+    const hits = tokens.map((stem) =>
+      sql`case when ${postings.title} ~* ${skillPatternSource(stem, '\\y', '')} then 1 else 0 end`)
     return sql`(${sql.join(hits, sql` + `)}) / ${tokens.length}::float8`
   }).filter(Boolean)
   if (!options.length) return null
