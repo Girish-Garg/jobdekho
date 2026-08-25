@@ -88,4 +88,29 @@ describe('arbeitnow adapter', () => {
   it('converts the epoch timestamp', () => {
     expect(arbeitnowRaw({ slug: 'a', created_at: 1786902019 }).postedAt).toContain('2026')
   })
+
+  // Seen live: one row in 175 carried job_types as an object rather than a
+  // list, because PHP serialises an array with non-sequential keys that way.
+  // Spreading it threw, and the whole board was lost to the one bad row.
+  it('reads a list that arrived as a keyed object', () => {
+    const raw = arbeitnowRaw({
+      slug: 'a', tags: { 2: 'Finance' }, job_types: { 1: 'professional / experienced' },
+    })
+    expect(raw.tags).toEqual(['Finance', 'professional / experienced'])
+  })
+
+  it('still reads an internship out of a keyed job_types object', () => {
+    expect(arbeitnowRaw({ slug: 'a', job_types: { 3: 'internship' } }).level).toBe('internship')
+  })
+
+  // One malformed row must not cost the other 174.
+  it('maps a whole board when one row carries the keyed shape', async () => {
+    const data = [
+      { slug: 'a', title: 'Dev', job_types: ['full time'] },
+      { slug: 'b', title: 'Ops', job_types: { 1: 'professional / experienced' } },
+      { slug: 'c', title: 'QA', tags: { 4: 'Testing' } },
+    ]
+    const rows = await arbeitnow().fetch(async () => ({ json: async () => ({ data }) }))
+    expect(rows.map((r) => r.externalId)).toEqual(['a', 'b', 'c'])
+  })
 })

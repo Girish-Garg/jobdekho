@@ -22,17 +22,41 @@ function place(l) {
   return where
 }
 
-// Only the first 100 postings are read. Boards larger than that need the
-// offset parameter, which no configured company currently justifies.
-const url = (slug) => `https://api.smartrecruiters.com/v1/companies/${slug}/postings?limit=100`
+const PER_PAGE = 100
+// Six configured boards each reported exactly 100 postings, which is this
+// endpoint's page size, not their size: Bosch alone had 4779. Reading one page
+// silently discarded about 6500 postings, more than the whole relevant corpus.
+//
+// country=in is what makes paging them affordable. These are multinationals,
+// so most of that 4779 is not reachable from India anyway and the location
+// rule would drop it after the request had already been paid for; the filter
+// moves that decision to the server and takes Bosch to 559. The trade is that
+// a genuinely worldwide-remote role at one of these companies is now out of
+// reach, where before it had a one-in-forty-eight chance of being in the
+// single page that was read.
+const url = (slug, offset) =>
+  `https://api.smartrecruiters.com/v1/companies/${slug}/postings` +
+  `?limit=${PER_PAGE}&offset=${offset}&country=in`
+
+// A ceiling on a board nobody expected to be this large, so one company
+// cannot dominate a run. No configured board is near it.
+const MAX_PAGES = 12
 
 export function smartrecruiters({ slug }) {
   return {
     name: `smartrecruiters:${slug}`,
     async fetch(http) {
-      const res = await http(url(slug))
-      const data = await res.json()
-      return (data.content || []).map((j) => ({
+      const content = []
+      for (let page = 0; page < MAX_PAGES; page++) {
+        const res = await http(url(slug, page * PER_PAGE))
+        const data = await res.json()
+        const rows = data.content || []
+        content.push(...rows)
+        // totalFound is absent on some responses, so the short page is the
+        // reliable end marker and the count is only a shortcut.
+        if (rows.length < PER_PAGE || content.length >= (data.totalFound ?? 0)) break
+      }
+      return content.map((j) => ({
         externalId: String(j.id),
         title: j.name || '',
         company: j.company?.name || slug,
