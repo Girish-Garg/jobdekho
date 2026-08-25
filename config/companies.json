@@ -77,8 +77,28 @@
     { "provider": "workable", "slug": "persado" },
     { "provider": "recruitee", "slug": "channable" },
     { "provider": "recruitee", "slug": "gorgias" },
-    { "provider": "recruitee", "slug": "vandebron" }
+    { "provider": "recruitee", "slug": "vandebron" },
+    { "provider": "workable", "slug": "tiger-analytics" },
+    { "provider": "greenhouse", "slug": "slice" },
+    { "provider": "greenhouse", "slug": "zenoti" },
+    { "provider": "lever", "slug": "mindtickle" },
+    { "provider": "lever", "slug": "zeta" },
+    { "provider": "greenhouse", "slug": "observeai" },
+    { "provider": "lever", "slug": "fampay" },
+    { "provider": "greenhouse", "slug": "cloudsek" },
+    { "provider": "smartrecruiters", "slug": "ixigo" },
+    { "provider": "ashby", "slug": "bounce" },
+    { "provider": "ashby", "slug": "navi" },
+    { "provider": "smartrecruiters", "slug": "Kredx" },
+    { "provider": "smartrecruiters", "slug": "Unacademy" },
+    { "provider": "lever", "slug": "pocketfm" },
+    { "provider": "smartrecruiters", "slug": "Whatfix" },
+    { "provider": "smartrecruiters", "slug": "NoBroker" },
+    { "provider": "smartrecruiters", "slug": "Turtlemint" },
+    { "provider": "smartrecruiters", "slug": "Cars24" },
+    { "provider": "smartrecruiters", "slug": "Upstox" },
+    { "provider": "smartrecruiters", "slug": "Lendingkart" }
   ],
   "companies": [],
-  "boards": ["internshala", "unstop", "remotive", "remoteok", "arbeitnow"]
+  "boards": ["internshala","unstop","remotive","remoteok","arbeitnow"]
 }
