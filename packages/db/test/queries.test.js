@@ -1,6 +1,15 @@
-import { describe, it, expect } from 'vitest'
-import { toRow, refreshSet, upsertPostings } from '@jobdekho/db/queries.js'
+import { describe, it, expect, vi, afterEach } from 'vitest'
+import { NeonDbError } from '@neondatabase/serverless'
+import { toRow, refreshSet, upsertPostings, getExistingIds, recordRun } from '@jobdekho/db/queries.js'
 import { postings } from '@jobdekho/db/schema.js'
+
+// A failure that never reached Postgres - see retry.js for where this shape
+// was read off the installed @neondatabase/serverless source.
+function connectionError() {
+  const err = new NeonDbError('Error connecting to database: fetch failed')
+  err.sourceError = new TypeError('fetch failed')
+  return err
+}
 
 describe('toRow', () => {
   const base = {
@@ -158,5 +167,93 @@ describe('upsertPostings', () => {
     const db = { insert: () => { calls += 1; return { values: () => ({ onConflictDoUpdate: () => {} }) } } }
     await upsertPostings(db, [])
     expect(calls).toBe(0)
+  })
+
+  describe('cold-start retry', () => {
+    afterEach(() => vi.useRealTimers())
+
+    // A cold start hits whichever batch happens to run first; the batch that
+    // failed must be resent, but a batch that already succeeded must not be -
+    // that would double a scrape's write volume for no correctness gain.
+    it('retries only the batch a connection failure landed on, not the one after it', async () => {
+      vi.useFakeTimers()
+      const calls = []
+      let firstBatchAttempts = 0
+      const db = {
+        insert: () => ({
+          values: (rows) => ({
+            onConflictDoUpdate: (conflict) => {
+              if (rows[0]?.id === 'p0') {
+                firstBatchAttempts += 1
+                if (firstBatchAttempts === 1) throw connectionError()
+              }
+              calls.push({ rows, conflict })
+            },
+          }),
+        }),
+      }
+      const items = Array.from({ length: 600 }, (_, i) => ({ id: `p${i}`, tags: [] }))
+      const result = upsertPostings(db, items)
+      await vi.runAllTimersAsync()
+      await result
+
+      expect(firstBatchAttempts).toBe(2)
+      const secondBatchCalls = calls.filter((c) => c.rows[0]?.id === 'p500')
+      expect(secondBatchCalls.length).toBe(1)
+
+      // The retried attempt resent exactly the same 500 rows - nothing lost,
+      // nothing duplicated, across the batch that failed once and the one that didn't.
+      const ids = calls.flatMap((c) => c.rows.map((r) => r.id))
+      expect(ids.length).toBe(600)
+      expect(new Set(ids).size).toBe(600)
+    })
+  })
+})
+
+describe('getExistingIds cold-start retry', () => {
+  afterEach(() => vi.useRealTimers())
+
+  it('retries a connection failure and returns the ids once the retry succeeds', async () => {
+    vi.useFakeTimers()
+    let attempts = 0
+    const db = {
+      select: () => ({
+        from: () => ({
+          where: async () => {
+            attempts += 1
+            if (attempts === 1) throw connectionError()
+            return [{ id: 'a' }, { id: 'b' }]
+          },
+        }),
+      }),
+    }
+    const result = getExistingIds(db, ['a', 'b'])
+    await vi.runAllTimersAsync()
+    await expect(result).resolves.toEqual(new Set(['a', 'b']))
+    expect(attempts).toBe(2)
+  })
+})
+
+describe('recordRun cold-start retry', () => {
+  afterEach(() => vi.useRealTimers())
+
+  it('retries a connection failure and then records the run', async () => {
+    vi.useFakeTimers()
+    let attempts = 0
+    const values = []
+    const db = {
+      insert: () => ({
+        values: async (row) => {
+          attempts += 1
+          if (attempts === 1) throw connectionError()
+          values.push(row)
+        },
+      }),
+    }
+    const result = recordRun(db, { id: 'r1', sourceResults: {}, newCount: 0 })
+    await vi.runAllTimersAsync()
+    await result
+    expect(attempts).toBe(2)
+    expect(values).toEqual([{ id: 'r1', sourceResults: {}, newCount: 0 }])
   })
 })

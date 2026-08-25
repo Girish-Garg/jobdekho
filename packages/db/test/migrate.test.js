@@ -1,5 +1,14 @@
-import { describe, it, expect } from 'vitest'
-import { migrate, STATEMENTS } from '@jobdekho/db/migrate.js'
+import { describe, it, expect, vi, afterEach } from 'vitest'
+import { NeonDbError } from '@neondatabase/serverless'
+import { migrate, STATEMENTS, describeError } from '@jobdekho/db/migrate.js'
+
+// A failure that never reached Postgres - see retry.js for where this shape
+// was read off the installed @neondatabase/serverless source.
+function connectionError() {
+  const err = new NeonDbError('Error connecting to database: fetch failed')
+  err.sourceError = new TypeError('fetch failed')
+  return err
+}
 
 describe('migrate', () => {
   it('runs every statement in order against the given sql client', async () => {
@@ -40,5 +49,56 @@ describe('migrate', () => {
   // among the filterable ones (level/degree_min/work_mode top out at 3-6 values).
   it('indexes source for the source filter and the per-source dashboard counts', () => {
     expect(STATEMENTS).toContain('create index if not exists postings_source_idx on postings (source)')
+  })
+
+  describe('cold-start retry', () => {
+    afterEach(() => vi.useRealTimers())
+
+    // This is the exact failure the user hit: the first statement of a run
+    // lands on a suspended compute. It must be retried in place, not skipped,
+    // and every later statement still has to run.
+    it('retries a statement that hits a connection failure, then continues the run', async () => {
+      vi.useFakeTimers()
+      const calls = []
+      let aAttempts = 0
+      const fakeSql = async (stmt) => {
+        calls.push(stmt)
+        if (stmt === 'a') {
+          aAttempts += 1
+          if (aAttempts === 1) throw connectionError()
+        }
+      }
+      const result = migrate(fakeSql, ['a', 'b'])
+      await vi.runAllTimersAsync()
+      expect(await result).toBe(2)
+      expect(calls).toEqual(['a', 'a', 'b'])
+    })
+
+    it('propagates a genuine SQL error without retrying, and stops the run there', async () => {
+      const err = new NeonDbError('syntax error at or near "FROM"')
+      err.code = '42601'
+      const calls = []
+      const fakeSql = async (stmt) => {
+        calls.push(stmt)
+        if (stmt === 'a') throw err
+      }
+      await expect(migrate(fakeSql, ['a', 'b'])).rejects.toBe(err)
+      expect(calls).toEqual(['a'])
+    })
+  })
+})
+
+describe('describeError', () => {
+  // The original driver message ("Error connecting to database: fetch
+  // failed") named neither a cause nor a next step - this is what replaces it.
+  it('names the Neon cold-start cause for a connection failure', () => {
+    const message = describeError(connectionError())
+    expect(message).toMatch(/could not reach the database/i)
+    expect(message).toMatch(/wake/i)
+  })
+
+  it('passes a SQL error message through unchanged, since it is not a connectivity problem', () => {
+    const err = new Error('syntax error at or near "FROM"')
+    expect(describeError(err)).toBe(err.message)
   })
 })

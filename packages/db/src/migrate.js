@@ -1,5 +1,6 @@
 import { pathToFileURL } from 'node:url'
 import { neon } from '@neondatabase/serverless'
+import { withRetry, isConnectionFailure, MAX_ATTEMPTS } from './retry.js'
 
 // Additive-only migration for the seniority and degree taxonomy.
 //
@@ -66,9 +67,25 @@ export const STATEMENTS = [
   'alter table user_filters add column if not exists max_experience_years integer',
 ]
 
+// Retried per statement, not around the whole loop: every statement is IF
+// NOT EXISTS (see the header comment above), so a run that dies partway
+// through should not have to redo the statements that already succeeded.
 export async function migrate(sql, statements = STATEMENTS) {
-  for (const statement of statements) await sql(statement)
+  for (const statement of statements) await withRetry(() => sql(statement))
   return statements.length
+}
+
+// Shared by main()'s catch handler and the test suite, so one place decides
+// what a failed run tells the operator. The raw driver message ("Error
+// connecting to database: fetch failed") named no cause and no next step.
+export function describeError(err) {
+  if (isConnectionFailure(err)) {
+    return `Could not reach the database after ${MAX_ATTEMPTS} attempts. A suspended Neon ` +
+      'compute can take several seconds to wake on its first request - if this keeps ' +
+      'happening, wait a moment and retry, or confirm DATABASE_URL points at a compute ' +
+      'that is not paused.'
+  }
+  return err.message || String(err)
 }
 
 async function main() {
@@ -79,5 +96,5 @@ async function main() {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  main().catch((err) => { console.error(err.message || err); process.exit(1) })
+  main().catch((err) => { console.error(describeError(err)); process.exit(1) })
 }

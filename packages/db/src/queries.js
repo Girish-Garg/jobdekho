@@ -1,5 +1,6 @@
 import { inArray, sql } from 'drizzle-orm'
 import { postings, runs } from './schema.js'
+import { withRetry } from './retry.js'
 
 // Everything a re-scrape may legitimately correct. firstSeenAt and id are
 // absent on purpose: the first is what "new today" is measured from, and the
@@ -41,9 +42,13 @@ export function toRow(p) {
   }
 }
 
+// The scrape's first query of a run, so it is the one most likely to land on
+// a Neon compute that has been suspended since the previous day's cron -
+// wrapped whole, since it is a single read with nothing partial to worry about.
 export async function getExistingIds(db, ids) {
   if (ids.length === 0) return new Set()
-  const rows = await db.select({ id: postings.id }).from(postings).where(inArray(postings.id, ids))
+  const rows = await withRetry(() =>
+    db.select({ id: postings.id }).from(postings).where(inArray(postings.id, ids)))
   return new Set(rows.map((r) => r.id))
 }
 
@@ -66,13 +71,19 @@ export async function upsertPostings(db, items) {
   if (items.length === 0) return
   for (let i = 0; i < items.length; i += UPSERT_BATCH_SIZE) {
     const batch = items.slice(i, i + UPSERT_BATCH_SIZE)
-    await db.insert(postings).values(batch.map(toRow)).onConflictDoUpdate({
+    // Retried per batch, not around the whole loop. onConflictDoUpdate on the
+    // primary key makes any one batch safe to resend, but batches that already
+    // landed should not be resent just because a later one hit a connection
+    // blip - that would double a scrape's network cost for no correctness gain,
+    // and on a ~90-source run the batches earlier in the loop are exactly the
+    // ones a cold-start failure (which hits the very first query) never reaches.
+    await withRetry(() => db.insert(postings).values(batch.map(toRow)).onConflictDoUpdate({
       target: postings.id,
       set: refreshSet(),
-    })
+    }))
   }
 }
 
 export async function recordRun(db, { id, sourceResults, newCount }) {
-  await db.insert(runs).values({ id, sourceResults, newCount })
+  await withRetry(() => db.insert(runs).values({ id, sourceResults, newCount }))
 }
