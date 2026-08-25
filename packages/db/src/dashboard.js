@@ -4,10 +4,10 @@ import { normalizeProfile } from '@jobdekho/core/profile.js'
 import { postings, userPostings } from './schema.js'
 import { postingConditions, clampPage } from './posting-filters.js'
 import { toNumber } from './posting-measures.js'
-import { orderFor, groupCountColumn, groupRankColumn } from './posting-order.js'
+import { orderFor, groupCountColumn, groupRankColumn, groupSourceCountColumn } from './posting-order.js'
 import { scoreColumn, canRank } from './posting-score.js'
 import { skillDocFreq } from './skill-doc-freq.js'
-import { withFit } from './posting-fit.js'
+import { withFit, withGhost } from './posting-fit.js'
 
 export function applyStatusFilter(rows, status) {
   const normalized = rows.map((r) => ({ ...r, status: r.status ?? null }))
@@ -42,12 +42,13 @@ export async function listPostingsForUser(db, userId, opts = {}) {
   const ranked = db
     .select({
       ...POSTING_COLUMNS,
-      // The reasons on a card must be computed against the same text the SQL
-      // scored, so a ranked page carries it - and only a ranked page, because
-      // an unranked one would pay 4000 characters a row for nothing.
-      ...(ranks ? { descriptionText: postings.descriptionText } : {}),
+      // Ghost detection reads this for its thin-JD signal on every feed now,
+      // not only a ranked one; it still never reaches the browser - see
+      // toPosting below and posting-fit.js.
+      descriptionText: postings.descriptionText,
       groupCount: groupCountColumn.as('group_count'),
       groupRank: groupRankColumn.as('group_rank'),
+      groupSourceCount: groupSourceCountColumn.as('group_source_count'),
       matchScore: (ranks ? scoreColumn(opts.profile, idf) : sql`0`).as('match_score'),
     })
     .from(postings)
@@ -65,12 +66,13 @@ export async function listPostingsForUser(db, userId, opts = {}) {
   let query = db.select().from(ranked)
   if (gate.length) query = query.where(and(...gate))
   const rows = await query.orderBy(...orderFor(sort, ranked)).limit(limit).offset(offset)
-  const page = rows.map((row) => toPosting(ranks ? withFit(row, opts.profile, idf) : row))
+  const page = rows.map((row) => toPosting(ranks ? withFit(row, opts.profile, idf) : withGhost(row)))
   return applyStatusFilter(page, opts.status)
 }
 
-// group_rank is query scaffolding; no window value means a group of one.
-function toPosting({ groupRank, groupCount, matchScore, ...rest }) {
+// group_rank and group_source_count are query scaffolding, not fields the
+// browser needs; no window value means a group of one.
+function toPosting({ groupRank, groupCount, groupSourceCount, matchScore, ...rest }) {
   return { ...rest, groupCount: Number(groupCount ?? 1), matchScore: Number(matchScore ?? 0) }
 }
 

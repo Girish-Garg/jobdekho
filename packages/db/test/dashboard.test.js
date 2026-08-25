@@ -196,6 +196,16 @@ describe('listPostingsForUser', () => {
     expect(calls.columns).toHaveProperty('type')
   })
 
+  // groupSourceCount is scaffolding for ghost detection's blast signal, like
+  // groupRank is scaffolding for the group pick - selected so core can read
+  // it, but not a field the returned posting carries.
+  it('selects groupSourceCount but strips it before it reaches the caller', async () => {
+    const { db, calls } = fakeDb([{ id: '1', status: undefined }])
+    const [posting] = await listPostingsForUser(db, 'u1')
+    expect(calls.columns).toHaveProperty('groupSourceCount')
+    expect('groupSourceCount' in posting).toBe(false)
+  })
+
   // Freshness and the group-rank pick are both applied by default, so "nothing
   // filtered" now means opting out of each.
   it('passes no WHERE clause when nothing is filtered', async () => {
@@ -226,15 +236,19 @@ describe('listPostingsForUser', () => {
   })
 
   it('normalizes row status and keeps the JS filter as a backstop', async () => {
+    // Neither row states a stipend, so ghost detection's one honest signal
+    // ("no pay stated") rides along on the unranked path too.
+    const ghost = { legitimacy: 'medium', ghostSignals: ['no pay stated'] }
     const { db } = fakeDb([
       { id: '1', status: undefined }, { id: '2', status: 'saved' },
     ])
     expect(await listPostingsForUser(db, 'u1')).toEqual([
-      { id: '1', status: null, groupCount: 1, matchScore: 0 }, { id: '2', status: 'saved', groupCount: 1, matchScore: 0 },
+      { id: '1', status: null, groupCount: 1, matchScore: 0, ...ghost },
+      { id: '2', status: 'saved', groupCount: 1, matchScore: 0, ...ghost },
     ])
     const { db: db2 } = fakeDb([{ id: '1', status: undefined }, { id: '2', status: 'saved' }])
     expect(await listPostingsForUser(db2, 'u1', { status: 'saved' })).toEqual([
-      { id: '2', status: 'saved', groupCount: 1, matchScore: 0 },
+      { id: '2', status: 'saved', groupCount: 1, matchScore: 0, ...ghost },
     ])
   })
 })
@@ -256,20 +270,44 @@ describe('listPostingsForUser when ranking', () => {
   })
 
   // 4000 characters times a page of rows must not ride to the browser just to
-  // justify a number - the reasons already carry the justification.
-  it('never lets descriptionText survive into a returned posting', async () => {
+  // justify a number - the reasons already carry the justification. Ghost
+  // detection reads the same field for its thin-JD signal, so it has to be
+  // stripped on the unranked path too, not only the ranked one.
+  it('never lets descriptionText survive into a returned posting, ranked or not', async () => {
     const { db } = fakeDb([{ ...row }, { ...row, id: '2', descriptionText: null }])
-    const postings = await listPostingsForUser(db, 'u1', { sort: 'match', profile })
-    for (const p of postings) expect('descriptionText' in p).toBe(false)
+    const ranked = await listPostingsForUser(db, 'u1', { sort: 'match', profile })
+    for (const p of ranked) expect('descriptionText' in p).toBe(false)
+    const { db: db2 } = fakeDb([{ ...row }])
+    const unranked = await listPostingsForUser(db2, 'u1')
+    for (const p of unranked) expect('descriptionText' in p).toBe(false)
   })
 
-  it('selects descriptionText for scoring only when ranking is active', async () => {
+  // Ghost detection's thin-JD signal needs the full text, and that signal has
+  // to fire on every feed, so the column can no longer be conditional on
+  // whether ranking is active.
+  it('selects descriptionText on every feed, ranked or not', async () => {
     const ranked = fakeDb()
     await listPostingsForUser(ranked.db, 'u1', { sort: 'match', profile })
     expect(ranked.calls.columns).toHaveProperty('descriptionText')
     const unranked = fakeDb()
     await listPostingsForUser(unranked.db, 'u1')
-    expect(unranked.calls.columns).not.toHaveProperty('descriptionText')
+    expect(unranked.calls.columns).toHaveProperty('descriptionText')
+  })
+
+  // legitimacy and ghostSignals need no profile, so an unranked feed still
+  // carries them - only fit, reasons, grade and breakdown wait on ranking.
+  it('carries legitimacy and ghostSignals on an unranked feed', async () => {
+    const { db } = fakeDb([{ ...row }])
+    const [posting] = await listPostingsForUser(db, 'u1')
+    expect(posting.legitimacy).toBeDefined()
+    expect(Array.isArray(posting.ghostSignals)).toBe(true)
+  })
+
+  it('adds grade and breakdown, derived from the same fit, only when ranking', async () => {
+    const { db } = fakeDb([{ ...row }])
+    const [posting] = await listPostingsForUser(db, 'u1', { sort: 'match', profile })
+    expect(posting.grade).toBeDefined()
+    expect(posting.breakdown.length).toBeGreaterThan(0)
   })
 
   it('issues the rarity scan before the page query, and only when ranking', async () => {
@@ -281,11 +319,13 @@ describe('listPostingsForUser when ranking', () => {
     expect(unranked.calls.selects.some((s) => 'df0' in s)).toBe(false)
   })
 
-  it('leaves unranked postings without fit or reasons', async () => {
+  it('leaves unranked postings without fit, reasons, grade or breakdown', async () => {
     const { db } = fakeDb([{ ...row }])
     const [posting] = await listPostingsForUser(db, 'u1')
     expect('fit' in posting).toBe(false)
     expect('reasons' in posting).toBe(false)
+    expect('grade' in posting).toBe(false)
+    expect('breakdown' in posting).toBe(false)
   })
 })
 

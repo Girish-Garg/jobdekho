@@ -168,6 +168,35 @@ describe('scorePosting', () => {
 })
 
 describe('scorePosting breakdown', () => {
+  // A display read `weight` as the dimension's ceiling in points and printed
+  // "32 of 4500". The ceiling is `max`, which is the weight renormalised over
+  // only the dimensions the profile supports, so it moves with the profile
+  // while the raw weight does not. The two must never be confused again.
+  it('carries a ceiling in points that is not the raw weight', () => {
+    const full = scorePosting(posting(), { skills: ['react'], titles: ['dev'], years: 2 })
+    const skills = full.breakdown.find((d) => d.dimension === 'skills')
+    expect(skills.weight).toBe(WEIGHTS.skills)
+    expect(skills.max).toBe(WEIGHTS.skills)
+
+    // Dropping the titles dimension renormalises the rest upward.
+    const partial = scorePosting(posting(), { skills: ['react'], years: 2 })
+    const widened = partial.breakdown.find((d) => d.dimension === 'skills')
+    expect(widened.weight).toBe(WEIGHTS.skills)
+    expect(widened.max).toBeGreaterThan(WEIGHTS.skills)
+  })
+
+  it('never reports points above the dimension ceiling', () => {
+    const { breakdown } = scorePosting(posting({ title: 'React Node Python Developer' }), profile)
+    for (const d of breakdown) expect(d.points).toBeLessThanOrEqual(d.max + 1e-9)
+  })
+
+  it('sums every ceiling to one hundred', () => {
+    for (const p of [profile, { skills: ['react'] }, { titles: ['dev'], years: 3 }]) {
+      const { breakdown } = scorePosting(posting(), p)
+      expect(Math.round(breakdown.reduce((sum, d) => sum + d.max, 0))).toBe(100)
+    }
+  })
+
   // The breakdown exists so a UI can show why a grade landed where it did,
   // which only works if the parts genuinely are the whole.
   it('adds up to the fit it explains', () => {

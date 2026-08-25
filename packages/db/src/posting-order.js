@@ -37,3 +37,12 @@ export const groupRankColumn = sql`
     partition by coalesce(${postings.groupKey}, ${postings.id})
     order by ${postings.postedAt} desc nulls last, ${postings.id} desc
   )`
+
+// groupCountColumn cannot carry the ghost blast signal: it counts every row in
+// a group, and a group is also how one role listed city by city is stored, so
+// an employer hiring in six offices would count identically to a job blasted
+// across six boards. Counting DISTINCT sources over the same partition tells
+// those apart. Same coalesce(groupKey, id) fallback as above, and for the same
+// reason - an unkeyed row must be its own group, not fall into one shared
+// partition with every other unkeyed row.
+export const groupSourceCountColumn = sql`count(distinct ${postings.source}) over (partition by coalesce(${postings.groupKey}, ${postings.id}))`

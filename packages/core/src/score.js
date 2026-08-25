@@ -1,6 +1,7 @@
 import { normalizeProfile, levelsForYears } from './profile.js'
 import { titleFit, levelFit, degreeFit, titleTokens } from './fit-dimensions.js'
 import { skillFit } from './skill-fit.js'
+import { buildBreakdown } from './breakdown.js'
 
 // Fit is a percentage, not an accumulating tally. The tally it replaced scored
 // 1485 real postings onto 22 distinct values, with 45% of the feed sharing one
@@ -53,16 +54,7 @@ export function scorePosting(posting, profile, idf = {}) {
     degree: degreeFit(posting.degreeMin, p.degree),
   }
   const earned = Object.entries(values).reduce((sum, [k, v]) => sum + w[k] * v, 0)
-  // A dropped dimension is left out of the breakdown rather than shown at
-  // zero: zero reads as a failed match, and the dimension was dropped
-  // precisely because the profile asked nothing of it. Points stay unrounded
-  // so they sum to the fit before its own rounding; rounding each part here
-  // could drift the total a point away from the fit the card shows.
-  const breakdown = Object.entries(values)
-    .filter(([k]) => w[k] > 0)
-    .map(([dimension, value]) => ({
-      dimension, value, weight: w[dimension], points: (100 * w[dimension] * value) / w.total,
-    }))
+  const breakdown = buildBreakdown(values, w)
   return {
     fit: w.total ? Math.round((100 * earned) / w.total) : 0,
     matched: skills.matched,
@@ -78,8 +70,10 @@ export function scorePosting(posting, profile, idf = {}) {
 // An opaque score is not trustworthy enough to sort a job hunt by, and two of
 // these are warnings, which is why the UI labels the block fit rather than
 // recommendation.
+// The breakdown rides along because the caller that wants reasons wants it
+// too, and scoring twice to collect both was the alternative.
 export function explainScore(posting, profile, idf = {}) {
-  const { fit, matched, mentioned, titleFit: title, levelFit: level, reachable } =
+  const { fit, matched, mentioned, titleFit: title, levelFit: level, reachable, breakdown } =
     scorePosting(posting, profile, idf)
   const reasons = []
   if (matched.length) reasons.push(`matches ${matched.join(', ')}`)
@@ -88,7 +82,7 @@ export function explainScore(posting, profile, idf = {}) {
   if (level === 1) reasons.push('suits your experience')
   else if (level <= 0.2) reasons.push('well outside your experience')
   if (!reachable) reasons.push('needs a higher degree than you listed')
-  return { fit, reasons }
+  return { fit, reasons, breakdown }
 }
 
 // An empty profile scores every posting alike, so ranking by it would only
