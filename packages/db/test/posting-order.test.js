@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { PgDialect } from 'drizzle-orm/pg-core'
-import { groupCountColumn, groupSourceCountColumn } from '@jobdekho/db/posting-order.js'
+import { groupCountColumn, groupSourceCountColumn, groupRankColumn } from '@jobdekho/db/posting-order.js'
 
 const dialect = new PgDialect()
 const render = (col) => dialect.sqlToQuery(col).sql
@@ -34,5 +34,38 @@ describe('groupSourceCountColumn', () => {
     const shared = partitionOf(render(groupCountColumn))
     expect(shared).toContain('coalesce')
     expect(render(groupSourceCountColumn).split(shared)).toHaveLength(3)
+  })
+})
+
+describe('groupRankColumn', () => {
+  // An aggregator reprints a role the employer already published. When both
+  // land in one group the direct posting has to be the one shown: its link
+  // goes to the employer rather than through a redirector, and its body is
+  // the full ad. A company board is named "provider:slug" and an aggregator
+  // is named by itself, so the colon already carries that distinction.
+  it('ranks a company board above an aggregator inside a group', () => {
+    const sql = render(groupRankColumn).toLowerCase()
+    expect(sql).toContain("like '%:%'")
+    expect(sql.indexOf("like '%:%'")).toBeLessThan(sql.indexOf('posted_at'))
+  })
+
+  // Recency still decides between two postings of the same kind, and id still
+  // breaks a tie, or a whole band would come back in arbitrary order.
+  it('keeps recency and the id tiebreak after the source preference', () => {
+    const sql = render(groupRankColumn).toLowerCase()
+    expect(sql).toContain('posted_at" desc nulls last')
+    expect(sql.indexOf('posted_at')).toBeLessThan(sql.lastIndexOf('id" desc'))
+  })
+
+  // groupCountColumn is written on one line and this one over several, so the
+  // comparison is on the clause rather than on its formatting.
+  it('partitions on the same coalesce fallback as the other window columns', () => {
+    const partition = (s) => s.replace(/\s+/g, ' ')
+      .slice(s.replace(/\s+/g, ' ').indexOf('partition by'))
+      .replace(/ order by.*/, '')
+      .replace(/\).*/, '')
+      .trim()
+    expect(partition(render(groupRankColumn))).toBe(partition(render(groupCountColumn)))
+    expect(partition(render(groupRankColumn))).toContain('coalesce')
   })
 })

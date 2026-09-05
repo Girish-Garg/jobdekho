@@ -32,10 +32,19 @@ export function orderFor(sort, t = postings) {
 // every unkeyed row collapses into a single partition of thousands.
 export const groupCountColumn = sql`count(*) over (partition by coalesce(${postings.groupKey}, ${postings.id}))`
 
+// A company board is named "provider:slug" and an aggregator is named by
+// itself, so the colon is already the difference between a posting read off
+// the employer's own board and the same role reprinted by a middleman. When a
+// group holds both, the direct one represents it: its link goes to the
+// employer rather than through a redirector, and its description is the full
+// ad rather than whatever the aggregator kept. The rest of the group is not
+// discarded, only ranked below, and groupCount still says how many there are.
+const DIRECT_FIRST = sql`(${postings.source} like '%:%') desc`
+
 export const groupRankColumn = sql`
   row_number() over (
     partition by coalesce(${postings.groupKey}, ${postings.id})
-    order by ${postings.postedAt} desc nulls last, ${postings.id} desc
+    order by ${DIRECT_FIRST}, ${postings.postedAt} desc nulls last, ${postings.id} desc
   )`
 
 // groupCountColumn cannot carry the ghost blast signal: it counts every row in
