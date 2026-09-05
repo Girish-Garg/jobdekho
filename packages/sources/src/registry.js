@@ -15,13 +15,15 @@ import { adzuna } from './boards/adzuna.js'
 import { remotive } from './boards/remotive.js'
 import { remoteok } from './boards/remoteok.js'
 import { arbeitnow } from './boards/arbeitnow.js'
+import { linkedin } from './boards/linkedin.js'
+import { instahyre } from './boards/instahyre.js'
 
 const PROVIDERS = { greenhouse, lever, ashby, smartrecruiters, workable, recruitee, personio }
 const COMPANIES = { amazon, microsoft, google, ey }
 // adzuna is registered but intentionally not in config/companies.json: it needs
 // API credentials, and listing it before those exist would log a failed source
 // on every run.
-const BOARDS = { internshala, unstop, adzuna, remotive, remoteok, arbeitnow }
+const BOARDS = { internshala, unstop, adzuna, remotive, remoteok, arbeitnow, linkedin, instahyre }
 
 export function buildAdapters(config) {
   const adapters = []
