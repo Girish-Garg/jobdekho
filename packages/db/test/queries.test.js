@@ -1,14 +1,13 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { NeonDbError } from '@neondatabase/serverless'
 import { toRow, refreshSet, upsertPostings, getExistingIds, recordRun } from '@jobdekho/db/queries.js'
 import { postings } from '@jobdekho/db/schema.js'
 
 // A failure that never reached Postgres - see retry.js for where this shape
-// was read off the installed @neondatabase/serverless source.
+// was read off the installed pg source.
 function connectionError() {
-  const err = new NeonDbError('Error connecting to database: fetch failed')
-  err.sourceError = new TypeError('fetch failed')
-  return err
+  return Object.assign(new Error('connect ECONNREFUSED 127.0.0.1:5432'), {
+    code: 'ECONNREFUSED', errno: -111, syscall: 'connect',
+  })
 }
 
 describe('toRow', () => {

@@ -1,15 +1,20 @@
 import { pathToFileURL } from 'node:url'
-import { neon } from '@neondatabase/serverless'
+import { createPool } from './client.js'
+import { CREATE_TABLES } from './create-tables.js'
 import { withRetry, isConnectionFailure, MAX_ATTEMPTS } from './retry.js'
 
-// Additive-only migration for the seniority and degree taxonomy.
-//
-// drizzle-kit push cannot do this one: its diff tries to recreate the
+// The whole schema as additive-only statements, so a fresh database and one
+// that already exists both come out usable from a single run - which is what
+// lets the container run this on every boot with no second command.
+// The base tables come first (create-tables.js): a fresh volume has none,
+// and every statement below assumes they exist. drizzle-kit push cannot be
+// the bootstrap: against an existing database its diff tries to recreate the
 // user_postings composite primary key and Postgres rejects it with 42P16
 // ("column user_id is in a primary key"), aborting the whole run. These
-// statements add columns and nothing else, and every one is IF NOT EXISTS,
-// so the migration is idempotent and safe to re-run.
+// statements add tables, columns and indexes and nothing else, and every one
+// is IF NOT EXISTS, so the migration is idempotent and safe to re-run.
 export const STATEMENTS = [
+  ...CREATE_TABLES,
   'alter table postings add column if not exists level text',
   'alter table postings add column if not exists degree_min text',
   'alter table postings add column if not exists degree_required boolean',
@@ -46,17 +51,6 @@ export const STATEMENTS = [
   // and never age out, even though a scrape has since run without returning
   // them. Seeding from first_seen_at lets the real stale ones expire on time.
   'update postings set last_seen_at = first_seen_at where last_seen_at is null',
-  `create table if not exists user_profiles (
-     user_id text primary key,
-     skills text[] not null default '{}',
-     titles text[] not null default '{}',
-     locations text[] not null default '{}',
-     years integer,
-     degree text,
-     resume_text text,
-     resume_name text,
-     updated_at timestamp not null default now()
-   )`,
   "alter table user_filters add column if not exists excluded_sources text[] not null default '{}'",
   "alter table user_filters add column if not exists work_modes text[] not null default '{}'",
   "alter table user_filters add column if not exists levels text[] not null default '{}'",
@@ -76,14 +70,15 @@ export async function migrate(sql, statements = STATEMENTS) {
 }
 
 // Shared by main()'s catch handler and the test suite, so one place decides
-// what a failed run tells the operator. The raw driver message ("Error
-// connecting to database: fetch failed") named no cause and no next step.
+// what a failed run tells the operator. The raw driver message ("connect
+// ECONNREFUSED 127.0.0.1:5432") names no next step, and a refused `localhost`
+// is an AggregateError over ::1 and 127.0.0.1 with an empty message of its own.
 export function describeError(err) {
   if (isConnectionFailure(err)) {
-    return `Could not reach the database after ${MAX_ATTEMPTS} attempts. A suspended Neon ` +
-      'compute can take several seconds to wake on its first request - if this keeps ' +
-      'happening, wait a moment and retry, or confirm DATABASE_URL points at a compute ' +
-      'that is not paused.'
+    const detail = err.message || err.errors?.[0]?.message || err.code
+    return `Could not reach the database after ${MAX_ATTEMPTS} attempts (${detail}). ` +
+      'Check that Postgres is running - `docker compose up db` starts the local one - ' +
+      'and that DATABASE_URL points at it.'
   }
   return err.message || String(err)
 }
@@ -91,8 +86,13 @@ export function describeError(err) {
 async function main() {
   try { process.loadEnvFile() } catch {}
   if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is not set')
-  const count = await migrate(neon(process.env.DATABASE_URL))
-  console.log(`Applied ${count} additive statement(s).`)
+  const pool = createPool(process.env.DATABASE_URL)
+  try {
+    const count = await migrate((statement) => pool.query(statement))
+    console.log(`Applied ${count} additive statement(s).`)
+  } finally {
+    await pool.end()
+  }
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

@@ -1,0 +1,20 @@
+# Kept out of the build context. node_modules is rebuilt inside the image for
+# Linux, dist is rebuilt by the build stage, and .env must never end up baked
+# into an image layer.
+node_modules
+**/node_modules
+**/dist
+.git
+.env
+.env.*
+# Local tooling state and docs - not needed to build or run the app.
+.claude
+.superpowers
+.github
+.wrangler
+docs
+*.md
+# Tests run on the host and in CI, not in the container.
+**/test
+**/*.test.js
+**/*.test.jsx

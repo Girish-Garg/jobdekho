@@ -1,39 +1,81 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { NeonDbError } from '@neondatabase/serverless'
+import pg from 'pg'
 import { withRetry, isConnectionFailure, MAX_ATTEMPTS } from '@jobdekho/db/retry.js'
 
-// Mirrors what @neondatabase/serverless actually throws (see retry.js's own
-// comment for where this was read off the installed source): a failure that
-// never reached Postgres is a NeonDbError with no `code`.
-function connectionError(message = 'Error connecting to database: fetch failed') {
-  const err = new NeonDbError(message)
-  err.sourceError = new TypeError('fetch failed')
-  return err
+// Mirrors what pg actually throws (see retry.js's own comment for where each
+// shape was read off the installed source). A connection that never reached
+// Postgres surfaces as Node's own socket error, passed through untouched.
+function socketError(code = 'ECONNREFUSED', message = 'connect ECONNREFUSED 127.0.0.1:5432') {
+  return Object.assign(new Error(message), { code, errno: -111, syscall: 'connect' })
 }
 
-// A failure Postgres itself produced always carries the SQLSTATE `code`.
-function sqlError(code = '23505') {
-  const err = new NeonDbError('duplicate key value violates unique constraint')
+// A connection Postgres dropped mid-flight is pg's own Error with no code.
+function droppedConnection(message = 'Connection terminated unexpectedly') {
+  return new Error(message)
+}
+
+// A failure Postgres itself produced is a DatabaseError carrying the SQLSTATE.
+function sqlError(code = '23505', message = 'duplicate key value violates unique constraint') {
+  const err = new pg.DatabaseError(message, message.length, 'error')
   err.code = code
   return err
 }
 
 describe('isConnectionFailure', () => {
-  it('treats a NeonDbError with no code as a connection failure', () => {
-    expect(isConnectionFailure(connectionError())).toBe(true)
+  it('treats a refused connection as a connection failure', () => {
+    expect(isConnectionFailure(socketError('ECONNREFUSED'))).toBe(true)
   })
 
-  it('treats a NeonDbError carrying a Postgres code as a SQL error', () => {
+  it('treats an unresolved or not-yet-resolvable host as a connection failure', () => {
+    expect(isConnectionFailure(socketError('ENOTFOUND', 'getaddrinfo ENOTFOUND db'))).toBe(true)
+    expect(isConnectionFailure(socketError('EAI_AGAIN', 'getaddrinfo EAI_AGAIN db'))).toBe(true)
+  })
+
+  // Seen from the host against a port nothing listens on: Node tries ::1 and
+  // 127.0.0.1 for `localhost` and throws one AggregateError over both, with
+  // an empty message of its own but the same syscall code.
+  it("treats Node's AggregateError for a refused localhost as a connection failure", () => {
+    const err = new AggregateError([socketError('ECONNREFUSED', 'connect ECONNREFUSED ::1:5432'),
+      socketError('ECONNREFUSED')], '')
+    err.code = 'ECONNREFUSED'
+    expect(isConnectionFailure(err)).toBe(true)
+  })
+
+  it('treats a socket reset mid-query as a connection failure', () => {
+    expect(isConnectionFailure(socketError('ECONNRESET', 'read ECONNRESET'))).toBe(true)
+  })
+
+  it("treats pg's own dropped-connection errors as connection failures", () => {
+    expect(isConnectionFailure(droppedConnection())).toBe(true)
+    expect(isConnectionFailure(droppedConnection('Connection terminated due to connection timeout'))).toBe(true)
+    expect(isConnectionFailure(droppedConnection('timeout exceeded when trying to connect'))).toBe(true)
+  })
+
+  it('treats a DatabaseError carrying a Postgres code as a SQL error', () => {
     expect(isConnectionFailure(sqlError())).toBe(false)
   })
 
-  it('treats a bare fetch TypeError as a connection failure', () => {
-    expect(isConnectionFailure(new TypeError('fetch failed'))).toBe(true)
+  // The invariant the whole file rests on: if Postgres answered, its answer
+  // stands. Even codes that read as connection-ish (08006 connection_failure,
+  // 57P03 cannot_connect_now) came from the server and are not retried here -
+  // the compose healthcheck is what covers a server that is still starting.
+  it('never treats a DatabaseError as retryable, whatever its code', () => {
+    expect(isConnectionFailure(sqlError('57P03', 'the database system is starting up'))).toBe(false)
+    expect(isConnectionFailure(sqlError('08006', 'connection failure'))).toBe(false)
+    expect(isConnectionFailure(sqlError('42P01', 'relation "postings" does not exist'))).toBe(false)
   })
 
   it('does not treat an unrecognised error as a connection failure', () => {
     expect(isConnectionFailure(new Error('boom'))).toBe(false)
-    expect(isConnectionFailure(new TypeError('something else'))).toBe(false)
+    expect(isConnectionFailure(new TypeError('fetch failed'))).toBe(false)
+    // A Node error code that is not a socket failure - a missing file, say.
+    expect(isConnectionFailure(socketError('ENOENT', 'no such file or directory'))).toBe(false)
+  })
+
+  it('does not treat a non-Error throw as a connection failure', () => {
+    expect(isConnectionFailure('ECONNREFUSED')).toBe(false)
+    expect(isConnectionFailure({ code: 'ECONNREFUSED' })).toBe(false)
+    expect(isConnectionFailure(undefined)).toBe(false)
   })
 })
 
@@ -45,7 +87,21 @@ describe('withRetry', () => {
     let calls = 0
     const fn = vi.fn(async () => {
       calls += 1
-      if (calls < 2) throw connectionError()
+      if (calls < 2) throw socketError()
+      return 'ok'
+    })
+    const result = withRetry(fn)
+    await vi.runAllTimersAsync()
+    await expect(result).resolves.toBe('ok')
+    expect(fn).toHaveBeenCalledTimes(2)
+  })
+
+  it('retries a connection the server dropped mid-query', async () => {
+    vi.useFakeTimers()
+    let calls = 0
+    const fn = vi.fn(async () => {
+      calls += 1
+      if (calls < 2) throw droppedConnection()
       return 'ok'
     })
     const result = withRetry(fn)
@@ -63,7 +119,7 @@ describe('withRetry', () => {
 
   it('surfaces the final error once every attempt is exhausted', async () => {
     vi.useFakeTimers()
-    const err = connectionError()
+    const err = socketError()
     const fn = vi.fn(async () => { throw err })
     const result = withRetry(fn)
     const assertion = expect(result).rejects.toBe(err)
@@ -77,7 +133,7 @@ describe('withRetry', () => {
     let calls = 0
     const fn = vi.fn(async () => {
       calls += 1
-      if (calls < 3) throw connectionError()
+      if (calls < 3) throw socketError()
       return 'ok'
     })
     const result = withRetry(fn)

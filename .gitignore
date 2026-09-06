@@ -5,3 +5,5 @@ dist/
 .wrangler/
 .dev.vars
 .claude/
+# The template is the one .env-named file that belongs in the repo.
+!.env.example

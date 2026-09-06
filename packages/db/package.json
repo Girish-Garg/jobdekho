@@ -1,7 +1,13 @@
 {
-  "name": "@jobdekho/db", "version": "0.0.0", "type": "module",
-  "exports": { "./*": "./src/*" },
+  "name": "@jobdekho/db",
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    "./*": "./src/*"
+  },
   "dependencies": {
-    "@jobdekho/core": "*", "drizzle-orm": "^0.36.0", "@neondatabase/serverless": "^0.10.0"
+    "@jobdekho/core": "*",
+    "drizzle-orm": "^0.36.0",
+    "pg": "^8.23.0"
   }
 }
