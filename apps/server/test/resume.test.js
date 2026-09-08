@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { parseProfileJson, unwrapCli, extractProfile } from '@jobdekho/server/resume/extract.js'
+import { parseProfileJson, extractProfile } from '@jobdekho/server/resume/extract.js'
 import { tidy, looksScanned } from '@jobdekho/server/resume/text.js'
+
+const HERE = () => '/usr/local/bin/claude'
+const answering = (stdout) => async () => ({ stdout, stderr: '', code: 0 })
 
 describe('parseProfileJson', () => {
   it('reads a bare object', () => {
@@ -20,45 +23,33 @@ describe('parseProfileJson', () => {
   })
 })
 
-describe('unwrapCli', () => {
-  it('unwraps the --output-format json envelope', () => {
-    const envelope = JSON.stringify({ type: 'result', result: '{"skills":["go"]}' })
-    expect(unwrapCli(envelope)).toEqual({ skills: ['go'] })
-  })
-
-  // Older CLI versions print the reply bare.
-  it('accepts a bare object too', () => {
-    expect(unwrapCli('{"skills":["go"]}')).toEqual({ skills: ['go'] })
-  })
-
-  // The CLI reports failure as is_error WITH exit code 0, so an expired login
-  // looks like success unless the envelope is checked.
-  it('surfaces an envelope error instead of treating it as a reply', () => {
-    const failed = JSON.stringify({
-      type: 'result', is_error: true,
-      result: 'Failed to authenticate: OAuth session expired and could not be refreshed',
-    })
-    expect(() => unwrapCli(failed)).toThrow(/OAuth session expired/)
-  })
-})
-
+// The envelope handling itself (including the is_error-with-exit-0 trap) is
+// covered in ai.test.js; these prove the resume feature sits on it correctly.
 describe('extractProfile', () => {
-  it('sends the resume and returns the parsed profile', async () => {
+  it('sends the resume over stdin and returns the parsed profile', async () => {
     let sent = ''
-    const run = async (input) => { sent = input; return '{"skills":["react"],"years":2}' }
-    expect(await extractProfile('Jane Doe, React developer', { run })).toEqual({ skills: ['react'], years: 2 })
+    const run = async ({ input }) => { sent = input; return { stdout: '{"skills":["react"],"years":2}', stderr: '', code: 0 } }
+    expect(await extractProfile('Jane Doe, React developer', { run, locate: HERE })).toEqual({ skills: ['react'], years: 2 })
     expect(sent).toContain('Jane Doe')
     expect(sent).toContain('RESUME:')
   })
 
   it('reports an authentication failure rather than a parse failure', async () => {
-    const run = async () => JSON.stringify({ is_error: true, result: 'Failed to authenticate' })
-    await expect(extractProfile('x', { run })).rejects.toThrow(/Failed to authenticate/)
+    const run = answering(JSON.stringify({ is_error: true, result: 'Failed to authenticate' }))
+    const err = await extractProfile('x', { run, locate: HERE }).catch((e) => e)
+    expect(err.kind).toBe('login')
+    expect(err.message).toMatch(/Failed to authenticate/)
   })
 
   it('fails loudly when the reply has no object in it', async () => {
-    await expect(extractProfile('x', { run: async () => 'sorry, I cannot' }))
-      .rejects.toThrow(/Could not read a profile/)
+    const err = await extractProfile('x', { run: answering('sorry, I cannot'), locate: HERE }).catch((e) => e)
+    expect(err.kind).toBe('unreadable')
+    expect(err.message).toMatch(/not in the shape JobDekho expected/)
+  })
+
+  it('does not reach for a CLI that is not there', async () => {
+    const err = await extractProfile('x', { run: answering('{}'), locate: () => null }).catch((e) => e)
+    expect(err.kind).toBe('not_found')
   })
 })
 

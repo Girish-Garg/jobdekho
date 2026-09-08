@@ -1,6 +1,6 @@
 import { listPostingsForUser, setPostingStatus, listSources } from '@jobdekho/db/dashboard.js'
 import { getUserFilters, upsertUserFilters, getNotificationPrefs, upsertNotificationPrefs } from '@jobdekho/db/dashboard-prefs.js'
-import { getProfile, upsertProfile, deleteProfile } from '@jobdekho/db/profiles.js'
+import { getProfile, getResumeText, upsertProfile, deleteProfile } from '@jobdekho/db/profiles.js'
 
 export function createDashboardStore(db) {
   return {
@@ -8,6 +8,8 @@ export function createDashboardStore(db) {
     setPostingStatus: (userId, id, status) => setPostingStatus(db, userId, id, status),
     listSources: () => listSources(db),
     getProfile: (userId) => getProfile(db, userId),
+    // Read on its own so the raw resume never rides along on a profile read.
+    getResumeText: (userId) => getResumeText(db, userId),
     upsertProfile: (userId, p) => upsertProfile(db, userId, p),
     deleteProfile: (userId) => deleteProfile(db, userId),
     getUserFilters: (userId) => getUserFilters(db, userId),

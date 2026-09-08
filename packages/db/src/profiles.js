@@ -26,8 +26,20 @@ export async function getResumeText(db, userId) {
   return row?.resumeText ?? null
 }
 
+const RESUME_COLUMNS = ['resumeText', 'resumeName']
+const PROFILE_COLUMNS = COLUMNS.filter((c) => !RESUME_COLUMNS.includes(c))
+
+// The resume columns are written only when the caller actually carries them.
+// Every column used to be overwritten on every upsert, and the profile form
+// deliberately sends no resume fields, so saving hand-edited skills silently
+// erased an uploaded resume - and with it the one input the cover letter and
+// resume tailoring features read. Membership rather than truthiness, so a
+// caller that means to clear the resume can still pass an explicit null.
+const carriesResume = (input) => Boolean(input) && RESUME_COLUMNS.some((c) => c in input)
+
 export async function upsertProfile(db, userId, input) {
   const p = normalizeProfile(input)
+  const resume = carriesResume(input)
   const values = {
     userId,
     skills: p.skills,
@@ -35,15 +47,18 @@ export async function upsertProfile(db, userId, input) {
     locations: p.locations,
     years: p.years,
     degree: p.degree,
-    resumeText: input?.resumeText ?? null,
-    resumeName: input?.resumeName ?? null,
     updatedAt: new Date(),
+    ...(resume ? { resumeText: input.resumeText ?? null, resumeName: input.resumeName ?? null } : {}),
   }
-  await db.insert(userProfiles).values(values).onConflictDoUpdate({
+  const columns = resume ? COLUMNS : PROFILE_COLUMNS
+  // Returning the stored row rather than the values sent: when the resume
+  // columns were left alone, only the database knows what they still hold, and
+  // reporting them as absent would be a lie the caller shows the user.
+  const [row] = await db.insert(userProfiles).values(values).onConflictDoUpdate({
     target: userProfiles.userId,
-    set: Object.fromEntries(COLUMNS.map((c) => [c, values[c]]).concat([['updatedAt', values.updatedAt]])),
-  })
-  return toProfile(values)
+    set: Object.fromEntries(columns.map((c) => [c, values[c]]).concat([['updatedAt', values.updatedAt]])),
+  }).returning()
+  return toProfile(row ?? values)
 }
 
 export async function deleteProfile(db, userId) {

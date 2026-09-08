@@ -14,6 +14,7 @@ function makeFakeStore() {
     setPostingStatus: vi.fn().mockResolvedValue(undefined),
     listSources: vi.fn().mockResolvedValue([{ name: 'internshala', count: 878 }]),
     getProfile: vi.fn().mockResolvedValue({ skills: ['react'], years: 2, degree: 'bachelors' }),
+    getResumeText: vi.fn().mockResolvedValue(null),
     upsertProfile: vi.fn().mockResolvedValue({}),
     deleteProfile: vi.fn().mockResolvedValue(undefined),
     getUserFilters: vi.fn().mockResolvedValue(null),
@@ -511,13 +512,15 @@ describe('PUT /api/profile', () => {
     expect(res.statusCode).toBe(401)
   })
 
+  // The stored resume rides along with the edit because the store replaces
+  // every column; with nothing stored, that is a pair of nulls.
   it('calls upsertProfile and returns its result', async () => {
     const store = makeFakeStore()
     store.upsertProfile.mockResolvedValue({ skills: ['react'], years: 2 })
     const res = await putProfile(store, { skills: ['react'], years: 2 })
     expect(res.statusCode).toBe(200)
     expect(res.json()).toEqual({ skills: ['react'], years: 2 })
-    expect(store.upsertProfile).toHaveBeenCalledWith('u1', { skills: ['react'], years: 2 })
+    expect(store.upsertProfile).toHaveBeenCalledWith('u1', { skills: ['react'], years: 2, resumeText: null, resumeName: null })
   })
 
   it('rejects a non-object body before it reaches normalizeProfile', async () => {
