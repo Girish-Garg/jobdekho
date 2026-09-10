@@ -1,7 +1,7 @@
 import { normalize } from '@jobdekho/core/normalize.js'
 import { filter } from '@jobdekho/core/filter.js'
 import { dedupe } from '@jobdekho/core/dedupe.js'
-import { getExistingIds, upsertPostings, recordRun } from '@jobdekho/db/queries.js'
+import { getExistingIds, upsertPostings, recordRun } from '@jobdekho/store/queries.js'
 import { formatBatch, formatOverflow, packBatches, MAX_ALERTS } from '@jobdekho/notify/format.js'
 import { sendTelegram } from '@jobdekho/notify/telegram.js'
 

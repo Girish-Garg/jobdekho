@@ -1,6 +1,6 @@
-import { listPostingsForUser, setPostingStatus, listSources } from '@jobdekho/db/dashboard.js'
-import { getUserFilters, upsertUserFilters, getNotificationPrefs, upsertNotificationPrefs } from '@jobdekho/db/dashboard-prefs.js'
-import { getProfile, getResumeText, upsertProfile, deleteProfile } from '@jobdekho/db/profiles.js'
+import { listPostingsForUser, setPostingStatus, listSources } from '@jobdekho/store/dashboard.js'
+import { getUserFilters, upsertUserFilters, getNotificationPrefs, upsertNotificationPrefs } from '@jobdekho/store/dashboard-prefs.js'
+import { getProfile, getResumeText, upsertProfile, deleteProfile } from '@jobdekho/store/profiles.js'
 
 export function createDashboardStore(db) {
   return {

@@ -1,0 +1,11 @@
+{
+  "name": "@jobdekho/store",
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    "./*": "./src/*"
+  },
+  "dependencies": {
+    "@jobdekho/core": "*"
+  }
+}

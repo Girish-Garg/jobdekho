@@ -1,0 +1,94 @@
+import { describe, it, expect } from 'vitest'
+import { clampPage, toNumber, isFresh, searchMatcher, postingPredicate, STALE_AFTER_DAYS } from '@jobdekho/store/posting-filters.js'
+
+const matchesSearch = (row, q) => searchMatcher(q)(row)
+import { orderFor, groupOrder, SORTS } from '@jobdekho/store/posting-order.js'
+import { SORTS as DB_SORTS } from '@jobdekho/db/posting-order.js'
+
+describe('clampPage', () => {
+  it('defaults, clamps and coerces', () => {
+    expect(clampPage()).toEqual({ limit: 500, offset: 0 })
+    expect(clampPage({ limit: '20', offset: '5' })).toEqual({ limit: 20, offset: 5 })
+    expect(clampPage({ limit: 5000, offset: -3 })).toEqual({ limit: 1000, offset: 0 })
+    expect(clampPage({ limit: 'x', offset: 'y' })).toEqual({ limit: 500, offset: 0 })
+  })
+})
+
+describe('toNumber', () => {
+  it('reads the strings a query carries and rejects the rest', () => {
+    expect(toNumber('15000')).toBe(15000)
+    expect(toNumber(0)).toBe(0)
+    expect(toNumber('')).toBeNull()
+    expect(toNumber(undefined)).toBeNull()
+    expect(toNumber('soon')).toBeNull()
+  })
+})
+
+describe('isFresh', () => {
+  it('keeps null, keeps the cutoff itself, drops older', () => {
+    const cutoff = '2026-09-01T00:00:00.000Z'
+    expect(isFresh({ lastSeenAt: null }, cutoff)).toBe(true)
+    expect(isFresh({ lastSeenAt: cutoff }, cutoff)).toBe(true)
+    expect(isFresh({ lastSeenAt: '2026-08-31T23:59:59.999Z' }, cutoff)).toBe(false)
+    expect(STALE_AFTER_DAYS).toBe(21)
+  })
+})
+
+describe('matchesSearch', () => {
+  it('falls back to a literal, case-insensitive title or company match for unknown words', () => {
+    expect(matchesSearch({ title: 'Quantum Analyst', company: 'X' }, 'QUANTUM')).toBe(true)
+    expect(matchesSearch({ title: 'Analyst', company: 'Quantum Labs' }, 'quantum')).toBe(true)
+    expect(matchesSearch({ title: 'Analyst', company: 'X' }, 'quantum')).toBe(false)
+  })
+
+  it('expands a family query across the title only', () => {
+    expect(matchesSearch({ title: 'Backend Engineer', company: 'X' }, 'web dev')).toBe(true)
+    expect(matchesSearch({ title: 'Chef', company: 'Backend Bakery' }, 'web dev')).toBe(false)
+  })
+})
+
+describe('postingPredicate', () => {
+  it('reads null level, work mode and degree as the old defaults', () => {
+    const row = { id: 'a', source: 's', title: 'T', tags: [], descriptionSnippet: '', level: null, workMode: null, degreeMin: null, lastSeenAt: null }
+    const passes = (opts) => postingPredicate(opts, () => null)(row)
+    expect(passes({ levels: ['mid'] })).toBe(true)
+    expect(passes({ levels: ['senior'] })).toBe(false)
+    expect(passes({ workModes: ['onsite'] })).toBe(true)
+    expect(passes({ workModes: ['remote'] })).toBe(false)
+    expect(passes({ maxDegree: 'bachelors' })).toBe(true)
+  })
+})
+
+describe('orderFor', () => {
+  it('offers the same sorts the API validates against', () => {
+    expect(SORTS).toEqual(DB_SORTS)
+  })
+
+  it('falls back to newest for an unknown sort and puts undated rows last either way', () => {
+    const rows = [{ id: '1', postedAt: null }, { id: '2', postedAt: '2026-01-01T00:00:00.000Z' }, { id: '3', postedAt: '2026-02-01T00:00:00.000Z' }]
+    expect([...rows].sort(orderFor('bogus')).map((r) => r.id)).toEqual(['3', '2', '1'])
+    expect([...rows].sort(orderFor('oldest')).map((r) => r.id)).toEqual(['2', '3', '1'])
+  })
+
+  it('ranks by score, then newest, then id', () => {
+    const rows = [
+      { id: '1', matchScore: 50, postedAt: '2026-01-01T00:00:00.000Z' },
+      { id: '2', matchScore: 80, postedAt: '2026-01-01T00:00:00.000Z' },
+      { id: '3', matchScore: 80, postedAt: '2026-02-01T00:00:00.000Z' },
+      { id: '4', matchScore: 80, postedAt: '2026-02-01T00:00:00.000Z' },
+    ]
+    expect([...rows].sort(orderFor('match')).map((r) => r.id)).toEqual(['4', '3', '2', '1'])
+  })
+})
+
+describe('groupOrder', () => {
+  it('prefers a company board, then the newer posting, then the higher id', () => {
+    const rows = [
+      { id: '1', source: 'linkedin', postedAt: '2026-03-01T00:00:00.000Z' },
+      { id: '2', source: 'lever:acme', postedAt: '2026-01-01T00:00:00.000Z' },
+      { id: '3', source: 'greenhouse:acme', postedAt: '2026-02-01T00:00:00.000Z' },
+      { id: '4', source: 'greenhouse:acme', postedAt: '2026-02-01T00:00:00.000Z' },
+    ]
+    expect([...rows].sort(groupOrder).map((r) => r.id)).toEqual(['4', '3', '2', '1'])
+  })
+})

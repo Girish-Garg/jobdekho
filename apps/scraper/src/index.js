@@ -2,8 +2,8 @@ import { readFileSync } from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import { createHttp } from '@jobdekho/sources/http.js'
 import { buildAdapters } from '@jobdekho/sources/registry.js'
-import { createDb } from '@jobdekho/db/client.js'
-import { listUsersForNotify } from '@jobdekho/db/dashboard-prefs.js'
+import { openStore } from '@jobdekho/store/open.js'
+import { listUsersForNotify } from '@jobdekho/store/dashboard-prefs.js'
 import { sendTelegram } from '@jobdekho/notify/telegram.js'
 import { runAdapters } from './runner.js'
 import { runPipeline } from './pipeline.js'
@@ -26,7 +26,7 @@ function buildSenders() {
 async function main() {
   const config = read('companies.json')
   const rules = read('filters.json')
-  const db = createDb(process.env.DATABASE_URL)
+  const db = openStore(process.env.JOBDEKHO_DATA_DIR)
   const http = createHttp()
   const ran = await runAdapters(buildAdapters(config), http)
   const summary = await runPipeline(ran, {

@@ -1,15 +1,15 @@
 import { loadConfig } from './config.js'
-import { createDb } from '@jobdekho/db/client.js'
-import { createUserStore } from '@jobdekho/db/users.js'
+import { openStore } from '@jobdekho/store/open.js'
+import { createUserStore } from '@jobdekho/store/users.js'
 import { createDashboardStore } from './api/store.js'
 import { buildApp } from './app.js'
 
 try { process.loadEnvFile() } catch {}
 
 const config = loadConfig()
-const db = createDb(config.databaseUrl)
-const dashboardStore = createDashboardStore(db)
-const app = buildApp({ config, userStore: createUserStore(db), dashboardStore, logger: true })
+const store = openStore(process.env.JOBDEKHO_DATA_DIR)
+const dashboardStore = createDashboardStore(store)
+const app = buildApp({ config, userStore: createUserStore(store), dashboardStore, logger: true })
 
 app.listen({ port: config.port, host: '0.0.0.0' })
   .then((addr) => app.log.info(`listening on ${addr}`))
