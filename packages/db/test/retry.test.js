@@ -55,14 +55,22 @@ describe('isConnectionFailure', () => {
     expect(isConnectionFailure(sqlError())).toBe(false)
   })
 
-  // The invariant the whole file rests on: if Postgres answered, its answer
-  // stands. Even codes that read as connection-ish (08006 connection_failure,
-  // 57P03 cannot_connect_now) came from the server and are not retried here -
-  // the compose healthcheck is what covers a server that is still starting.
-  it('never treats a DatabaseError as retryable, whatever its code', () => {
-    expect(isConnectionFailure(sqlError('57P03', 'the database system is starting up'))).toBe(false)
-    expect(isConnectionFailure(sqlError('08006', 'connection failure'))).toBe(false)
+  // The invariant the whole file rests on: if Postgres ran something, its
+  // answer stands. A constraint violation will not clear on its own and a
+  // half-applied write must not be sent twice.
+  it('never retries a DatabaseError from a statement Postgres actually ran', () => {
     expect(isConnectionFailure(sqlError('42P01', 'relation "postings" does not exist'))).toBe(false)
+    expect(isConnectionFailure(sqlError('23505', 'duplicate key value'))).toBe(false)
+    expect(isConnectionFailure(sqlError('08006', 'connection failure'))).toBe(false)
+  })
+
+  // 57P03 was unreachable while a container healthcheck held the app back
+  // until pg_isready answered. Without one, a server part way through
+  // starting answers it directly, and it means the connection was refused
+  // rather than a statement run - the same case as ECONNREFUSED, reported a
+  // few milliseconds later once Postgres can speak the protocol.
+  it('retries a server that says it is still starting up', () => {
+    expect(isConnectionFailure(sqlError('57P03', 'the database system is starting up'))).toBe(true)
   })
 
   it('does not treat an unrecognised error as a connection failure', () => {

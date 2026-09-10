@@ -15,8 +15,8 @@ export function createPool(url) {
     // run would hang for ten seconds after printing "Done.".
     allowExitOnIdle: true,
   })
-  // pg-pool emits 'error' for an idle connection the server drops - which is
-  // what a `docker compose restart db` under a running server looks like.
+  // pg-pool emits 'error' for an idle connection the server drops, which is
+  // what restarting Postgres under a running server looks like.
   // With no listener Node treats that as an unhandled 'error' event and
   // kills the process, even though the pool has already discarded the
   // connection and the next query would simply open a fresh one.

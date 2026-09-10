@@ -124,7 +124,7 @@ describe('describeError', () => {
   it('tells the operator to check Postgres is running for a connection failure', () => {
     const message = describeError(connectionError())
     expect(message).toMatch(/could not reach the database/i)
-    expect(message).toMatch(/docker compose up db/)
+    expect(message).toMatch(/DATABASE_URL/)
     expect(message).toContain('ECONNREFUSED')
   })
 

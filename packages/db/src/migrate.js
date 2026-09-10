@@ -77,8 +77,7 @@ export function describeError(err) {
   if (isConnectionFailure(err)) {
     const detail = err.message || err.errors?.[0]?.message || err.code
     return `Could not reach the database after ${MAX_ATTEMPTS} attempts (${detail}). ` +
-      'Check that Postgres is running - `docker compose up db` starts the local one - ' +
-      'and that DATABASE_URL points at it.'
+      'Check that Postgres is running and that DATABASE_URL points at it.'
   }
   return err.message || String(err)
 }
