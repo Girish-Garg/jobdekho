@@ -81,3 +81,71 @@ describe('smartrecruiters adapter', () => {
     expect(await smartrecruiters({ slug: 'Acme' }).fetch(empty)).toEqual([])
   })
 })
+
+// The list fixture above already carries jobAd on one row to cover the case
+// where the list endpoint starts returning it. These postings carry none, so
+// every description below can only have come from the detail call.
+const detailList = {
+  totalFound: 2,
+  content: [
+    { id: '201', name: 'Backend Engineer', company: { name: 'Acme Corp' }, location: { fullLocation: 'Pune, India' } },
+    { id: '202', name: 'Frontend Engineer', company: { name: 'Acme Corp' }, location: { fullLocation: 'Pune, India' } },
+  ],
+}
+
+// The same companyDescription boilerplate on both, so excluding it is the
+// only reason the two bodies below do not also read alike.
+const detailBodies = {
+  201: {
+    jobAd: {
+      sections: {
+        companyDescription: { text: '<p>Acme has been hiring since 1990.</p>' },
+        jobDescription: { text: '<p>Own the payments API.</p>' },
+        qualifications: { text: '<p>B.Tech required.</p>' },
+        additionalInformation: { text: '<p>Hybrid, 3 days onsite.</p>' },
+      },
+    },
+  },
+  202: {
+    jobAd: {
+      sections: {
+        companyDescription: { text: '<p>Acme has been hiring since 1990.</p>' },
+        jobDescription: { text: '<p>Ship the design system.</p>' },
+        qualifications: { text: '<p>Portfolio required.</p>' },
+        additionalInformation: { text: '<p>Remote friendly.</p>' },
+      },
+    },
+  },
+}
+
+// Routes on the URL shape rather than tracking call order, so it behaves like
+// the real pair of endpoints regardless of which posting the pool reaches first.
+function detailHttp({ failId } = {}) {
+  return async (reqUrl) => {
+    if (reqUrl.includes('/postings?')) return { json: async () => detailList }
+    const id = reqUrl.split('/').pop()
+    if (id === failId) throw new Error('timeout')
+    return { json: async () => detailBodies[id] || {} }
+  }
+}
+
+describe('smartrecruiters detail fetch', () => {
+  it('assembles the body from jobDescription, qualifications and additionalInformation', async () => {
+    const [r] = await smartrecruiters({ slug: 'Acme' }).fetch(detailHttp())
+    expect(r.description).toContain('Own the payments API')
+    expect(r.description).toContain('B.Tech required')
+    expect(r.description).toContain('Hybrid, 3 days onsite')
+    expect(r.description).not.toContain('<p>')
+  })
+
+  it('excludes companyDescription so postings at one company do not read alike', async () => {
+    const [r] = await smartrecruiters({ slug: 'Acme' }).fetch(detailHttp())
+    expect(r.description).not.toContain('hiring since 1990')
+  })
+
+  it('leaves only the failed posting body-less, its sibling still gets its body', async () => {
+    const [r1, r2] = await smartrecruiters({ slug: 'Acme' }).fetch(detailHttp({ failId: '201' }))
+    expect(r1.description).toBe('')
+    expect(r2.description).toContain('Ship the design system')
+  })
+})

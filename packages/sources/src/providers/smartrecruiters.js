@@ -1,15 +1,6 @@
-import { stripHtml } from '../html.js'
 import { internLevel } from './employment-type.js'
 import { toIso } from '../iso-date.js'
-
-// The list endpoint returns metadata only; SmartRecruiters serves the job ad
-// body from the per-posting detail call. jobAd is mapped anyway so the body
-// appears automatically if the list ever starts carrying it.
-function body(j) {
-  const s = j.jobAd?.sections || {}
-  const parts = [s.jobDescription?.text, s.qualifications?.text, s.companyDescription?.text]
-  return stripHtml(parts.filter(Boolean).join(' '))
-}
+import { descriptionFromSections, fillDescriptions } from './smartrecruiters-detail.js'
 
 // fullLocation is prebuilt by the platform and ships empty segments when a
 // posting has no region, e.g. "Chennai, , India".
@@ -56,17 +47,22 @@ export function smartrecruiters({ slug }) {
         // reliable end marker and the count is only a shortcut.
         if (rows.length < PER_PAGE || content.length >= (data.totalFound ?? 0)) break
       }
-      return content.map((j) => ({
+      const postings = content.map((j) => ({
         externalId: String(j.id),
         title: j.name || '',
         company: j.company?.name || slug,
         location: place(j.location),
         url: `https://jobs.smartrecruiters.com/${slug}/${j.id}`,
-        description: body(j),
+        // the list response never actually carries jobAd, but reading it here
+        // costs nothing and picks the body up automatically if that changes
+        description: descriptionFromSections(j.jobAd?.sections),
         tags: [j.department?.label, j.function?.label, j.typeOfEmployment?.label].filter(Boolean),
         postedAt: toIso(j.releasedDate),
         ...internLevel(j.typeOfEmployment?.id, j.experienceLevel?.id),
       }))
+      // the list endpoint is metadata only, so the body has to come from a
+      // second call per posting
+      return fillDescriptions(http, slug, postings)
     },
   }
 }
