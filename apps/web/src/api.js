@@ -1,25 +1,9 @@
-// Tiny fetch client. Every call sends the session cookie.
+// Tiny fetch client. Every call sends the session cookie (see lib/request.js).
+import { send, failure } from './lib/request.js';
+import { NDJSON_TYPE, readNdjson } from './lib/ndjson.js';
 
-async function req(url, opts = {}) {
-  // The JSON content-type only goes on calls that actually send JSON: a
-  // FormData body needs the browser to write the multipart boundary into the
-  // header itself, and a bodyless POST that claims to carry JSON is a 400 at
-  // the server's parser.
-  const headers = typeof opts.body === 'string' ? { 'content-type': 'application/json' } : undefined;
-  const res = await fetch(url, { credentials: 'include', headers, ...opts });
-  if (res.status === 401) {
-    const err = new Error('unauthorized');
-    err.status = 401;
-    throw err;
-  }
-  if (!res.ok) {
-    // The resume 422s and the apply-filter 400 carry messages written to be
-    // shown to the user verbatim, so prefer the server's words to a status line.
-    const body = await res.json().catch(() => null);
-    const err = new Error(body?.error || `${opts.method || 'GET'} ${url} -> ${res.status}`);
-    err.status = res.status;
-    throw err;
-  }
+async function req(url, opts) {
+  const res = await send(url, opts);
   return res.status === 204 ? null : res.json();
 }
 
@@ -78,6 +62,24 @@ export function uploadResume(file) {
 
 export function applyProfileFilter() {
   return req('/api/profile/apply-filter', { method: 'POST' });
+}
+
+export function getProviders({ refresh = false } = {}) {
+  return req(`/api/ai/providers${refresh ? '?refresh=true' : ''}`).then((d) => d.providers);
+}
+
+// Asks for the stream (see lib/ndjson.js) so the twenty seconds a model takes
+// show as progress rather than silence. The stream is always a 200, so a
+// failure arrives as its last line; it rejects the way a failed plain call
+// does, with the server's sentence as the message and `kind` attached.
+export async function extractProfile({ onEvent } = {}) {
+  const res = await send('/api/profile/extract', { method: 'POST', headers: { accept: NDJSON_TYPE } });
+  // The 400 and 401 are plain JSON and have already thrown inside send(). A
+  // plain 200 body is the same object the stream would have ended with.
+  const streamed = (res.headers.get('content-type') || '').includes(NDJSON_TYPE);
+  const body = streamed ? await readNdjson(res, onEvent) : await res.json();
+  if (!body || body.error) throw failure(body, 'The connection dropped before the answer arrived. Try again.');
+  return body;
 }
 
 export function logout() {

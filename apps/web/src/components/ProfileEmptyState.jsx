@@ -7,7 +7,7 @@ export default function ProfileEmptyState({ onStart }) {
       <p className="text-sm leading-relaxed text-muted">
         Your profile is what the Best fit ranking on Postings scores against: the
         skills, target titles, experience and degree you bring. Upload a resume
-        above and the fields fill themselves in, or write them yourself. Once it
+        above and fill the fields in from it, or write them yourself. Once it
         is saved you can also use it to seed your notification filter.
       </p>
       <button

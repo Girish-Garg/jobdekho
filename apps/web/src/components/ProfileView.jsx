@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getProfile, putProfile } from '../api.js';
 import ResumeUpload from './ResumeUpload.jsx';
+import FillFromResume from './FillFromResume.jsx';
 import ProfileForm from './ProfileForm.jsx';
 import ProfileEmptyState from './ProfileEmptyState.jsx';
 import ApplyToAlerts from './ApplyToAlerts.jsx';
@@ -33,6 +34,9 @@ export default function ProfileView() {
     setExists(true);
   }
 
+  // The upload and the fill-in both hand back the server's saved copy.
+  const adopt = (p) => (setProfile(p), setExists(true));
+
   const blank = profile === null && !editing;
 
   return (
@@ -46,7 +50,10 @@ export default function ProfileView() {
         <p className="py-10 font-mono text-sm text-muted">Loading your profile...</p>
       ) : (
         <div className="mt-8 flex max-w-2xl flex-col gap-8">
-          <ResumeUpload resumeName={profile?.resumeName} onUploaded={(p) => (setProfile(p), setExists(true))} />
+          <div className="flex flex-col gap-3">
+            <ResumeUpload resumeName={profile?.resumeName} onUploaded={adopt} />
+            {profile?.resumeName && <FillFromResume profile={profile} onFilled={adopt} />}
+          </div>
           {blank ? (
             <ProfileEmptyState onStart={() => setEditing(true)} />
           ) : (

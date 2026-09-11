@@ -8,13 +8,21 @@ vi.mock('../api.js', () => ({
   uploadResume: vi.fn(async () => PROFILE),
   applyProfileFilter: vi.fn(async () => ({})),
   deleteProfile: vi.fn(async () => null),
+  getProviders: vi.fn(async () => [CLAUDE]),
+  extractProfile: vi.fn(async () => ({ ...PROFILE, skills: ['node'] })),
 }));
 
-import { getProfile, putProfile, uploadResume, applyProfileFilter, deleteProfile } from '../api.js';
+import {
+  getProfile, putProfile, uploadResume, applyProfileFilter, deleteProfile, extractProfile,
+} from '../api.js';
 
 const PROFILE = {
   skills: ['react'], titles: ['frontend intern'], locations: ['pune'],
   years: 1, degree: 'bachelors', resumeName: 'cv.pdf',
+};
+const CLAUDE = {
+  id: 'claude', label: 'Claude Code', install: 'https://claude.ai/code',
+  present: true, path: 'C:\\npm\\claude.cmd', runs: true, version: '1.0.0', error: null,
 };
 
 const pickFile = () =>
@@ -42,7 +50,7 @@ describe('ProfileView with no profile', () => {
     expect(screen.queryByRole('button', { name: 'Use this for my alerts' })).not.toBeInTheDocument();
   });
 
-  it('fills the form from an uploaded resume and shows its name', async () => {
+  it('adopts the profile the upload returns and shows the file name', async () => {
     render(<ProfileView />);
     await screen.findByRole('heading', { name: 'No profile yet' });
     pickFile();
@@ -50,6 +58,14 @@ describe('ProfileView with no profile', () => {
     expect(uploadResume).toHaveBeenCalled();
     expect(screen.getByText('On file: cv.pdf')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Delete profile' })).toBeInTheDocument();
+  });
+
+  it('offers to fill in from the resume only once one is on file', async () => {
+    render(<ProfileView />);
+    await screen.findByRole('heading', { name: 'No profile yet' });
+    expect(screen.queryByRole('button', { name: 'Fill in from resume' })).not.toBeInTheDocument();
+    pickFile();
+    expect(await screen.findByRole('button', { name: 'Fill in from resume' })).toBeInTheDocument();
   });
 
   it('shows the 422 extraction message verbatim', async () => {
@@ -87,6 +103,17 @@ describe('ProfileView with a saved profile', () => {
         years: 2, degree: 'bachelors',
       }),
     );
+  });
+
+  it('puts the extracted profile into the form after the overwrite warning', async () => {
+    render(<ProfileView />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Fill in from resume' }));
+    // The saved profile has fields, so the run waits for the confirm.
+    expect(extractProfile).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Overwrite and fill in' }));
+    expect(await screen.findByText('node')).toBeInTheDocument();
+    expect(screen.queryByText('react')).not.toBeInTheDocument();
+    expect(extractProfile).toHaveBeenCalledTimes(1);
   });
 
   it('applies to alerts only after the confirm step', async () => {

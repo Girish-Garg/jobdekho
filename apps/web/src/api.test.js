@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   getMe, getPostings, getSources, setStatus, putFilters, getNotifications, putNotifications,
-  getProfile, putProfile, deleteProfile, uploadResume, applyProfileFilter,
+  getProfile, putProfile, deleteProfile, uploadResume, applyProfileFilter, getProviders, extractProfile,
 } from './api.js';
 
 function mockFetch(body, status = 200) {
@@ -166,5 +166,74 @@ describe('profile api', () => {
   it('applyProfileFilter surfaces the no-profile message', async () => {
     mockFetch({ error: 'no profile' }, 400);
     await expect(applyProfileFilter()).rejects.toMatchObject({ message: 'no profile', status: 400 });
+  });
+});
+
+// The extract client checks the content type before reading lines, so these
+// mocks are real Responses: they carry headers and give the stream a body.
+function mockResponse(body, headers) {
+  const fn = vi.fn().mockResolvedValue(new Response(body, { status: 200, headers }));
+  global.fetch = fn;
+  return fn;
+}
+const ndjson = (...objs) => mockResponse(objs.map((o) => JSON.stringify(o)).join('\n') + '\n', { 'content-type': 'application/x-ndjson' });
+
+const PROFILE = { skills: ['react'], titles: [], locations: [], years: 1, degree: 'none', resumeName: 'cv.pdf' };
+const START = { event: 'start', provider: 'claude', path: 'C:\\npm\\claude.cmd' };
+const WAIT = { event: 'progress', stage: 'wait', elapsedMs: 5000 };
+
+describe('ai api', () => {
+  it('getProviders unwraps the list and re-probes only when asked', async () => {
+    const fetchMock = mockFetch({ providers: [{ id: 'claude', present: true }] });
+    expect(await getProviders()).toEqual([{ id: 'claude', present: true }]);
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/ai/providers');
+    await getProviders({ refresh: true });
+    expect(fetchMock.mock.calls[1][0]).toBe('/api/ai/providers?refresh=true');
+  });
+
+  it('extractProfile asks for the stream with a bodyless POST', async () => {
+    const fetchMock = ndjson(PROFILE);
+    await extractProfile();
+    const [url, opts] = fetchMock.mock.calls[0];
+    expect(url).toBe('/api/profile/extract');
+    expect(opts.method).toBe('POST');
+    expect(opts.credentials).toBe('include');
+    // Only accept: a content-type on a bodyless POST is a 400 at the server.
+    expect(opts.headers).toEqual({ accept: 'application/x-ndjson' });
+  });
+
+  it('extractProfile reports each event and resolves with the saved profile', async () => {
+    ndjson(START, WAIT, PROFILE);
+    const onEvent = vi.fn();
+    expect(await extractProfile({ onEvent })).toEqual(PROFILE);
+    expect(onEvent.mock.calls.map(([e]) => e)).toEqual([START, WAIT]);
+  });
+
+  it('extractProfile rejects an { error, kind } last line with the sentence and the kind', async () => {
+    const error = 'Claude Code is not signed in (Not logged in). Open a terminal, run "claude", finish signing in, then try again.';
+    ndjson(START, { error, kind: 'login' });
+    await expect(extractProfile()).rejects.toMatchObject({ message: error, kind: 'login' });
+  });
+
+  it('extractProfile rejects the plain-JSON 400 the same way, before reading any lines', async () => {
+    mockFetch({ error: 'Upload a resume first.' }, 400);
+    const onEvent = vi.fn();
+    await expect(extractProfile({ onEvent })).rejects.toMatchObject({ message: 'Upload a resume first.', status: 400 });
+    expect(onEvent).not.toHaveBeenCalled();
+  });
+
+  it('extractProfile rejects a 401 like every other call', async () => {
+    mockFetch(null, 401);
+    await expect(extractProfile()).rejects.toMatchObject({ status: 401 });
+  });
+
+  it('extractProfile takes a plain JSON 200 as the same object the stream ends with', async () => {
+    mockResponse(JSON.stringify(PROFILE), { 'content-type': 'application/json' });
+    expect(await extractProfile()).toEqual(PROFILE);
+  });
+
+  it('extractProfile rejects a stream that ends before the result line', async () => {
+    ndjson(START, WAIT);
+    await expect(extractProfile()).rejects.toThrow(/connection dropped/);
   });
 });
