@@ -1,7 +1,7 @@
 {
   "providers": [
     { "provider": "greenhouse", "slug": "gitlab" },
-    { "provider": "greenhouse", "slug": "phonepe" },
+    { "provider": "smartrecruiters", "slug": "PhonePeLimited" },
     { "provider": "greenhouse", "slug": "mongodb" },
     { "provider": "greenhouse", "slug": "postman" },
     { "provider": "greenhouse", "slug": "vercel" },
