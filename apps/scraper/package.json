@@ -1,8 +1,7 @@
 {
   "name": "@jobdekho/scraper", "version": "0.0.0", "type": "module",
   "dependencies": {
-    "@jobdekho/core": "*", "@jobdekho/db": "*",
-    "@jobdekho/sources": "*", "@jobdekho/notify": "*",
-    "drizzle-orm": "^0.36.0"
+    "@jobdekho/core": "*", "@jobdekho/store": "*",
+    "@jobdekho/sources": "*", "@jobdekho/notify": "*"
   }
 }

@@ -3,7 +3,6 @@ import { clampPage, toNumber, isFresh, searchMatcher, postingPredicate, STALE_AF
 
 const matchesSearch = (row, q) => searchMatcher(q)(row)
 import { orderFor, groupOrder, SORTS } from '@jobdekho/store/posting-order.js'
-import { SORTS as DB_SORTS } from '@jobdekho/db/posting-order.js'
 
 describe('clampPage', () => {
   it('defaults, clamps and coerces', () => {
@@ -60,8 +59,10 @@ describe('postingPredicate', () => {
 })
 
 describe('orderFor', () => {
-  it('offers the same sorts the API validates against', () => {
-    expect(SORTS).toEqual(DB_SORTS)
+  // The API validates ?sort= against this same constant, so the two cannot
+  // drift. What can drift is the web's sort menu, which sends these strings.
+  it('offers the sorts the web sort menu sends', () => {
+    expect(SORTS).toEqual(['newest', 'oldest', 'added', 'company', 'match'])
   })
 
   it('falls back to newest for an unknown sort and puts undated rows last either way', () => {

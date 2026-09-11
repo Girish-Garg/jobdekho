@@ -8,14 +8,9 @@
     "dev:web": "npm -w @jobdekho/web run dev",
     "test": "vitest run",
     "scrape": "node apps/scraper/src/index.js",
-    "db:push": "drizzle-kit push",
-    "db:migrate": "node packages/db/src/migrate.js",
-    "db:backfill": "node apps/scraper/src/backfill.js",
-    "build": "npm -w @jobdekho/web run build",
-    "heroku-postbuild": "npm -w @jobdekho/web run build"
+    "build": "npm -w @jobdekho/web run build"
   },
   "devDependencies": {
-    "vitest": "^2.1.0",
-    "drizzle-kit": "^0.28.0"
+    "vitest": "^2.1.0"
   }
 }
