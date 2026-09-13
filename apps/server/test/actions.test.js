@@ -33,7 +33,7 @@ const REPLY = {
 
 describe('the action registry', () => {
   it('lists the fake check under its kind, with the web policy and a browsing timeout', () => {
-    expect(Object.keys(ACTIONS)).toEqual(['fake-check'])
+    expect(Object.keys(ACTIONS)).toContain('fake-check')
     expect(ACTIONS['fake-check']).toBe(fakeCheck)
     expect(fakeCheck.tools).toBe('web')
     expect(fakeCheck.timeoutMs).toBe(300000)

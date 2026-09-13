@@ -35,11 +35,12 @@ describe('PostingDetail placement of the fake check', () => {
     expect(screen.getByText('AI').parentElement).toContainElement(button);
   });
 
-  it('puts the check beside the caution list when the signals stack up, and only there', async () => {
+  it('puts the check beside the caution list when the signals stack up, and moves only the check', async () => {
     setup({ legitimacy: 'suspicious', ghostSignals: ['no pay stated', 'very short job description', 'posted 4 months ago'] });
     const button = await screen.findByRole('button', { name: 'Is this job real?' });
     expect(screen.getByText('Caution').parentElement).toContainElement(button);
-    expect(screen.queryByText('AI')).not.toBeInTheDocument();
+    // The rest of the AI section (other actions, not the fake check) still
+    // renders where it always does; only the fake check itself relocates.
     expect(screen.getAllByRole('button', { name: 'Is this job real?' })).toHaveLength(1);
   });
 

@@ -1,4 +1,5 @@
 import { fakeCheck } from './fake-check.js'
+import { coverLetter } from './cover-letter.js'
 
 // Every AI action a posting offers, by the kind that names it in the URL
 // (POST /api/postings/:id/ai/:kind) and in the saved result. An action is one
@@ -16,4 +17,4 @@ import { fakeCheck } from './fake-check.js'
 //
 // Adding one is that module plus an entry in this list; the route, the
 // store and the streamed progress come with it.
-export const ACTIONS = Object.fromEntries([fakeCheck].map((action) => [action.kind, action]))
+export const ACTIONS = Object.fromEntries([fakeCheck, coverLetter].map((action) => [action.kind, action]))
