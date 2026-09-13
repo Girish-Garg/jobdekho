@@ -42,9 +42,11 @@ const FIELDS = [
 ]
 
 export function buildFakeCheckPrompt(posting) {
-  const lines = FIELDS.filter(([, key]) => posting[key]).map(([name, key]) => `${name}: ${posting[key]}`)
-  // A description that contained the closing marker could end the fence
-  // early and put its own words outside it, so the marker cannot appear.
+  // A description, or a title or company, that contained the closing marker
+  // could end the fence early and put its own words outside it, so the
+  // marker cannot appear in anything scraped.
+  const lines = FIELDS.filter(([, key]) => posting[key])
+    .map(([name, key]) => `${name}: ${String(posting[key]).split(CLOSE).join('')}`)
   const description = String(posting.descriptionText || posting.descriptionSnippet || '')
     .slice(0, MAX_DESCRIPTION).split(CLOSE).join('')
   const signals = posting.ghostSignals?.length ? posting.ghostSignals.join('; ') : 'none'

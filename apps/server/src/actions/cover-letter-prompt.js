@@ -34,10 +34,11 @@ const MAX_RESUME = 8000
 const FIELDS = [['title', 'title'], ['company', 'company'], ['location', 'location']]
 
 export function buildCoverLetterPrompt(posting, context) {
-  const lines = FIELDS.filter(([, key]) => posting[key]).map(([name, key]) => `${name}: ${posting[key]}`)
-  // A description or resume that contained its own closing marker could end
-  // the fence early and put its own words outside it, so neither marker may
-  // appear inside the text it fences.
+  // A description, title or resume that contained its own closing marker
+  // could end the fence early and put its own words outside it, so neither
+  // marker may appear inside the text it fences.
+  const lines = FIELDS.filter(([, key]) => posting[key])
+    .map(([name, key]) => `${name}: ${String(posting[key]).split(CLOSE_JOB).join('')}`)
   const description = String(posting.descriptionText || posting.descriptionSnippet || '')
     .slice(0, MAX_DESCRIPTION).split(CLOSE_JOB).join('')
   const resume = String(context.resumeText || '').slice(0, MAX_RESUME).split(CLOSE_RESUME).join('')
