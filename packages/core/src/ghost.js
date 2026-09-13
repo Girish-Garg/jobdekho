@@ -21,7 +21,8 @@ const BLAST_SOURCES = 5
 // Matching any of these SUPPRESSES the "generic" signal, so a gap in the list
 // makes the check more accusing but a stray everyday word ("spring", "excel")
 // only excuses. That asymmetry is why the list errs broad rather than pure.
-const TOOL_TERMS = [
+// Exported so the resume tailoring's keyword coverage starts from this list.
+export const TOOL_TERMS = [
   'javascript', 'typescript', 'python', 'java', 'kotlin', 'swift', 'c++', 'c#',
   'golang', 'php', 'ruby', 'rust', 'scala', 'matlab', 'react', 'angular', 'vue',
   'node', 'node.js', 'next.js', 'django', 'flask', 'spring', 'laravel', 'rails',

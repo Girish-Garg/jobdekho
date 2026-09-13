@@ -12,10 +12,16 @@ import { DEFAULT_PROVIDER } from '../ai/providers.js'
 // `run`, `locate`, `scratch` and `emit` pass through to callProvider: the
 // first three so a test never spawns a real CLI, the last so a route can
 // stream progress.
+//
+// parse() gets the posting and the context after the reply, so an action can
+// hold the model's answer against what it was asked about: the resume
+// tailoring checks its rewrite against the original resume and the posting
+// here, in code the model cannot talk its way past. An action that reads the
+// reply alone ignores the second argument.
 export async function runAction(action, { posting, context = {}, provider = DEFAULT_PROVIDER, ...seams }) {
   const prompt = action.buildPrompt(posting, context)
   const { text } = await callProvider({ provider, prompt, tools: action.tools, timeoutMs: action.timeoutMs, ...seams })
-  const result = action.parse(text)
+  const result = action.parse(text, { posting, context })
   if (!result) throw new ProviderError('unreadable', provider)
   return { kind: action.kind, postingId: posting.id, provider: provider.id, result }
 }

@@ -1,5 +1,6 @@
 import { fakeCheck } from './fake-check.js'
 import { coverLetter } from './cover-letter.js'
+import { resumeTailor } from './resume-tailor.js'
 
 // Every AI action a posting offers, by the kind that names it in the URL
 // (POST /api/postings/:id/ai/:kind) and in the saved result. An action is one
@@ -13,8 +14,10 @@ import { coverLetter } from './cover-letter.js'
 //                sentence when the person has not supplied it yet
 //   buildPrompt  (posting, context) -> the prompt; the posting is the feed
 //                row plus descriptionText, status, legitimacy and ghostSignals
-//   parse        (text) -> the result to save, or null for an unreadable reply
+//   parse        (text, { posting, context }) -> the result to save, or null
+//                for an unreadable reply; the second argument is for an
+//                action that checks the reply against what it was given
 //
 // Adding one is that module plus an entry in this list; the route, the
 // store and the streamed progress come with it.
-export const ACTIONS = Object.fromEntries([fakeCheck, coverLetter].map((action) => [action.kind, action]))
+export const ACTIONS = Object.fromEntries([fakeCheck, coverLetter, resumeTailor].map((action) => [action.kind, action]))
