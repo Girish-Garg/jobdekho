@@ -23,4 +23,14 @@ describe('GhostSignals', () => {
     const { container } = render(<GhostSignals />);
     expect(container).toBeEmptyDOMElement();
   });
+
+  it('seats whatever it is given under the list, inside the same block', () => {
+    render(<GhostSignals signals={['no pay stated']}><button type="button">Is this job real?</button></GhostSignals>);
+    expect(screen.getByText('Caution').parentElement).toContainElement(screen.getByRole('button', { name: 'Is this job real?' }));
+  });
+
+  it('renders nothing even with children when there are no signals to seat them under', () => {
+    const { container } = render(<GhostSignals signals={[]}><button type="button">x</button></GhostSignals>);
+    expect(container).toBeEmptyDOMElement();
+  });
 });

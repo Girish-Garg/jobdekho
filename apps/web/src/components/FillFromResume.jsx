@@ -4,8 +4,11 @@ import { useProviders } from '../lib/useProviders.js';
 import { progressText } from '../lib/aiProgress.js';
 import InstallHint from './InstallHint.jsx';
 import OverwriteConfirm from './OverwriteConfirm.jsx';
+import AiError from './AiError.jsx';
 
 const SECONDARY = 'rounded-full border border-line px-4 py-1.5 text-sm text-ink transition hover:border-ink disabled:opacity-60';
+
+const INTRO = 'Filling in from the resume asks an AI CLI installed on this computer, on your own subscription.';
 
 // A button, not a side effect of the upload. Each run spends the person's own
 // CLI subscription and holds the form for twenty seconds or more, which is
@@ -33,7 +36,7 @@ export default function FillFromResume({ profile, onFilled }) {
     if (event.event === 'start') {
       label.current = providers.find((p) => p.id === event.provider)?.label ?? event.provider;
     }
-    setProgress(progressText(event, label.current));
+    setProgress(progressText(event, label.current, { noun: 'Resume' }));
   }
 
   async function run() {
@@ -51,7 +54,7 @@ export default function FillFromResume({ profile, onFilled }) {
 
   if (providers === undefined) return <p className="font-mono text-xs text-muted">Checking for an AI CLI...</p>;
   const ready = providers.find((p) => p.present && p.runs);
-  if (!ready) return <InstallHint providers={providers} checking={checking} onRecheck={refresh} />;
+  if (!ready) return <InstallHint intro={INTRO} providers={providers} checking={checking} onRecheck={refresh} />;
   if (step === 'confirm') return <OverwriteConfirm label={ready.label} onConfirm={run} onCancel={() => setStep('idle')} />;
 
   return (
@@ -69,16 +72,7 @@ export default function FillFromResume({ profile, onFilled }) {
           {step === 'busy' ? progress : step === 'done' ? 'Filled in. Check the fields, then save.' : ''}
         </span>
       </div>
-      {error && (
-        <p role="alert" className="flex flex-wrap items-center gap-2 text-sm text-ember">
-          {error.message}
-          {error.kind === 'not_found' && (
-            <button type="button" disabled={checking} onClick={() => (setError(null), refresh())} className="underline">
-              {checking ? 'Checking...' : 'Check again'}
-            </button>
-          )}
-        </p>
-      )}
+      <AiError error={error} checking={checking} onRecheck={() => (setError(null), refresh())} />
       <p className="text-xs leading-relaxed text-muted">
         Asks {ready.label} on this computer to read the resume on file. Takes twenty seconds or so.
       </p>

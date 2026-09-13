@@ -1,5 +1,6 @@
 import { locateBinary } from './locate.js'
 import { runCli } from './spawn.js'
+import { inEmptyDir } from './scratch-dir.js'
 import { ProviderError } from './errors.js'
 import { startEvent, progressEvent } from './events.js'
 
@@ -13,12 +14,18 @@ const HEARTBEAT_MS = 5000
 // out of that text is the feature's job, because every feature asks for a
 // different one.
 //
-// `run` and `locate` are injectable so a test never spawns a real CLI, and so
-// the route layer can hand in fakes through one decorator.
+// `tools` is the policy the feature chose (see providers.js) and has no
+// default on purpose: leaving it out is a bug that must fail before a CLI
+// starts, not a call that runs with every tool the CLI has.
+//
+// `run`, `locate` and `scratch` are injectable so a test never spawns a real
+// CLI or touches the real temp directory, and so the route layer can hand in
+// fakes through one decorator.
 export async function callProvider({
-  provider, prompt, timeoutMs = DEFAULT_TIMEOUT_MS, emit = () => {},
-  run = runCli, locate = locateBinary, heartbeatMs = HEARTBEAT_MS, now = Date.now,
+  provider, prompt, tools, timeoutMs = DEFAULT_TIMEOUT_MS, emit = () => {},
+  run = runCli, locate = locateBinary, scratch = inEmptyDir, heartbeatMs = HEARTBEAT_MS, now = Date.now,
 }) {
+  const args = provider.promptArgs(tools)
   const file = locate(provider.binary)
   if (!file) throw new ProviderError('not_found', provider)
 
@@ -28,7 +35,7 @@ export async function callProvider({
   const beat = setInterval(() => emit(progressEvent({ stage: 'wait', elapsedMs: now() - started })), heartbeatMs)
   let result
   try {
-    result = await run({ file, args: provider.promptArgs, input: prompt, timeoutMs })
+    result = await scratch((cwd) => run({ file, args, input: prompt, timeoutMs, cwd }))
   } catch (err) {
     throw notRun(err, provider, timeoutMs)
   } finally {
@@ -48,8 +55,16 @@ function notRun(err, provider, timeoutMs) {
 }
 
 // A CLI that is installed but not signed in usually says so on stderr and
-// exits non-zero, which is the other route an expired login takes.
-function exited({ stderr, code }, provider) {
+// exits non-zero, which is the other route an expired login takes. Claude
+// Code 2.1 takes both at once: it prints its is_error envelope on stdout AND
+// exits 1 with nothing on stderr, so the envelope is read first or the
+// person sees "exited with code 1" where "OAuth session expired" was.
+function exited({ stdout, stderr, code }, provider) {
+  try {
+    provider.unwrap(stdout, provider)
+  } catch (err) {
+    if (err instanceof ProviderError) return err
+  }
   const detail = stderr.trim().slice(0, 200) || `exited with code ${code}`
   return new ProviderError(provider.loginPattern.test(detail) ? 'login' : 'failed', provider, detail)
 }

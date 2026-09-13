@@ -1,8 +1,12 @@
 import { describe, it, expect, vi } from 'vitest'
 import { locateBinary } from '@jobdekho/server/ai/locate.js'
 import { unwrapClaude } from '@jobdekho/server/ai/claude.js'
-import { CLAUDE, PROVIDERS, providerById } from '@jobdekho/server/ai/providers.js'
+import { CLAUDE, PROVIDERS, TOOL_POLICIES, providerById } from '@jobdekho/server/ai/providers.js'
 import { callProvider } from '@jobdekho/server/ai/call.js'
+import { inEmptyDir } from '@jobdekho/server/ai/scratch-dir.js'
+import { existsSync, readdirSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { createDetector } from '@jobdekho/server/ai/detect.js'
 import { ProviderError, FAILURE_KINDS } from '@jobdekho/server/ai/errors.js'
 import { readNdjson, startEvent, progressEvent, isEvent } from '@jobdekho/server/ai/events.js'
@@ -55,8 +59,29 @@ describe('the provider registry', () => {
   })
 
   it('drives it in one-shot mode with a JSON reply and no prompt on the command line', () => {
-    expect(CLAUDE.promptArgs).toEqual(['-p', '--output-format', 'json'])
+    expect(CLAUDE.promptArgs('none').slice(0, 3)).toEqual(['-p', '--output-format', 'json'])
     expect(CLAUDE.versionArgs).toEqual(['--version'])
+  })
+
+  // The prompt carries a job description, which is third-party text, so the
+  // call must never run with the CLI's default of every tool.
+  it('names the two tool policies and refuses anything else', () => {
+    expect(TOOL_POLICIES).toEqual(['none', 'web'])
+    expect(CLAUDE.promptArgs('none')).toContain('--tools')
+    expect(CLAUDE.promptArgs('none').at(-1)).toBe('')
+    const web = CLAUDE.promptArgs('web')
+    expect(web.slice(web.indexOf('--tools'))).toEqual(['--tools', 'WebSearch,WebFetch', '--allowedTools', 'WebSearch,WebFetch'])
+    expect(() => CLAUDE.promptArgs()).toThrow(/unknown tool policy/)
+    expect(() => CLAUDE.promptArgs('default')).toThrow(/unknown tool policy/)
+  })
+
+  it('keeps the person\'s own hooks, MCP servers and settings out of every one-shot call', () => {
+    for (const tools of TOOL_POLICIES) {
+      const args = CLAUDE.promptArgs(tools)
+      expect(args).toEqual(expect.arrayContaining(['--safe-mode', '--strict-mcp-config', '--no-chrome', '--no-session-persistence']))
+      expect(args).not.toContain('--dangerously-skip-permissions')
+      expect(args).not.toContain('bypassPermissions')
+    }
   })
 })
 
@@ -91,7 +116,7 @@ describe('unwrapClaude', () => {
 describe('callProvider', () => {
   it('refuses before spawning anything when the binary is absent', async () => {
     const run = vi.fn()
-    const err = await rejection(callProvider({ provider: CLAUDE, prompt: 'x', locate: NOWHERE, run }))
+    const err = await rejection(callProvider({ provider: CLAUDE, prompt: 'x', tools: 'none', locate: NOWHERE, run }))
     expect(err.kind).toBe('not_found')
     expect(err.status).toBe(503)
     expect(err.message).toMatch(/Claude Code is not installed/)
@@ -101,30 +126,63 @@ describe('callProvider', () => {
 
   it('sends the whole prompt over stdin with fixed arguments and returns the text', async () => {
     const run = vi.fn(answering(envelope('hello')))
-    const out = await callProvider({ provider: CLAUDE, prompt: 'resume "here"; rm -rf /', locate: HERE, run })
+    const out = await callProvider({ provider: CLAUDE, prompt: 'resume "here"; rm -rf /', tools: 'none', locate: HERE, run, scratch: (work) => work('/scratch') })
     expect(out).toEqual({ provider: 'claude', text: 'hello' })
     expect(run).toHaveBeenCalledWith({
-      file: '/usr/local/bin/claude', args: ['-p', '--output-format', 'json'],
-      input: 'resume "here"; rm -rf /', timeoutMs: 120000,
+      file: '/usr/local/bin/claude', args: CLAUDE.promptArgs('none'),
+      input: 'resume "here"; rm -rf /', timeoutMs: 120000, cwd: '/scratch',
     })
+  })
+
+  it('passes the feature\'s tool policy through to the arguments', async () => {
+    const run = vi.fn(answering(envelope('hello')))
+    await callProvider({ provider: CLAUDE, prompt: 'x', tools: 'web', locate: HERE, run, scratch: (work) => work('/s') })
+    expect(run.mock.calls[0][0].args).toEqual(CLAUDE.promptArgs('web'))
+  })
+
+  // Forgetting the policy must fail before anything is spawned, because the
+  // CLI's own default is every tool.
+  it('refuses to run without a tool policy', async () => {
+    const run = vi.fn()
+    await expect(callProvider({ provider: CLAUDE, prompt: 'x', locate: HERE, run })).rejects.toThrow(/unknown tool policy/)
+    expect(run).not.toHaveBeenCalled()
+  })
+
+  it('runs the CLI in an empty directory that is gone afterwards', async () => {
+    let seen
+    const run = async ({ cwd }) => { seen = { cwd, files: readdirSync(cwd) }; return { stdout: envelope('ok'), stderr: '', code: 0 } }
+    await callProvider({ provider: CLAUDE, prompt: 'x', tools: 'none', locate: HERE, run })
+    expect(seen.files).toEqual([])
+    expect(seen.cwd).toContain('jobdekho-ai-')
+    expect(existsSync(seen.cwd)).toBe(false)
   })
 
   it('lets the envelope trap through as a login failure even though the exit code was 0', async () => {
     const run = answering(envelope('Failed to authenticate', { is_error: true }))
-    const err = await rejection(callProvider({ provider: CLAUDE, prompt: 'x', locate: HERE, run }))
+    const err = await rejection(callProvider({ provider: CLAUDE, prompt: 'x', tools: 'none', locate: HERE, run }))
     expect(err.kind).toBe('login')
+  })
+
+  // Claude Code 2.1.245, seen live: the is_error envelope on stdout, nothing
+  // on stderr, exit code 1. The envelope holds the only useful sentence.
+  it('reads the reason out of the envelope when the CLI both reports is_error and exits 1', async () => {
+    const run = async () => ({ stdout: envelope('Failed to authenticate: OAuth session expired and could not be refreshed', { is_error: true }), stderr: '', code: 1 })
+    const err = await rejection(callProvider({ provider: CLAUDE, prompt: 'x', tools: 'none', locate: HERE, run }))
+    expect(err.kind).toBe('login')
+    expect(err.message).toMatch(/OAuth session expired/)
+    expect(err.message).not.toMatch(/exited with code/)
   })
 
   it('reads a sign-out message off stderr when the CLI exits non-zero', async () => {
     const run = async () => ({ stdout: '', stderr: 'Not logged in. Please run /login', code: 1 })
-    const err = await rejection(callProvider({ provider: CLAUDE, prompt: 'x', locate: HERE, run }))
+    const err = await rejection(callProvider({ provider: CLAUDE, prompt: 'x', tools: 'none', locate: HERE, run }))
     expect(err.kind).toBe('login')
     expect(err.message).toMatch(/Not logged in/)
   })
 
   it('reports any other non-zero exit with what stderr said', async () => {
     const run = async () => ({ stdout: '', stderr: 'segmentation fault', code: 139 })
-    const err = await rejection(callProvider({ provider: CLAUDE, prompt: 'x', locate: HERE, run }))
+    const err = await rejection(callProvider({ provider: CLAUDE, prompt: 'x', tools: 'none', locate: HERE, run }))
     expect(err.kind).toBe('failed')
     expect(err.status).toBe(502)
     expect(err.message).toMatch(/segmentation fault/)
@@ -132,7 +190,7 @@ describe('callProvider', () => {
 
   it('turns a timeout into a failure that says how long it waited', async () => {
     const run = async () => { const e = new Error('slow'); e.code = 'ETIMEDOUT'; throw e }
-    const err = await rejection(callProvider({ provider: CLAUDE, prompt: 'x', locate: HERE, run, timeoutMs: 30000 }))
+    const err = await rejection(callProvider({ provider: CLAUDE, prompt: 'x', tools: 'none', locate: HERE, run, timeoutMs: 30000 }))
     expect(err.kind).toBe('timeout')
     expect(err.status).toBe(504)
     expect(err.message).toMatch(/did not answer within 30 seconds/)
@@ -152,7 +210,7 @@ describe('callProvider', () => {
       await new Promise((r) => setTimeout(r, 40))
       return { stdout: envelope('done'), stderr: '', code: 0 }
     }
-    await callProvider({ provider: CLAUDE, prompt: 'abc', locate: HERE, run, emit: (e) => events.push(e), heartbeatMs: 5 })
+    await callProvider({ provider: CLAUDE, prompt: 'abc', tools: 'none', locate: HERE, run, emit: (e) => events.push(e), heartbeatMs: 5 })
     expect(events[0]).toEqual({ event: 'start', provider: 'claude', path: '/usr/local/bin/claude' })
     expect(events[1]).toEqual({ event: 'progress', stage: 'send', chars: 3 })
     expect(events.filter((e) => e.stage === 'wait').length).toBeGreaterThan(0)
@@ -163,10 +221,37 @@ describe('callProvider', () => {
   it('stops the heartbeat once the call has failed', async () => {
     const events = []
     const run = async () => { const e = new Error('slow'); e.code = 'ETIMEDOUT'; throw e }
-    await rejection(callProvider({ provider: CLAUDE, prompt: 'x', locate: HERE, run, emit: (e) => events.push(e), heartbeatMs: 2 }))
+    await rejection(callProvider({ provider: CLAUDE, prompt: 'x', tools: 'none', locate: HERE, run, emit: (e) => events.push(e), heartbeatMs: 2 }))
     const count = events.length
     await new Promise((r) => setTimeout(r, 15))
     expect(events.length).toBe(count)
+  })
+})
+
+describe('inEmptyDir', () => {
+  it('hands the work a fresh empty directory and removes it, whatever was left in it', async () => {
+    let dir
+    const out = await inEmptyDir(async (d) => {
+      dir = d
+      expect(readdirSync(d)).toEqual([])
+      writeFileSync(join(d, 'transcript.jsonl'), 'left behind')
+      return 'answer'
+    })
+    expect(out).toBe('answer')
+    expect(existsSync(dir)).toBe(false)
+  })
+
+  it('removes the directory when the work throws, and lets the error through', async () => {
+    let dir
+    const err = await rejection(inEmptyDir(async (d) => { dir = d; throw new Error('boom') }))
+    expect(err.message).toBe('boom')
+    expect(existsSync(dir)).toBe(false)
+  })
+
+  it('makes each call its own directory', async () => {
+    const dirs = []
+    await Promise.all([inEmptyDir(async (d) => dirs.push(d)), inEmptyDir(async (d) => dirs.push(d))])
+    expect(new Set(dirs).size).toBe(2)
   })
 })
 
@@ -261,6 +346,36 @@ describe('runCli', () => {
   it('rejects with ENOENT for a file that is not there', async () => {
     const err = await rejection(runCli({ file: '/definitely/not/here', args: [], input: '', timeoutMs: 5000 }))
     expect(err.code).toBe('ENOENT')
+  })
+
+  it('starts the process in the directory it was given', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'jobdekho-cwd-'))
+    try {
+      const out = await runCli({ file: node, args: ['-e', 'process.stdout.write(process.cwd())'], input: '', timeoutMs: 20000, cwd: dir })
+      expect(out.stdout).toBe(dir)
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  // `--tools ""` is the "no tools" spelling, and an empty argument is the one
+  // a command line can lose.
+  it('delivers an empty argument intact to a native binary', async () => {
+    const args = ['-e', 'process.stdout.write(JSON.stringify(process.argv.slice(1)))', '--', '--tools', '']
+    const out = await runCli({ file: node, args, input: '', timeoutMs: 20000 })
+    expect(JSON.parse(out.stdout)).toEqual(['--tools', ''])
+  })
+
+  it.runIf(process.platform === 'win32')('delivers an empty argument intact through cmd.exe for a .cmd shim', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'jobdekho-cmd-'))
+    const shim = join(dir, 'echo-args.cmd')
+    writeFileSync(shim, '@echo %*\r\n')
+    try {
+      const out = await runCli({ file: shim, args: ['--tools', '', 'next'], input: '', timeoutMs: 20000, cwd: dir })
+      expect(out.stdout.trim()).toBe('--tools "" next')
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
   })
 
   // A child that dies before reading a long resume closes the pipe under the

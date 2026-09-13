@@ -27,8 +27,11 @@ export { parseJsonObject as parseProfileJson }
 
 // `run`, `locate` and `emit` pass straight through to callProvider: the first
 // two so a test never spawns a real CLI, the third so a route can stream.
+//
+// No tools: reading a resume needs none, and the resume is the one document
+// here that must never leave the machine.
 export async function extractProfile(resumeText, { provider = DEFAULT_PROVIDER, ...seams } = {}) {
-  const { text } = await callProvider({ provider, prompt: INSTRUCTION + resumeText, timeoutMs: TIMEOUT_MS, ...seams })
+  const { text } = await callProvider({ provider, prompt: INSTRUCTION + resumeText, tools: 'none', timeoutMs: TIMEOUT_MS, ...seams })
   const parsed = parseJsonObject(text)
   if (!parsed) throw new ProviderError('unreadable', provider)
   return parsed

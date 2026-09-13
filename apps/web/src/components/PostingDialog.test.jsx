@@ -2,6 +2,15 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import PostingDialog from './PostingDialog.jsx';
 
+// The detail view probes for an AI CLI on mount. Left pending here so the
+// dialog's own behaviour is what these tests see; the probe and what follows
+// it have their own suites (AiGate, AiSection, PostingDetail).
+vi.mock('../api.js', () => ({
+  getProviders: vi.fn(() => new Promise(() => {})),
+  getPostingAiResults: vi.fn(() => new Promise(() => {})),
+  runPostingAction: vi.fn(),
+}));
+
 const posting = {
   id: 'p1',
   source: 'internshala',

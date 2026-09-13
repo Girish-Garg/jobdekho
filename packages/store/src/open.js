@@ -25,6 +25,7 @@ export const FILES = {
   notifications: 'notifications.json',
   users: 'users.json',
   runs: 'runs.ndjson',
+  aiResults: 'ai-results.json',
 }
 
 export function openStore(dir) {
@@ -42,5 +43,9 @@ export function openStore(dir) {
     // DEV_AUTH_USER_ID instead and this file never appears.
     users: userFile(at('users')),
     runs: openRuns(at('runs')),
+    // What the AI CLI answered about a posting, per user. Each answer cost a
+    // call on the person's own subscription, which is why it is kept with
+    // the things they made rather than with the corpus a scrape may reset.
+    aiResults: userFile(at('aiResults')),
   }
 }

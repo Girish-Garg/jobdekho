@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   getMe, getPostings, getSources, setStatus, putFilters, getNotifications, putNotifications,
   getProfile, putProfile, deleteProfile, uploadResume, applyProfileFilter, getProviders, extractProfile,
+  runPostingAction, getPostingAiResults,
 } from './api.js';
 
 function mockFetch(body, status = 200) {
@@ -235,5 +236,31 @@ describe('ai api', () => {
   it('extractProfile rejects a stream that ends before the result line', async () => {
     ndjson(START, WAIT);
     await expect(extractProfile()).rejects.toThrow(/connection dropped/);
+  });
+});
+
+const RECORD = { kind: 'fake-check', postingId: 'p1', provider: 'claude', createdAt: '2026-09-13T00:00:00.000Z', result: { verdict: 'genuine' } };
+
+describe('posting action api', () => {
+  it('runPostingAction streams the action for one posting and resolves with the saved record', async () => {
+    const fetchMock = ndjson(START, WAIT, RECORD);
+    const onEvent = vi.fn();
+    expect(await runPostingAction('p1', 'fake-check', { onEvent })).toEqual(RECORD);
+    const [url, opts] = fetchMock.mock.calls[0];
+    expect(url).toBe('/api/postings/p1/ai/fake-check');
+    expect(opts.method).toBe('POST');
+    expect(opts.headers).toEqual({ accept: 'application/x-ndjson' });
+    expect(onEvent).toHaveBeenCalledTimes(2);
+  });
+
+  it('runPostingAction surfaces the 404 for a posting the corpus dropped', async () => {
+    mockFetch({ error: 'no such posting' }, 404);
+    await expect(runPostingAction('gone', 'fake-check')).rejects.toMatchObject({ message: 'no such posting', status: 404 });
+  });
+
+  it('getPostingAiResults unwraps the saved records for a posting', async () => {
+    const fetchMock = mockFetch({ results: [RECORD] });
+    expect(await getPostingAiResults('p1')).toEqual([RECORD]);
+    expect(fetchMock).toHaveBeenCalledWith('/api/postings/p1/ai', expect.objectContaining({ credentials: 'include' }));
   });
 });

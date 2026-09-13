@@ -1,10 +1,14 @@
 import { listPostingsForUser, setPostingStatus, listSources } from '@jobdekho/store/dashboard.js'
 import { getUserFilters, upsertUserFilters, getNotificationPrefs, upsertNotificationPrefs } from '@jobdekho/store/dashboard-prefs.js'
 import { getProfile, getResumeText, upsertProfile, deleteProfile } from '@jobdekho/store/profiles.js'
+import { getPosting } from '@jobdekho/store/posting-lookup.js'
+import { getAiResult, setAiResult, listAiResults } from '@jobdekho/store/ai-results.js'
 
 export function createDashboardStore(db) {
   return {
     listPostingsForUser: (userId, opts) => listPostingsForUser(db, userId, opts),
+    // One posting with its full description, for the AI actions.
+    getPosting: (userId, id) => getPosting(db, userId, id),
     setPostingStatus: (userId, id, status) => setPostingStatus(db, userId, id, status),
     listSources: () => listSources(db),
     getProfile: (userId) => getProfile(db, userId),
@@ -16,5 +20,8 @@ export function createDashboardStore(db) {
     upsertUserFilters: (userId, f) => upsertUserFilters(db, userId, f),
     getNotificationPrefs: (userId) => getNotificationPrefs(db, userId),
     upsertNotificationPrefs: (userId, p) => upsertNotificationPrefs(db, userId, p),
+    getAiResult: (userId, postingId, kind) => getAiResult(db, userId, postingId, kind),
+    setAiResult: (userId, record) => setAiResult(db, userId, record),
+    listAiResults: (userId, postingId) => listAiResults(db, userId, postingId),
   }
 }

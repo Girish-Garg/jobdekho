@@ -2,7 +2,11 @@
 // against the snippet could disagree with the very call it explains. An empty
 // list renders nothing at all - the signals can flag a posting, but their
 // absence cannot clear one, so there is no "looks fine" state to show.
-export default function GhostSignals({ signals }) {
+//
+// Children sit under the list, inside the same block: the detail view puts
+// the "is this job real?" check there when the signals stack up, so the
+// natural next step is beside the evidence that raised the question.
+export default function GhostSignals({ signals, children }) {
   if (!signals?.length) return null;
 
   return (
@@ -13,6 +17,7 @@ export default function GhostSignals({ signals }) {
           <li key={signal}>{signal}</li>
         ))}
       </ul>
+      {children && <div className="mt-3">{children}</div>}
     </div>
   );
 }

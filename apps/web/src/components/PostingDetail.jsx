@@ -1,33 +1,23 @@
-import { levelLabel, degreeLabel, workModeLabel } from '../lib/taxonomy.js';
-import { levelTone } from '../lib/levelColor.js';
-import { relativeDay } from '../lib/time.js';
 import PostingActions from './PostingActions.jsx';
+import PostingFacts from './PostingFacts.jsx';
 import MatchReasons from './MatchReasons.jsx';
 import GhostSignals from './GhostSignals.jsx';
+import AiGate from './AiGate.jsx';
+import AiSection from './AiSection.jsx';
+import FakeCheck from './FakeCheck.jsx';
 
 // Only one overlay is ever mounted, so a constant id is enough to name it.
 export const TITLE_ID = 'posting-dialog-title';
 
-// Third slot is the value's own colour, so the level keeps the hue it had on
-// the card. Rows the scraper never filled drop out rather than read "unknown".
-function detailRows(posting) {
-  const others = (posting.groupCount || 1) - 1;
-  return [
-    ['Location', posting.location],
-    ['Also listed in', others > 0 ? `${others} other location${others === 1 ? '' : 's'}` : ''],
-    ['Work mode', workModeLabel(posting.workMode)],
-    ['Level', levelLabel(posting.level), levelTone(posting.level).text],
-    ['Degree', degreeLabel(posting.degreeMin, posting.degreeRequired)],
-    ['Stipend', posting.stipend],
-    ['Duration', posting.duration],
-    ['Experience', posting.experience],
-    ['Posted', relativeDay(posting.postedAt || posting.firstSeenAt)],
-    ['Last seen', relativeDay(posting.lastSeenAt)],
-    ['Source', posting.source],
-  ].filter(([, value]) => value);
-}
+const CHECK_INTRO = 'Checking whether a job is real asks an AI CLI installed on this computer, on your own subscription.';
 
 export default function PostingDetail({ posting, onClose, onStatus }) {
+  // A doubtful posting keeps its rank and its badge; what moves is the check.
+  // The two rungs where the card already warns are the two where the person
+  // is asking "is this real?", so the button sits with the evidence rather
+  // than further down among the other AI actions.
+  const doubtful = posting.legitimacy === 'low' || posting.legitimacy === 'suspicious';
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-start gap-4">
@@ -54,20 +44,19 @@ export default function PostingDetail({ posting, onClose, onStatus }) {
       {/* Ranked or not: legitimacy is about the posting, not the profile. This
           list is what the card's warning rests on - shown whenever there is
           evidence, even when it stayed below the warning's threshold. */}
-      <GhostSignals signals={posting.ghostSignals} />
+      <GhostSignals signals={posting.ghostSignals}>
+        {doubtful && (
+          <AiGate intro={CHECK_INTRO}>{(cli) => <FakeCheck posting={posting} cli={cli} />}</AiGate>
+        )}
+      </GhostSignals>
 
-      <dl className="grid grid-cols-2 gap-x-6 gap-y-3 border-y border-line py-4 sm:grid-cols-3">
-        {detailRows(posting).map(([label, value, tone]) => (
-          <div key={label} className="min-w-0">
-            <dt className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">{label}</dt>
-            <dd className={`mt-0.5 truncate text-sm ${tone || 'text-ink'}`}>{value}</dd>
-          </div>
-        ))}
-      </dl>
+      <PostingFacts posting={posting} />
 
       {posting.descriptionSnippet && (
         <p className="text-sm leading-relaxed text-ink/80">{posting.descriptionSnippet}</p>
       )}
+
+      <AiSection posting={posting} skip={doubtful ? [FakeCheck] : []} />
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
         <PostingActions
