@@ -6,15 +6,15 @@ import { ProviderError } from './errors.js'
 // Order is preference, so a machine with Claude Code behaves as it did
 // before Antigravity was added, and Antigravity answers only the calls
 // Claude Code is not there to take.
-export function pickProvider(detected, policy) {
-  const fit = detected.find((p) => p.present && p.runs && p.policies.includes(policy))
+export function pickProvider(detected, policy, after = []) {
+  const fit = detected.find((p) => p.present && p.runs && p.policies.includes(policy) && !after.includes(p.id))
   if (fit) return providerById(fit.id)
   throw new ProviderError('not_found', preferred(policy), whyNone(detected, policy))
 }
 
 // select(policy) over the shared, cached probe (see detect.js), so choosing
 // costs no process start of its own within the cache's minute.
-export const createSelector = (detect) => async (policy) => pickProvider(await detect(), policy)
+export const createSelector = (detect) => async (policy, { after = [] } = {}) => pickProvider(await detect(), policy, after)
 
 // Also where an unknown policy fails, before any sentence is written for it.
 const preferred = (policy) => PROVIDERS.find((p) => p.supports(policy))

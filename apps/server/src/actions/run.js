@@ -1,4 +1,4 @@
-import { callProvider } from '../ai/call.js'
+import { callWithFallback } from '../ai/fallback.js'
 import { ProviderError } from '../ai/errors.js'
 
 // One AI action on one posting, from prompt to a record the store can keep.
@@ -21,9 +21,8 @@ import { ProviderError } from '../ai/errors.js'
 // here, in code the model cannot talk its way past. An action that reads the
 // reply alone ignores the second argument.
 export async function runAction(action, { posting, context = {}, select, ...seams }) {
-  const provider = await select(action.tools)
   const prompt = action.buildPrompt(posting, context)
-  const { text } = await callProvider({ provider, prompt, tools: action.tools, timeoutMs: action.timeoutMs, ...seams })
+  const { provider, text } = await callWithFallback({ select, policy: action.tools, prompt, timeoutMs: action.timeoutMs, ...seams })
   const result = action.parse(text, { posting, context })
   if (!result) throw new ProviderError('unreadable', provider)
   return { kind: action.kind, postingId: posting.id, provider: provider.id, result }

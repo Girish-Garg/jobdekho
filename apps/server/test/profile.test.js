@@ -34,6 +34,15 @@ const cliAnswering = (stdout) => ({
   run: vi.fn(async () => ({ stdout, stderr: '', code: 0 })),
   home: '/no/such/home',
 })
+// A machine with Claude Code alone, for the cases where its own failure is
+// the answer: with a second CLI installed, a dead login is a reason to try
+// that one instead (see ai/fallback.js), not a reason to give up.
+const onlyClaude = (stdout) => ({
+  locate: (binary) => (binary === 'claude' ? '/usr/local/bin/claude' : null),
+  run: vi.fn(async () => ({ stdout, stderr: '', code: 0 })),
+  home: '/no/such/home',
+})
+
 const envelope = (result, extra = {}) => JSON.stringify({ type: 'result', result, ...extra })
 
 async function makeApp(store, cli = NO_CLI) {
@@ -149,7 +158,7 @@ describe('POST /api/profile/extract', () => {
 
   // Exit code 0 with is_error in the envelope: the trap.
   it('reports an expired login even though the CLI exited 0', async () => {
-    const cli = cliAnswering(envelope('Failed to authenticate: OAuth session expired', { is_error: true }))
+    const cli = onlyClaude(envelope('Failed to authenticate: OAuth session expired', { is_error: true }))
     const res = await extract(makeFakeStore(), cli)
     expect(res.statusCode).toBe(503)
     expect(res.json().kind).toBe('login')
@@ -191,7 +200,7 @@ describe('POST /api/profile/extract as NDJSON', () => {
   })
 
   it('reports a failure as a last line with error and kind, under a 200', async () => {
-    const cli = cliAnswering(envelope('Failed to authenticate', { is_error: true }))
+    const cli = onlyClaude(envelope('Failed to authenticate', { is_error: true }))
     const res = await extract(makeFakeStore(), cli, accept)
     expect(res.statusCode).toBe(200)
     const { result } = readNdjson(res.body)

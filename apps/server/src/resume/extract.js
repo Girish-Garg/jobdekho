@@ -1,4 +1,4 @@
-import { callProvider } from '../ai/call.js'
+import { callWithFallback } from '../ai/fallback.js'
 import { parseJsonObject } from '../ai/loose-json.js'
 import { ProviderError } from '../ai/errors.js'
 
@@ -34,8 +34,7 @@ export { parseJsonObject as parseProfileJson }
 // `run`, `locate` and `emit` pass straight through to callProvider: the first
 // two so a test never spawns a real CLI, the third so a route can stream.
 export async function extractProfile(resumeText, { select, ...seams } = {}) {
-  const provider = await select(TOOLS)
-  const { text } = await callProvider({ provider, prompt: INSTRUCTION + resumeText, tools: TOOLS, timeoutMs: TIMEOUT_MS, ...seams })
+  const { provider, text } = await callWithFallback({ select, policy: TOOLS, prompt: INSTRUCTION + resumeText, timeoutMs: TIMEOUT_MS, ...seams })
   const parsed = parseJsonObject(text)
   if (!parsed) throw new ProviderError('unreadable', provider)
   return parsed
