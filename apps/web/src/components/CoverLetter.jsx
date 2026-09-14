@@ -37,3 +37,8 @@ export default function CoverLetter({ posting, cli }) {
     </div>
   );
 }
+
+// The tool policy its server-side twin runs under, and the sentence the gate
+// shows when no installed CLI can take it (see AiGate).
+CoverLetter.policy = 'none';
+CoverLetter.intro = 'Writing a cover letter asks an AI CLI installed on this computer, on your own subscription.';

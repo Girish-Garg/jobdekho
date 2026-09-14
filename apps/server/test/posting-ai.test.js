@@ -107,7 +107,7 @@ describe('POST /api/postings/:id/ai/:kind', () => {
     const cli = cliAnswering(REPLY)
     const res = await check(store, cli)
     expect(res.statusCode).toBe(200)
-    const call = cli.run.mock.calls[0][0]
+    const call = cli.run.mock.calls.at(-1)[0]
     expect(call.args).toEqual(CLAUDE.promptArgs('web'))
     expect(call.args).toEqual(expect.arrayContaining(['--tools', 'WebSearch,WebFetch']))
     expect(call.timeoutMs).toBe(300000)
@@ -126,7 +126,7 @@ describe('POST /api/postings/:id/ai/:kind', () => {
     await check(store, cli)
     expect(store.getResumeText).not.toHaveBeenCalled()
     expect(store.getProfile).not.toHaveBeenCalled()
-    expect(cli.run.mock.calls[0][0].input).not.toContain('JANE DOE')
+    expect(cli.run.mock.calls.at(-1)[0].input).not.toContain('JANE DOE')
   })
 
   it('answers 422 when the reply holds no verdict', async () => {

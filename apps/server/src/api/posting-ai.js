@@ -34,7 +34,7 @@ export async function postingAiRoutes(app) {
     const { context, error } = await loadContext(app.dashboard, userId, action.context)
     if (error) return reply.code(400).send({ error })
     return answer(request, reply, async (emit) => {
-      const record = await runAction(action, { posting, context, emit, ...cli })
+      const record = await runAction(action, { posting, context, emit, select: app.ai.select, ...cli })
       return app.dashboard.setAiResult(userId, record)
     })
   })

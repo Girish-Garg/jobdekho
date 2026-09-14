@@ -6,6 +6,8 @@ import { runAction } from '@jobdekho/server/actions/run.js'
 import { CLAUDE } from '@jobdekho/server/ai/providers.js'
 
 const HERE = () => '/usr/local/bin/claude'
+// The route's chooser of CLI, stubbed: which CLI answers is select.test.js's subject.
+const select = async () => CLAUDE
 const scratch = (work) => work('/scratch')
 const answering = (stdout) => vi.fn(async () => ({ stdout, stderr: '', code: 0 }))
 
@@ -114,7 +116,7 @@ describe('parseCoverLetter', () => {
 describe('runAction with coverLetter', () => {
   it('calls the CLI under the no-tools policy, with the resume in the prompt', async () => {
     const run = answering(JSON.stringify({ type: 'result', result: JSON.stringify(REPLY) }))
-    const out = await runAction(coverLetter, { posting: POSTING, context: { resumeText: RESUME }, run, locate: HERE, scratch })
+    const out = await runAction(coverLetter, { posting: POSTING, context: { resumeText: RESUME }, run, locate: HERE, scratch, select })
     expect(out).toEqual({ kind: 'cover-letter', postingId: 'p1', provider: 'claude', result: REPLY })
     const call = run.mock.calls[0][0]
     expect(call.args).toEqual(CLAUDE.promptArgs('none'))
@@ -123,7 +125,7 @@ describe('runAction with coverLetter', () => {
   })
 
   it('reports a reply it cannot read as unreadable', async () => {
-    const err = await runAction(coverLetter, { posting: POSTING, context: { resumeText: RESUME }, run: answering('nope'), locate: HERE, scratch }).catch((e) => e)
+    const err = await runAction(coverLetter, { posting: POSTING, context: { resumeText: RESUME }, run: answering('nope'), locate: HERE, scratch, select }).catch((e) => e)
     expect(err.kind).toBe('unreadable')
   })
 })

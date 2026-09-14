@@ -81,7 +81,7 @@ describe('POST /api/postings/:id/ai/cover-letter', () => {
     const cli = cliAnswering(REPLY)
     const res = await post(store, cli)
     expect(res.statusCode).toBe(200)
-    const call = cli.run.mock.calls[0][0]
+    const call = cli.run.mock.calls.at(-1)[0]
     expect(call.args).toEqual(CLAUDE.promptArgs('none'))
     expect(call.input).toContain('JANE DOE RESUME')
     expect(call.input).toContain('Build the board with React')

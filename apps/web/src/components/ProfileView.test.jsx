@@ -21,7 +21,7 @@ const PROFILE = {
   years: 1, degree: 'bachelors', resumeName: 'cv.pdf',
 };
 const CLAUDE = {
-  id: 'claude', label: 'Claude Code', install: 'https://claude.ai/code',
+  id: 'claude', label: 'Claude Code', install: 'https://claude.ai/code', policies: ['none', 'web'],
   present: true, path: 'C:\\npm\\claude.cmd', runs: true, version: '1.0.0', error: null,
 };
 

@@ -40,3 +40,9 @@ export default function FakeCheck({ posting, cli }) {
     </div>
   );
 }
+
+// The tool policy its server-side twin runs under, and the sentence the gate
+// shows when no installed CLI can take it (see AiGate). A browser, which is
+// why Antigravity is never the CLI named above.
+FakeCheck.policy = 'web';
+FakeCheck.intro = 'Checking whether a job is real asks an AI CLI installed on this computer, on your own subscription.';

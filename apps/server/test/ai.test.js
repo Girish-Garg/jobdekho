@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { locateBinary } from '@jobdekho/server/ai/locate.js'
 import { unwrapClaude } from '@jobdekho/server/ai/claude.js'
-import { CLAUDE, PROVIDERS, TOOL_POLICIES, providerById } from '@jobdekho/server/ai/providers.js'
+import { CLAUDE, AGY, PROVIDERS, TOOL_POLICIES, providerById } from '@jobdekho/server/ai/providers.js'
 import { callProvider } from '@jobdekho/server/ai/call.js'
 import { inEmptyDir } from '@jobdekho/server/ai/scratch-dir.js'
 import { existsSync, readdirSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs'
@@ -14,6 +14,11 @@ import { runCli } from '@jobdekho/server/ai/spawn.js'
 
 const HERE = () => '/usr/local/bin/claude'
 const NOWHERE = () => null
+// Every CLI installed, each under its own name.
+const ALL = (name) => `/usr/local/bin/${name}`
+// A home directory with no CLI settings in it, so the Antigravity gate in
+// agy-settings.js reads nothing (its own cases live in agy.test.js).
+const NO_HOME = '/no/such/home'
 const envelope = (result, extra = {}) => JSON.stringify({ type: 'result', result, ...extra })
 const answering = (stdout) => async () => ({ stdout, stderr: '', code: 0 })
 
@@ -52,10 +57,30 @@ describe('locateBinary', () => {
 })
 
 describe('the provider registry', () => {
-  it('knows Claude Code and finds it by id', () => {
-    expect(PROVIDERS.map((p) => p.id)).toEqual(['claude'])
+  it('knows Claude Code and Antigravity, in that order of preference, and finds each by id', () => {
+    expect(PROVIDERS.map((p) => p.id)).toEqual(['claude', 'agy'])
     expect(providerById('claude')).toBe(CLAUDE)
+    expect(providerById('agy')).toBe(AGY)
     expect(providerById('antigravity')).toBeNull()
+  })
+
+  // Which policies a CLI honours decides which actions it may be handed:
+  // Claude Code takes both, Antigravity only the one it honours by
+  // construction (see agy.js). Asking for the other is an ordinary "not this
+  // CLI", not a crash; only a policy nobody knows is a bug.
+  it('says which policies each CLI honours, answering null rather than throwing for one it cannot', () => {
+    expect(CLAUDE.policies).toEqual(['none', 'web'])
+    expect(AGY.policies).toEqual(['none'])
+    expect(CLAUDE.supports('web')).toBe(true)
+    expect(AGY.supports('none')).toBe(true)
+    expect(AGY.supports('web')).toBe(false)
+    expect(AGY.promptArgs('web')).toBeNull()
+    expect(() => AGY.supports('default')).toThrow(/unknown tool policy/)
+    expect(() => AGY.promptArgs()).toThrow(/unknown tool policy/)
+  })
+
+  it('hands Claude Code the prompt as plain stdin, unchanged', () => {
+    expect(CLAUDE.encodeInput('resume "here"\nrm -rf /')).toBe('resume "here"\nrm -rf /')
   })
 
   it('drives it in one-shot mode with a JSON reply and no prompt on the command line', () => {
@@ -138,6 +163,25 @@ describe('callProvider', () => {
     const run = vi.fn(answering(envelope('hello')))
     await callProvider({ provider: CLAUDE, prompt: 'x', tools: 'web', locate: HERE, run, scratch: (work) => work('/s') })
     expect(run.mock.calls[0][0].args).toEqual(CLAUDE.promptArgs('web'))
+  })
+
+  // A CLI with an input protocol gets the prompt wrapped; the wrapper is not
+  // content anyone wrote, so the send event counts the prompt alone.
+  it('sends what the provider encodes and counts only the prompt in the send event', async () => {
+    const events = []
+    const provider = { ...CLAUDE, encodeInput: (prompt) => `<${prompt}>` }
+    const run = vi.fn(answering(envelope('hi')))
+    await callProvider({ provider, prompt: 'abc', tools: 'none', locate: HERE, run, scratch: (work) => work('/s'), emit: (e) => events.push(e) })
+    expect(run.mock.calls[0][0].input).toBe('<abc>')
+    expect(events.find((e) => e.stage === 'send')).toEqual({ event: 'progress', stage: 'send', chars: 3 })
+  })
+
+  // select.js never picks a CLI for a policy it cannot honour, so arriving
+  // here with one is a wiring bug, and the safe failure is no spawn.
+  it('refuses to run a provider under a policy it cannot honour', async () => {
+    const run = vi.fn()
+    await expect(callProvider({ provider: AGY, prompt: 'x', tools: 'web', locate: HERE, run })).rejects.toThrow(/cannot honour the "web" tool policy/)
+    expect(run).not.toHaveBeenCalled()
   })
 
   // Forgetting the policy must fail before anything is spawned, because the
@@ -256,12 +300,18 @@ describe('inEmptyDir', () => {
 })
 
 describe('createDetector', () => {
-  it('reports a present provider with the version it printed', async () => {
-    const detect = createDetector({ locate: HERE, run: answering('2.1.245 (Claude Code)\n') })
-    expect(await detect()).toEqual([{
-      id: 'claude', label: 'Claude Code', install: 'https://claude.ai/code',
-      present: true, path: '/usr/local/bin/claude', runs: true, version: '2.1.245 (Claude Code)', error: null,
-    }])
+  it('reports each provider with the version it printed and the policies it honours', async () => {
+    const detect = createDetector({ locate: ALL, run: answering('2.1.245\n'), home: NO_HOME })
+    expect(await detect()).toEqual([
+      {
+        id: 'claude', label: 'Claude Code', install: 'https://claude.ai/code', policies: ['none', 'web'],
+        present: true, path: '/usr/local/bin/claude', runs: true, version: '2.1.245', error: null,
+      },
+      {
+        id: 'agy', label: 'Antigravity', install: 'https://antigravity.google', policies: ['none'],
+        present: true, path: '/usr/local/bin/agy', runs: true, version: '2.1.245', error: null,
+      },
+    ])
   })
 
   it('reports an absent provider without trying to run it', async () => {
@@ -281,7 +331,7 @@ describe('createDetector', () => {
   it('answers from cache within the ttl and probes again on refresh or expiry', async () => {
     let t = 0
     const run = vi.fn(answering('1.0'))
-    const detect = createDetector({ locate: HERE, run, ttlMs: 1000, now: () => t })
+    const detect = createDetector({ locate: HERE, run, providers: [CLAUDE], ttlMs: 1000, now: () => t })
     await Promise.all([detect(), detect()])
     await detect()
     expect(run).toHaveBeenCalledTimes(1)
@@ -293,10 +343,11 @@ describe('createDetector', () => {
   })
 
   // A real call costs the user money; a version probe costs nothing.
-  it('only ever runs the version probe, never a prompt', async () => {
+  it('only ever runs the version probe, one per CLI, never a prompt', async () => {
     const run = vi.fn(answering('1.0'))
-    await createDetector({ locate: HERE, run })()
-    expect(run.mock.calls.map((c) => c[0].args)).toEqual([['--version']])
+    await createDetector({ locate: ALL, run, home: NO_HOME })()
+    expect(run.mock.calls.map((c) => c[0].args)).toEqual([['--version'], ['--version']])
+    expect(run.mock.calls.map((c) => c[0].input)).toEqual(['', ''])
   })
 })
 

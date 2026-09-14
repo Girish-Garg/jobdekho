@@ -8,6 +8,8 @@ import { runAction } from '@jobdekho/server/actions/run.js'
 import { CLAUDE, TOOL_POLICIES } from '@jobdekho/server/ai/providers.js'
 
 const HERE = () => '/usr/local/bin/claude'
+// The route's chooser of CLI, stubbed: which CLI answers is select.test.js's subject.
+const select = async () => CLAUDE
 const scratch = (work) => work('/scratch')
 const answering = (stdout) => vi.fn(async () => ({ stdout, stderr: '', code: 0 }))
 
@@ -169,7 +171,7 @@ describe('loadContext', () => {
 describe('runAction', () => {
   it('runs the action under its own policy and timeout and returns a record to save', async () => {
     const run = answering(JSON.stringify({ type: 'result', result: JSON.stringify(REPLY) }))
-    const out = await runAction(fakeCheck, { posting: POSTING, run, locate: HERE, scratch })
+    const out = await runAction(fakeCheck, { posting: POSTING, run, locate: HERE, scratch, select })
     expect(out).toEqual({ kind: 'fake-check', postingId: 'p1', provider: 'claude', result: REPLY })
     const call = run.mock.calls[0][0]
     expect(call.args).toEqual(CLAUDE.promptArgs('web'))
@@ -179,14 +181,14 @@ describe('runAction', () => {
   })
 
   it('reports a reply the action cannot read as unreadable', async () => {
-    const err = await runAction(fakeCheck, { posting: POSTING, run: answering('nope'), locate: HERE, scratch }).catch((e) => e)
+    const err = await runAction(fakeCheck, { posting: POSTING, run: answering('nope'), locate: HERE, scratch, select }).catch((e) => e)
     expect(err.kind).toBe('unreadable')
     expect(err.status).toBe(422)
   })
 
   it('does not reach for a CLI that is not there', async () => {
     const run = vi.fn()
-    const err = await runAction(fakeCheck, { posting: POSTING, run, locate: () => null }).catch((e) => e)
+    const err = await runAction(fakeCheck, { posting: POSTING, run, locate: () => null, select }).catch((e) => e)
     expect(err.kind).toBe('not_found')
     expect(run).not.toHaveBeenCalled()
   })

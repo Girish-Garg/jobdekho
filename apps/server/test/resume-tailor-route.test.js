@@ -58,7 +58,7 @@ describe('POST /api/postings/:id/ai/resume-tailor', () => {
     const res = await tailor(store, cli)
     expect(res.statusCode).toBe(200)
     expect(store.getResumeText).toHaveBeenCalledWith('u1')
-    const call = cli.run.mock.calls[0][0]
+    const call = cli.run.mock.calls.at(-1)[0]
     expect(call.args).toEqual(CLAUDE.promptArgs('none'))
     expect(call.args).toEqual(expect.arrayContaining(['--tools', '']))
     expect(call.args).not.toContain('WebSearch,WebFetch')

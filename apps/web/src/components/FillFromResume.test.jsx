@@ -10,10 +10,14 @@ vi.mock('../api.js', () => ({
 import { getProviders, extractProfile } from '../api.js';
 
 const CLAUDE = {
-  id: 'claude', label: 'Claude Code', install: 'https://claude.ai/code',
+  id: 'claude', label: 'Claude Code', install: 'https://claude.ai/code', policies: ['none', 'web'],
   present: true, path: 'C:\\npm\\claude.cmd', runs: true, version: '1.0.0', error: null,
 };
 const MISSING = { ...CLAUDE, present: false, path: null, runs: false, version: null };
+const AGY = {
+  id: 'agy', label: 'Antigravity', install: 'https://antigravity.google', policies: ['none'],
+  present: true, path: 'C:\\agy\\bin\\agy.exe', runs: true, version: '1.1.22', error: null,
+};
 const BROKEN = {
   ...CLAUDE, runs: false, version: null,
   error: 'Claude Code is installed at C:\\npm\\claude.cmd but could not run: exited with code 1',
@@ -46,6 +50,16 @@ describe('FillFromResume when no CLI can answer', () => {
     expect(screen.queryByRole('button', { name: 'Fill in from resume' })).not.toBeInTheDocument();
   });
 
+  it('lists both CLIs with their links when neither is installed, since either can read a resume', async () => {
+    getProviders.mockResolvedValue([MISSING, { ...AGY, present: false, path: null, runs: false, version: null }]);
+    render(<FillFromResume profile={EMPTY} onFilled={() => {}} />);
+    expect(await screen.findByRole('link', { name: 'https://antigravity.google' })).toHaveAttribute('href', 'https://antigravity.google');
+    expect(screen.getByRole('link', { name: 'https://claude.ai/code' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'https://claude.ai/code' }).closest('p'))
+      .toHaveTextContent(/Install Claude Code from https:\/\/claude\.ai\/code or Antigravity from https:\/\/antigravity\.google, then check again/);
+    expect(screen.queryByText(/would not help/)).not.toBeInTheDocument();
+  });
+
   it('re-probes on request and switches to the button once the CLI is found', async () => {
     getProviders.mockResolvedValueOnce([MISSING]);
     render(<FillFromResume profile={EMPTY} onFilled={() => {}} />);
@@ -70,6 +84,15 @@ describe('FillFromResume when no CLI can answer', () => {
 });
 
 describe('FillFromResume with a CLI ready', () => {
+  // The copy names the CLI the server will pick (ai/select.js): Claude Code
+  // when it is there, else Antigravity, which can read a resume with no tools.
+  it('names Antigravity when it is the CLI that will read the resume', async () => {
+    getProviders.mockResolvedValue([MISSING, AGY]);
+    render(<FillFromResume profile={EMPTY} onFilled={() => {}} />);
+    await screen.findByRole('button', { name: 'Fill in from resume' });
+    expect(screen.getByText(/asks antigravity on this computer to read the resume/i)).toBeInTheDocument();
+  });
+
   it('asks the server on first load without forcing a re-probe', async () => {
     render(<FillFromResume profile={EMPTY} onFilled={() => {}} />);
     await screen.findByRole('button', { name: 'Fill in from resume' });

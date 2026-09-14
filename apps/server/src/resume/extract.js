@@ -1,7 +1,6 @@
 import { callProvider } from '../ai/call.js'
 import { parseJsonObject } from '../ai/loose-json.js'
 import { ProviderError } from '../ai/errors.js'
-import { DEFAULT_PROVIDER } from '../ai/providers.js'
 
 // The instruction and the resume travel together as one prompt over stdin
 // (see ai/spawn.js), so nothing user-supplied ever reaches a command line.
@@ -23,15 +22,20 @@ RESUME:
 // enough that a hung CLI does not hold the browser forever.
 const TIMEOUT_MS = 120000
 
+const TOOLS = 'none'
+
 export { parseJsonObject as parseProfileJson }
 
+// No tools: reading a resume needs none, and the resume is the one document
+// here that must never leave the machine. The policy is named here and the
+// CLI chosen for it by `select` (see ai/select.js), so a CLI that cannot
+// honour it is never handed the resume.
+//
 // `run`, `locate` and `emit` pass straight through to callProvider: the first
 // two so a test never spawns a real CLI, the third so a route can stream.
-//
-// No tools: reading a resume needs none, and the resume is the one document
-// here that must never leave the machine.
-export async function extractProfile(resumeText, { provider = DEFAULT_PROVIDER, ...seams } = {}) {
-  const { text } = await callProvider({ provider, prompt: INSTRUCTION + resumeText, tools: 'none', timeoutMs: TIMEOUT_MS, ...seams })
+export async function extractProfile(resumeText, { select, ...seams } = {}) {
+  const provider = await select(TOOLS)
+  const { text } = await callProvider({ provider, prompt: INSTRUCTION + resumeText, tools: TOOLS, timeoutMs: TIMEOUT_MS, ...seams })
   const parsed = parseJsonObject(text)
   if (!parsed) throw new ProviderError('unreadable', provider)
   return parsed

@@ -8,6 +8,8 @@ import { CLAUDE } from '@jobdekho/server/ai/providers.js'
 import { ORIGINAL, HONEST, JD } from './fixtures/tailored-resume.js'
 
 const HERE = () => '/usr/local/bin/claude'
+// The route's chooser of CLI, stubbed: which CLI answers is select.test.js's subject.
+const select = async () => CLAUDE
 const scratch = (work) => work('/scratch')
 const answering = (stdout) => vi.fn(async () => ({ stdout, stderr: '', code: 0 }))
 const envelope = (result) => JSON.stringify({ type: 'result', result })
@@ -134,7 +136,7 @@ describe('parseResumeTailor', () => {
 describe('runAction with the tailoring', () => {
   it('sends the resume under the no-tools policy and returns the checked record', async () => {
     const run = answering(envelope(JSON.stringify(REPLY)))
-    const out = await runAction(resumeTailor, { posting: POSTING, context: { resumeText: ORIGINAL }, run, locate: HERE, scratch })
+    const out = await runAction(resumeTailor, { posting: POSTING, context: { resumeText: ORIGINAL }, run, locate: HERE, scratch, select })
     expect(out).toMatchObject({ kind: 'resume-tailor', postingId: 'p1', provider: 'claude' })
     expect(out.result.factCheck.ok).toBe(true)
     expect(out.result.coverage.total).toBe(16)
@@ -149,10 +151,10 @@ describe('runAction with the tailoring', () => {
   it('hands parse the posting and the context, and leaves the fake check unaffected', async () => {
     const parse = vi.fn(() => ({ ok: true }))
     const action = { ...resumeTailor, parse }
-    await runAction(action, { posting: POSTING, context: { resumeText: 'R' }, run: answering(envelope('{}')), locate: HERE, scratch })
+    await runAction(action, { posting: POSTING, context: { resumeText: 'R' }, run: answering(envelope('{}')), locate: HERE, scratch, select })
     expect(parse).toHaveBeenCalledWith('{}', { posting: POSTING, context: { resumeText: 'R' } })
     const verdict = { verdict: 'genuine', stillOpen: true, summary: '', checks: [], redFlags: [] }
-    const fake = await runAction(fakeCheck, { posting: POSTING, run: answering(envelope(JSON.stringify(verdict))), locate: HERE, scratch })
+    const fake = await runAction(fakeCheck, { posting: POSTING, run: answering(envelope(JSON.stringify(verdict))), locate: HERE, scratch, select })
     expect(fake.result).toEqual(verdict)
   })
 })

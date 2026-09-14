@@ -14,9 +14,11 @@ const HEARTBEAT_MS = 5000
 // out of that text is the feature's job, because every feature asks for a
 // different one.
 //
-// `tools` is the policy the feature chose (see providers.js) and has no
+// `tools` is the policy the feature chose (see policies.js) and has no
 // default on purpose: leaving it out is a bug that must fail before a CLI
-// starts, not a call that runs with every tool the CLI has.
+// starts, not a call that runs with every tool the CLI has. A provider that
+// cannot honour the policy is the same kind of bug: select.js never picks
+// one, so reaching here with it is a caller wiring the wrong CLI in.
 //
 // `run`, `locate` and `scratch` are injectable so a test never spawns a real
 // CLI or touches the real temp directory, and so the route layer can hand in
@@ -26,16 +28,19 @@ export async function callProvider({
   run = runCli, locate = locateBinary, scratch = inEmptyDir, heartbeatMs = HEARTBEAT_MS, now = Date.now,
 }) {
   const args = provider.promptArgs(tools)
+  if (!args) throw new Error(`${provider.label} cannot honour the "${tools}" tool policy and should not have been chosen for it`)
   const file = locate(provider.binary)
   if (!file) throw new ProviderError('not_found', provider)
 
+  // The send event counts the prompt, not the wrapper a CLI's input protocol
+  // adds around it: the wrapper is not content anyone wrote.
   emit(startEvent({ provider: provider.id, path: file }))
   emit(progressEvent({ stage: 'send', chars: prompt.length }))
   const started = now()
   const beat = setInterval(() => emit(progressEvent({ stage: 'wait', elapsedMs: now() - started })), heartbeatMs)
   let result
   try {
-    result = await scratch((cwd) => run({ file, args, input: prompt, timeoutMs, cwd }))
+    result = await scratch((cwd) => run({ file, args, input: provider.encodeInput(prompt), timeoutMs, cwd }))
   } catch (err) {
     throw notRun(err, provider, timeoutMs)
   } finally {

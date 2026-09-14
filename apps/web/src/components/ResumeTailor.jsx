@@ -47,3 +47,8 @@ export default function ResumeTailor({ posting, cli }) {
     </div>
   );
 }
+
+// The tool policy its server-side twin runs under, and the sentence the gate
+// shows when no installed CLI can take it (see AiGate).
+ResumeTailor.policy = 'none';
+ResumeTailor.intro = 'Tailoring the resume asks an AI CLI installed on this computer, on your own subscription.';

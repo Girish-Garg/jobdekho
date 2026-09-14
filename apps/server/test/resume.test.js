@@ -1,8 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import { parseProfileJson, extractProfile } from '@jobdekho/server/resume/extract.js'
 import { tidy, looksScanned } from '@jobdekho/server/resume/text.js'
+import { CLAUDE } from '@jobdekho/server/ai/providers.js'
 
 const HERE = () => '/usr/local/bin/claude'
+// The route's chooser of CLI, stubbed: which CLI answers is select.test.js's subject.
+const select = async () => CLAUDE
 const answering = (stdout) => async () => ({ stdout, stderr: '', code: 0 })
 
 describe('parseProfileJson', () => {
@@ -29,26 +32,26 @@ describe('extractProfile', () => {
   it('sends the resume over stdin and returns the parsed profile', async () => {
     let sent = ''
     const run = async ({ input }) => { sent = input; return { stdout: '{"skills":["react"],"years":2}', stderr: '', code: 0 } }
-    expect(await extractProfile('Jane Doe, React developer', { run, locate: HERE })).toEqual({ skills: ['react'], years: 2 })
+    expect(await extractProfile('Jane Doe, React developer', { run, locate: HERE, select })).toEqual({ skills: ['react'], years: 2 })
     expect(sent).toContain('Jane Doe')
     expect(sent).toContain('RESUME:')
   })
 
   it('reports an authentication failure rather than a parse failure', async () => {
     const run = answering(JSON.stringify({ is_error: true, result: 'Failed to authenticate' }))
-    const err = await extractProfile('x', { run, locate: HERE }).catch((e) => e)
+    const err = await extractProfile('x', { run, locate: HERE, select }).catch((e) => e)
     expect(err.kind).toBe('login')
     expect(err.message).toMatch(/Failed to authenticate/)
   })
 
   it('fails loudly when the reply has no object in it', async () => {
-    const err = await extractProfile('x', { run: answering('sorry, I cannot'), locate: HERE }).catch((e) => e)
+    const err = await extractProfile('x', { run: answering('sorry, I cannot'), locate: HERE, select }).catch((e) => e)
     expect(err.kind).toBe('unreadable')
     expect(err.message).toMatch(/not in the shape JobDekho expected/)
   })
 
   it('does not reach for a CLI that is not there', async () => {
-    const err = await extractProfile('x', { run: answering('{}'), locate: () => null }).catch((e) => e)
+    const err = await extractProfile('x', { run: answering('{}'), locate: () => null, select }).catch((e) => e)
     expect(err.kind).toBe('not_found')
   })
 })

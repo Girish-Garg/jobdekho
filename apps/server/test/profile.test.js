@@ -27,9 +27,12 @@ function makeFakeStore({ profile = STORED, resumeText = 'Jane Doe, two years of 
 // tried to spawn one anyway.
 const NO_CLI = { locate: () => null, run: vi.fn(async () => { throw new Error('a test spawned a CLI') }) }
 
+// `locate` finds every CLI at the same path, so both are probed; `home` holds
+// no CLI settings, so the Antigravity gate (agy-settings.js) reads nothing.
 const cliAnswering = (stdout) => ({
   locate: () => '/usr/local/bin/claude',
   run: vi.fn(async () => ({ stdout, stderr: '', code: 0 })),
+  home: '/no/such/home',
 })
 const envelope = (result, extra = {}) => JSON.stringify({ type: 'result', result, ...extra })
 
@@ -136,11 +139,12 @@ describe('POST /api/profile/extract', () => {
     expect(res.json()).toEqual({ error: 'Upload a resume first.' })
   })
 
-  it('says the CLI is not installed, and how to fix that, when it is absent', async () => {
+  // Either CLI can read a resume, so the sentence offers both.
+  it('says no CLI is installed, and how to fix that, when none is', async () => {
     const res = await extract(makeFakeStore(), NO_CLI)
     expect(res.statusCode).toBe(503)
     expect(res.json().kind).toBe('not_found')
-    expect(res.json().error).toMatch(/Claude Code is not installed.*claude\.ai\/code/)
+    expect(res.json().error).toMatch(/^Neither Claude Code nor Antigravity is installed.*claude\.ai\/code.*antigravity\.google/)
   })
 
   // Exit code 0 with is_error in the envelope: the trap.
@@ -163,7 +167,7 @@ describe('POST /api/profile/extract', () => {
     const cli = cliAnswering(envelope('{"skills":["node"],"titles":["backend"],"years":3,"degree":"masters","locations":["pune"]}'))
     const res = await extract(store, cli)
     expect(res.statusCode).toBe(200)
-    expect(cli.run.mock.calls[0][0].input).toContain('Jane Doe, two years of React.')
+    expect(cli.run.mock.calls.at(-1)[0].input).toContain('Jane Doe, two years of React.')
     expect(store.upsertProfile).toHaveBeenCalledWith('u1', {
       skills: ['node'], titles: ['backend'], years: 3, degree: 'masters', locations: ['pune'],
       resumeText: 'Jane Doe, two years of React.', resumeName: 'cv.pdf',
@@ -223,14 +227,20 @@ describe('GET /api/ai/providers', () => {
     expect((await app.inject({ method: 'GET', url: '/api/ai/providers' })).statusCode).toBe(401)
   })
 
-  it('lists what is installed and whether it runs', async () => {
+  it('lists what is installed, whether it runs, and which policies it can take', async () => {
     const { app, cookie } = await makeApp(makeFakeStore(), cliAnswering('2.1.245 (Claude Code)\n'))
     const res = await app.inject({ method: 'GET', url: '/api/ai/providers', headers: { cookie } })
     expect(res.statusCode).toBe(200)
-    expect(res.json()).toEqual({ providers: [{
-      id: 'claude', label: 'Claude Code', install: 'https://claude.ai/code',
-      present: true, path: '/usr/local/bin/claude', runs: true, version: '2.1.245 (Claude Code)', error: null,
-    }] })
+    expect(res.json()).toEqual({ providers: [
+      {
+        id: 'claude', label: 'Claude Code', install: 'https://claude.ai/code', policies: ['none', 'web'],
+        present: true, path: '/usr/local/bin/claude', runs: true, version: '2.1.245 (Claude Code)', error: null,
+      },
+      {
+        id: 'agy', label: 'Antigravity', install: 'https://antigravity.google', policies: ['none'],
+        present: true, path: '/usr/local/bin/claude', runs: true, version: '2.1.245 (Claude Code)', error: null,
+      },
+    ] })
   })
 
   it('says so when nothing is installed', async () => {

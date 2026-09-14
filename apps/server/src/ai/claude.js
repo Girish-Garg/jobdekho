@@ -1,6 +1,22 @@
 import { parseJsonObject } from './loose-json.js'
 import { ProviderError } from './errors.js'
 
+// --safe-mode drops the person's own hooks, MCP servers, CLAUDE.md, skills and
+// plugins for this one call while leaving their login alone (--bare would
+// drop that too). --strict-mcp-config makes the MCP set exactly what this
+// command line passes, which is nothing. --no-chrome keeps the browser bridge
+// out, and --no-session-persistence leaves no transcript of the posting on
+// disk. Verified against Claude Code 2.1.245.
+//
+// -p is a flag here: the prompt itself arrives over stdin as plain text.
+export const CLAUDE_ARGS = {
+  base: ['-p', '--output-format', 'json', '--safe-mode', '--strict-mcp-config', '--no-chrome', '--no-session-persistence'],
+  byPolicy: {
+    none: ['--tools', ''],
+    web: ['--tools', 'WebSearch,WebFetch', '--allowedTools', 'WebSearch,WebFetch'],
+  },
+}
+
 // `claude -p --output-format json` wraps the reply in an envelope whose
 // `result` holds the model's text. Older versions print the text bare, so
 // handle both.

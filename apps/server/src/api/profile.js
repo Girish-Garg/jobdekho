@@ -74,7 +74,7 @@ export async function profileRoutes(app) {
     const text = await app.dashboard.getResumeText(userId)
     if (!text) return reply.code(400).send({ error: 'Upload a resume first.' })
     return answer(request, reply, async (emit) => {
-      const extracted = await extractProfile(text, { ...cli, emit })
+      const extracted = await extractProfile(text, { ...cli, select: app.ai.select, emit })
       return app.dashboard.upsertProfile(userId, await keepingResume(app, userId, extracted))
     })
   })

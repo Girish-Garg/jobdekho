@@ -10,7 +10,7 @@ vi.mock('../api.js', () => ({
 
 import { getProviders } from '../api.js';
 
-const CLAUDE = { id: 'claude', label: 'Claude Code', install: 'https://claude.ai/code', present: true, runs: true, error: null };
+const CLAUDE = { id: 'claude', label: 'Claude Code', install: 'https://claude.ai/code', policies: ['none', 'web'], present: true, runs: true, error: null };
 const posting = {
   id: 'p1', source: 'internshala', company: 'Acme', title: 'Frontend Intern', location: 'Remote',
   url: 'https://example.com/p1', descriptionSnippet: 'Build the board.', status: null, level: 'internship',

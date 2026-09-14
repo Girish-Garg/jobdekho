@@ -9,8 +9,6 @@ import FakeCheck from './FakeCheck.jsx';
 // Only one overlay is ever mounted, so a constant id is enough to name it.
 export const TITLE_ID = 'posting-dialog-title';
 
-const CHECK_INTRO = 'Checking whether a job is real asks an AI CLI installed on this computer, on your own subscription.';
-
 export default function PostingDetail({ posting, onClose, onStatus }) {
   // A doubtful posting keeps its rank and its badge; what moves is the check.
   // The two rungs where the card already warns are the two where the person
@@ -46,7 +44,7 @@ export default function PostingDetail({ posting, onClose, onStatus }) {
           evidence, even when it stayed below the warning's threshold. */}
       <GhostSignals signals={posting.ghostSignals}>
         {doubtful && (
-          <AiGate intro={CHECK_INTRO}>{(cli) => <FakeCheck posting={posting} cli={cli} />}</AiGate>
+          <AiGate intro={FakeCheck.intro} posting={posting} actions={[FakeCheck]} />
         )}
       </GhostSignals>
 

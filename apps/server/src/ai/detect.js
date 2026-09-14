@@ -1,3 +1,4 @@
+import { homedir } from 'node:os'
 import { PROVIDERS } from './providers.js'
 import { locateBinary } from './locate.js'
 import { runCli } from './spawn.js'
@@ -15,14 +16,22 @@ const DEFAULT_TTL_MS = 60000
 
 const firstLine = (text) => String(text).trim().split('\n')[0] || null
 
-async function inspect(provider, { locate, run }) {
-  const base = { id: provider.id, label: provider.label, install: provider.install }
+// `policies` rides along so a browser can tell which installed CLI can take
+// which action without knowing the CLIs (see select.js for the same choice
+// made server-side).
+//
+// An install that must not be used (Antigravity with tools pre-approved in
+// its settings, see agy-settings.js) is reported the way one that will not
+// run is: present, runs false, and the sentence saying why. It is asked
+// before the probe because it is a file read where the probe is a process.
+async function inspect(provider, { locate, run, home }) {
+  const base = { id: provider.id, label: provider.label, install: provider.install, policies: provider.policies }
   const path = locate(provider.binary)
   if (!path) return { ...base, present: false, path: null, runs: false, version: null, error: null }
-  const broken = (detail) => ({
-    ...base, present: true, path, runs: false, version: null,
-    error: `${provider.label} is installed at ${path} but could not run: ${detail}`,
-  })
+  const unusable = (error) => ({ ...base, present: true, path, runs: false, version: null, error })
+  const broken = (detail) => unusable(`${provider.label} is installed at ${path} but could not run: ${detail}`)
+  const refusal = provider.unusable?.({ home })
+  if (refusal) return unusable(refusal)
   try {
     const { stdout, stderr, code } = await run({ file: path, args: provider.versionArgs, input: '', timeoutMs: PROBE_TIMEOUT_MS })
     if (code !== 0) return broken(stderr.trim().slice(0, 200) || `exited with code ${code}`)
@@ -34,13 +43,15 @@ async function inspect(provider, { locate, run }) {
 
 // Returns a detect() whose answer is cached for ttlMs. The promise itself is
 // cached, so two loads arriving together share one probe instead of racing.
+// `home` is where a CLI's own settings are looked for, injectable so a test
+// never reads the real ones.
 export function createDetector({
-  locate = locateBinary, run = runCli, providers = PROVIDERS, ttlMs = DEFAULT_TTL_MS, now = Date.now,
+  locate = locateBinary, run = runCli, providers = PROVIDERS, ttlMs = DEFAULT_TTL_MS, now = Date.now, home = homedir(),
 } = {}) {
   let cached = null
   return function detect({ refresh = false } = {}) {
     if (refresh || !cached || now() - cached.at >= ttlMs) {
-      cached = { at: now(), list: Promise.all(providers.map((p) => inspect(p, { locate, run }))) }
+      cached = { at: now(), list: Promise.all(providers.map((p) => inspect(p, { locate, run, home }))) }
     }
     return cached.list
   }

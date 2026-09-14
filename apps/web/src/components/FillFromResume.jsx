@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { extractProfile } from '../api.js';
 import { useProviders } from '../lib/useProviders.js';
+import { providerFor } from '../lib/providerFor.js';
 import { progressText } from '../lib/aiProgress.js';
 import InstallHint from './InstallHint.jsx';
 import OverwriteConfirm from './OverwriteConfirm.jsx';
@@ -9,6 +10,11 @@ import AiError from './AiError.jsx';
 const SECONDARY = 'rounded-full border border-line px-4 py-1.5 text-sm text-ink transition hover:border-ink disabled:opacity-60';
 
 const INTRO = 'Filling in from the resume asks an AI CLI installed on this computer, on your own subscription.';
+
+// The tool policy the extraction runs under on the server: none, since the
+// prompt is the resume. Either CLI can take it, and the server picks the
+// same one this component names (ai/select.js).
+const POLICY = 'none';
 
 // A button, not a side effect of the upload. Each run spends the person's own
 // CLI subscription and holds the form for twenty seconds or more, which is
@@ -53,8 +59,8 @@ export default function FillFromResume({ profile, onFilled }) {
   }
 
   if (providers === undefined) return <p className="font-mono text-xs text-muted">Checking for an AI CLI...</p>;
-  const ready = providers.find((p) => p.present && p.runs);
-  if (!ready) return <InstallHint intro={INTRO} providers={providers} checking={checking} onRecheck={refresh} />;
+  const ready = providerFor(providers, POLICY);
+  if (!ready) return <InstallHint intro={INTRO} policies={[POLICY]} providers={providers} checking={checking} onRecheck={refresh} />;
   if (step === 'confirm') return <OverwriteConfirm label={ready.label} onConfirm={run} onCancel={() => setStep('idle')} />;
 
   return (

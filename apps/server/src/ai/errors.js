@@ -18,9 +18,14 @@ const STATUS = {
 // reads as a typo.
 const trimStop = (detail) => String(detail).trim().replace(/\.$/, '')
 
+// Which CLI is missing depends on the action's policy and on what else is
+// installed, which select.js knows and this file does not, so its sentence
+// arrives whole as the detail. The plain sentence is for the not_found
+// raised inside a call, when a binary the probe found is gone by the time
+// it is run.
 const MESSAGE = {
-  not_found: (p) =>
-    `${p.label} is not installed, or is not on the PATH JobDekho was started with. `
+  not_found: (p, detail) => detail
+    || `${p.label} is not installed, or is not on the PATH JobDekho was started with. `
     + `Install it from ${p.install}, then restart JobDekho.`,
   login: (p, detail) =>
     `${p.label} is not signed in (${trimStop(detail)}). `

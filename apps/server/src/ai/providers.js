@@ -1,52 +1,34 @@
-import { unwrapClaude } from './claude.js'
+import { CLAUDE_ARGS, unwrapClaude } from './claude.js'
+import { AGY_ARGS, encodeAgyInput, unwrapAgy } from './agy.js'
+import { agyUnusable } from './agy-settings.js'
+import { TOOL_POLICIES, underPolicies } from './policies.js'
+
+export { TOOL_POLICIES }
 
 // One entry per CLI that can be driven from an HTTP handler: a one-shot prompt
 // read from stdin and a machine-readable reply on stdout. Nothing outside this
 // file knows which CLI it is talking to, so adding Codex, Gemini or Qwen is an
-// entry here plus an unwrap for that CLI's envelope, and their login wording.
-//
-// Antigravity is a desktop IDE with no such mode, so it is not an entry and
-// cannot become one.
+// entry here plus an adapter for that CLI's envelope, and their login wording.
 //
 //   binary        name looked up on PATH, never a path of its own
 //   versionArgs   a probe that proves the binary runs without costing a model call
+//   policies      the tool policies this CLI can honour (see policies.js)
+//   supports      (tools) -> whether it honours that policy
 //   promptArgs    (tools) -> one-shot mode reading the prompt from stdin,
-//                 replying as JSON, under the named tool policy
+//                 replying machine-readably, under that policy; null when
+//                 this CLI cannot honour it
+//   encodeInput   (prompt) -> what goes over stdin: the prompt as it is, or
+//                 the prompt inside the line the CLI's input protocol wants
 //   loginPattern  how this CLI words "you are not signed in", in stderr or its envelope
 //   unwrap        (stdout, provider) -> the model's text, or throw a ProviderError
+//   cannot        optional, policy -> the sentence for why this CLI is not
+//                 offered for it, shown when nothing that can is installed
+//   unusable      optional, ({ home }) -> a sentence when the install must
+//                 not be used at all, asked at detection time (see detect.js)
 //
-// Every call names a tool policy; there is no default, because the CLI's own
-// default is every tool it has, and the prompt carries third-party text (a
-// job description) that could tell an agent to read files and post them
-// somewhere. The policies, and what they mean on each CLI:
-//   none  no tools at all: the model reads the prompt and answers
-//   web   WebSearch and WebFetch and nothing else, pre-approved because print
-//         mode cannot ask and would deny them silently
-export const TOOL_POLICIES = ['none', 'web']
-
-// --safe-mode drops the person's own hooks, MCP servers, CLAUDE.md, skills and
-// plugins for this one call while leaving their login alone (--bare would
-// drop that too). --strict-mcp-config makes the MCP set exactly what this
-// command line passes, which is nothing. --no-chrome keeps the browser bridge
-// out, and --no-session-persistence leaves no transcript of the posting on
-// disk. Verified against Claude Code 2.1.245.
-const CLAUDE_ONE_SHOT = [
-  '-p', '--output-format', 'json',
-  '--safe-mode', '--strict-mcp-config', '--no-chrome', '--no-session-persistence',
-]
-const CLAUDE_TOOLS = {
-  none: ['--tools', ''],
-  web: ['--tools', 'WebSearch,WebFetch', '--allowedTools', 'WebSearch,WebFetch'],
-}
-
-// An unknown policy is a programming error, and the safe failure is no call
-// at all rather than a call with whatever the CLI would have defaulted to.
-function oneShot(base, byPolicy) {
-  return (tools) => {
-    if (!byPolicy[tools]) throw new Error(`unknown tool policy "${tools}", expected one of ${TOOL_POLICIES.join(', ')}`)
-    return [...base, ...byPolicy[tools]]
-  }
-}
+// Order is preference: the first entry that is installed, runs and honours
+// an action's policy answers it (see select.js), so a machine with Claude
+// Code behaves exactly as it did before Antigravity was added.
 
 export const CLAUDE = {
   id: 'claude',
@@ -54,14 +36,36 @@ export const CLAUDE = {
   binary: 'claude',
   install: 'https://claude.ai/code',
   versionArgs: ['--version'],
-  promptArgs: oneShot(CLAUDE_ONE_SHOT, CLAUDE_TOOLS),
+  ...underPolicies(CLAUDE_ARGS),
+  encodeInput: (prompt) => prompt,
   loginPattern: /authenticat|oauth|logged in|\/login|api key|credential/i,
   unwrap: unwrapClaude,
 }
 
-export const PROVIDERS = [CLAUDE]
+// Antigravity's CLI, for the actions whose prompt carries the resume and
+// nothing else. Headless agy honours 'none' by auto-denying every tool (see
+// agy.js), and 'web' is not offered because giving it a browser means a
+// permanent allow-rule in the person's own global config. Its sign-in
+// wording, measured: "Please sign in to view available models" in the
+// result, "not authenticated" in the print-mode log.
+export const AGY = {
+  id: 'agy',
+  label: 'Antigravity',
+  binary: 'agy',
+  install: 'https://antigravity.google',
+  versionArgs: ['--version'],
+  ...underPolicies(AGY_ARGS),
+  encodeInput: encodeAgyInput,
+  loginPattern: /sign in|authenticat/i,
+  unwrap: unwrapAgy,
+  cannot: {
+    web: 'This action needs a CLI that can browse, and Antigravity\'s headless mode cannot be given '
+      + 'web access without permanent allow-rules in its own config.',
+  },
+  unusable: agyUnusable,
+}
 
-export const DEFAULT_PROVIDER = CLAUDE
+export const PROVIDERS = [CLAUDE, AGY]
 
 export function providerById(id) {
   return PROVIDERS.find((p) => p.id === id) ?? null
