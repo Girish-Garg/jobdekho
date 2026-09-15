@@ -29,7 +29,7 @@ export default function SourceSelect({ options, excluded, onChange }) {
         type="button"
         onClick={toggleMenu}
         aria-expanded={open}
-        className={`${TRIGGER} ${triggerTone(count > 0 || open)}`}
+        className={`${TRIGGER} ${triggerTone(count > 0, open)}`}
       >
         {count === 0 ? 'All sources' : `${count} excluded`}
         <Caret />

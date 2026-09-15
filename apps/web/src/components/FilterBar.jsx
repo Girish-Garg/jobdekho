@@ -28,7 +28,11 @@ export default function FilterBar({ filters, setFilters }) {
   const chips = activeChips(filters);
 
   return (
-    <div className="shrink-0 border-b border-line bg-panel px-6 py-2.5">
+    // No bottom border of its own: PostingsHeader sits flush underneath on the
+    // same bg-panel and carries the hairline, so the two read as one control
+    // panel (the filters line, then the count-and-sort line) rather than two
+    // separately boxed bars stacked on top of each other.
+    <div className="shrink-0 bg-panel px-6 py-1.5">
       {/* One line at every width the grid is usable at; wrapping only kicks in
           on a phone, where the alternative is scrolling the page sideways. */}
       <div className="flex flex-wrap items-center gap-2">

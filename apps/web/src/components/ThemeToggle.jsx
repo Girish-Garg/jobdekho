@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { CHOICES, applyTheme, readChoice, writeChoice, watchSystem } from '../lib/theme.js';
+import { CHOICES, applyTheme, onChoiceChange, readChoice, writeChoice, watchSystem } from '../lib/theme.js';
 
 // Sun, moon, and the half-filled circle that means "whatever the system says".
 const FACE = { light: '○', dark: '●', system: '◑' };
@@ -16,6 +16,10 @@ export default function ThemeToggle() {
     // The system only gets a vote while the choice is to follow it.
     return choice === 'system' ? watchSystem(() => applyTheme('system')) : undefined;
   }, [choice]);
+
+  // The command palette can set the theme too, so the button follows the
+  // choice rather than owning it.
+  useEffect(() => onChoiceChange(setChoice), []);
 
   function cycle() {
     const next = NEXT[choice] ?? CHOICES[0];

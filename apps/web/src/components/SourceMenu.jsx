@@ -14,7 +14,7 @@ export default function SourceMenu({ options, excluded, onChange }) {
     onChange(excluded.includes(name) ? excluded.filter((s) => s !== name) : [...excluded, name]);
 
   return (
-    <div className="absolute left-0 top-full z-30 mt-2 w-72 rounded-lg border border-line bg-panel p-2 shadow-lg">
+    <div className="absolute left-0 top-full z-30 mt-2 w-72 rounded-lg border border-line bg-overlay p-2 shadow-pop">
       <div className="flex items-center gap-2 pb-2">
         <input
           autoFocus

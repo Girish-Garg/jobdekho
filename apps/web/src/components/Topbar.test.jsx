@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import Topbar from './Topbar.jsx';
 
 vi.mock('../api.js', () => ({
@@ -51,7 +51,38 @@ describe('Topbar search', () => {
     const { container } = render(<Topbar user={{}} q="" onSearch={() => {}} onLogout={() => {}} />);
     const header = container.querySelector('header');
     expect(header.className).not.toContain('flex-wrap');
-    expect(screen.getByLabelText('Keyword').parentElement.className).toContain('flex-1');
+    expect(screen.getByLabelText('Keyword').closest('.flex-1')).not.toBeNull();
+  });
+});
+
+// The box is easy to miss until someone knows to look for it, so a small
+// hint names the shortcut right on the control it triggers.
+describe('Topbar search hint', () => {
+  it('shows the / hint until the box is used', () => {
+    render(<Topbar user={{}} q="" onSearch={() => {}} onLogout={() => {}} />);
+    expect(screen.getByText('/')).toBeInTheDocument();
+  });
+
+  it('hides the hint once the box has focus', () => {
+    render(<Topbar user={{}} q="" onSearch={() => {}} onLogout={() => {}} />);
+    fireEvent.focus(screen.getByLabelText('Keyword'));
+    expect(screen.queryByText('/')).not.toBeInTheDocument();
+  });
+
+  it('hides the hint once a keyword is typed, even after the box blurs', () => {
+    render(<Topbar user={{}} q="react" onSearch={() => {}} onLogout={() => {}} />);
+    expect(screen.queryByText('/')).not.toBeInTheDocument();
+  });
+
+  it('blurs the box on Escape', () => {
+    render(<Topbar user={{}} q="" onSearch={() => {}} onLogout={() => {}} />);
+    const box = screen.getByLabelText('Keyword');
+    box.focus();
+    expect(box).toHaveFocus();
+    // The Escape handler calls the DOM .blur() imperatively rather than
+    // through fireEvent, so React's own act wrapping does not see it.
+    act(() => fireEvent.keyDown(box, { key: 'Escape' }));
+    expect(box).not.toHaveFocus();
   });
 });
 

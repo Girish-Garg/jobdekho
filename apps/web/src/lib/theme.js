@@ -5,6 +5,7 @@
 export const KEY = 'jobdekho-theme';
 export const CHOICES = ['system', 'light', 'dark'];
 const QUERY = '(prefers-color-scheme: dark)';
+const CHANGED = 'jobdekho:theme';
 
 // Storage can throw outright in a locked-down browser, not just come back
 // empty, and a theme is never worth failing a render over.
@@ -17,12 +18,22 @@ export function readChoice(storage = globalThis.localStorage) {
   }
 }
 
-export function writeChoice(choice, storage = globalThis.localStorage) {
+export function writeChoice(choice, storage = globalThis.localStorage, view = globalThis) {
   try {
     storage?.setItem(KEY, choice);
   } catch {
     // A theme that does not persist is still a theme for this session.
   }
+  // The command palette sets the theme without going through the toggle, and
+  // the toggle holds the choice in its own state, so a write has to say so or
+  // the button keeps showing the theme it used to be in.
+  view?.dispatchEvent?.(new CustomEvent(CHANGED, { detail: choice }));
+}
+
+export function onChoiceChange(handler, view = globalThis) {
+  const listener = (event) => handler(event.detail);
+  view?.addEventListener?.(CHANGED, listener);
+  return () => view?.removeEventListener?.(CHANGED, listener);
 }
 
 export const resolve = (choice, prefersDark) =>

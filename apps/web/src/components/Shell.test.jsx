@@ -161,3 +161,32 @@ describe('Shell layout', () => {
     expect(screen.queryByRole('button', { name: 'Level' })).not.toBeInTheDocument();
   });
 });
+
+// The palette and the shortcuts help get their own thorough tests; this is
+// just the wiring that gets a keypress from the document to those overlays.
+describe('Shell global shortcuts', () => {
+  it('opens the command palette on Ctrl+K', async () => {
+    await mount();
+    fireEvent.keyDown(document, { key: 'k', ctrlKey: true });
+    expect(screen.getByRole('dialog', { name: 'Command palette' })).toBeInTheDocument();
+  });
+
+  it('opens the shortcuts help on ?', async () => {
+    await mount();
+    fireEvent.keyDown(document, { key: '?' });
+    expect(screen.getByRole('dialog', { name: 'Keyboard shortcuts' })).toBeInTheDocument();
+  });
+
+  it('focuses the search box on /', async () => {
+    await mount();
+    fireEvent.keyDown(document, { key: '/' });
+    expect(screen.getByLabelText('Keyword')).toHaveFocus();
+  });
+
+  it('closes the palette on Escape and returns focus to the page', async () => {
+    await mount();
+    fireEvent.keyDown(document, { key: 'k', ctrlKey: true });
+    fireEvent.keyDown(screen.getByLabelText('Type a command'), { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+});

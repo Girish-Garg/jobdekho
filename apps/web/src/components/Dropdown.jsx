@@ -1,12 +1,21 @@
 import { usePopover } from '../lib/usePopover.js';
 
 // Shared by every trigger in the bar, including the source picker, so the row
-// stays one uniform line of controls.
+// stays one uniform line of controls. No background here: triggerTone owns
+// that, since a trigger needs exactly one bg-* class at a time and stacking a
+// base bg-paper under a conditional one lets Tailwind's stylesheet order,
+// not the state, decide which colour actually wins.
 export const TRIGGER =
-  'flex shrink-0 items-center gap-2 rounded-md border bg-paper px-3 py-1.5 text-sm outline-none transition';
+  'flex shrink-0 items-center gap-2 rounded-md border px-3 py-1.5 text-sm outline-none transition';
 
-export function triggerTone(active) {
-  return active ? 'border-ink text-ink' : 'border-line text-muted hover:border-ink hover:text-ink';
+// Three readable states, not two: a filled trigger means it is holding a
+// value, a bare ink border means it is only open, and the quiet default means
+// neither. Collapsing "has a value" into "is open" was how an active filter
+// used to look identical to an empty one being poked at.
+export function triggerTone(hasValue, isOpen) {
+  if (hasValue) return 'border-ink bg-select text-ink font-medium';
+  if (isOpen) return 'border-ink bg-paper text-ink';
+  return 'border-line bg-paper text-muted hover:border-ink hover:text-ink';
 }
 
 export function Caret() {
@@ -25,7 +34,7 @@ export default function Dropdown({ label, count = 0, width = 'w-64', align = 'le
         type="button"
         onClick={() => setOpen(!open)}
         aria-expanded={open}
-        className={`${TRIGGER} ${triggerTone(count > 0 || open)}`}
+        className={`${TRIGGER} ${triggerTone(count > 0, open)}`}
       >
         {count > 0 ? `${label} (${count})` : label}
         <Caret />
@@ -33,7 +42,7 @@ export default function Dropdown({ label, count = 0, width = 'w-64', align = 'le
       {open && (
         <div
           className={`absolute top-full z-30 mt-2 ${align === 'right' ? 'right-0' : 'left-0'} ${width}
-            rounded-lg border border-line bg-panel p-3 shadow-lg`}
+            rounded-lg border border-line bg-overlay p-3 shadow-pop`}
         >
           {children}
         </div>

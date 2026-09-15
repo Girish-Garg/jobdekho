@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import ThemeToggle from './ThemeToggle.jsx';
-import { KEY } from '../lib/theme.js';
+import { KEY, writeChoice } from '../lib/theme.js';
 
 beforeEach(() => {
   localStorage.clear();
@@ -34,5 +34,13 @@ describe('ThemeToggle', () => {
     render(<ThemeToggle />);
     expect(screen.getByRole('button', { name: 'Theme: dark' })).toBeInTheDocument();
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+  });
+
+  // The command palette can set the theme without this button being clicked,
+  // and the button used to keep showing the theme it used to be in.
+  it('follows a choice set from somewhere else', () => {
+    render(<ThemeToggle />);
+    act(() => writeChoice('dark'));
+    expect(screen.getByRole('button', { name: 'Theme: dark' })).toBeInTheDocument();
   });
 });
