@@ -1,71 +1,50 @@
-import { useEffect, useState } from 'react';
-import { getProfile, putProfile } from '../api.js';
+import { useState } from 'react';
+import { useProfileState } from '../lib/useProfileState.js';
 import ResumeUpload from './ResumeUpload.jsx';
 import FillFromResume from './FillFromResume.jsx';
+import ExtractedEntriesReview from './ExtractedEntriesReview.jsx';
+import CareerSections from './CareerSections.jsx';
 import ProfileForm from './ProfileForm.jsx';
 import ProfileEmptyState from './ProfileEmptyState.jsx';
 import ApplyToAlerts from './ApplyToAlerts.jsx';
 import DeleteProfile from './DeleteProfile.jsx';
 
-const P0 = { skills: [], titles: [], locations: [], years: null, degree: 'none', resumeName: null };
-
 export default function ProfileView() {
-  // undefined is "still asking"; null is the server saying there is none.
-  const [profile, setProfile] = useState(undefined);
-  // Tracked apart from the draft: apply-filter and delete act on the server's
-  // copy, which an unsaved hand-edit has not created yet.
-  const [exists, setExists] = useState(false);
+  const { profile, setProfile, exists, proposed, save, adopt, addProposals, dismissProposed, reset } = useProfileState();
+  // Local, not part of the hook: starting the blank form by hand is a pure
+  // UI choice that never touches the server until Save actually runs.
   const [editing, setEditing] = useState(false);
-
-  useEffect(() => {
-    let alive = true;
-    getProfile()
-      .then((p) => alive && (setProfile(p), setExists(p !== null)))
-      .catch(() => alive && setProfile(null));
-    return () => {
-      alive = false;
-    };
-  }, []);
-
-  async function save() {
-    const { skills, titles, locations, years, degree } = profile ?? P0;
-    const saved = await putProfile({ skills, titles, locations, years, degree });
-    setProfile(saved);
-    setExists(true);
-  }
-
-  // The upload and the fill-in both hand back the server's saved copy.
-  const adopt = (p) => (setProfile(p), setExists(true));
-
-  const blank = profile === null && !editing;
+  const blank = profile !== undefined && !exists && !editing;
 
   return (
     <section className="px-8 py-8">
       <h2 className="font-display text-2xl font-extrabold tracking-tight">Profile</h2>
       <p className="mt-1 font-mono text-xs text-muted">
-        What the Best fit ranking scores postings against. It can also seed your notification filter, but only when you say so.
+        Your full career record. Best fit on Postings scores against the fields at the bottom; a resume builder
+        will later draw from everything above them.
       </p>
 
       {profile === undefined ? (
         <p className="py-10 font-mono text-sm text-muted">Loading your profile...</p>
       ) : (
-        <div className="mt-8 flex max-w-2xl flex-col gap-8">
+        <div className="mt-8 flex max-w-3xl flex-col gap-8">
           <div className="flex flex-col gap-3">
-            <ResumeUpload resumeName={profile?.resumeName} onUploaded={adopt} />
-            {profile?.resumeName && <FillFromResume profile={profile} onFilled={adopt} />}
+            <ResumeUpload resumeName={profile.resumeName} onUploaded={adopt} />
+            {profile.resumeName && <FillFromResume profile={profile} onFilled={adopt} />}
           </div>
+          {proposed && <ExtractedEntriesReview proposed={proposed} onAdd={addProposals} onDismiss={dismissProposed} />}
           {blank ? (
             <ProfileEmptyState onStart={() => setEditing(true)} />
           ) : (
             <>
-              <ProfileForm profile={profile ?? P0} onChange={setProfile} onSave={save} />
+              <CareerSections profile={profile} onChange={setProfile} />
+              <ProfileForm profile={profile} onChange={setProfile} onSave={save} />
               {exists && (
                 <div className="flex flex-col gap-5 border-t border-line pt-6">
                   <ApplyToAlerts />
                   <DeleteProfile
                     onDeleted={() => {
-                      setProfile(null);
-                      setExists(false);
+                      reset();
                       setEditing(false);
                     }}
                   />

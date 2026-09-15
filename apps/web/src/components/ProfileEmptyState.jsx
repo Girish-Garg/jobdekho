@@ -5,10 +5,11 @@ export default function ProfileEmptyState({ onStart }) {
     <div className="flex max-w-xl flex-col items-start gap-4 border-t border-line pt-8">
       <h3 className="font-display text-lg font-bold tracking-tight">No profile yet</h3>
       <p className="text-sm leading-relaxed text-muted">
-        Your profile is what the Best fit ranking on Postings scores against: the
-        skills, target titles, experience and degree you bring. Upload a resume
-        above and fill the fields in from it, or write them yourself. Once it
-        is saved you can also use it to seed your notification filter.
+        Your profile is your full career record: experience, projects, education, skills, certifications and
+        achievements, each holding as many entries as you need. The skills, target titles, experience and degree
+        you bring are what the Best fit ranking on Postings scores against. Upload a resume above and fill the
+        record in from it, or write it yourself. Once it is saved you can also use it to seed your notification
+        filter.
       </p>
       <button
         type="button"

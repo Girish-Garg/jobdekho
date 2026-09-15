@@ -1,13 +1,20 @@
 import { normalizeProfile } from '@jobdekho/core/profile.js'
+import { normalizeSections } from './profile-sections.js'
 import { toIso } from './timestamp.js'
 
 const RESUME_FIELDS = ['resumeText', 'resumeName']
 
 // The record carries bookkeeping the caller has no use for, and
-// normalizeProfile drops anything it does not own.
+// normalizeProfile/normalizeSections drop anything they do not own. Passing
+// record as both the input and the current record normalizes a section that
+// is present and defaults one that a legacy flat-only record never had.
 export function toProfile(record) {
   if (!record) return null
-  return { ...normalizeProfile(record), resumeName: record.resumeName ?? null }
+  return {
+    ...normalizeProfile(record),
+    ...normalizeSections(record, record),
+    resumeName: record.resumeName ?? null,
+  }
 }
 
 export async function getProfile(store, userId) {
@@ -31,9 +38,11 @@ const carriesResume = (input) => Boolean(input) && RESUME_FIELDS.some((c) => c i
 export async function upsertProfile(store, userId, input) {
   const p = normalizeProfile(input)
   const current = store.profiles.get(userId) ?? { resumeText: null, resumeName: null }
+  const sections = normalizeSections(input, current)
   const record = {
     ...current,
     skills: p.skills, titles: p.titles, locations: p.locations, years: p.years, degree: p.degree,
+    ...sections,
     ...(carriesResume(input)
       ? { resumeText: input.resumeText ?? null, resumeName: input.resumeName ?? null }
       : {}),

@@ -183,6 +183,36 @@ describe('POST /api/profile/extract', () => {
     })
     expect(res.json()).toMatchObject({ skills: ['node'], resumeName: 'cv.pdf' })
   })
+
+  // The heart of "extraction proposes, the person keeps or discards": the
+  // structured entries ride along in the response for review, but never
+  // reach upsertProfile, so a hand-typed experience entry already on the
+  // profile is never in the room to be overwritten by this call.
+  it('returns proposed experience, projects and education without saving them', async () => {
+    const store = makeFakeStore()
+    const cli = cliAnswering(envelope(JSON.stringify({
+      skills: ['node'],
+      experience: [{ title: 'Backend Engineer', organisation: 'Acme' }],
+      projects: [{ title: 'Side project' }],
+      education: [{ title: 'B.Tech', organisation: 'IIT' }],
+    })))
+    const res = await extract(store, cli)
+    expect(res.statusCode).toBe(200)
+    expect(store.upsertProfile).toHaveBeenCalledWith('u1', {
+      skills: ['node'], resumeText: 'Jane Doe, two years of React.', resumeName: 'cv.pdf',
+    })
+    expect(res.json().proposed).toEqual({
+      experience: [{ title: 'Backend Engineer', organisation: 'Acme' }],
+      projects: [{ title: 'Side project' }],
+      education: [{ title: 'B.Tech', organisation: 'IIT' }],
+    })
+  })
+
+  it('proposes nothing structured when the reply carries none', async () => {
+    const store = makeFakeStore()
+    const res = await extract(store, cliAnswering(envelope('{"skills":["node"]}')))
+    expect(res.json().proposed).toEqual({ experience: [], projects: [], education: [] })
+  })
 })
 
 describe('POST /api/profile/extract as NDJSON', () => {

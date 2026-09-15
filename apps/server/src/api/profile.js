@@ -74,8 +74,14 @@ export async function profileRoutes(app) {
     const text = await app.dashboard.getResumeText(userId)
     if (!text) return reply.code(400).send({ error: 'Upload a resume first.' })
     return answer(request, reply, async (emit) => {
-      const extracted = await extractProfile(text, { ...cli, select: app.ai.select, emit })
-      return app.dashboard.upsertProfile(userId, await keepingResume(app, userId, extracted))
+      const { experience, projects, education, ...flat } = await extractProfile(text, { ...cli, select: app.ai.select, emit })
+      const saved = await app.dashboard.upsertProfile(userId, await keepingResume(app, userId, flat))
+      // The structured entries never reach upsertProfile: they are proposals,
+      // not a write, so a hand-typed job or project already on the profile
+      // is never in the room to be overwritten. The person reviews each one
+      // and the ones they keep are saved through the normal PUT, same as a
+      // hand edit.
+      return { ...saved, proposed: { experience: experience ?? [], projects: projects ?? [], education: education ?? [] } }
     })
   })
 }

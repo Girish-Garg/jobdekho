@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import ProfileView from './ProfileView.jsx';
+import { EMPTY_PROFILE } from '../lib/emptyProfile.js';
 
 vi.mock('../api.js', () => ({
   getProfile: vi.fn(async () => null),
@@ -17,6 +18,7 @@ import {
 } from '../api.js';
 
 const PROFILE = {
+  ...EMPTY_PROFILE,
   skills: ['react'], titles: ['frontend intern'], locations: ['pune'],
   years: 1, degree: 'bachelors', resumeName: 'cv.pdf',
 };
@@ -42,10 +44,12 @@ describe('ProfileView with no profile', () => {
     expect(screen.getByLabelText(/resume \(pdf\)/i)).toBeInTheDocument();
   });
 
-  it('opens a blank form for building the profile by hand', async () => {
+  it('opens a blank career record for building the profile by hand', async () => {
     render(<ProfileView />);
     fireEvent.click(await screen.findByRole('button', { name: 'Fill it in by hand' }));
     expect(screen.getByLabelText('Years of experience')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Basics' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Experience/ })).toBeInTheDocument();
     // Apply and delete act on the server's copy, which does not exist yet.
     expect(screen.queryByRole('button', { name: 'Use this for my alerts' })).not.toBeInTheDocument();
   });
@@ -84,7 +88,7 @@ describe('ProfileView with no profile', () => {
 describe('ProfileView with a saved profile', () => {
   beforeEach(() => getProfile.mockResolvedValue(PROFILE));
 
-  it('loads every field for correction', async () => {
+  it('loads every flat field for correction', async () => {
     render(<ProfileView />);
     expect(await screen.findByText('react')).toBeInTheDocument();
     expect(screen.getByLabelText('Years of experience')).toHaveValue(1);
@@ -92,20 +96,74 @@ describe('ProfileView with a saved profile', () => {
     expect(screen.getByText('On file: cv.pdf')).toBeInTheDocument();
   });
 
-  it('saves the edited fields and never sends resumeName', async () => {
+  it('saves the whole career record, deriving skills and never sending resumeName', async () => {
     render(<ProfileView />);
     await screen.findByText('react');
     fireEvent.change(screen.getByLabelText('Years of experience'), { target: { value: '2' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save profile' }));
-    await waitFor(() =>
-      expect(putProfile).toHaveBeenCalledWith({
-        skills: ['react'], titles: ['frontend intern'], locations: ['pune'],
-        years: 2, degree: 'bachelors',
-      }),
-    );
+    await waitFor(() => expect(putProfile).toHaveBeenCalled());
+    const [sent] = putProfile.mock.calls[0];
+    expect(sent.resumeName).toBeUndefined();
+    expect(sent).toMatchObject({
+      skills: ['react'], titles: ['frontend intern'], locations: ['pune'], years: 2, degree: 'bachelors',
+      basics: EMPTY_PROFILE.basics, experience: [], projects: [], skillGroups: [],
+    });
   });
 
-  it('puts the extracted profile into the form after the overwrite warning', async () => {
+  it('adds a role to Experience, edits it and includes it in the next save', async () => {
+    render(<ProfileView />);
+    await screen.findByText('react');
+    fireEvent.click(screen.getByRole('button', { name: 'Add role' }));
+    const titleBox = await screen.findByLabelText('Role');
+    fireEvent.change(titleBox, { target: { value: 'Backend Engineer' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save profile' }));
+    await waitFor(() => expect(putProfile).toHaveBeenCalled());
+    const [sent] = putProfile.mock.calls[0];
+    expect(sent.experience).toMatchObject([{ title: 'Backend Engineer' }]);
+  });
+
+  it('removes an experience entry from the section', async () => {
+    render(<ProfileView />);
+    await screen.findByText('react');
+    fireEvent.click(screen.getByRole('button', { name: 'Add role' }));
+    fireEvent.change(await screen.findByLabelText('Role'), { target: { value: 'Backend Engineer' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Remove' }));
+    expect(screen.queryByLabelText('Role')).not.toBeInTheDocument();
+  });
+
+  it('reorders two experience entries with Move down', async () => {
+    render(<ProfileView />);
+    await screen.findByText('react');
+    fireEvent.click(screen.getByRole('button', { name: 'Add role' }));
+    fireEvent.change(await screen.findByLabelText('Role'), { target: { value: 'First role' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Add role' }));
+    const roleBoxes = screen.getAllByLabelText('Role');
+    fireEvent.change(roleBoxes[1], { target: { value: 'Second role' } });
+    const [moveDown] = screen.getAllByRole('button', { name: 'Move down' });
+    fireEvent.click(moveDown);
+    fireEvent.click(screen.getByRole('button', { name: 'Save profile' }));
+    await waitFor(() => expect(putProfile).toHaveBeenCalled());
+    const [sent] = putProfile.mock.calls[0];
+    expect(sent.experience.map((e) => e.title)).toEqual(['Second role', 'First role']);
+  });
+
+  it('derives the flat skills field from the skill groups at save time', async () => {
+    render(<ProfileView />);
+    await screen.findByText('react');
+    fireEvent.click(screen.getByRole('button', { name: 'Add group' }));
+    fireEvent.change(screen.getByLabelText('Group name'), { target: { value: 'Languages' } });
+    // The skill group's own tag box, first in the DOM ahead of the flat
+    // Skills/Titles/Locations boxes further down in ProfileForm.
+    const [groupTagBox] = screen.getAllByPlaceholderText('add...');
+    fireEvent.change(groupTagBox, { target: { value: 'python' } });
+    fireEvent.keyDown(groupTagBox, { key: 'Enter' });
+    fireEvent.click(screen.getByRole('button', { name: 'Save profile' }));
+    await waitFor(() => expect(putProfile).toHaveBeenCalled());
+    const [sent] = putProfile.mock.calls[0];
+    expect(sent.skills).toEqual(expect.arrayContaining(['react', 'python']));
+  });
+
+  it('puts the extracted flat fields into the form after the overwrite warning', async () => {
     render(<ProfileView />);
     fireEvent.click(await screen.findByRole('button', { name: 'Fill in from resume' }));
     // The saved profile has fields, so the run waits for the confirm.
@@ -114,6 +172,45 @@ describe('ProfileView with a saved profile', () => {
     expect(await screen.findByText('node')).toBeInTheDocument();
     expect(screen.queryByText('react')).not.toBeInTheDocument();
     expect(extractProfile).toHaveBeenCalledTimes(1);
+  });
+
+  it('reviews proposed experience entries without touching a hand-typed one', async () => {
+    render(<ProfileView />);
+    await screen.findByText('react');
+    fireEvent.click(screen.getByRole('button', { name: 'Add role' }));
+    fireEvent.change(await screen.findByLabelText('Role'), { target: { value: 'Hand typed role' } });
+
+    extractProfile.mockResolvedValueOnce({
+      ...PROFILE,
+      proposed: { experience: [{ title: 'Proposed role', organisation: 'Acme' }], projects: [], education: [] },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Fill in from resume' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Overwrite and fill in' }));
+
+    const panel = await screen.findByText(/found 1 entry/i);
+    expect(within(panel.closest('div')).getByText(/Proposed role/)).toBeInTheDocument();
+    // Nothing is written yet: the hand-typed entry is unchanged and no save happened.
+    expect(screen.getByDisplayValue('Hand typed role')).toBeInTheDocument();
+    expect(putProfile).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add selected' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save profile' }));
+    await waitFor(() => expect(putProfile).toHaveBeenCalled());
+    const [sent] = putProfile.mock.calls[0];
+    expect(sent.experience.map((e) => e.title)).toEqual(['Hand typed role', 'Proposed role']);
+  });
+
+  it('dismisses a proposal review without changing the profile', async () => {
+    render(<ProfileView />);
+    extractProfile.mockResolvedValueOnce({
+      ...PROFILE,
+      proposed: { experience: [{ title: 'Proposed role' }], projects: [], education: [] },
+    });
+    fireEvent.click(await screen.findByRole('button', { name: 'Fill in from resume' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Overwrite and fill in' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Dismiss' }));
+    expect(screen.queryByText(/Proposed role/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Role')).not.toBeInTheDocument();
   });
 
   it('applies to alerts only after the confirm step', async () => {

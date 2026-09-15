@@ -6,7 +6,10 @@ import { ProviderError } from '../ai/errors.js'
 // (see ai/spawn.js), so nothing user-supplied ever reaches a command line.
 const INSTRUCTION = `Read the resume below and reply with ONE JSON object and nothing else.
 No prose, no markdown fence. Shape:
-{"skills":[],"titles":[],"locations":[],"years":<number>,"degree":"none|bachelors|masters|phd"}
+{"skills":[],"titles":[],"locations":[],"years":<number>,"degree":"none|bachelors|masters|phd",
+"experience":[{"title":"","organisation":"","location":"","startDate":"","endDate":"","bullets":[]}],
+"projects":[{"title":"","organisation":"","startDate":"","endDate":"","bullets":[],"tech":[],"link":""}],
+"education":[{"title":"","organisation":"","location":"","startDate":"","endDate":""}]}
 
 skills: concrete technologies and tools only, lowercase, at most 25. No soft skills.
 titles: job titles actually held or clearly targeted, lowercase.
@@ -14,6 +17,20 @@ locations: cities or regions the person is in or wants, lowercase.
 years: total years of professional experience as a number. Internships count as
   0.5 each. Use 0 for a student or new graduate.
 degree: the HIGHEST completed or in-progress degree. "none" if unclear.
+
+experience: one entry per job or internship actually held, most recent first.
+  title is the role held, organisation is the employer, dates and bullets are
+  written as they appear in the resume. Omit the array entirely if the
+  resume lists none.
+projects: one entry per project, side project or piece of coursework named on
+  its own. organisation is the employer or context it was built under, or ""
+  for independent work. tech is the stack named for that project only.
+education: one entry per degree or programme. title is the degree or
+  programme name, organisation is the institution.
+
+These three arrays are PROPOSALS: whatever you list is offered to the person
+for review, never written over anything they already have, so include every
+entry you can find rather than picking a "best" few.
 
 RESUME:
 `
