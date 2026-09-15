@@ -10,6 +10,15 @@
       rel="stylesheet"
     />
     <title>JobDekho</title>
+    <script>
+      // Applied before first paint so a dark session never flashes light.
+      // Mirrors lib/theme.js: same key, same rule.
+      try {
+        var choice = localStorage.getItem('jobdekho-theme');
+        var dark = choice === 'dark' || ((!choice || choice === 'system') && matchMedia('(prefers-color-scheme: dark)').matches);
+        if (dark) document.documentElement.setAttribute('data-theme', 'dark');
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

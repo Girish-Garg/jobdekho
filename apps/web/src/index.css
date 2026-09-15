@@ -2,8 +2,68 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Tokens are channel triplets so Tailwind can still take an alpha: text-ink/70
+   and bg-ember/10 keep working across both themes. Names are semantic, never
+   literal colours, because the same class has to mean "the raised surface" in
+   both. */
 :root {
   color-scheme: light;
+
+  /* Ground, then the two surfaces that sit above it. Depth is a surface step
+     plus a hairline first, a shadow only where something really floats. */
+  --paper: 247 244 238;
+  --panel: 255 253 248;
+  --overlay: 255 253 248;
+
+  --ink: 26 24 21;
+  --muted: 111 106 96;
+  --line: 226 221 210;
+  --edge: 201 194 180;
+  --ember: 184 67 15;
+  --ring: 26 24 21;
+  --select: 240 234 222;
+
+  /* Seniority is an ordered ladder, so the rungs are one ramp: lightness falls
+     a fixed step per rung, which keeps the order legible in greyscale and to a
+     dichromat. Measured on paper: 4.70, 5.60, 6.74, 8.04, 9.54, 11.21 to 1. */
+  --level-internship: 75 119 86;
+  --level-entry: 11 109 108;
+  --level-mid: 24 90 133;
+  --level-senior: 96 62 102;
+  --level-staff: 97 48 64;
+  --level-executive: 73 47 27;
+
+  --duration-fast: 120ms;
+  --duration-slow: 220ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Roasted paper rather than black: the warmth is the product's, and a true
+   black ground under warm text reads as a different app at night. */
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --paper: 22 20 15;
+  --panel: 30 27 21;
+  --overlay: 38 34 27;
+
+  --ink: 242 236 224;
+  --muted: 167 157 139;
+  --line: 51 46 37;
+  --edge: 74 66 55;
+  --ember: 232 114 47;
+  --ring: 242 236 224;
+  --select: 42 38 32;
+
+  /* The same six hues, lightness solved to step down 60, 54, 48, 42, 37, 32
+     so the ramp keeps its order the way the light one does. Every rung clears
+     5.5 to 1 even on the overlay surface, the lightest of the three. */
+  --level-internship: 169 214 182;
+  --level-entry: 136 206 205;
+  --level-mid: 149 189 218;
+  --level-senior: 201 160 208;
+  --level-staff: 209 147 167;
+  --level-executive: 194 143 98;
 }
 
 html,
@@ -14,12 +74,34 @@ body,
 }
 
 body {
-  background: theme('colors.paper');
-  color: theme('colors.ink');
+  background: rgb(var(--paper));
+  color: rgb(var(--ink));
   font-family: theme('fontFamily.sans');
   -webkit-font-smoothing: antialiased;
 }
 
+/* One focus treatment for the whole app, since it is meant to be driven from
+   the keyboard: every control shows the same ring whether it was reached by
+   tab or by a shortcut, and no component has to remember to style it. */
+:focus-visible {
+  outline: 2px solid rgb(var(--ring));
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 .tnum {
   font-variant-numeric: tabular-nums;
+}
+
+/* Wired once, globally, so a component cannot forget it. Motion here is only
+   ever feedback, so removing it costs nothing but the animation. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

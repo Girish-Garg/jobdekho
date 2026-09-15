@@ -1,5 +1,6 @@
 // Slim top strip: wordmark, section nav, keyword search, current user, sign-out.
 import { logout } from '../api.js';
+import ThemeToggle from './ThemeToggle.jsx';
 
 export default function Topbar({ user, view, setView, onLogout, q = '', onSearch }) {
   const name = user?.name || user?.email || 'Account';
@@ -41,6 +42,7 @@ export default function Topbar({ user, view, setView, onLogout, q = '', onSearch
         <span className="hidden h-8 w-8 place-items-center rounded-full bg-ink font-mono text-xs text-paper sm:grid">
           {initial}
         </span>
+        <ThemeToggle />
         <button
           type="button"
           onClick={handleLogout}
