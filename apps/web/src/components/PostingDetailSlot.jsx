@@ -11,12 +11,17 @@ export default function PostingDetailSlot({ isWide, opened, onClose, onStatus })
   }
 
   return (
-    <div className="w-[380px] shrink-0">
-      <div className="sticky top-12 max-h-[calc(100vh-5rem)] overflow-y-auto rounded-lg border border-line bg-panel p-6">
+    <div className="w-[380px] shrink-0 xl:w-[440px]">
+      <div className="sticky top-[var(--feed-header)] max-h-[calc(100vh-var(--chrome-above-feed)-var(--feed-header)-1rem)] overflow-y-auto rounded-lg border border-line bg-panel p-6">
         {opened ? (
-          <PostingDetail posting={opened} onClose={onClose} onStatus={onStatus} />
+          <div key={opened.id} className="rise">
+            <PostingDetail posting={opened} onStatus={onStatus} />
+          </div>
         ) : (
-          <p className="py-10 text-center text-sm text-muted">Select a posting to see it here.</p>
+          // Only an empty feed reaches this: a feed with rows in it opens on
+          // its first one, so the pane is never an empty column with an
+          // instruction in it.
+          <p className="p-6 text-sm text-muted">Nothing to show yet.</p>
         )}
       </div>
     </div>

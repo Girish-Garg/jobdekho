@@ -617,12 +617,22 @@ describe('PostingsView wide two-pane layout', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it('shows a placeholder in the pane before anything is opened', async () => {
+  // The pane used to open empty, with an instruction in it. Beside a list
+  // there is always something worth showing, so it opens on the first row.
+  it('opens the first posting in the pane rather than standing empty', async () => {
     mockWide(true);
+    getPostings.mockResolvedValue([row({ id: 'a', title: 'Alpha', descriptionSnippet: 'Ship it.' })]);
+    render(<PostingsView filters={EMPTY} />);
+    await waitFor(() => expect(screen.getByText('Ship it.')).toBeInTheDocument());
+    expect(screen.queryByText(/Nothing to show yet/)).not.toBeInTheDocument();
+  });
+
+  it('leaves the narrow layout alone: no dialog opens on its own', async () => {
+    mockWide(false);
     getPostings.mockResolvedValue([row({ id: 'a', title: 'Alpha' })]);
     render(<PostingsView filters={EMPTY} />);
     await screen.findByText('Alpha');
-    expect(screen.getByText(/Select a posting/)).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('falls back to the dialog below the wide breakpoint', async () => {

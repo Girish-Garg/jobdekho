@@ -16,6 +16,8 @@ export const TITLE_ID = 'posting-dialog-title';
 // and company plus level, location and pay - not a fact worth making a
 // person scroll past the score to reach.
 export default function PostingDetail({ posting, onClose, onStatus }) {
+  // The pane hands no onClose: there, a posting is replaced rather than
+  // dismissed, and closing would leave an empty column.
   // A doubtful posting keeps its rank and its badge; what moves is the check.
   // The two rungs where the card already warns are the two where the person
   // is asking "is this real?", so the button sits with the evidence rather
@@ -31,14 +33,16 @@ export default function PostingDetail({ posting, onClose, onStatus }) {
           </h2>
           <p className="mt-1 text-sm text-muted">{posting.company}</p>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close"
-          className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-line text-muted transition hover:border-ink hover:text-ink"
-        >
-          &#215;
-        </button>
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-line text-muted transition-colors duration-fast ease hover:border-edge hover:text-ink"
+          >
+            &#215;
+          </button>
+        )}
       </div>
 
       <PostingFacts posting={posting} />

@@ -33,6 +33,13 @@
   --level-staff: 97 48 64;
   --level-executive: 73 47 27;
 
+  /* What sits above the scrolling feed: the topbar and the filter bar are
+     outside it, the sort bar sticks to its top. The detail pane reads both
+     to know where to stick and how tall it may be, which it used to guess
+     at 48px and 80px, so its bottom fell off the screen. */
+  --chrome-above-feed: 92px;
+  --feed-header: 44px;
+
   --duration-fast: 120ms;
   --duration-slow: 220ms;
   --ease: cubic-bezier(0.2, 0, 0, 1);
@@ -89,6 +96,32 @@ body {
   border-radius: 2px;
 }
 
+
+/* The only two motions in the app, and each says something: content that
+   replaced other content rises the few pixels it would have travelled,
+   and a surface waiting on the network breathes so it reads as pending
+   rather than broken. Both are switched off by the reduced-motion rule
+   below, which is why neither carries meaning of its own. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+.rise {
+  animation: rise var(--duration-slow) var(--ease) both;
+}
+
+@keyframes breathe {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.breathe {
+  animation: breathe 1.4s ease-in-out infinite;
+}
 .tnum {
   font-variant-numeric: tabular-nums;
 }

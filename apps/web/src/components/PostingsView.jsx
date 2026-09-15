@@ -6,6 +6,8 @@ import { useMediaQuery } from '../lib/useMediaQuery.js';
 import { useTriage } from '../lib/useTriage.js';
 import { useOpenPosting } from '../lib/useOpenPosting.js';
 import { useListKeys } from '../lib/useListKeys.js';
+import { useAutoOpen } from '../lib/useAutoOpen.js';
+import { rankingNotice } from '../lib/rankingNotice.js';
 import PostingsHeader from './PostingsHeader.jsx';
 import FeedBody from './FeedBody.jsx';
 import PostingDetailSlot from './PostingDetailSlot.jsx';
@@ -26,13 +28,7 @@ export default function PostingsView({ filters, onOpenProfile }) {
   const isWide = useMediaQuery(WIDE_QUERY);
   const { opened, openFromClick: openRow, openById, close: closeCard } = useOpenPosting(rows);
 
-  // The notice fires wherever the UI claims a ranking the server is not
-  // doing: best-fit order, or a fit floor, which the server ignores with no
-  // profile to score against.
-  const fitFiltered = Boolean(filters.minFit);
-  const claimsRanking = sort === 'match' || fitFiltered;
-  const serverRanked = rows.some((row) => Number.isInteger(row.fit));
-  const unranked = claimsRanking && rows.length > 0 && !serverRanked;
+  const { fitFiltered, unranked } = rankingNotice(filters, sort, rows);
 
   // Selection (keyboard highlight) is separate from "open": only Enter or a
   // click commits to viewing a posting.
@@ -42,6 +38,8 @@ export default function PostingsView({ filters, onOpenProfile }) {
     setSelectedId(posting.id);
     openRow(posting, element);
   }
+
+  useAutoOpen({ enabled: isWide, opened, loading, rows, onSelect: setSelectedId, onOpen: openById });
 
   useListKeys({
     rows,
