@@ -191,6 +191,20 @@ describe('PostingCard work mode', () => {
   });
 });
 
+describe('PostingCard selection', () => {
+  it('carries its id as data-row-id for keyboard scroll and focus lookups', () => {
+    render(<PostingCard posting={base} onOpen={() => {}} />);
+    expect(screen.getByRole('button', { name: /Frontend Intern/ })).toHaveAttribute('data-row-id', 'p1');
+  });
+
+  it('paints the selection background when selected, the panel surface otherwise', () => {
+    const { rerender } = render(<PostingCard posting={base} onOpen={() => {}} />);
+    expect(screen.getByRole('button', { name: /Frontend Intern/ }).className).toContain('bg-panel');
+    rerender(<PostingCard posting={base} selected onOpen={() => {}} />);
+    expect(screen.getByRole('button', { name: /Frontend Intern/ }).className).toContain('bg-select');
+  });
+});
+
 describe('isNewToday', () => {
   it('is true within 24h and false beyond', () => {
     expect(isNewToday('2026-06-28T06:00:00Z', now)).toBe(true);

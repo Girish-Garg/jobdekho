@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, fireEvent, within, act } from '@testing-library/react';
 import PostingsView from './PostingsView.jsx';
 
@@ -29,9 +29,25 @@ const row = (over) => ({
   ...over,
 });
 
-const card = (name) => screen.getByRole('button', { name: new RegExp(name) });
+// The feed's default view is rows: every option carries its title, company
+// and the rest of its own text as its accessible name, the same way the old
+// card button did, so a name regex still finds the right one.
+const card = (name) => screen.getByRole('row', { name: new RegExp(name) });
 
-beforeEach(() => vi.clearAllMocks());
+const mockWide = (matches) => {
+  window.matchMedia = vi.fn().mockImplementation((query) => ({
+    matches, media: query, addEventListener: () => {}, removeEventListener: () => {},
+  }));
+};
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  window.localStorage.clear();
+});
+
+afterEach(() => {
+  delete window.matchMedia;
+});
 
 describe('PostingsView server-side filters', () => {
   // The feed opens personalised; the server's default is match too, but the
@@ -171,7 +187,7 @@ describe('PostingsView measure filters go to the server', () => {
     }));
   });
 
-  // Whatever the API returns is what the grid shows. Re-filtering here would
+  // Whatever the API returns is what the feed shows. Re-filtering here would
   // narrow only the loaded page and disagree with the "N shown" count.
   it('renders every row the server returned', async () => {
     getPostings.mockResolvedValueOnce([
@@ -184,23 +200,45 @@ describe('PostingsView measure filters go to the server', () => {
   });
 });
 
-describe('PostingsView grid', () => {
-  it('renders one card per posting', async () => {
-    getPostings.mockResolvedValueOnce([
-      row({ id: 'a', title: 'Alpha' }),
-      row({ id: 'b', title: 'Beta' }),
-      row({ id: 'c', title: 'Gamma' }),
-    ]);
+describe('PostingsView rows and view mode', () => {
+  it('renders rows in a grid by default', async () => {
+    getPostings.mockResolvedValueOnce([row({ id: 'a', title: 'Alpha' }), row({ id: 'b', title: 'Beta' })]);
     render(<PostingsView filters={EMPTY} />);
+    const list = await screen.findByTestId('posting-list');
+    expect(within(list).getAllByRole('row')).toHaveLength(2);
+  });
 
-    const grid = await screen.findByTestId('posting-grid');
-    expect(within(grid).getAllByRole('button')).toHaveLength(3);
+  it('switches to the card grid via the density toggle and remembers the choice', async () => {
+    getPostings.mockResolvedValueOnce([row({ id: 'a', title: 'Alpha' })]);
+    render(<PostingsView filters={EMPTY} />);
+    await screen.findByTestId('posting-list');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cards' }));
+    expect(await screen.findByTestId('posting-grid')).toBeInTheDocument();
+    expect(window.localStorage.getItem('jobdekho-view-mode')).toBe('grid');
   });
 
   it('says so when nothing matches', async () => {
     render(<PostingsView filters={EMPTY} />);
     expect(await screen.findByText('Nothing matches these filters yet.')).toBeInTheDocument();
-    expect(screen.queryByTestId('posting-grid')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('posting-list')).not.toBeInTheDocument();
+  });
+
+  it('names the active filter when nothing matches it', async () => {
+    render(<PostingsView filters={{ ...EMPTY, minFit: '44' }} />);
+    expect(await screen.findByText(/Good fit filter/)).toBeInTheDocument();
+  });
+
+  it('shows skeleton rows instead of a spinner or a loading line while the first page is in flight', async () => {
+    let deliver;
+    getPostings.mockReturnValueOnce(new Promise((resolve) => { deliver = resolve; }));
+    render(<PostingsView filters={EMPTY} />);
+
+    expect(screen.getByTestId('feed-skeleton')).toBeInTheDocument();
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Fetching/)).not.toBeInTheDocument();
+
+    await act(async () => deliver([]));
   });
 });
 
@@ -275,7 +313,7 @@ describe('PostingsView best-fit ranking', () => {
     getPostings.mockReturnValueOnce(new Promise((resolve) => { deliver = resolve; }));
     render(<PostingsView filters={{ ...EMPTY, minFit: '30' }} onOpenProfile={() => {}} />);
 
-    expect(screen.getByText('Fetching postings...')).toBeInTheDocument();
+    expect(screen.getByTestId('feed-skeleton')).toBeInTheDocument();
     expect(screen.queryByText(/needs a profile/i)).not.toBeInTheDocument();
 
     await act(async () => deliver([row()]));
@@ -289,18 +327,18 @@ describe('PostingsView best-fit ranking', () => {
     getPostings.mockResolvedValue([]);
     render(<PostingsView filters={{ ...EMPTY, minFit: '45' }} onOpenProfile={() => {}} />);
 
-    expect(await screen.findByText('Nothing matches these filters yet.')).toBeInTheDocument();
+    expect(await screen.findByText(/Nothing matches/)).toBeInTheDocument();
     expect(screen.queryByText(/needs a profile/i)).not.toBeInTheDocument();
   });
 
-  it('shows the server reasons in the overlay, not on the card', async () => {
+  it('shows the server reasons in the overlay, not on the row', async () => {
     getPostings.mockResolvedValue([
       row({ title: 'React Engineer', fit: 58, reasons: ['matches react, typescript', 'suits your experience'] }),
     ]);
     render(<PostingsView filters={EMPTY} onOpenProfile={() => {}} />);
     expect(await screen.findByText('React Engineer')).toBeInTheDocument();
 
-    // The card stays a scan unit; the reasons live in the overlay.
+    // The row stays a scan unit; the reasons live in the overlay.
     expect(screen.queryByText(/matches react/)).not.toBeInTheDocument();
     fireEvent.click(card('React Engineer'));
     expect(await screen.findByText(/matches react, typescript/)).toBeInTheDocument();
@@ -325,7 +363,7 @@ describe('PostingsView best-fit ranking', () => {
 });
 
 describe('PostingsView legitimacy and grade', () => {
-  it('shows the ghost signals in the overlay, not on the card', async () => {
+  it('shows the ghost signals in the overlay, not on the row', async () => {
     getPostings.mockResolvedValue([
       row({
         title: 'Ghost Engineer',
@@ -336,8 +374,8 @@ describe('PostingsView legitimacy and grade', () => {
     render(<PostingsView filters={EMPTY} onOpenProfile={() => {}} />);
     expect(await screen.findByText('Ghost Engineer')).toBeInTheDocument();
 
-    // The card carries the warning; the evidence stays in the overlay.
-    expect(screen.getByText('May not be a live opening')).toBeInTheDocument();
+    // The row carries the warning; the evidence stays in the overlay.
+    expect(screen.getByText('Caution')).toBeInTheDocument();
     expect(screen.queryByText('no pay stated')).not.toBeInTheDocument();
 
     fireEvent.click(card('Ghost Engineer'));
@@ -360,10 +398,6 @@ describe('PostingsView legitimacy and grade', () => {
     render(<PostingsView filters={EMPTY} onOpenProfile={() => {}} />);
     expect(await screen.findByText('React Engineer')).toBeInTheDocument();
 
-    // The card already says "45 fit"; a letter next to it would be a second
-    // number competing to mean the same thing.
-    expect(screen.queryByText(/Grade/)).not.toBeInTheDocument();
-
     fireEvent.click(card('React Engineer'));
     expect(await screen.findByText('Grade B')).toBeInTheDocument();
     expect(screen.getByText('Skills')).toBeInTheDocument();
@@ -380,14 +414,13 @@ describe('PostingsView legitimacy and grade', () => {
     fireEvent.click(card('Engineer'));
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.queryByText(/Grade/)).not.toBeInTheDocument();
-    expect(screen.queryByText('Caution')).not.toBeInTheDocument();
   });
 });
 
 describe('PostingsView overlay', () => {
   beforeEach(() => getPostings.mockResolvedValue([row({ title: 'Engineer' })]));
 
-  it('opens the detail overlay from a card', async () => {
+  it('opens the detail overlay from a row', async () => {
     render(<PostingsView filters={EMPTY} />);
     expect(await screen.findByText('Engineer')).toBeInTheDocument();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -397,7 +430,7 @@ describe('PostingsView overlay', () => {
     expect(within(dialog).getByText('Ship the thing.')).toBeInTheDocument();
   });
 
-  it('closes on Escape and hands focus back to the card that opened it', async () => {
+  it('closes on Escape and hands focus back to the row that opened it', async () => {
     render(<PostingsView filters={EMPTY} />);
     expect(await screen.findByText('Engineer')).toBeInTheDocument();
 
@@ -443,5 +476,160 @@ describe('PostingsView overlay', () => {
       expect(within(screen.getByRole('dialog')).getByRole('button', { name: 'Save' }))
         .toHaveAttribute('aria-pressed', 'false'),
     );
+  });
+});
+
+describe('PostingsView keyboard', () => {
+  beforeEach(() => {
+    getPostings.mockResolvedValue([
+      row({ id: 'a', title: 'Alpha' }),
+      row({ id: 'b', title: 'Beta' }),
+      row({ id: 'c', title: 'Gamma' }),
+    ]);
+  });
+
+  it('moves the selection with j/k, shown through aria-selected', async () => {
+    render(<PostingsView filters={EMPTY} />);
+    await screen.findByText('Alpha');
+
+    fireEvent.keyDown(document, { key: 'j' });
+    expect(card('Alpha')).toHaveAttribute('aria-selected', 'true');
+    fireEvent.keyDown(document, { key: 'j' });
+    expect(card('Beta')).toHaveAttribute('aria-selected', 'true');
+    expect(card('Alpha')).toHaveAttribute('aria-selected', 'false');
+    fireEvent.keyDown(document, { key: 'k' });
+    expect(card('Alpha')).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('answers to the arrow keys the same way as j/k', async () => {
+    render(<PostingsView filters={EMPTY} />);
+    await screen.findByText('Alpha');
+
+    fireEvent.keyDown(document, { key: 'ArrowDown' });
+    expect(card('Alpha')).toHaveAttribute('aria-selected', 'true');
+    fireEvent.keyDown(document, { key: 'ArrowDown' });
+    expect(card('Beta')).toHaveAttribute('aria-selected', 'true');
+    fireEvent.keyDown(document, { key: 'ArrowUp' });
+    expect(card('Alpha')).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('moving the selection alone never opens anything', async () => {
+    render(<PostingsView filters={EMPTY} />);
+    await screen.findByText('Alpha');
+    fireEvent.keyDown(document, { key: 'j' });
+    fireEvent.keyDown(document, { key: 'j' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('opens the selected row on Enter', async () => {
+    render(<PostingsView filters={EMPTY} />);
+    await screen.findByText('Alpha');
+    fireEvent.keyDown(document, { key: 'j' });
+    fireEvent.keyDown(document, { key: 'Enter' });
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText('Alpha')).toBeInTheDocument();
+  });
+
+  it('sets a status with s/a/d on the selected row', async () => {
+    render(<PostingsView filters={EMPTY} />);
+    await screen.findByText('Alpha');
+    fireEvent.keyDown(document, { key: 'j' });
+    fireEvent.keyDown(document, { key: 's' });
+    await waitFor(() => expect(setStatus).toHaveBeenCalledWith('a', 'saved'));
+  });
+
+  it('clears the selection on Escape', async () => {
+    render(<PostingsView filters={EMPTY} />);
+    await screen.findByText('Alpha');
+    fireEvent.keyDown(document, { key: 'j' });
+    expect(card('Alpha')).toHaveAttribute('aria-selected', 'true');
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(card('Alpha')).toHaveAttribute('aria-selected', 'false');
+  });
+
+  it('ignores every bound key while a text filter input has focus', async () => {
+    render(
+      <div>
+        <input aria-label="search" />
+        <PostingsView filters={EMPTY} />
+      </div>,
+    );
+    await screen.findByText('Alpha');
+    const input = screen.getByLabelText('search');
+    input.focus();
+    fireEvent.keyDown(input, { key: 'j' });
+    expect(card('Alpha')).toHaveAttribute('aria-selected', 'false');
+  });
+});
+
+describe('PostingsView triage from the row', () => {
+  it('sets a status from the row action buttons without opening it', async () => {
+    getPostings.mockResolvedValue([row({ id: 'a', title: 'Alpha' })]);
+    render(<PostingsView filters={EMPTY} />);
+    await screen.findByText('Alpha');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(setStatus).toHaveBeenCalledWith('a', 'saved'));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('shows an inline "Dismissed. Undo" on the row itself, not a floating toast', async () => {
+    getPostings.mockResolvedValue([row({ id: 'a', title: 'Alpha' })]);
+    render(<PostingsView filters={EMPTY} />);
+    await screen.findByText('Alpha');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
+    const flash = await screen.findByText(/Dismissed\./);
+    expect(within(card('Alpha')).getByText(/Dismissed\./)).toBe(flash);
+  });
+
+  it('undoes the dismiss from the inline affordance', async () => {
+    getPostings.mockResolvedValue([row({ id: 'a', title: 'Alpha' })]);
+    render(<PostingsView filters={EMPTY} />);
+    await screen.findByText('Alpha');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
+    await screen.findByText(/Dismissed\./);
+    fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    await waitFor(() => expect(setStatus).toHaveBeenLastCalledWith('a', null));
+  });
+
+  it('undoes the last status change with u', async () => {
+    getPostings.mockResolvedValue([row({ id: 'a', title: 'Alpha' })]);
+    render(<PostingsView filters={EMPTY} />);
+    await screen.findByText('Alpha');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(setStatus).toHaveBeenCalledWith('a', 'saved'));
+    fireEvent.keyDown(document, { key: 'u' });
+    await waitFor(() => expect(setStatus).toHaveBeenLastCalledWith('a', null));
+  });
+});
+
+describe('PostingsView wide two-pane layout', () => {
+  it('renders a right-hand pane instead of a dialog once something is open', async () => {
+    mockWide(true);
+    getPostings.mockResolvedValue([row({ id: 'a', title: 'Alpha', descriptionSnippet: 'Ship it.' })]);
+    render(<PostingsView filters={EMPTY} />);
+
+    fireEvent.click(await screen.findByText('Alpha'));
+    await waitFor(() => expect(screen.getByText('Ship it.')).toBeInTheDocument());
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('shows a placeholder in the pane before anything is opened', async () => {
+    mockWide(true);
+    getPostings.mockResolvedValue([row({ id: 'a', title: 'Alpha' })]);
+    render(<PostingsView filters={EMPTY} />);
+    await screen.findByText('Alpha');
+    expect(screen.getByText(/Select a posting/)).toBeInTheDocument();
+  });
+
+  it('falls back to the dialog below the wide breakpoint', async () => {
+    mockWide(false);
+    getPostings.mockResolvedValue([row({ id: 'a', title: 'Alpha' })]);
+    render(<PostingsView filters={EMPTY} />);
+    fireEvent.click(await screen.findByText('Alpha'));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 });

@@ -12,7 +12,7 @@ const MODE_WORD = { remote: 'Remote', hybrid: 'Hybrid' };
 // A card is a scan unit, so it carries only the fields you sort candidates by.
 // The description lives in the overlay: on the card it turned every tile into a
 // wall of grey text and killed the scan.
-export default function PostingCard({ posting, onOpen }) {
+export default function PostingCard({ posting, selected = false, onOpen }) {
   const fresh = isNewToday(posting.firstSeenAt);
   const status = STATUS_WORD[posting.status];
   const mode = MODE_WORD[posting.workMode];
@@ -28,12 +28,15 @@ export default function PostingCard({ posting, onOpen }) {
   return (
     <button
       type="button"
+      data-row-id={posting.id}
       onClick={(event) => onOpen(posting, event.currentTarget)}
       // The left edge is the level. It rides the border the card already had,
       // so the ramp costs no content pixels and reads as a column of rungs.
-      className={`flex flex-col gap-2.5 rounded-lg border border-l-[3px] border-line bg-panel p-4 pl-3.5 text-left outline-none transition hover:border-ink/40 hover:shadow-sm focus-visible:border-ink focus-visible:ring-1 focus-visible:ring-ink ${tone.edge} ${
-        posting.status === 'dismissed' ? 'opacity-45' : ''
-      }`}
+      // Selection borrows the same token the row uses, so j/k reads the same
+      // way in either view.
+      className={`flex flex-col gap-2.5 rounded-lg border border-l-[3px] border-line p-4 pl-3.5 text-left outline-none transition hover:border-ink/40 hover:shadow-sm focus-visible:border-ink focus-visible:ring-1 focus-visible:ring-ink ${tone.edge} ${
+        selected ? 'bg-select' : 'bg-panel'
+      } ${posting.status === 'dismissed' ? 'opacity-45' : ''}`}
     >
       <div className="flex items-center gap-2">
         {/* The word sits in its own colour, so the edge never has to be decoded. */}
