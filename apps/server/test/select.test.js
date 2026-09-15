@@ -83,6 +83,27 @@ describe('pickProvider', () => {
   })
 })
 
+describe('pickProvider with a preference', () => {
+  it('honours an explicit preference over the default order', () => {
+    expect(pickProvider([ready(CLAUDE), ready(AGY)], 'none', [], 'agy')).toBe(AGY)
+  })
+
+  it('falls back to the default order when the preferred CLI is not eligible', () => {
+    expect(pickProvider([absent(CLAUDE), ready(AGY)], 'none', [], 'claude')).toBe(AGY)
+    expect(pickProvider([ready(CLAUDE), ready(AGY)], 'none', ['agy'], 'agy')).toBe(CLAUDE)
+  })
+
+  // The preference can never put Antigravity on a web action: it is not in
+  // the eligible set for 'web' at all, preferred or not.
+  it('never lets a preference reach a CLI that cannot honour the policy', () => {
+    expect(pickProvider([ready(CLAUDE), ready(AGY)], 'web', [], 'agy')).toBe(CLAUDE)
+  })
+
+  it('treats no preference the same as before the feature existed', () => {
+    expect(pickProvider([ready(CLAUDE), ready(AGY)], 'none')).toBe(CLAUDE)
+  })
+})
+
 describe('createSelector', () => {
   it('asks the shared detector each time and answers with the provider itself', async () => {
     const detect = vi.fn(async () => [absent(CLAUDE), ready(AGY)])
@@ -90,5 +111,18 @@ describe('createSelector', () => {
     expect(await select('none')).toBe(AGY)
     await expect(select('web')).rejects.toMatchObject({ kind: 'not_found' })
     expect(detect).toHaveBeenCalledTimes(2)
+  })
+
+  it('asks the preference callback on every call and honours it when eligible', async () => {
+    const detect = vi.fn(async () => [ready(CLAUDE), ready(AGY)])
+    const getPreferred = vi.fn(async () => 'agy')
+    const select = createSelector(detect, getPreferred)
+    expect(await select('none')).toBe(AGY)
+    expect(getPreferred).toHaveBeenCalledTimes(1)
+  })
+
+  it('defaults to no preference, same fallback order as before', async () => {
+    const detect = vi.fn(async () => [ready(CLAUDE), ready(AGY)])
+    expect(await createSelector(detect)('none')).toBe(CLAUDE)
   })
 })

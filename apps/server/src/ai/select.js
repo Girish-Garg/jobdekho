@@ -1,23 +1,28 @@
 import { PROVIDERS, providerById } from './providers.js'
 import { ProviderError } from './errors.js'
 
-// Which CLI answers one call: the first in PROVIDERS order that detection
-// found installed and running and that can honour the action's tool policy.
-// Order is preference, so a machine with Claude Code behaves as it did
-// before Antigravity was added, and Antigravity answers only the calls
-// Claude Code is not there to take.
-export function pickProvider(detected, policy, after = []) {
-  const fit = detected.find((p) => p.present && p.runs && p.policies.includes(policy) && !after.includes(p.id))
+// Which CLI answers one call: the person's own preferred CLI (see
+// ai-provider-pref.js) if it is installed, running and honours the action's
+// policy; otherwise the first in PROVIDERS order that does, same as before
+// the preference existed. A preference for a CLI that cannot honour this
+// policy (Antigravity for 'web') is not a candidate at all, so it never
+// overrides the "only Claude Code browses" rule; it just falls through to
+// the ordinary fallback below.
+export function pickProvider(detected, policy, after = [], preferredId = null) {
+  const eligible = detected.filter((p) => p.present && p.runs && p.policies.includes(policy) && !after.includes(p.id))
+  const fit = eligible.find((p) => p.id === preferredId) ?? eligible[0]
   if (fit) return providerById(fit.id)
-  throw new ProviderError('not_found', preferred(policy), whyNone(detected, policy))
+  throw new ProviderError('not_found', firstCapable(policy), whyNone(detected, policy))
 }
 
 // select(policy) over the shared, cached probe (see detect.js), so choosing
-// costs no process start of its own within the cache's minute.
-export const createSelector = (detect) => async (policy, { after = [] } = {}) => pickProvider(await detect(), policy, after)
+// costs no process start of its own within the cache's minute. `getPreferred`
+// is asked fresh on every call, not cached: it is a file read, not a probe.
+export const createSelector = (detect, getPreferred = async () => null) =>
+  async (policy, { after = [] } = {}) => pickProvider(await detect(), policy, after, await getPreferred())
 
 // Also where an unknown policy fails, before any sentence is written for it.
-const preferred = (policy) => PROVIDERS.find((p) => p.supports(policy))
+const firstCapable = (policy) => PROVIDERS.find((p) => p.supports(policy))
 
 // Which CLI is missing depends on what the action needed and on what else
 // is installed, so the sentence is written here rather than in errors.js.

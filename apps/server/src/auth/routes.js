@@ -1,16 +1,6 @@
-import { currentUser, clearSession } from './session.js'
-
+// Just a liveness check. Sign-in, sessions and sign-out were removed with
+// Google OAuth: JobDekho is single-user now, and DEV_AUTH_USER_ID (see
+// config.js) is the whole of how that one user is identified.
 export async function authRoutes(app) {
   app.get('/healthz', async () => ({ ok: true }))
-
-  app.get('/auth/me', async (request, reply) => {
-    const user = currentUser(request)
-    if (!user) return reply.code(401).send({ error: 'unauthorized' })
-    return { id: user.sub, email: user.email, name: user.name, avatarUrl: user.avatarUrl }
-  })
-
-  app.post('/auth/logout', async (request, reply) => {
-    clearSession(reply)
-    return reply.code(204).send()
-  })
 }

@@ -1,19 +1,11 @@
-// Slim top strip: wordmark, section nav, keyword search, current user, sign-out.
+// Slim top strip: wordmark, section nav, keyword search, theme toggle.
 import { useState } from 'react';
-import { logout } from '../api.js';
 import ThemeToggle from './ThemeToggle.jsx';
 
-export default function Topbar({ user, view, setView, onLogout, q = '', onSearch, searchRef }) {
-  const name = user?.name || user?.email || 'Account';
-  const initial = name.slice(0, 1).toUpperCase();
+export default function Topbar({ view, setView, q = '', onSearch, searchRef }) {
   // Drives the "/" hint: it is only useful before anyone has found the box,
   // so it drops out the moment there is a reason it would be in the way.
   const [searchFocused, setSearchFocused] = useState(false);
-
-  async function handleLogout() {
-    await logout();
-    onLogout?.();
-  }
 
   // Never wraps: the two end groups keep their size and the search takes what
   // is left, down to nothing on a phone. A compact 48px row is the budget the
@@ -25,6 +17,7 @@ export default function Topbar({ user, view, setView, onLogout, q = '', onSearch
         <nav className="flex items-center gap-1">
           <NavItem active={view === 'postings'} onClick={() => setView?.('postings')}>Postings</NavItem>
           <NavItem active={view === 'profile'} onClick={() => setView?.('profile')}>Profile</NavItem>
+          <NavItem active={view === 'resume'} onClick={() => setView?.('resume')}>Resume</NavItem>
           <NavItem active={view === 'settings'} onClick={() => setView?.('settings')}>Settings</NavItem>
         </nav>
       </div>
@@ -56,19 +49,7 @@ export default function Topbar({ user, view, setView, onLogout, q = '', onSearch
       )}
 
       <div className="flex shrink-0 items-center gap-3">
-        <span className="hidden text-sm text-muted lg:inline">{name}</span>
-        {/* Both drop out on a phone so the width goes to the search instead. */}
-        <span className="hidden h-7 w-7 place-items-center rounded-full bg-ink font-mono text-xs text-paper sm:grid">
-          {initial}
-        </span>
         <ThemeToggle />
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="rounded-full border border-line px-3 py-1 text-sm text-muted transition hover:border-ink hover:text-ink"
-        >
-          Log out
-        </button>
       </div>
     </header>
   );

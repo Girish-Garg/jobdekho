@@ -1,30 +1,31 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { buildApp } from '@jobdekho/server/app.js'
 
-const config = { googleClientId: 'id', googleClientSecret: 'sec', sessionSecret: 'test-secret', baseUrl: 'http://localhost:3000' }
-
-function makeApp() {
-  const userStore = { upsertUser: vi.fn(), getUserById: vi.fn() }
-  return buildApp({ config, userStore, fetchProfile: vi.fn() })
-}
+const config = { sessionSecret: 'test-secret' }
 
 describe('buildApp', () => {
   it('serves healthz', async () => {
-    const app = makeApp(); await app.ready()
+    const app = buildApp({ config })
+    await app.ready()
     const res = await app.inject({ method: 'GET', url: '/healthz' })
     expect(res.json()).toEqual({ ok: true })
   })
-  it('starts the google oauth redirect', async () => {
-    const app = makeApp(); await app.ready()
-    const res = await app.inject({ method: 'GET', url: '/auth/google' })
-    expect(res.statusCode).toBe(302)
-    expect(res.headers.location).toMatch(/accounts\.google\.com/)
+
+  it('rejects a guarded api route with no identity at all', async () => {
+    const app = buildApp({ config })
+    await app.ready()
+    const res = await app.inject({ method: 'GET', url: '/api/notifications' })
+    expect(res.statusCode).toBe(401)
   })
-  it('round-trips a session through /auth/me', async () => {
-    const app = makeApp(); await app.ready()
-    const token = app.jwt.sign({ sub: 'u1', email: 'a@b.c', name: 'A', avatarUrl: null })
-    const res = await app.inject({ method: 'GET', url: '/auth/me', headers: { cookie: `session=${token}` } })
+
+  // The only identity JobDekho has left: every request runs as this user,
+  // with no cookie and no sign-in step.
+  it('runs every request as the local user when DEV_AUTH_USER_ID is set', async () => {
+    const dashboardStore = { getNotificationPrefs: async () => null }
+    const app = buildApp({ config: { ...config, devUserId: 'local' }, dashboardStore })
+    await app.ready()
+    const res = await app.inject({ method: 'GET', url: '/api/notifications' })
     expect(res.statusCode).toBe(200)
-    expect(res.json().id).toBe('u1')
+    expect(res.json()).toEqual({ channel: 'none', telegramChatId: null, enabled: true })
   })
 })

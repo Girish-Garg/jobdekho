@@ -3,6 +3,7 @@ import { getUserFilters, upsertUserFilters, getNotificationPrefs, upsertNotifica
 import { getProfile, getResumeText, upsertProfile, deleteProfile } from '@jobdekho/store/profiles.js'
 import { getPosting } from '@jobdekho/store/posting-lookup.js'
 import { getAiResult, setAiResult, listAiResults } from '@jobdekho/store/ai-results.js'
+import { getProviderPref, upsertProviderPref } from '@jobdekho/store/ai-provider-pref.js'
 
 export function createDashboardStore(db) {
   return {
@@ -23,5 +24,7 @@ export function createDashboardStore(db) {
     getAiResult: (userId, postingId, kind) => getAiResult(db, userId, postingId, kind),
     setAiResult: (userId, record) => setAiResult(db, userId, record),
     listAiResults: (userId, postingId) => listAiResults(db, userId, postingId),
+    getProviderPref: (userId) => getProviderPref(db, userId),
+    upsertProviderPref: (userId, p) => upsertProviderPref(db, userId, p),
   }
 }
