@@ -9,6 +9,12 @@ import FakeCheck from './FakeCheck.jsx';
 // Only one overlay is ever mounted, so a constant id is enough to name it.
 export const TITLE_ID = 'posting-dialog-title';
 
+// The read order is the decision order: what the job is, then why it fits,
+// then what to doubt about it, then the description, then the AI actions,
+// and only then the apply step. The facts strip sits right under the header
+// rather than after the fit block, because "what the job is" is the title
+// and company plus level, location and pay - not a fact worth making a
+// person scroll past the score to reach.
 export default function PostingDetail({ posting, onClose, onStatus }) {
   // A doubtful posting keeps its rank and its badge; what moves is the check.
   // The two rungs where the card already warns are the two where the person
@@ -17,7 +23,7 @@ export default function PostingDetail({ posting, onClose, onStatus }) {
   const doubtful = posting.legitimacy === 'low' || posting.legitimacy === 'suspicious';
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5">
       <div className="flex items-start gap-4">
         <div className="min-w-0 flex-1">
           <h2 id={TITLE_ID} className="font-display text-2xl font-extrabold leading-tight tracking-tight">
@@ -35,6 +41,8 @@ export default function PostingDetail({ posting, onClose, onStatus }) {
         </button>
       </div>
 
+      <PostingFacts posting={posting} />
+
       {/* Whenever the server ranked the feed, whatever the sort. The card
           stays a scan unit; the room for "why" is here. */}
       <MatchReasons reasons={posting.reasons} grade={posting.grade} breakdown={posting.breakdown} />
@@ -48,15 +56,17 @@ export default function PostingDetail({ posting, onClose, onStatus }) {
         )}
       </GhostSignals>
 
-      <PostingFacts posting={posting} />
-
       {posting.descriptionSnippet && (
         <p className="text-sm leading-relaxed text-ink/80">{posting.descriptionSnippet}</p>
       )}
 
       <AiSection posting={posting} skip={doubtful ? [FakeCheck] : []} />
 
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
+      {/* Sticky rather than merely last: the apply step is the point of the
+          screen, so it stays reachable without scrolling past everything
+          above, inside whichever ancestor is actually doing the scrolling
+          (the dialog's backdrop, or the wide pane's own overflow). */}
+      <div className="sticky bottom-0 flex flex-wrap items-center justify-between gap-3 border-t border-line bg-panel pt-4">
         <PostingActions
           status={posting.status}
           onStatus={(value) => onStatus(posting.id, posting.status === value ? null : value)}
@@ -65,7 +75,7 @@ export default function PostingDetail({ posting, onClose, onStatus }) {
           href={posting.url}
           target="_blank"
           rel="noreferrer"
-          className="rounded-full bg-ink px-4 py-2 font-mono text-[11px] text-paper transition hover:opacity-85"
+          className="rounded-full bg-ink px-6 py-3 text-sm font-semibold text-paper transition hover:opacity-85"
         >
           Open posting
         </a>

@@ -20,7 +20,10 @@ export default function AiSection({ posting, skip = [] }) {
   return (
     <div className="rounded-md bg-paper px-3 py-2">
       <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">AI</p>
-      <div className="mt-1.5 flex flex-col gap-4">
+      {/* A hairline between rows, not a gap: a task list, not a stack of
+          cards. Each action owns its own vertical padding so this still
+          looks right whether one row is offered or three. */}
+      <div className="mt-1 flex flex-col divide-y divide-line">
         <AiGate intro={INTRO} posting={posting} actions={actions} />
       </div>
     </div>

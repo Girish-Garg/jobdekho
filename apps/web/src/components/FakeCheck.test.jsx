@@ -111,4 +111,23 @@ describe('FakeCheck with a saved verdict', () => {
     expect(screen.getByText('Could not tell')).toBeInTheDocument();
     await waitFor(() => expect(screen.getByRole('button', { name: 'Check again' })).toBeEnabled());
   });
+
+  // Three saved actions on one posting should not bury the page under three
+  // full write-ups: a saved verdict opens collapsed to its one line and only
+  // shows the rest once that line is clicked.
+  it('collapses the saved verdict to one line until it is opened', async () => {
+    getPostingAiResults.mockResolvedValue([SAVED]);
+    render(<FakeCheck posting={POSTING} cli={cli()} />);
+    const line = await screen.findByText('Could not tell · checked today');
+    expect(screen.getByText('Too little to go on.')).not.toBeVisible();
+    fireEvent.click(line);
+    expect(screen.getByText('Too little to go on.')).toBeVisible();
+  });
+
+  it('opens a fresh verdict automatically, since the person just asked to see it', async () => {
+    render(<FakeCheck posting={POSTING} cli={cli()} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Is this job real?' }));
+    await screen.findByText('Looks genuine');
+    expect(screen.getByText('Acme is real and hiring.')).toBeVisible();
+  });
 });

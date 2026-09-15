@@ -97,6 +97,9 @@ describe('CoverLetter with a saved letter', () => {
     const writeText = vi.fn(async () => {});
     Object.assign(navigator, { clipboard: { writeText } });
     render(<CoverLetter posting={POSTING} cli={cli()} />);
+    // The saved letter starts collapsed to one line; open it before reaching
+    // for the button inside.
+    fireEvent.click(await screen.findByText('Cover letter written today'));
     fireEvent.click(await screen.findByRole('button', { name: 'Copy' }));
     expect(writeText).toHaveBeenCalledWith(expect.stringContaining('Dear Hiring Team at Acme'));
     expect(await screen.findByRole('button', { name: 'Copied' })).toBeInTheDocument();
@@ -106,6 +109,7 @@ describe('CoverLetter with a saved letter', () => {
     getPostingAiResults.mockResolvedValue([SAVED]);
     Object.assign(navigator, { clipboard: { writeText: vi.fn(async () => { throw new Error('denied'); }) } });
     render(<CoverLetter posting={POSTING} cli={cli()} />);
+    fireEvent.click(await screen.findByText('Cover letter written today'));
     fireEvent.click(await screen.findByRole('button', { name: 'Copy' }));
     expect(await screen.findByText(/could not copy/i)).toBeInTheDocument();
   });
@@ -117,5 +121,24 @@ describe('CoverLetter with a saved letter', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Write again' }));
     expect(await screen.findByRole('alert')).toHaveTextContent(/120 seconds/);
     expect(screen.getByDisplayValue(/Dear Hiring Team at Acme/)).toBeInTheDocument();
+  });
+
+  // Three saved actions on one posting should not bury the page under three
+  // full drafts: a saved letter opens collapsed to its one line and only
+  // shows the draft once that line is clicked.
+  it('collapses the saved letter to one line until it is opened', async () => {
+    getPostingAiResults.mockResolvedValue([SAVED]);
+    render(<CoverLetter posting={POSTING} cli={cli()} />);
+    const line = await screen.findByText('Cover letter written today');
+    expect(screen.getByDisplayValue(/Dear Hiring Team at Acme/)).not.toBeVisible();
+    fireEvent.click(line);
+    expect(screen.getByDisplayValue(/Dear Hiring Team at Acme/)).toBeVisible();
+  });
+
+  it('opens a fresh letter automatically, since the person just asked to see it', async () => {
+    render(<CoverLetter posting={POSTING} cli={cli()} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Write a cover letter' }));
+    const draft = await screen.findByDisplayValue(/Fresh letter/);
+    expect(draft).toBeVisible();
   });
 });

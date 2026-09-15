@@ -4,7 +4,9 @@ const LABEL = 'font-mono text-[10px] uppercase tracking-[0.18em]';
 
 // The verdict in words a job seeker would use. Ink throughout, whatever the
 // verdict: ember is "new today" and errors, and a scam warning is neither.
-const VERDICT_WORD = {
+// Exported so the collapsed one-line summary above can lead with the same
+// word rather than inventing a second vocabulary for the same verdict.
+export const VERDICT_WORD = {
   genuine: 'Looks genuine',
   probably_genuine: 'Probably genuine',
   unclear: 'Could not tell',

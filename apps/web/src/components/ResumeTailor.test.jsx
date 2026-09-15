@@ -100,6 +100,9 @@ describe('ResumeTailor with a saved rewrite', () => {
     expect(screen.getByRole('button', { name: 'Tailor again' })).toBeInTheDocument();
     expect(screen.queryByText(/sends the resume on file/i)).not.toBeInTheDocument();
     expect(runPostingAction).not.toHaveBeenCalled();
+    // The saved rewrite starts collapsed to one line; open it before reaching
+    // for a button inside.
+    fireEvent.click(screen.getByText('Tailored today, nothing flagged'));
     fireEvent.click(screen.getByRole('button', { name: 'Download as .txt' }));
     expect(click.mock.instances[0].download).toBe('resume-acme-systems.txt');
     click.mockRestore();
@@ -117,5 +120,34 @@ describe('ResumeTailor with a saved rewrite', () => {
 
   it('is offered by the AI section, after the actions that came before it', () => {
     expect(ACTIONS[ACTIONS.length - 1]).toBe(ResumeTailor);
+  });
+
+  // Three saved actions on one posting should not bury the page under three
+  // full rewrites: a saved rewrite opens collapsed to a line naming whether
+  // anything needs checking, and only shows the rest once clicked.
+  it('collapses the saved rewrite to one line until it is opened', async () => {
+    getPostingAiResults.mockResolvedValue([SAVED]);
+    render(<ResumeTailor posting={POSTING} cli={cli()} />);
+    const line = await screen.findByText('Tailored today, nothing flagged');
+    expect(screen.getByLabelText('Tailored resume')).not.toBeVisible();
+    fireEvent.click(line);
+    expect(screen.getByLabelText('Tailored resume')).toBeVisible();
+  });
+
+  it('names how many things need checking in the collapsed line', async () => {
+    getPostingAiResults.mockResolvedValue([{
+      ...SAVED,
+      result: { ...RESULT, factCheck: { flags: [{ type: 'number', value: '9', context: 'x' }], ok: false } },
+    }]);
+    render(<ResumeTailor posting={POSTING} cli={cli()} />);
+    expect(await screen.findByText('Tailored today, 1 to check')).toBeInTheDocument();
+  });
+
+  it('opens a fresh rewrite automatically, since the person just asked to see it', async () => {
+    render(<ResumeTailor posting={POSTING} cli={cli()} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Tailor my resume for this job' }));
+    const box = await screen.findByLabelText('Tailored resume');
+    expect(box).toBeVisible();
+    expect(box).toHaveValue('Fresh rewrite');
   });
 });
