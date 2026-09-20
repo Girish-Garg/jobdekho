@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useOpenPosting } from './useOpenPosting.js';
+import { currentOpenPostingId } from './openPostingSignal.js';
 
 const rows = [{ id: 'a' }, { id: 'b' }];
 
@@ -44,5 +45,14 @@ describe('useOpenPosting', () => {
     const { result } = renderHook(() => useOpenPosting(rows));
     act(() => result.current.openById('missing'));
     expect(result.current.opened).toBe(null);
+  });
+
+  it('announces the open id for the chat panel, and clears it on unmount', () => {
+    const { result, unmount } = renderHook(() => useOpenPosting(rows));
+    expect(currentOpenPostingId()).toBeNull();
+    act(() => result.current.openFromClick(rows[0], document.createElement('div')));
+    expect(currentOpenPostingId()).toBe('a');
+    unmount();
+    expect(currentOpenPostingId()).toBeNull();
   });
 });

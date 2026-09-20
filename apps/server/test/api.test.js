@@ -19,8 +19,6 @@ function makeFakeStore() {
     deleteProfile: vi.fn().mockResolvedValue(undefined),
     getUserFilters: vi.fn().mockResolvedValue(null),
     upsertUserFilters: vi.fn().mockResolvedValue(undefined),
-    getNotificationPrefs: vi.fn().mockResolvedValue(null),
-    upsertNotificationPrefs: vi.fn().mockResolvedValue(undefined),
   }
 }
 
@@ -393,105 +391,6 @@ describe('PUT /api/filters', () => {
     const res = await app.inject({ method: 'PUT', url: '/api/filters', headers: { cookie } })
     expect(res.statusCode).toBe(400)
     expect(store.upsertUserFilters).not.toHaveBeenCalled()
-  })
-})
-
-describe('GET /api/notifications', () => {
-  it('returns 401 without cookie', async () => {
-    const app = makeApp(makeFakeStore()); await app.ready()
-    const res = await app.inject({ method: 'GET', url: '/api/notifications' })
-    expect(res.statusCode).toBe(401)
-  })
-
-  it('returns defaults when store returns null', async () => {
-    const store = makeFakeStore()
-    const app = makeApp(store)
-    const cookie = await signedCookie(app)
-    const res = await app.inject({ method: 'GET', url: '/api/notifications', headers: { cookie } })
-    expect(res.statusCode).toBe(200)
-    expect(res.json()).toEqual({ channel: 'none', telegramChatId: null, enabled: true })
-  })
-
-  it('returns user prefs when available', async () => {
-    const store = makeFakeStore()
-    store.getNotificationPrefs.mockResolvedValue({ channel: 'telegram', telegramChatId: '123', enabled: true })
-    const app = makeApp(store)
-    const cookie = await signedCookie(app)
-    const res = await app.inject({ method: 'GET', url: '/api/notifications', headers: { cookie } })
-    expect(res.statusCode).toBe(200)
-    expect(res.json().channel).toBe('telegram')
-  })
-})
-
-describe('PUT /api/notifications', () => {
-  async function putNotifications(store, body) {
-    const app = makeApp(store)
-    const cookie = await signedCookie(app)
-    const res = await app.inject({
-      method: 'PUT', url: '/api/notifications',
-      headers: { cookie, 'content-type': 'application/json' },
-      body: JSON.stringify(body),
-    })
-    return res
-  }
-
-  it('returns 401 without cookie', async () => {
-    const app = makeApp(makeFakeStore()); await app.ready()
-    const res = await app.inject({ method: 'PUT', url: '/api/notifications', body: {} })
-    expect(res.statusCode).toBe(401)
-  })
-
-  it('calls upsertNotificationPrefs and returns 204', async () => {
-    const store = makeFakeStore()
-    const app = makeApp(store)
-    const cookie = await signedCookie(app)
-    const prefs = { channel: 'telegram', telegramChatId: 'chat123', enabled: true }
-    const res = await app.inject({
-      method: 'PUT', url: '/api/notifications',
-      headers: { cookie, 'content-type': 'application/json' },
-      body: JSON.stringify(prefs),
-    })
-    expect(res.statusCode).toBe(204)
-    expect(store.upsertNotificationPrefs).toHaveBeenCalledWith('u1', prefs)
-  })
-
-  it.each(['none', 'telegram'])('accepts the real channel "%s"', async (channel) => {
-    const store = makeFakeStore()
-    const res = await putNotifications(store, { channel, telegramChatId: null, enabled: true })
-    expect(res.statusCode).toBe(204)
-    expect(store.upsertNotificationPrefs).toHaveBeenCalled()
-  })
-
-  // email was deliberately removed from this project. It must stay rejected.
-  it('rejects a channel outside none/telegram, including email', async () => {
-    const store = makeFakeStore()
-    const res = await putNotifications(store, { channel: 'email' })
-    expect(res.statusCode).toBe(400)
-    expect(store.upsertNotificationPrefs).not.toHaveBeenCalled()
-  })
-
-  it('rejects a non-boolean enabled value', async () => {
-    const store = makeFakeStore()
-    const res = await putNotifications(store, { enabled: 'yes' })
-    expect(res.statusCode).toBe(400)
-    expect(store.upsertNotificationPrefs).not.toHaveBeenCalled()
-  })
-
-  it('accepts a null telegramChatId', async () => {
-    const store = makeFakeStore()
-    const res = await putNotifications(store, { channel: 'none', telegramChatId: null, enabled: false })
-    expect(res.statusCode).toBe(204)
-    expect(store.upsertNotificationPrefs).toHaveBeenCalledWith('u1',
-      { channel: 'none', telegramChatId: null, enabled: false })
-  })
-
-  it('returns 400 instead of 500 for a request with no body', async () => {
-    const store = makeFakeStore()
-    const app = makeApp(store)
-    const cookie = await signedCookie(app)
-    const res = await app.inject({ method: 'PUT', url: '/api/notifications', headers: { cookie } })
-    expect(res.statusCode).toBe(400)
-    expect(store.upsertNotificationPrefs).not.toHaveBeenCalled()
   })
 })
 

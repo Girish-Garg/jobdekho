@@ -7,12 +7,11 @@ import FilterBar from './FilterBar.jsx';
 import SortSelect from './SortSelect.jsx';
 import DensityToggle from './DensityToggle.jsx';
 import Topbar from './Topbar.jsx';
-import PostingsView from './PostingsView.jsx';
-import ProfileView from './ProfileView.jsx';
-import ResumeBuilderView from './ResumeBuilderView.jsx';
-import SettingsView from './SettingsView.jsx';
 import CommandPalette from './CommandPalette.jsx';
 import ShortcutsHelp from './ShortcutsHelp.jsx';
+import AiChatPanel from './AiChatPanel.jsx';
+import ToastHost from './ToastHost.jsx';
+import ShellMain from './ShellMain.jsx';
 
 // Full-viewport app frame: topbar, filter bar, scrolling main region. The
 // filters sit above the feed rather than beside it so the grid gets the width.
@@ -26,6 +25,7 @@ export default function Shell() {
   // feed's own state.
   const [sort, setSort] = useState('match');
   const [viewMode, setViewMode] = useViewMode();
+  const [chatOpen, setChatOpen] = useState(false);
   const searchRef = useRef(null);
   const postings = view === 'postings';
 
@@ -57,6 +57,8 @@ export default function Shell() {
         q={filters.q}
         onSearch={postings ? (value) => setFilters({ ...filters, q: value }) : null}
         searchRef={searchRef}
+        chatOpen={chatOpen}
+        onToggleChat={postings ? () => setChatOpen((on) => !on) : null}
       />
       {postings && (
         <FilterBar
@@ -70,17 +72,17 @@ export default function Shell() {
           )}
         />
       )}
-      <main className="min-h-0 flex-1 overflow-y-auto">
-        {postings ? (
-          <PostingsView filters={filters} sort={sort} viewMode={viewMode} onOpenProfile={() => setView('profile')} />
-        ) : view === 'profile' ? (
-          <ProfileView />
-        ) : view === 'resume' ? (
-          <ResumeBuilderView />
-        ) : (
-          <SettingsView />
-        )}
-      </main>
+      <div className="flex min-h-0 flex-1">
+        {postings && <AiChatPanel
+            open={chatOpen}
+            onClose={() => setChatOpen(false)}
+            context={{ filters, sort }}
+            apply={{ setFilters, setSort }}
+          />}
+        <main className="min-h-0 flex-1 overflow-y-auto">
+        <ShellMain view={view} filters={filters} sort={sort} viewMode={viewMode} setView={setView} />
+        </main>
+      </div>
       <CommandPalette
         open={paletteOpen}
         onClose={() => setPaletteOpen(false)}
@@ -92,6 +94,7 @@ export default function Shell() {
         onOpenHelp={() => setHelpOpen(true)}
       />
       <ShortcutsHelp open={helpOpen} onClose={() => setHelpOpen(false)} />
+      <ToastHost />
     </div>
   );
 }

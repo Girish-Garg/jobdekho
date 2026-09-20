@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { streamedPost } from './aiCall.js';
+import { onNotice } from './toast.js';
 
 // The client checks the content type before reading lines, so these mocks
 // are real Responses: they carry headers and give the stream a body.
@@ -56,6 +57,28 @@ describe('streamedPost', () => {
   it('rejects a stream that ends before the result line', async () => {
     ndjson(START, WAIT);
     await expect(streamedPost('/x')).rejects.toThrow(/connection dropped/);
+  });
+
+  // The button that started this already shows the same sentence inline;
+  // the notice is only for the person who has scrolled or switched tabs
+  // during the minute or several a model can take.
+  it('announces a failure under the caller\'s label, in addition to rejecting', async () => {
+    const error = 'Claude Code is not signed in (Not logged in). Open a terminal, run "claude", finish signing in, then try again.';
+    ndjson(START, { error, kind: 'login' });
+    const notices = [];
+    const stop = onNotice((n) => notices.push(n));
+    await expect(streamedPost('/x', { label: 'Cover letter' })).rejects.toMatchObject({ kind: 'login' });
+    stop();
+    expect(notices).toContainEqual(expect.objectContaining({ title: 'Cover letter', detail: error, action: 'login' }));
+  });
+
+  it('falls back to a generic title when the caller names no label', async () => {
+    mockResponse(JSON.stringify({ error: 'no such posting' }), { 'content-type': 'application/json' }, 404);
+    const notices = [];
+    const stop = onNotice((n) => notices.push(n));
+    await expect(streamedPost('/x')).rejects.toThrow();
+    stop();
+    expect(notices).toContainEqual(expect.objectContaining({ title: 'AI action' }));
   });
 
   it('sends a refine instruction as a JSON body, content-type included only then', async () => {

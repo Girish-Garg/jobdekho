@@ -27,8 +27,6 @@ function makeFakeStore() {
     deleteProfile: vi.fn(),
     getUserFilters: vi.fn().mockResolvedValue(null),
     upsertUserFilters: vi.fn(),
-    getNotificationPrefs: vi.fn().mockResolvedValue(null),
-    upsertNotificationPrefs: vi.fn(),
     getAiResult: vi.fn().mockResolvedValue(null),
     setAiResult: vi.fn(async (_userId, record) => ({ ...record, createdAt: '2026-09-13T00:00:00.000Z' })),
     listAiResults: vi.fn().mockResolvedValue([]),

@@ -279,10 +279,10 @@ describe('FilterBar More filters disclosure', () => {
 });
 
 describe('Save as my default', () => {
-  it('says that saved filters also drive Telegram alerts', async () => {
+  it('says the saved filter loads again on sign-in', async () => {
     await setup();
     openMore();
-    expect(screen.getByText(/Telegram/)).toBeInTheDocument();
+    expect(screen.getByText(/Loads every time you sign in/)).toBeInTheDocument();
   });
 
   it('PUTs the filters under the persisted field names', async () => {

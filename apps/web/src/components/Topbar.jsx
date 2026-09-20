@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import ThemeToggle from './ThemeToggle.jsx';
 
-export default function Topbar({ view, setView, q = '', onSearch, searchRef }) {
+export default function Topbar({ view, setView, q = '', onSearch, searchRef, chatOpen, onToggleChat }) {
   // Drives the "/" hint: it is only useful before anyone has found the box,
   // so it drops out the moment there is a reason it would be in the way.
   const [searchFocused, setSearchFocused] = useState(false);
@@ -49,6 +49,18 @@ export default function Topbar({ view, setView, q = '', onSearch, searchRef }) {
       )}
 
       <div className="ml-auto flex shrink-0 items-center gap-3">
+        {onToggleChat && (
+          <button
+            type="button"
+            onClick={onToggleChat}
+            aria-pressed={Boolean(chatOpen)}
+            className={`rounded-md border px-2.5 py-1 text-sm transition-colors duration-fast ease ${
+              chatOpen ? 'border-ink bg-ink text-paper' : 'border-line text-muted hover:border-edge hover:text-ink'
+            }`}
+          >
+            Ask
+          </button>
+        )}
         <ThemeToggle />
       </div>
     </header>

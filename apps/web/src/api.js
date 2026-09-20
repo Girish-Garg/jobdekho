@@ -5,3 +5,4 @@ export * from './api/postings.js';
 export * from './api/profile.js';
 export * from './api/ai.js';
 export * from './api/resume.js';
+export * from './api/chat.js';
