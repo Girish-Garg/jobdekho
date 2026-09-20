@@ -32,7 +32,7 @@ export default function PostingDialog({ posting, onClose, onStatus }) {
         aria-modal="true"
         aria-labelledby={TITLE_ID}
         tabIndex={-1}
-        className="mx-auto w-full max-w-2xl rounded-xl border border-line bg-panel p-6 shadow-xl outline-none sm:p-8"
+        className="mx-auto w-full max-w-2xl overflow-hidden rounded-xl border border-line bg-panel shadow-pop outline-none"
       >
         <PostingDetail posting={posting} onClose={onClose} onStatus={onStatus} />
       </div>

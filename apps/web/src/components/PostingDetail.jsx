@@ -25,7 +25,8 @@ export default function PostingDetail({ posting, onClose, onStatus }) {
   const doubtful = posting.legitimacy === 'low' || posting.legitimacy === 'suspicious';
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col">
+      <div className="flex flex-col gap-5 px-6 pt-6">
       <div className="flex items-start gap-4">
         <div className="min-w-0 flex-1">
           <h2 id={TITLE_ID} className="font-display text-xl font-extrabold leading-tight tracking-tight">
@@ -65,12 +66,13 @@ export default function PostingDetail({ posting, onClose, onStatus }) {
       )}
 
       <AiSection posting={posting} skip={doubtful ? [FakeCheck] : []} />
+      </div>
 
       {/* Sticky rather than merely last: the apply step is the point of the
           screen, so it stays reachable without scrolling past everything
           above, inside whichever ancestor is actually doing the scrolling
           (the dialog's backdrop, or the wide pane's own overflow). */}
-      <div className="sticky bottom-0 flex flex-wrap items-center justify-between gap-3 border-t border-line bg-panel pt-4">
+      <div className="sticky bottom-0 mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-line bg-panel px-6 py-4">
         <PostingActions
           status={posting.status}
           onStatus={(value) => onStatus(posting.id, posting.status === value ? null : value)}

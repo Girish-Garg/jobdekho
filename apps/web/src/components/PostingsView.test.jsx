@@ -635,14 +635,31 @@ describe('PostingsView wide two-pane layout', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  // The pane used to open empty, with an instruction in it. Beside a list
-  // there is always something worth showing, so it opens on the first row.
-  it('opens the first posting in the pane rather than standing empty', async () => {
+  // The pane is opened and closed by hand: it used to open the first row by
+  // itself, which spent a column of the screen on a posting nobody asked for.
+  it('shows no pane until a row is opened, and gives the width back when it closes', async () => {
     mockWide(true);
     getPostings.mockResolvedValue([row({ id: 'a', title: 'Alpha', descriptionSnippet: 'Ship it.' })]);
     render(<Harness filters={EMPTY} />);
+    await screen.findByText('Alpha');
+    expect(screen.queryByText('Ship it.')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('Alpha'));
     await waitFor(() => expect(screen.getByText('Ship it.')).toBeInTheDocument());
-    expect(screen.queryByText(/Nothing to show yet/)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    await waitFor(() => expect(screen.queryByText('Ship it.')).not.toBeInTheDocument());
+  });
+
+  // Escape means "close what is open" before it means "drop the highlight".
+  it('closes the pane on Escape', async () => {
+    mockWide(true);
+    getPostings.mockResolvedValue([row({ id: 'a', title: 'Alpha', descriptionSnippet: 'Ship it.' })]);
+    render(<Harness filters={EMPTY} />);
+    fireEvent.click(await screen.findByText('Alpha'));
+    await waitFor(() => expect(screen.getByText('Ship it.')).toBeInTheDocument());
+    fireEvent.keyDown(document, { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByText('Ship it.')).not.toBeInTheDocument());
   });
 
   it('leaves the narrow layout alone: no dialog opens on its own', async () => {

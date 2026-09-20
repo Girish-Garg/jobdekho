@@ -18,12 +18,11 @@ describe('PostingDetailSlot below the wide breakpoint', () => {
 });
 
 describe('PostingDetailSlot at the wide breakpoint', () => {
-  // Only an empty feed gets here: a feed with rows opens on its first one,
-  // so the pane is never a column telling the person to go and pick something.
-  it('says there is nothing to show when the feed came back empty', () => {
-    render(<PostingDetailSlot isWide opened={null} onClose={noop} onStatus={noop} />);
-    expect(screen.getByText('Nothing to show yet.')).toBeInTheDocument();
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  // A pane nobody opened is a column of the screen spent on nothing, so
+  // there is no pane at all until a posting is opened into it.
+  it('takes no width at all until something is opened', () => {
+    const { container } = render(<PostingDetailSlot isWide opened={null} onClose={noop} onStatus={noop} />);
+    expect(container).toBeEmptyDOMElement();
   });
 
   it('shows the opened posting in the pane instead of a dialog', () => {

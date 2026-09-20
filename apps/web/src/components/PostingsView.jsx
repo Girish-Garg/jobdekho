@@ -5,7 +5,6 @@ import { useMediaQuery } from '../lib/useMediaQuery.js';
 import { useTriage } from '../lib/useTriage.js';
 import { useOpenPosting } from '../lib/useOpenPosting.js';
 import { useListKeys } from '../lib/useListKeys.js';
-import { useAutoOpen } from '../lib/useAutoOpen.js';
 import { rankingNotice } from '../lib/rankingNotice.js';
 import PostingsHeader from './PostingsHeader.jsx';
 import FeedBody from './FeedBody.jsx';
@@ -36,8 +35,6 @@ export default function PostingsView({ filters, sort = 'match', viewMode = 'list
     openRow(posting, element);
   }
 
-  useAutoOpen({ enabled: isWide, opened, loading, rows, onSelect: setSelectedId, onOpen: openById });
-
   useListKeys({
     rows,
     selectedId,
@@ -45,7 +42,7 @@ export default function PostingsView({ filters, sort = 'match', viewMode = 'list
     onOpen: openById,
     onStatus: triage.setStatus,
     onUndo: triage.undo,
-    onClear: () => setSelectedId(null),
+    onClear: () => (opened ? closeCard() : setSelectedId(null)),
   });
 
   return (
