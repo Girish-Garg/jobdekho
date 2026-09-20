@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import ResumeBuilderPreview from './ResumeBuilderPreview.jsx';
 import * as api from '../api.js';
+import { onNotice } from '../lib/toast.js';
 
 const selection = { template: 'classic', sections: {} };
 
@@ -39,6 +40,47 @@ describe('ResumeBuilderPreview', () => {
     screen.getByRole('button', { name: 'Download .tex' }).click();
     await waitFor(() => expect(HTMLAnchorElement.prototype.click).toHaveBeenCalled());
     expect(api.getResumeTex).toHaveBeenCalledWith(selection);
+  });
+
+  // The inline sentence above stays the primary read; this is the second
+  // channel, for a person who has since switched templates, or tabs, while
+  // the debounced compile was still in flight.
+  it('also announces a compile failure as a notice', async () => {
+    const err = Object.assign(new Error('The resume did not compile: missing \\begin{document}.'), { kind: 'compile_failed' });
+    vi.spyOn(api, 'getResumePdf').mockRejectedValue(err);
+    const notices = [];
+    const stop = onNotice((n) => notices.push(n));
+    render(<ResumeBuilderPreview selection={selection} fileName="resume" />);
+    await screen.findByRole('alert');
+    stop();
+    expect(notices).toContainEqual(expect.objectContaining({ title: 'Resume PDF', detail: err.message }));
+  });
+
+  // A missing LaTeX install (LatexError) carries the very same kind string
+  // - 'not_found' - a missing AI CLI does (ProviderError), and both travel
+  // to the browser as the same plain { error, kind } body. Offering the AI
+  // CLI recheck button here would point at the wrong fix entirely.
+  it('never offers the AI CLI recheck button for a LaTeX-not-found notice', async () => {
+    const err = Object.assign(new Error('No LaTeX installation was found.'), { kind: 'not_found' });
+    vi.spyOn(api, 'getResumePdf').mockRejectedValue(err);
+    const notices = [];
+    const stop = onNotice((n) => notices.push(n));
+    render(<ResumeBuilderPreview selection={selection} fileName="resume" />);
+    await screen.findByRole('alert');
+    stop();
+    expect(notices).toContainEqual(expect.objectContaining({ title: 'Resume PDF', action: null }));
+  });
+
+  it('announces a .tex download failure, which had no handling of its own before', async () => {
+    vi.spyOn(api, 'getResumePdf').mockResolvedValue(new Blob(['%PDF-fake']));
+    vi.spyOn(api, 'getResumeTex').mockRejectedValue(new Error('no such posting'));
+    const notices = [];
+    const stop = onNotice((n) => notices.push(n));
+    render(<ResumeBuilderPreview selection={selection} fileName="resume" />);
+    await screen.findByTitle('Resume preview');
+    screen.getByRole('button', { name: 'Download .tex' }).click();
+    await waitFor(() => expect(notices).toContainEqual(expect.objectContaining({ title: 'Resume .tex' })));
+    stop();
   });
 
   it('re-compiles when the selection changes', async () => {

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { notifyError } from '../lib/toast.js';
 
 // Primary-action save button with transient confirmation. Ink, not ember: the
 // accent is reserved for "new today" in the feed, and a second ember element on
@@ -12,8 +13,12 @@ export default function SaveBar({ onSave, label: idleLabel = 'Save changes' }) {
       await onSave();
       setState('saved');
       setTimeout(() => setState('idle'), 1800);
-    } catch {
+    } catch (err) {
+      // The button beside it only ever says "Could not save."; this is
+      // where the actual reason goes, since Settings and Profile are both
+      // screens a person can be scrolled well past the button on.
       setState('error');
+      notifyError(err, idleLabel);
     }
   }
 

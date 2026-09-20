@@ -1,26 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { getResumePdf, getResumeTex } from '../api.js';
 import { downloadText } from '../lib/downloadText.js';
+import { downloadBlob } from '../lib/downloadBlob.js';
+import { notifyError } from '../lib/toast.js';
 
 const BUTTON = 'rounded-full border border-line px-4 py-1.5 text-sm text-ink transition hover:border-ink disabled:opacity-60';
 // A person stops typing/clicking for this long before a compile is worth
 // paying for; every checkbox or reorder click would otherwise fire its own
 // pdflatex run.
 const DEBOUNCE_MS = 400;
-
-// Binary sibling of lib/downloadText.js: same blob-and-click technique, but
-// for the PDF bytes already sitting in state rather than text fetched fresh,
-// so the download is exactly the page the iframe is showing.
-function downloadBlob(fileName, blob) {
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = fileName;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
 
 // Compiles on every selection change (debounced) and shows the result in an
 // iframe. A compile failure - most commonly no LaTeX installed at all -
@@ -54,6 +42,11 @@ export default function ResumeBuilderPreview({ selection, plan, fileName }) {
           setError(null);
         })
         .catch((err) => {
+          // Announced even after the pane has gone: the debounce means a
+          // compile can still be running when the person has already
+          // switched templates, or tabs, and would otherwise never see why
+          // the preview came back empty.
+          notifyError(err, 'Resume PDF');
           if (!alive) return;
           setPdfUrl(null);
           setPdfBlob(null);
@@ -70,8 +63,12 @@ export default function ResumeBuilderPreview({ selection, plan, fileName }) {
   useEffect(() => () => { if (urlRef.current) URL.revokeObjectURL(urlRef.current); }, []);
 
   async function onDownloadTex() {
-    const tex = await getResumeTex(payload);
-    downloadText(`${fileName}.tex`, tex);
+    try {
+      const tex = await getResumeTex(payload);
+      downloadText(`${fileName}.tex`, tex);
+    } catch (err) {
+      notifyError(err, 'Resume .tex');
+    }
   }
 
   return (

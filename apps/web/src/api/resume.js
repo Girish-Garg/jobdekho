@@ -1,16 +1,18 @@
 import { send } from '../lib/request.js';
-import { req } from './request.js';
+import { req, announced } from './request.js';
 
 // Which templates exist, the person's saved choice of template and entries,
 // and the two things it renders to. The .tex never needs a LaTeX install; the
 // PDF does, and says so in the server's own words when there is none (see
-// apps/server/src/resume).
+// apps/server/src/resume). The PDF and .tex calls are announced by
+// ResumeBuilderPreview.jsx itself instead of here: that screen already shows
+// the server's sentence inline and knows which of the two just ran.
 export function getResumeTemplates() {
-  return req('/api/resume/templates').then((d) => d.templates);
+  return announced(req('/api/resume/templates'), 'Resume templates').then((d) => d.templates);
 }
 
 export function getResumeSelection() {
-  return req('/api/resume/selection');
+  return announced(req('/api/resume/selection'), 'Resume selection');
 }
 
 export function putResumeSelection(selection) {

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getProfile, getResumeTemplates, getResumeSelection, putResumeSelection } from '../api.js';
+import { notifyError } from '../lib/toast.js';
 import ResumeBuilderControls from './ResumeBuilderControls.jsx';
 import ResumeBuilderPreview from './ResumeBuilderPreview.jsx';
 
@@ -65,7 +66,7 @@ export default function ResumeBuilderView({ plan = null }) {
     // opened from one job's tailoring is never saved over that, or a second
     // tailoring - or just reopening the Resume tab - would inherit picks and
     // wording that had nothing to do with it.
-    if (!plan) putResumeSelection(next).catch(() => {});
+    if (!plan) putResumeSelection(next).catch((err) => notifyError(err, 'Resume selection'));
   }
 
   if (profile === undefined) return <p className="p-6 font-mono text-xs text-muted">Loading...</p>;

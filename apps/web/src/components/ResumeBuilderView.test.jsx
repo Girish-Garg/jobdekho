@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import ResumeBuilderView from './ResumeBuilderView.jsx';
 import * as api from '../api.js';
+import { onNotice } from '../lib/toast.js';
 
 const PROFILE = {
   basics: { name: 'Priya Sharma', headline: '', email: '', phone: '', location: '', links: {} },
@@ -62,6 +63,20 @@ describe('ResumeBuilderView', () => {
     await screen.findByText('Classic');
     fireEvent.click(screen.getByRole('radio', { name: /Compact/ }));
     await waitFor(() => expect(api.putResumeSelection).toHaveBeenCalledWith(expect.objectContaining({ template: 'compact' })));
+  });
+
+  // A save the person never asked to watch (every checkbox and reorder
+  // fires one) used to drop its own failure on the floor entirely.
+  it('announces a selection save that failed, since nothing here shows it inline', async () => {
+    vi.spyOn(api, 'getProfile').mockResolvedValue(PROFILE);
+    vi.spyOn(api, 'putResumeSelection').mockRejectedValue(new Error('disk full'));
+    const notices = [];
+    const stop = onNotice((n) => notices.push(n));
+    render(<ResumeBuilderView />);
+    await screen.findByText('Classic');
+    fireEvent.click(screen.getByRole('radio', { name: /Compact/ }));
+    await waitFor(() => expect(notices).toContainEqual(expect.objectContaining({ title: 'Resume selection', detail: 'disk full' })));
+    stop();
   });
 
   // Seeded from a tailored resume result (see ResumeBuilderOverlay.jsx): the
