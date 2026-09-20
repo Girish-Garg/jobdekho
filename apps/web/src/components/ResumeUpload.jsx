@@ -1,12 +1,18 @@
-import { useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { uploadResume } from '../api.js';
 
+const CONTROL = 'cursor-pointer text-sm text-ink underline decoration-edge underline-offset-4 transition-colors duration-fast ease-ease hover:decoration-ink';
+
 // Upload is how a profile usually starts, but it only proposes values: the
-// form below stays the place where wrong extractions get fixed.
-export default function ResumeUpload({ resumeName, onUploaded }) {
+// record beside it stays the place where wrong extractions get fixed. A
+// quiet card rather than a dropzone: the whole card still takes a dropped
+// file, it just does not look like a hole in the page. `children` is the
+// fill-in control, which belongs with the file it reads.
+export default function ResumeUpload({ resumeName, onUploaded, children }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const inputRef = useRef(null);
+  const inputId = useId();
 
   async function send(file) {
     if (!file || busy) return;
@@ -26,17 +32,18 @@ export default function ResumeUpload({ resumeName, onUploaded }) {
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      <label
-        onDragOver={(event) => event.preventDefault()}
-        onDrop={(event) => {
-          event.preventDefault();
-          send(event.dataTransfer?.files?.[0]);
-        }}
-        className="flex cursor-pointer flex-col items-start gap-1.5 rounded-lg border border-dashed border-line bg-panel px-4 py-4 transition hover:border-ink focus-within:border-ink focus-within:ring-1 focus-within:ring-ink"
-      >
-        <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted">Resume (PDF)</span>
+    <div
+      onDragOver={(event) => event.preventDefault()}
+      onDrop={(event) => {
+        event.preventDefault();
+        send(event.dataTransfer?.files?.[0]);
+      }}
+      className="flex flex-col gap-3 rounded-md border border-line bg-panel p-4 transition-colors duration-fast ease-ease focus-within:border-edge"
+    >
+      <div className="flex flex-col gap-1">
+        <label htmlFor={inputId} className="text-sm font-medium text-ink">Resume (PDF)</label>
         <input
+          id={inputId}
           ref={inputRef}
           type="file"
           accept="application/pdf"
@@ -44,19 +51,19 @@ export default function ResumeUpload({ resumeName, onUploaded }) {
           onChange={(event) => send(event.target.files?.[0])}
           className="sr-only"
         />
-        <span className="text-sm text-ink" aria-live="polite">
-          {busy
-            ? 'Reading your resume...'
-            : 'Drop a PDF here or click to choose one. 5MB max.'}
+        <span aria-live="polite" className="text-sm text-muted">
+          {busy ? 'Reading your resume...' : resumeName ? `On file: ${resumeName}` : ''}
         </span>
-      </label>
-      {error ? (
-        <p role="alert" className="text-sm text-ember">{error}</p>
-      ) : (
-        resumeName && (
-          <p className="font-mono text-xs text-muted">On file: {resumeName}</p>
-        )
-      )}
+        {!busy && (resumeName ? (
+          <label htmlFor={inputId} className={`${CONTROL} self-start`}>Replace</label>
+        ) : (
+          <label htmlFor={inputId} className="cursor-pointer text-sm text-muted">
+            Drop a PDF here or <span className={CONTROL}>choose one</span>. 5MB max.
+          </label>
+        ))}
+      </div>
+      {error && <p role="alert" className="text-sm text-ember">{error}</p>}
+      {children}
     </div>
   );
 }

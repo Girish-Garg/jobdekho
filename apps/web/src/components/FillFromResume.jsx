@@ -7,7 +7,8 @@ import InstallHint from './InstallHint.jsx';
 import OverwriteConfirm from './OverwriteConfirm.jsx';
 import AiError from './AiError.jsx';
 
-const SECONDARY = 'rounded-full border border-line px-4 py-1.5 text-sm text-ink transition hover:border-ink disabled:opacity-60';
+// Text-weight, like the Replace control it sits under in the resume card.
+const SECONDARY = 'text-sm text-ink underline decoration-edge underline-offset-4 transition-colors duration-fast ease-ease hover:decoration-ink disabled:opacity-60';
 
 const INTRO = 'Filling in from the resume asks an AI CLI installed on this computer, on your own subscription.';
 

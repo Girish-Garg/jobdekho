@@ -1,7 +1,10 @@
 import { makeGroup } from '../lib/newEntry.js';
+import { sectionId } from '../lib/profileIndex.js';
+import ProfileSection, { AddControl } from './ProfileSection.jsx';
+import { BOX, Labelled } from './ProfileField.jsx';
 import TagInput from './TagInput.jsx';
 
-const BOX = 'rounded-md border border-line bg-paper px-2.5 py-1.5 text-sm outline-none focus:border-ink';
+const HINT = 'Group your skills the way a resume would: Languages, Frameworks, Tools. Feeds the Skills field under Best fit too.';
 
 // Grouped rather than one flat list (Languages, Frameworks, ...), so a
 // hundred skills reads as a handful of rows. deriveSkills.js folds every
@@ -13,44 +16,41 @@ export default function SkillGroupsSection({ groups, onChange }) {
   const remove = (index) => onChange(groups.filter((_, i) => i !== index));
 
   return (
-    <section className="flex flex-col gap-2">
-      <div className="flex items-baseline justify-between gap-3">
-        <h3 className="text-md font-semibold text-ink">
-          Skills <span className="font-mono text-xs font-normal text-muted">{groups.length}</span>
-        </h3>
-        <button type="button" onClick={add} className="rounded-full border border-line px-3 py-1 text-xs text-ink transition hover:border-ink">
-          Add group
-        </button>
-      </div>
-      {groups.length === 0 ? (
-        <p className="text-xs leading-relaxed text-muted">
-          Group your skills the way a resume would: Languages, Frameworks, Tools. Feeds the Skills field below too.
-        </p>
-      ) : (
-        <div className="flex flex-col gap-2">
+    <ProfileSection
+      id={sectionId('skills')}
+      title="Skills"
+      count={groups.length}
+      hint={groups.length === 0 ? HINT : null}
+      action={<AddControl label="Add group" onClick={add} />}
+    >
+      {groups.length > 0 && (
+        <div className="flex flex-col divide-y divide-line border-t border-line">
           {groups.map((group, i) => (
-            <div key={group.id} className="flex flex-col gap-2 rounded-md border border-line bg-paper p-3">
-              <div className="flex items-center gap-2">
-                <input
-                  aria-label="Group name"
-                  className={`${BOX} flex-1`}
-                  placeholder="Group name, e.g. Languages"
-                  value={group.name}
-                  onChange={(event) => update(i, { ...group, name: event.target.value })}
-                />
-                <button
-                  type="button"
-                  onClick={() => remove(i)}
-                  className="rounded-full border border-line px-2 py-1 text-xs text-muted transition hover:border-ink hover:text-ink"
-                >
-                  Remove
-                </button>
+            <div key={group.id} className="flex flex-col gap-3 py-3 sm:flex-row sm:items-start sm:gap-6">
+              <div className="sm:w-48 sm:shrink-0">
+                <Labelled label="Group name">
+                  <input
+                    className={BOX}
+                    placeholder="e.g. Languages"
+                    value={group.name}
+                    onChange={(event) => update(i, { ...group, name: event.target.value })}
+                  />
+                </Labelled>
               </div>
-              <TagInput label="Items" values={group.items} onChange={(items) => update(i, { ...group, items })} />
+              <div className="min-w-0 flex-1">
+                <TagInput plain label="Items" values={group.items} onChange={(items) => update(i, { ...group, items })} />
+              </div>
+              <button
+                type="button"
+                onClick={() => remove(i)}
+                className="self-start text-sm text-muted transition-colors duration-fast ease-ease hover:text-ink sm:mt-6"
+              >
+                Remove
+              </button>
             </div>
           ))}
         </div>
       )}
-    </section>
+    </ProfileSection>
   );
 }

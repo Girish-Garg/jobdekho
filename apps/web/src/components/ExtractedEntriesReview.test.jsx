@@ -23,6 +23,14 @@ describe('ExtractedEntriesReview', () => {
     expect(screen.getAllByRole('checkbox').every((box) => box.checked)).toBe(true);
   });
 
+  it('says keep or discard beside each row as its box is toggled', () => {
+    render(<ExtractedEntriesReview proposed={PROPOSED} onAdd={() => {}} onDismiss={() => {}} />);
+    expect(screen.getAllByText('keep')).toHaveLength(2);
+    fireEvent.click(screen.getAllByRole('checkbox')[1]);
+    expect(screen.getAllByText('keep')).toHaveLength(1);
+    expect(screen.getByText('discard')).toBeInTheDocument();
+  });
+
   it('adds only the rows still checked, grouped back by section', () => {
     const onAdd = vi.fn();
     render(<ExtractedEntriesReview proposed={PROPOSED} onAdd={onAdd} onDismiss={() => {}} />);

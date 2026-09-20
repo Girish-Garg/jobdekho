@@ -59,6 +59,24 @@ describe('ResumeUpload', () => {
     expect(screen.getByText('On file: girish.pdf')).toBeInTheDocument();
   });
 
+  it('offers Replace as a second label for the same input once a file is on file', () => {
+    render(<ResumeUpload resumeName="girish.pdf" onUploaded={() => {}} />);
+    const input = screen.getByLabelText(/resume \(pdf\)/i);
+    expect(screen.getByText('Replace').closest('label')).toHaveAttribute('for', input.id);
+    expect(screen.queryByText(/drop a pdf/i)).not.toBeInTheDocument();
+  });
+
+  it('is not a dashed dropzone: a bordered panel card with the fill-in control inside it', () => {
+    render(
+      <ResumeUpload resumeName="girish.pdf" onUploaded={() => {}}>
+        <button type="button">Fill in from resume</button>
+      </ResumeUpload>,
+    );
+    const card = screen.getByText('On file: girish.pdf').closest('.bg-panel');
+    expect(card).not.toHaveClass('border-dashed');
+    expect(card).toContainElement(screen.getByRole('button', { name: 'Fill in from resume' }));
+  });
+
   it('uploads a file dropped onto the control', async () => {
     render(<ResumeUpload resumeName={null} onUploaded={() => {}} />);
     const zone = screen.getByText(/drop a pdf/i).closest('label');

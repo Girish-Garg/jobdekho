@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import ProfileView from './ProfileView.jsx';
 import { EMPTY_PROFILE } from '../lib/emptyProfile.js';
@@ -228,5 +228,85 @@ describe('ProfileView with a saved profile', () => {
     await waitFor(() => expect(deleteProfile).toHaveBeenCalledTimes(1));
     expect(await screen.findByRole('heading', { name: 'No profile yet' })).toBeInTheDocument();
     expect(screen.queryByLabelText('Years of experience')).not.toBeInTheDocument();
+  });
+});
+
+// jsdom has no matchMedia, which the view reads as narrow; a stub that says
+// wide is how the rail gets exercised at all.
+const setWidth = (wide) => {
+  window.matchMedia = vi.fn(() => ({ matches: wide, addEventListener: () => {}, removeEventListener: () => {} }));
+};
+
+describe('ProfileView index at wide widths', () => {
+  beforeEach(() => {
+    getProfile.mockResolvedValue({ ...PROFILE, basics: { ...EMPTY_PROFILE.basics, name: 'Girish Garg', headline: 'Backend engineer' } });
+    setWidth(true);
+  });
+  afterEach(() => { delete window.matchMedia; });
+
+  it('puts the name, the section counts and the resume card in a rail beside the record', async () => {
+    render(<ProfileView />);
+    const rail = await screen.findByRole('complementary', { name: 'Record index' });
+    expect(rail).toHaveTextContent('Girish Garg');
+    expect(rail).toHaveTextContent('Backend engineer');
+    expect(within(rail).getByRole('link', { name: 'Experience 0' })).toBeInTheDocument();
+    expect(within(rail).getByRole('link', { name: 'Best fit' })).toBeInTheDocument();
+    expect(within(rail).getByLabelText(/resume \(pdf\)/i)).toBeInTheDocument();
+    expect(within(rail).getByRole('button', { name: 'Fill in from resume' })).toBeInTheDocument();
+  });
+
+  it('starts on Basics and counts a new entry the moment it is added', async () => {
+    render(<ProfileView />);
+    const rail = await screen.findByRole('complementary', { name: 'Record index' });
+    expect(within(rail).getByRole('link', { name: 'Basics' })).toHaveAttribute('aria-current', 'location');
+    fireEvent.click(screen.getByRole('button', { name: 'Add role' }));
+    expect(within(rail).getByRole('link', { name: 'Experience 1' })).toBeInTheDocument();
+  });
+
+  it('scrolls to a section and marks it current when its line is clicked', async () => {
+    render(<ProfileView />);
+    const rail = await screen.findByRole('complementary', { name: 'Record index' });
+    const target = document.getElementById('profile-projects');
+    target.scrollIntoView = vi.fn();
+    fireEvent.click(within(rail).getByRole('link', { name: 'Projects 0' }));
+    expect(target.scrollIntoView).toHaveBeenCalledWith({ block: 'start' });
+    expect(within(rail).getByRole('link', { name: 'Projects 0' })).toHaveAttribute('aria-current', 'location');
+    expect(within(rail).getByRole('link', { name: 'Basics' })).not.toHaveAttribute('aria-current');
+  });
+
+  it('shows a name placeholder and no index while there is no record on screen', async () => {
+    getProfile.mockResolvedValue(null);
+    render(<ProfileView />);
+    await screen.findByRole('heading', { name: 'No profile yet' });
+    const rail = screen.getByRole('complementary', { name: 'Record index' });
+    expect(rail).toHaveTextContent('Your name');
+    expect(screen.queryByRole('navigation', { name: 'Sections' })).not.toBeInTheDocument();
+  });
+});
+
+describe('ProfileView index below 1100px', () => {
+  beforeEach(() => {
+    getProfile.mockResolvedValue(PROFILE);
+    setWidth(false);
+  });
+  afterEach(() => { delete window.matchMedia; });
+
+  it('folds the rail into a sticky strip of section links above a one-column record', async () => {
+    render(<ProfileView />);
+    await screen.findByText('react');
+    expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
+    const strip = screen.getByRole('navigation', { name: 'Sections' });
+    expect(strip.parentElement).toHaveClass('sticky');
+    expect(within(strip).getByRole('list')).toHaveClass('overflow-x-auto');
+    expect(within(strip).getByRole('link', { name: 'Skills 0' })).toBeInTheDocument();
+    // The resume card keeps its place at the head of the column.
+    expect(screen.getByLabelText(/resume \(pdf\)/i)).toBeInTheDocument();
+  });
+
+  it('shows no strip at all while there is no record to index', async () => {
+    getProfile.mockResolvedValue(null);
+    render(<ProfileView />);
+    await screen.findByRole('heading', { name: 'No profile yet' });
+    expect(screen.queryByRole('navigation', { name: 'Sections' })).not.toBeInTheDocument();
   });
 });

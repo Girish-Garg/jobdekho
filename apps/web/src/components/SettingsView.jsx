@@ -31,7 +31,7 @@ export default function SettingsView() {
 
   return (
     <section className="px-8 py-8">
-      <h2 className="font-display text-2xl font-extrabold tracking-tight">Settings</h2>
+      <h2 className="font-display text-xl font-extrabold tracking-tight">Settings</h2>
 
       <div className="mt-8 flex max-w-2xl flex-col gap-10">
         <Section title="Appearance" hint="How JobDekho looks on this device.">

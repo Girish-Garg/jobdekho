@@ -7,7 +7,9 @@ const labelFor = (key) => ENTRY_SECTIONS.find((section) => section.key === key).
 // Extraction proposes; nothing here is saved until "Add selected" merges the
 // chosen entries into local state (see mergeProposals.js), and even then
 // only Save profile persists them. Declining a row or dismissing the whole
-// panel touches nothing already on the profile.
+// panel touches nothing already on the profile. Boxed and raised, unlike
+// the record around it, because it is the one thing on the page that is
+// waiting on a decision and goes away once it has one.
 export default function ExtractedEntriesReview({ proposed, onAdd, onDismiss }) {
   const flat = PROPOSED_KEYS.flatMap((key) => (proposed[key] ?? []).map((entry, i) => ({ key, entry, id: `${key}-${i}` })));
   const [picked, setPicked] = useState(() => new Set(flat.map((row) => row.id)));
@@ -29,38 +31,43 @@ export default function ExtractedEntriesReview({ proposed, onAdd, onDismiss }) {
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-line bg-panel p-4">
-      <p className="text-sm text-ink">
-        Found {flat.length} {flat.length === 1 ? 'entry' : 'entries'} in the resume. Pick the ones to add;
-        nothing already on your profile is touched, and none of this is saved until you add it.
+    <div className="flex flex-col gap-3 rounded-md border border-edge bg-panel p-4 shadow-raise">
+      <h3 className="font-display text-lg font-bold tracking-tight text-ink">From the resume</h3>
+      <p className="text-sm text-muted">
+        Found {flat.length} {flat.length === 1 ? 'entry' : 'entries'} in the resume. Keep the ones that belong on the record;
+        nothing already on it is touched, and none of this is saved until you add it.
       </p>
-      <ul className="flex flex-col gap-1.5">
-        {flat.map((row) => (
-          <li key={row.id}>
-            <label className="flex items-start gap-2 text-sm text-ink">
-              <input type="checkbox" checked={picked.has(row.id)} onChange={() => toggle(row.id)} className="mt-1" />
-              <span>
-                <span className="text-xs text-muted">{labelFor(row.key)}:</span>{' '}
-                {row.entry.title || 'Untitled'}
-                {row.entry.organisation ? ` at ${row.entry.organisation}` : ''}
-              </span>
-            </label>
-          </li>
-        ))}
+      <ul className="flex flex-col divide-y divide-line border-y border-line">
+        {flat.map((row) => {
+          const keep = picked.has(row.id);
+          return (
+            <li key={row.id}>
+              <label className="flex cursor-pointer items-baseline gap-3 py-2 text-sm text-ink">
+                <input type="checkbox" checked={keep} onChange={() => toggle(row.id)} className="relative top-px accent-ink" />
+                <span className="w-24 shrink-0 text-xs text-muted">{labelFor(row.key)}</span>
+                <span className="min-w-0 flex-1 truncate">
+                  {row.entry.title || 'Untitled'}
+                  {row.entry.organisation ? ` at ${row.entry.organisation}` : ''}
+                </span>
+                <span className="shrink-0 text-xs text-muted">{keep ? 'keep' : 'discard'}</span>
+              </label>
+            </li>
+          );
+        })}
       </ul>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-4">
         <button
           type="button"
           onClick={addSelected}
           disabled={picked.size === 0}
-          className="rounded-full bg-ink px-4 py-1.5 text-sm font-medium text-paper transition hover:opacity-90 disabled:opacity-60"
+          className="rounded-full bg-ink px-4 py-1.5 text-sm font-medium text-paper transition-opacity duration-fast ease-ease hover:opacity-90 disabled:opacity-60"
         >
           Add selected
         </button>
         <button
           type="button"
           onClick={onDismiss}
-          className="rounded-full border border-line px-4 py-1.5 text-sm text-muted transition hover:border-ink hover:text-ink"
+          className="text-sm text-muted transition-colors duration-fast ease-ease hover:text-ink"
         >
           Dismiss
         </button>
