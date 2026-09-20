@@ -1,104 +1,458 @@
 {
   "providers": [
-    { "provider": "greenhouse", "slug": "gitlab" },
-    { "provider": "smartrecruiters", "slug": "PhonePeLimited" },
-    { "provider": "greenhouse", "slug": "mongodb" },
-    { "provider": "greenhouse", "slug": "postman" },
-    { "provider": "greenhouse", "slug": "vercel" },
-    { "provider": "greenhouse", "slug": "groww" },
-    { "provider": "greenhouse", "slug": "webflow" },
-    { "provider": "greenhouse", "slug": "elastic" },
-    { "provider": "greenhouse", "slug": "netlify" },
-    { "provider": "greenhouse", "slug": "inmobi" },
-    { "provider": "greenhouse", "slug": "hackerrank" },
-    { "provider": "greenhouse", "slug": "grafanalabs" },
-    { "provider": "greenhouse", "slug": "airbnb" },
-    { "provider": "greenhouse", "slug": "coinbase" },
-    { "provider": "greenhouse", "slug": "druva" },
-    { "provider": "greenhouse", "slug": "dropbox" },
-    { "provider": "greenhouse", "slug": "planetscale" },
-    { "provider": "greenhouse", "slug": "cockroachlabs" },
-    { "provider": "greenhouse", "slug": "figma" },
-    { "provider": "greenhouse", "slug": "stripe" },
-    { "provider": "greenhouse", "slug": "razorpaysoftwareprivatelimited" },
-    { "provider": "greenhouse", "slug": "databricks" },
-    { "provider": "greenhouse", "slug": "twilio" },
-    { "provider": "greenhouse", "slug": "samsara" },
-    { "provider": "greenhouse", "slug": "fivetran" },
-    { "provider": "greenhouse", "slug": "rubrik" },
-    { "provider": "greenhouse", "slug": "sigmoid" },
-    { "provider": "greenhouse", "slug": "turing" },
-    { "provider": "greenhouse", "slug": "thoughtworks" },
-    { "provider": "greenhouse", "slug": "canonical" },
-    { "provider": "greenhouse", "slug": "sourcegraph91" },
-    { "provider": "greenhouse", "slug": "coursera" },
-    { "provider": "greenhouse", "slug": "okta" },
-    { "provider": "greenhouse", "slug": "ripple" },
-    { "provider": "greenhouse", "slug": "anthropic" },
-    { "provider": "lever", "slug": "meesho" },
-    { "provider": "lever", "slug": "netomi" },
-    { "provider": "lever", "slug": "cred" },
-    { "provider": "lever", "slug": "paytm" },
-    { "provider": "lever", "slug": "porter" },
-    { "provider": "lever", "slug": "epifi" },
-    { "provider": "lever", "slug": "hevodata" },
-    { "provider": "lever", "slug": "plivo" },
-    { "provider": "lever", "slug": "palantir" },
-    { "provider": "lever", "slug": "contentsquare" },
-    { "provider": "lever", "slug": "matchgroup" },
-    { "provider": "ashby", "slug": "vanta" },
-    { "provider": "ashby", "slug": "clipboard" },
-    { "provider": "ashby", "slug": "posthog" },
-    { "provider": "ashby", "slug": "notion" },
-    { "provider": "ashby", "slug": "zip" },
-    { "provider": "ashby", "slug": "sarvam" },
-    { "provider": "ashby", "slug": "openai" },
-    { "provider": "ashby", "slug": "cursor" },
-    { "provider": "ashby", "slug": "perplexity" },
-    { "provider": "ashby", "slug": "elevenlabs" },
-    { "provider": "ashby", "slug": "cohere" },
-    { "provider": "ashby", "slug": "supabase" },
-    { "provider": "ashby", "slug": "replit" },
-    { "provider": "ashby", "slug": "linear" },
-    { "provider": "ashby", "slug": "n8n" },
-    { "provider": "ashby", "slug": "langchain" },
-    { "provider": "ashby", "slug": "oyster" },
-    { "provider": "ashby", "slug": "pleo" },
-    { "provider": "smartrecruiters", "slug": "Freshworks" },
-    { "provider": "smartrecruiters", "slug": "NielsenIQ" },
-    { "provider": "smartrecruiters", "slug": "WesternDigital" },
-    { "provider": "smartrecruiters", "slug": "AveryDennison" },
-    { "provider": "smartrecruiters", "slug": "BoschGroup" },
-    { "provider": "smartrecruiters", "slug": "Wise" },
-    { "provider": "workable", "slug": "apna" },
-    { "provider": "workable", "slug": "blueground" },
-    { "provider": "workable", "slug": "orfium" },
-    { "provider": "workable", "slug": "spotawheel" },
-    { "provider": "workable", "slug": "persado" },
-    { "provider": "recruitee", "slug": "channable" },
-    { "provider": "recruitee", "slug": "gorgias" },
-    { "provider": "recruitee", "slug": "vandebron" },
-    { "provider": "workable", "slug": "tiger-analytics" },
-    { "provider": "greenhouse", "slug": "slice" },
-    { "provider": "greenhouse", "slug": "zenoti" },
-    { "provider": "lever", "slug": "mindtickle" },
-    { "provider": "lever", "slug": "zeta" },
-    { "provider": "greenhouse", "slug": "observeai" },
-    { "provider": "lever", "slug": "fampay" },
-    { "provider": "greenhouse", "slug": "cloudsek" },
-    { "provider": "smartrecruiters", "slug": "ixigo" },
-    { "provider": "ashby", "slug": "bounce" },
-    { "provider": "ashby", "slug": "navi" },
-    { "provider": "smartrecruiters", "slug": "Kredx" },
-    { "provider": "smartrecruiters", "slug": "Unacademy" },
-    { "provider": "lever", "slug": "pocketfm" },
-    { "provider": "smartrecruiters", "slug": "Whatfix" },
-    { "provider": "smartrecruiters", "slug": "NoBroker" },
-    { "provider": "smartrecruiters", "slug": "Turtlemint" },
-    { "provider": "smartrecruiters", "slug": "Cars24" },
-    { "provider": "smartrecruiters", "slug": "Upstox" },
-    { "provider": "smartrecruiters", "slug": "Lendingkart" }
+    {
+      "provider": "smartrecruiters",
+      "slug": "PhonePeLimited"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "gitlab"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "mongodb"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "postman"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "vercel"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "groww"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "webflow"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "elastic"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "netlify"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "inmobi"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "hackerrank"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "grafanalabs"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "airbnb"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "coinbase"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "druva"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "dropbox"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "planetscale"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "cockroachlabs"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "figma"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "stripe"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "razorpaysoftwareprivatelimited"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "databricks"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "twilio"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "samsara"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "fivetran"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "rubrik"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "sigmoid"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "turing"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "thoughtworks"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "canonical"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "sourcegraph91"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "coursera"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "okta"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "ripple"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "anthropic"
+    },
+    {
+      "provider": "lever",
+      "slug": "meesho"
+    },
+    {
+      "provider": "lever",
+      "slug": "netomi"
+    },
+    {
+      "provider": "lever",
+      "slug": "cred"
+    },
+    {
+      "provider": "lever",
+      "slug": "paytm"
+    },
+    {
+      "provider": "lever",
+      "slug": "porter"
+    },
+    {
+      "provider": "lever",
+      "slug": "epifi"
+    },
+    {
+      "provider": "lever",
+      "slug": "hevodata"
+    },
+    {
+      "provider": "lever",
+      "slug": "plivo"
+    },
+    {
+      "provider": "lever",
+      "slug": "palantir"
+    },
+    {
+      "provider": "lever",
+      "slug": "contentsquare"
+    },
+    {
+      "provider": "lever",
+      "slug": "matchgroup"
+    },
+    {
+      "provider": "ashby",
+      "slug": "vanta"
+    },
+    {
+      "provider": "ashby",
+      "slug": "clipboard"
+    },
+    {
+      "provider": "ashby",
+      "slug": "posthog"
+    },
+    {
+      "provider": "ashby",
+      "slug": "notion"
+    },
+    {
+      "provider": "ashby",
+      "slug": "zip"
+    },
+    {
+      "provider": "ashby",
+      "slug": "sarvam"
+    },
+    {
+      "provider": "ashby",
+      "slug": "openai"
+    },
+    {
+      "provider": "ashby",
+      "slug": "cursor"
+    },
+    {
+      "provider": "ashby",
+      "slug": "perplexity"
+    },
+    {
+      "provider": "ashby",
+      "slug": "elevenlabs"
+    },
+    {
+      "provider": "ashby",
+      "slug": "cohere"
+    },
+    {
+      "provider": "ashby",
+      "slug": "supabase"
+    },
+    {
+      "provider": "ashby",
+      "slug": "replit"
+    },
+    {
+      "provider": "ashby",
+      "slug": "linear"
+    },
+    {
+      "provider": "ashby",
+      "slug": "n8n"
+    },
+    {
+      "provider": "ashby",
+      "slug": "langchain"
+    },
+    {
+      "provider": "ashby",
+      "slug": "oyster"
+    },
+    {
+      "provider": "ashby",
+      "slug": "pleo"
+    },
+    {
+      "provider": "smartrecruiters",
+      "slug": "Freshworks"
+    },
+    {
+      "provider": "smartrecruiters",
+      "slug": "NielsenIQ"
+    },
+    {
+      "provider": "smartrecruiters",
+      "slug": "WesternDigital"
+    },
+    {
+      "provider": "smartrecruiters",
+      "slug": "AveryDennison"
+    },
+    {
+      "provider": "smartrecruiters",
+      "slug": "BoschGroup"
+    },
+    {
+      "provider": "smartrecruiters",
+      "slug": "Wise"
+    },
+    {
+      "provider": "workable",
+      "slug": "apna"
+    },
+    {
+      "provider": "workable",
+      "slug": "blueground"
+    },
+    {
+      "provider": "workable",
+      "slug": "orfium"
+    },
+    {
+      "provider": "workable",
+      "slug": "spotawheel"
+    },
+    {
+      "provider": "workable",
+      "slug": "persado"
+    },
+    {
+      "provider": "recruitee",
+      "slug": "channable"
+    },
+    {
+      "provider": "recruitee",
+      "slug": "gorgias"
+    },
+    {
+      "provider": "recruitee",
+      "slug": "vandebron"
+    },
+    {
+      "provider": "workable",
+      "slug": "tiger-analytics"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "slice"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "zenoti"
+    },
+    {
+      "provider": "lever",
+      "slug": "mindtickle"
+    },
+    {
+      "provider": "lever",
+      "slug": "zeta"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "observeai"
+    },
+    {
+      "provider": "lever",
+      "slug": "fampay"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "cloudsek"
+    },
+    {
+      "provider": "smartrecruiters",
+      "slug": "ixigo"
+    },
+    {
+      "provider": "ashby",
+      "slug": "bounce"
+    },
+    {
+      "provider": "ashby",
+      "slug": "navi"
+    },
+    {
+      "provider": "smartrecruiters",
+      "slug": "Kredx"
+    },
+    {
+      "provider": "smartrecruiters",
+      "slug": "Unacademy"
+    },
+    {
+      "provider": "lever",
+      "slug": "pocketfm"
+    },
+    {
+      "provider": "smartrecruiters",
+      "slug": "Whatfix"
+    },
+    {
+      "provider": "smartrecruiters",
+      "slug": "NoBroker"
+    },
+    {
+      "provider": "smartrecruiters",
+      "slug": "Turtlemint"
+    },
+    {
+      "provider": "smartrecruiters",
+      "slug": "Cars24"
+    },
+    {
+      "provider": "smartrecruiters",
+      "slug": "Upstox"
+    },
+    {
+      "provider": "smartrecruiters",
+      "slug": "Lendingkart"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "blenheimchalcotindia"
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "alphagrepsecurities"
+    },
+    {
+      "provider": "workable",
+      "slug": "qode"
+    },
+    {
+      "provider": "workable",
+      "slug": "infosys-consulting"
+    },
+    {
+      "provider": "workable",
+      "slug": "whizz"
+    },
+    {
+      "provider": "workable",
+      "slug": "lakshya"
+    },
+    {
+      "provider": "workable",
+      "slug": "velotio"
+    },
+    {
+      "provider": "workable",
+      "slug": "cars24"
+    },
+    {
+      "provider": "workable",
+      "slug": "trackier"
+    },
+    {
+      "provider": "workable",
+      "slug": "bahwan-cybertek"
+    },
+    {
+      "provider": "smartrecruiters",
+      "slug": "wns-global-services"
+    },
+    {
+      "provider": "smartrecruiters",
+      "slug": "dr-reddys-laboratories"
+    },
+    {
+      "provider": "recruitee",
+      "slug": "lenskart"
+    }
   ],
   "companies": [],
-  "boards": ["internshala","unstop","remotive","remoteok","arbeitnow","linkedin","instahyre"]
+  "boards": [
+    "internshala",
+    "unstop",
+    "remotive",
+    "remoteok",
+    "arbeitnow",
+    "linkedin",
+    "instahyre"
+  ]
 }
