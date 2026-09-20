@@ -2,13 +2,17 @@
   "name": "jobdekho",
   "private": true,
   "type": "module",
-  "workspaces": ["packages/*", "apps/*"],
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "scripts": {
     "start": "node apps/server/src/server.js",
     "dev:web": "npm -w @jobdekho/web run dev",
     "test": "vitest run",
     "scrape": "node apps/scraper/src/index.js",
-    "build": "npm -w @jobdekho/web run build"
+    "build": "npm -w @jobdekho/web run build",
+    "resume:check": "node apps/server/src/resume/check-templates.js"
   },
   "devDependencies": {
     "vitest": "^2.1.0"
