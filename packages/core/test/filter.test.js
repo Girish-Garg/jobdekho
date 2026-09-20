@@ -90,8 +90,8 @@ describe('filter locations', () => {
     expect(filter({ ...base, location: 'Indianapolis, Indiana' }, rules)).toBe(false)
   })
 
-  // /api/profile/apply-filter writes [] for most users; reading that as
-  // "remote only" silently emptied their alerts.
+  // config/filters.json ships most lists empty; reading that as "remote
+  // only" would silently drop nearly every posting instead of keeping them.
   it('treats an empty locations list as no preference', () => {
     const anywhere = { includeKeywords: [], excludeKeywords: [], locations: [] }
     expect(filter(base, anywhere)).toBe(true)

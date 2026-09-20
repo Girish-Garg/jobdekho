@@ -18,7 +18,7 @@ export default function ProfileSection({ id, title, count, hint, action, childre
           </h3>
           {action}
         </div>
-        {hint && <p className="text-sm text-muted">{hint}</p>}
+        {hint && <p className="max-w-2xl text-sm text-muted">{hint}</p>}
       </div>
       {children}
     </section>

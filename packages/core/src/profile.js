@@ -1,8 +1,7 @@
 import { DEGREES } from './degree.js'
 
-// What a resume reduces to. Every field maps onto a dimension the query layer
-// already understands, which is what lets one profile both rank postings and
-// populate the saved notification filter.
+// What a resume reduces to. Every field maps onto a dimension score.js
+// already understands, which is what lets one profile rank postings.
 export const EMPTY_PROFILE = { skills: [], years: null, degree: 'none', titles: [], locations: [] }
 
 const clean = (list) => [...new Set(
@@ -43,17 +42,4 @@ export function levelsForYears(years) {
   if (years < 6) return ['mid', 'senior']
   if (years < 10) return ['senior', 'staff']
   return ['staff', 'executive']
-}
-
-// The notification filter the profile implies. Kept separate from the profile
-// itself so a bad extraction can be corrected without silently rewriting the
-// filter, and so the user can edit either one independently.
-export function filterFromProfile(profile) {
-  const p = normalizeProfile(profile)
-  return {
-    includeKeywords: [...p.skills, ...p.titles].slice(0, MAX_SKILLS),
-    levels: levelsForYears(p.years),
-    maxDegree: p.degree === 'none' ? null : p.degree,
-    locations: p.locations,
-  }
 }

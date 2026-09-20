@@ -31,16 +31,20 @@ export default function EntryCard({ entry, titleLabel, orgLabel, startOpen, isFi
         </span>
       </summary>
       <div className="flex flex-col gap-3 pb-5 pt-1">
-        <div className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+        {/* Wide enough to hold a record's rest, this row goes from two
+            stacked pairs to title, organisation, location and dates side by
+            side in one line, rather than reserving that width and stacking
+            anyway. */}
+        <div className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 min-[1100px]:grid-cols-[1.3fr_1.3fr_1fr_auto]">
           <TextField label={titleLabel} value={entry.title} onChange={set('title')} />
           <TextField label={orgLabel} value={entry.organisation} onChange={set('organisation')} />
           <TextField label="Location" value={entry.location} onChange={set('location')} />
-          <div className="grid grid-cols-2 gap-x-3">
+          <div className="grid grid-cols-2 gap-x-3 min-[1100px]:w-56">
             <TextField label="Start" value={entry.startDate} onChange={set('startDate')} />
             <TextField label="End" value={entry.endDate} onChange={set('endDate')} placeholder="Present" />
           </div>
         </div>
-        <label className="flex flex-col gap-1">
+        <label className="flex max-w-2xl flex-col gap-1">
           <span className="text-sm text-muted">Bullet lines, one per line</span>
           <textarea
             rows={3}
@@ -49,8 +53,12 @@ export default function EntryCard({ entry, titleLabel, orgLabel, startOpen, isFi
             onChange={(event) => set('bullets')(event.target.value.split('\n'))}
           />
         </label>
-        <TagInput plain label="Tech" values={entry.tech} onChange={set('tech')} />
-        <TextField label="Link" value={entry.link} onChange={set('link')} />
+        <div className="max-w-md">
+          <TagInput plain label="Tech" values={entry.tech} onChange={set('tech')} />
+        </div>
+        <div className="max-w-md">
+          <TextField label="Link" value={entry.link} onChange={set('link')} />
+        </div>
         <div className="flex flex-wrap items-center gap-4 pt-1">
           <button type="button" aria-pressed={entry.pinned} onClick={() => set('pinned')(!entry.pinned)} className={TEXT_BTN}>
             {entry.pinned ? 'Pinned' : 'Pin'}

@@ -2,6 +2,6 @@
   "name": "@jobdekho/scraper", "version": "0.0.0", "type": "module",
   "dependencies": {
     "@jobdekho/core": "*", "@jobdekho/store": "*",
-    "@jobdekho/sources": "*", "@jobdekho/notify": "*"
+    "@jobdekho/sources": "*"
   }
 }

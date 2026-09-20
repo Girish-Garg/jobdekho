@@ -37,7 +37,7 @@ export default function SkillGroupsSection({ groups, onChange }) {
                   />
                 </Labelled>
               </div>
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 max-w-xl flex-1">
                 <TagInput plain label="Items" values={group.items} onChange={(items) => update(i, { ...group, items })} />
               </div>
               <button

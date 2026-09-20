@@ -34,14 +34,13 @@ export function toSavedFilters(filters) {
 
 // The keyword, the status, the stale toggle and the fit floor are per-session
 // rather than persisted, so the blank bar is the blank saved filter plus those
-// four. minFit stays unsaved on purpose: the saved filter also drives the
-// Telegram alerts, and the notifier cannot score a posting against the
-// profile, so persisting a fit floor would promise a cut the alerts never
-// make.
+// four. minFit stays unsaved on purpose: it depends on the profile at query
+// time, and the server ignores it with no profile to score against, so a
+// floor saved here could promise a cut that silently never lands.
 export const EMPTY_FILTERS = { ...toFilterState(), q: '', status: '', includeStale: false, minFit: '' };
 
-// One saved filter backs both the filter bar and Settings, so a write from
-// either surface has to carry the other's keys through untouched.
+// "Save as my default" only ever sends this bar's own fields, so the merge
+// keeps that write from resetting every field the bar does not carry.
 export async function mergeSave(patch) {
   const current = await getFilters().catch(() => ({}));
   return putFilters({ ...current, ...patch });

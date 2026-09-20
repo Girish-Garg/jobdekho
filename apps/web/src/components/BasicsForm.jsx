@@ -11,7 +11,7 @@ export default function BasicsForm({ basics, onChange }) {
 
   return (
     <ProfileSection id={sectionId('basics')} title="Basics" hint="Who the record is about: the header of every resume built from it.">
-      <div className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-x-6 gap-y-3 min-[1100px]:grid-cols-2 min-[1500px]:grid-cols-3">
         <TextField label="Name" value={basics.name} onChange={set('name')} />
         <TextField label="Headline" value={basics.headline} onChange={set('headline')} placeholder="e.g. Backend engineer" />
         <TextField label="Email" value={basics.email} onChange={set('email')} />

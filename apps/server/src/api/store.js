@@ -1,5 +1,5 @@
 import { listPostingsForUser, setPostingStatus, listSources } from '@jobdekho/store/dashboard.js'
-import { getUserFilters, upsertUserFilters, getNotificationPrefs, upsertNotificationPrefs } from '@jobdekho/store/dashboard-prefs.js'
+import { getUserFilters, upsertUserFilters } from '@jobdekho/store/dashboard-prefs.js'
 import { getProfile, getResumeText, upsertProfile, deleteProfile } from '@jobdekho/store/profiles.js'
 import { getPosting } from '@jobdekho/store/posting-lookup.js'
 import { getAiResult, setAiResult, listAiResults } from '@jobdekho/store/ai-results.js'
@@ -19,8 +19,6 @@ export function createDashboardStore(db) {
     deleteProfile: (userId) => deleteProfile(db, userId),
     getUserFilters: (userId) => getUserFilters(db, userId),
     upsertUserFilters: (userId, f) => upsertUserFilters(db, userId, f),
-    getNotificationPrefs: (userId) => getNotificationPrefs(db, userId),
-    upsertNotificationPrefs: (userId, p) => upsertNotificationPrefs(db, userId, p),
     getAiResult: (userId, postingId, kind) => getAiResult(db, userId, postingId, kind),
     setAiResult: (userId, record) => setAiResult(db, userId, record),
     listAiResults: (userId, postingId) => listAiResults(db, userId, postingId),

@@ -7,7 +7,7 @@ export default function SaveDefaultFilters({ filters }) {
     <div className="flex flex-col gap-1">
       <SaveBar onSave={() => mergeSave(toSavedFilters(filters))} label="Save as my default" />
       <p className="text-xs leading-relaxed text-muted">
-        Loads every time you sign in. It also decides which new postings your Telegram alerts cover.
+        Loads every time you sign in.
       </p>
     </div>
   );

@@ -1,32 +1,28 @@
-import { req } from './request.js';
+import { req, announced } from './request.js';
 
 export function getPostings(params = {}) {
   const q = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) if (v) q.set(k, v);
   const qs = q.toString();
-  return req(`/api/postings${qs ? `?${qs}` : ''}`).then((d) => d.postings);
+  return announced(req(`/api/postings${qs ? `?${qs}` : ''}`), 'Postings').then((d) => d.postings);
 }
 
 export function getSources() {
-  return req('/api/sources').then((d) => d.sources);
+  return announced(req('/api/sources'), 'Sources').then((d) => d.sources);
 }
 
+// A status change is an optimistic click: the row flips before this
+// resolves, and rolls back on failure (see usePostingsFeed.js). Without a
+// notice that rollback reads as nothing happened, rather than as the save
+// that did not save.
 export function setStatus(id, status) {
-  return req(`/api/postings/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) });
+  return announced(req(`/api/postings/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }), 'Status change');
 }
 
 export function getFilters() {
-  return req('/api/filters');
+  return announced(req('/api/filters'), 'Saved filters');
 }
 
 export function putFilters(f) {
   return req('/api/filters', { method: 'PUT', body: JSON.stringify(f) });
-}
-
-export function getNotifications() {
-  return req('/api/notifications');
-}
-
-export function putNotifications(p) {
-  return req('/api/notifications', { method: 'PUT', body: JSON.stringify(p) });
 }

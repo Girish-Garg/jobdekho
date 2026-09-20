@@ -16,19 +16,6 @@ export const postingStatusSchema = {
   },
 }
 
-// email was deliberately removed from this project, so it is not a valid
-// channel even though it once was.
-export const notificationPrefsSchema = {
-  body: {
-    type: 'object',
-    properties: {
-      channel: { type: 'string', enum: ['none', 'telegram'] },
-      telegramChatId: { type: ['string', 'null'] },
-      enabled: { type: 'boolean' },
-    },
-  },
-}
-
 // coerceFilters already normalizes every field and tolerates a missing one;
 // this only keeps a wrong-shaped body, an array or a string, from reaching it.
 export const filtersBodySchema = {

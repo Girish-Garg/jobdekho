@@ -55,7 +55,7 @@ export default function ProfileView() {
       {profile === undefined ? (
         <p className="py-10 text-sm text-muted">Loading your profile...</p>
       ) : wide ? (
-        <div className="mt-8 grid grid-cols-[260px_minmax(0,760px)] items-start gap-x-16">
+        <div className="mt-8 grid grid-cols-[260px_minmax(0,1fr)] items-start gap-x-12 min-[1500px]:gap-x-16">
           <ProfileRail basics={profile.basics} rows={rows} current={current} onJump={jumpTo}>
             {resume}
           </ProfileRail>

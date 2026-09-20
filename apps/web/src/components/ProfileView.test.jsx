@@ -7,14 +7,13 @@ vi.mock('../api.js', () => ({
   getProfile: vi.fn(async () => null),
   putProfile: vi.fn(async (p) => ({ ...p, resumeName: null })),
   uploadResume: vi.fn(async () => PROFILE),
-  applyProfileFilter: vi.fn(async () => ({})),
   deleteProfile: vi.fn(async () => null),
   getProviders: vi.fn(async () => [CLAUDE]),
   extractProfile: vi.fn(async () => ({ ...PROFILE, skills: ['node'] })),
 }));
 
 import {
-  getProfile, putProfile, uploadResume, applyProfileFilter, deleteProfile, extractProfile,
+  getProfile, putProfile, uploadResume, deleteProfile, extractProfile,
 } from '../api.js';
 
 const PROFILE = {
@@ -50,8 +49,8 @@ describe('ProfileView with no profile', () => {
     expect(screen.getByLabelText('Years of experience')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Basics' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Experience/ })).toBeInTheDocument();
-    // Apply and delete act on the server's copy, which does not exist yet.
-    expect(screen.queryByRole('button', { name: 'Use this for my alerts' })).not.toBeInTheDocument();
+    // Delete acts on the server's copy, which does not exist yet.
+    expect(screen.queryByRole('button', { name: 'Delete profile' })).not.toBeInTheDocument();
   });
 
   it('adopts the profile the upload returns and shows the file name', async () => {
@@ -211,14 +210,6 @@ describe('ProfileView with a saved profile', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Dismiss' }));
     expect(screen.queryByText(/Proposed role/)).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Role')).not.toBeInTheDocument();
-  });
-
-  it('applies to alerts only after the confirm step', async () => {
-    render(<ProfileView />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Use this for my alerts' }));
-    expect(applyProfileFilter).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: 'Overwrite my filter' }));
-    await waitFor(() => expect(applyProfileFilter).toHaveBeenCalledTimes(1));
   });
 
   it('returns to the empty state after a confirmed delete', async () => {

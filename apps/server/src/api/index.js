@@ -1,10 +1,10 @@
 import { postingsRoutes } from './postings.js'
 import { filtersRoutes } from './filters.js'
-import { notificationsRoutes } from './notifications.js'
 import { aiProviderRoutes } from './ai-provider.js'
 import { profileRoutes } from './profile.js'
 import { postingAiRoutes } from './posting-ai.js'
 import { resumeRoutes } from './resume.js'
+import { chatRoutes } from './chat.js'
 import { aiRoutes } from '../ai/routes.js'
 import { createDetector } from '../ai/detect.js'
 import { createSelector } from '../ai/select.js'
@@ -33,10 +33,10 @@ export async function apiRoutes(app) {
 
   await app.register(postingsRoutes)
   await app.register(filtersRoutes)
-  await app.register(notificationsRoutes)
   await app.register(aiProviderRoutes)
   await app.register(profileRoutes)
   await app.register(postingAiRoutes)
   await app.register(resumeRoutes)
+  await app.register(chatRoutes)
   await app.register(aiRoutes)
 }

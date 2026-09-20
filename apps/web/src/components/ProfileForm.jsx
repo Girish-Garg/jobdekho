@@ -16,7 +16,7 @@ export default function ProfileForm({ profile, onChange, onSave }) {
 
   return (
     <ProfileSection id={sectionId('fit')} title="Best fit" hint={HINT}>
-      <div className="flex flex-col gap-4">
+      <div className="flex max-w-2xl flex-col gap-4">
         <TagInput plain label="Skills" values={profile.skills} onChange={set('skills')} />
         <TagInput plain label="Target titles" values={profile.titles} onChange={set('titles')} />
         <TagInput plain label="Locations" values={profile.locations} onChange={set('locations')} />

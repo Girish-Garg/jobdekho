@@ -22,8 +22,8 @@ export async function send(url, opts = {}) {
   const res = await fetch(url, { credentials: 'include', headers, ...opts });
   if (res.status === 401) throw failure(null, 'unauthorized', 401);
   if (!res.ok) {
-    // The resume 422s and the apply-filter 400 carry messages written to be
-    // shown to the user verbatim, so prefer the server's words to a status line.
+    // The resume upload's 422 carries a message written to be shown to the
+    // user verbatim, so prefer the server's words to a status line.
     const body = await res.json().catch(() => null);
     throw failure(body, `${opts.method || 'GET'} ${url} -> ${res.status}`, res.status);
   }

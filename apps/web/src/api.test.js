@@ -1,10 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
-  getPostings, getSources, setStatus, putFilters, getNotifications, putNotifications,
-  getProfile, putProfile, deleteProfile, uploadResume, applyProfileFilter, getProviders,
+  getPostings, getSources, setStatus, putFilters,
+  getProfile, putProfile, deleteProfile, uploadResume, getProviders,
   getProviderPreference, putProviderPreference, extractProfile,
   runPostingAction, getPostingAiResults,
 } from './api.js';
+import { onNotice } from './lib/toast.js';
 
 function mockFetch(body, status = 200) {
   const fn = vi.fn().mockResolvedValue({
@@ -83,19 +84,21 @@ describe('api client', () => {
     expect(opts.method).toBe('PUT');
   });
 
-  it('notification helpers hit /api/notifications', async () => {
-    const get = mockFetch({ channel: 'none' });
-    await getNotifications();
-    expect(get).toHaveBeenCalledWith('/api/notifications', expect.objectContaining({ credentials: 'include' }));
-
-    const put = mockFetch(null, 204);
-    await putNotifications({ channel: 'telegram', telegramChatId: 'chat1', enabled: true });
-    expect(put.mock.calls[0][1].method).toBe('PUT');
-  });
-
   it('throws a 401-tagged error on unauthorized', async () => {
     mockFetch(null, 401);
     await expect(getSources()).rejects.toMatchObject({ status: 401 });
+  });
+
+  // getSources is one of several GET calls whose local caller falls back to
+  // an empty list on failure with no message of its own (see useSources.js);
+  // this is the one place that still says so.
+  it('getSources announces a failed read, in addition to rejecting', async () => {
+    mockFetch({ error: 'server down' }, 500);
+    const notices = [];
+    const stop = onNotice((n) => notices.push(n));
+    await expect(getSources()).rejects.toThrow();
+    stop();
+    expect(notices).toContainEqual(expect.objectContaining({ title: 'Sources', detail: 'server down' }));
   });
 });
 
@@ -148,20 +151,15 @@ describe('profile api', () => {
     });
   });
 
-  it('applyProfileFilter POSTs with no body and no content-type', async () => {
-    const fetchMock = mockFetch({ includeKeywords: ['react'] });
-    const out = await applyProfileFilter();
-    const [url, opts] = fetchMock.mock.calls[0];
-    expect(url).toBe('/api/profile/apply-filter');
-    expect(opts.method).toBe('POST');
-    // A bodyless POST claiming to carry JSON is a 400 at Fastify's parser.
-    expect(opts.headers).toBeUndefined();
-    expect(out).toEqual({ includeKeywords: ['react'] });
-  });
-
-  it('applyProfileFilter surfaces the no-profile message', async () => {
-    mockFetch({ error: 'no profile' }, 400);
-    await expect(applyProfileFilter()).rejects.toMatchObject({ message: 'no profile', status: 400 });
+  // useProfileState.js falls back to an empty profile on a failed read, which
+  // looks exactly like a genuinely empty one; this is what tells them apart.
+  it('getProfile announces a failed read, in addition to rejecting', async () => {
+    mockFetch({ error: 'server down' }, 500);
+    const notices = [];
+    const stop = onNotice((n) => notices.push(n));
+    await expect(getProfile()).rejects.toThrow();
+    stop();
+    expect(notices).toContainEqual(expect.objectContaining({ title: 'Profile', detail: 'server down' }));
   });
 });
 
@@ -185,6 +183,17 @@ describe('ai api', () => {
     expect(fetchMock.mock.calls[0][0]).toBe('/api/ai/providers');
     await getProviders({ refresh: true });
     expect(fetchMock.mock.calls[1][0]).toBe('/api/ai/providers?refresh=true');
+  });
+
+  // useProviders.js turns a failed probe into "no CLIs installed" with
+  // nothing said about the probe itself having failed; this is that notice.
+  it('getProviders announces a failed probe, in addition to rejecting', async () => {
+    mockFetch({ error: 'server down' }, 500);
+    const notices = [];
+    const stop = onNotice((n) => notices.push(n));
+    await expect(getProviders()).rejects.toThrow();
+    stop();
+    expect(notices).toContainEqual(expect.objectContaining({ title: 'AI CLIs', detail: 'server down' }));
   });
 
   it('provider preference helpers hit /api/ai/provider', async () => {

@@ -18,8 +18,6 @@ function makeFakeStore({ profile = STORED, resumeText = 'Jane Doe, two years of 
     deleteProfile: vi.fn(),
     getUserFilters: vi.fn().mockResolvedValue(null),
     upsertUserFilters: vi.fn(),
-    getNotificationPrefs: vi.fn().mockResolvedValue(null),
-    upsertNotificationPrefs: vi.fn(),
   }
 }
 

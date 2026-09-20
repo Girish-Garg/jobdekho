@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { normalizeProfile, levelsForYears, filterFromProfile } from '@jobdekho/core/profile.js'
+import { normalizeProfile, levelsForYears } from '@jobdekho/core/profile.js'
 import {
   scorePosting, explainScore, canRank, dimensionWeights, levelFitTable, WEIGHTS,
 } from '@jobdekho/core/score.js'
@@ -346,20 +346,5 @@ describe('explainScore', () => {
       titles: ['frontend developer'], years: 2,
     })
     expect(reasons.join(' ')).toContain('title')
-  })
-})
-
-describe('filterFromProfile', () => {
-  it('turns a profile into the notification filter it implies', () => {
-    expect(filterFromProfile({ ...profile, titles: ['Backend Developer'], locations: ['Pune'] })).toEqual({
-      includeKeywords: ['react', 'node', 'python', 'backend developer'],
-      levels: ['entry', 'mid'],
-      maxDegree: 'bachelors',
-      locations: ['pune'],
-    })
-  })
-
-  it('leaves the degree ceiling open when none was found', () => {
-    expect(filterFromProfile({ skills: ['go'] }).maxDegree).toBeNull()
   })
 })

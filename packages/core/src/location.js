@@ -21,8 +21,8 @@ function remoteOk(loc) {
 }
 
 // An empty list means "no location preference", matching how every other
-// list-shaped rule reads empty: /api/profile/apply-filter writes [] for most
-// users, and restricting that to remote-only silently emptied their alerts.
+// list-shaped rule reads empty: config/filters.json ships most lists empty,
+// and restricting that to remote-only would silently drop nearly everything.
 export function locationOk(location, rules) {
   const loc = (location || '').toLowerCase()
   const wanted = rules.locations ?? []

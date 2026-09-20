@@ -1,7 +1,7 @@
-import { req } from './request.js';
+import { req, announced } from './request.js';
 
 export function getProfile() {
-  return req('/api/profile');
+  return announced(req('/api/profile'), 'Profile');
 }
 
 export function putProfile(p) {
@@ -16,8 +16,4 @@ export function uploadResume(file) {
   const form = new FormData();
   form.append('file', file);
   return req('/api/profile/resume', { method: 'POST', body: form });
-}
-
-export function applyProfileFilter() {
-  return req('/api/profile/apply-filter', { method: 'POST' });
 }

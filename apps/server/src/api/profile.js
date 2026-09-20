@@ -1,4 +1,3 @@
-import { filterFromProfile } from '@jobdekho/core/profile.js'
 import { pdfToText } from '../resume/text.js'
 import { extractProfile } from '../resume/extract.js'
 import { answer } from '../ai/ndjson.js'
@@ -33,18 +32,6 @@ export async function profileRoutes(app) {
   app.delete('/api/profile', { preHandler: app.requireAuth }, async (request, reply) => {
     await app.dashboard.deleteProfile(request.user.sub)
     return reply.code(204).send()
-  })
-
-  // Applying the profile to the notification filter is a separate, explicit
-  // step. Rewriting a saved filter as a side effect of an upload would be a
-  // surprise, and the extraction is not reliable enough to earn that.
-  app.post('/api/profile/apply-filter', { preHandler: app.requireAuth }, async (request, reply) => {
-    const profile = await app.dashboard.getProfile(request.user.sub)
-    if (!profile) return reply.code(400).send({ error: 'no profile' })
-    const current = await app.dashboard.getUserFilters(request.user.sub)
-    const merged = { ...current, ...filterFromProfile(profile) }
-    await app.dashboard.upsertUserFilters(request.user.sub, merged)
-    return merged
   })
 
   // Storing the text needs only unpdf, so the upload never waits on the AI CLI
