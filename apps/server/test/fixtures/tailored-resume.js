@@ -1,8 +1,113 @@
-// A realistic two-year profile. Note what makes it a fair test: 2022 appears
-// twice already (a project and an award), so a changed employment year
-// cannot be caught by value alone; skills appear under spellings a keyword
-// matcher does not equate (ReactJS, Node JS, Postgres); and the pay uses
-// Indian grouping.
+// A realistic two-year career record. Note what makes it a fair test: 2022
+// appears twice already (a project and an award), so a changed employment
+// year cannot be caught by value alone; skills appear under spellings a
+// keyword matcher does not equate (ReactJS, Node JS, Postgres); and the pay
+// uses Indian grouping.
+export const PROFILE = {
+  basics: {
+    name: 'Priya Sharma', headline: '', email: 'priya.sharma@example.com', phone: '+91 98765 43210',
+    location: 'Pune, Maharashtra', links: { github: 'github.com/priyasharma', linkedin: '', portfolio: '' },
+  },
+  experience: [
+    {
+      id: 'exp-infobeans', order: 0, title: 'Software Developer', organisation: 'Infobeans Technologies', location: 'Pune',
+      startDate: 'Jul 2023', endDate: 'Present', tech: ['ReactJS', 'Node JS', 'Postgres', 'Redis', 'Jest', 'Docker', 'AWS'],
+      link: '', pinned: false, weight: 0,
+      bullets: [
+        'Developed the customer onboarding portal in ReactJS and Node JS used by 40,000 monthly users.',
+        'Reduced API response time by 35% by adding Redis caching and query indexes in Postgres.',
+        'Wrote unit tests with Jest, raising coverage from 48% to 81%.',
+        'Set up CI pipelines on GitHub Actions and deployed containers with Docker on AWS EC2.',
+        'Mentored 2 interns on code review and Git workflow.',
+      ],
+    },
+    {
+      id: 'exp-zensar', order: 1, title: 'Software Developer Intern', organisation: 'Zensar Technologies', location: 'Pune',
+      startDate: 'Jan 2023', endDate: 'Jun 2023', tech: ['Express', 'ReactJS', 'jQuery'], link: '', pinned: false, weight: 0,
+      bullets: [
+        'Built REST APIs in Express for an internal leave management tool with 1,200 employees.',
+        'Migrated 15 legacy jQuery pages to ReactJS.',
+      ],
+    },
+  ],
+  projects: [
+    {
+      id: 'proj-campus', order: 0, title: 'Campus Marketplace', organisation: '', location: '',
+      startDate: '2022', endDate: '', tech: ['ReactJS', 'Express', 'MongoDB'], link: '', pinned: false, weight: 0,
+      bullets: ['A buy and sell app for students built with ReactJS, Express and MongoDB. 300 users in the first month.'],
+    },
+    {
+      id: 'proj-expense', order: 1, title: 'Expense Tracker', organisation: '', location: '',
+      startDate: '2021', endDate: '', tech: ['Kotlin', 'Firebase'], link: '', pinned: false, weight: 0,
+      bullets: ['Android app in Kotlin with a Firebase backend.'],
+    },
+  ],
+  education: [
+    {
+      id: 'edu-sppu', order: 0, title: 'B.Tech, Computer Science and Engineering', organisation: 'Savitribai Phule Pune University',
+      location: '', startDate: '2019', endDate: '2023', tech: [], link: '', pinned: false, weight: 0,
+      bullets: ['CGPA 8.4'],
+    },
+  ],
+  certifications: [],
+  achievements: [
+    {
+      id: 'ach-sih', order: 0, title: 'Winner, Smart India Hackathon', organisation: '', location: '',
+      startDate: '2022', endDate: '', tech: [], link: '', pinned: false, weight: 0,
+      bullets: ['Winner, Smart India Hackathon 2022 (team of 6), stipend of Rs 1,00,000.'],
+    },
+  ],
+  skillGroups: [
+    { id: 'sg-lang', order: 0, name: 'Languages', items: ['JavaScript', 'TypeScript', 'Python', 'Kotlin', 'SQL'] },
+    { id: 'sg-frame', order: 1, name: 'Frameworks', items: ['ReactJS', 'Node JS', 'Express', 'Jest'] },
+    { id: 'sg-tools', order: 2, name: 'Tools', items: ['Docker', 'Git', 'GitHub Actions', 'AWS', 'Redis', 'Postgres', 'MongoDB', 'Firebase'] },
+  ],
+}
+
+// An honest plan for a Node.js backend posting: the two backend roles kept
+// and reworded, the Android project dropped entirely, and the posting's own
+// spellings used where an entry already supports them.
+export const PLAN = {
+  sections: {
+    experience: [
+      {
+        id: 'exp-infobeans',
+        bullets: [
+          'Cut API response time by 35 % with Redis caching and PostgreSQL query indexes.',
+          'Built and maintained Node.js services behind the customer onboarding portal serving 40000 monthly users.',
+          'Set up CI pipelines on GitHub Actions and shipped Docker containers to AWS EC2.',
+          'Raised unit test coverage from 48% to 81% with Jest.',
+          'Mentored 2 interns on code review and Git workflow.',
+        ],
+        dropped: [],
+      },
+      {
+        id: 'exp-zensar',
+        bullets: ['Designed REST APIs in Express for a leave management tool used by 1,200 employees.'],
+        dropped: ['Migrated 15 legacy jQuery pages to ReactJS.'],
+      },
+    ],
+    projects: [
+      {
+        id: 'proj-campus',
+        bullets: ['Express and MongoDB backend for a student buy and sell app with React frontend; 300 users in the first month.'],
+        dropped: [],
+      },
+    ],
+    education: [{ id: 'edu-sppu', bullets: ['CGPA 8.4'], dropped: [] }],
+    certifications: [],
+    achievements: [{ id: 'ach-sih', bullets: ['Winner, Smart India Hackathon 2022 (team of 6), stipend of Rs 100000.'], dropped: [] }],
+  },
+  keywords: { used: ['node.js', 'postgresql', 'redis'], missing: ['kafka', 'kubernetes'] },
+}
+
+export const JD = `Backend Engineer (Node.js)
+We are looking for a backend engineer with 1 to 3 years of experience. Must have: Node.js, Express, PostgreSQL, Redis, REST APIs, Docker, AWS. Good to have: Kafka, Kubernetes, TypeScript, GraphQL, CI/CD with GitHub Actions. You will design microservices and own their reliability.`
+
+// The same career record as flat resume text, kept for resume-fact-check.test.js
+// (and anything else that wants to exercise the checker on plain text rather
+// than on a profile and a plan): PROFILE above and this text describe the
+// same person, just shaped for two different callers.
 export const ORIGINAL = `Priya Sharma
 Pune, Maharashtra | priya.sharma@example.com | +91 98765 43210 | github.com/priyasharma
 
@@ -37,9 +142,9 @@ ACHIEVEMENTS
 Winner, Smart India Hackathon 2022 (team of 6), stipend of Rs 1,00,000.
 `
 
-// An honest tailoring for a Node.js backend posting: reordered, reworded,
-// standard headings, the Android project dropped, and the posting's own
-// spellings used where the original supports them.
+// An honest tailoring of ORIGINAL for the same Node.js backend posting:
+// reordered, reworded, standard headings, the Android project dropped, and
+// the posting's own spellings used where the original supports them.
 export const HONEST = `Priya Sharma
 Pune, Maharashtra | priya.sharma@example.com | +91 98765 43210 | github.com/priyasharma
 
@@ -71,6 +176,3 @@ B.Tech, Computer Science and Engineering, Savitribai Phule Pune University, 2019
 Achievements
 Winner, Smart India Hackathon 2022 (team of 6), stipend of Rs 100000.
 `
-
-export const JD = `Backend Engineer (Node.js)
-We are looking for a backend engineer with 1 to 3 years of experience. Must have: Node.js, Express, PostgreSQL, Redis, REST APIs, Docker, AWS. Good to have: Kafka, Kubernetes, TypeScript, GraphQL, CI/CD with GitHub Actions. You will design microservices and own their reliability.`

@@ -1,52 +1,62 @@
 import { useState } from 'react';
-import { usePostingAction } from '../lib/usePostingAction.js';
+import { usePostingAction, versionsOf } from '../lib/usePostingAction.js';
 import { relativeDay } from '../lib/time.js';
 import AiError from './AiError.jsx';
+import AiRefine from './AiRefine.jsx';
+import AiVersions from './AiVersions.jsx';
 import ResumeTailorResult from './ResumeTailorResult.jsx';
+import ResumeBuilderOverlay from './ResumeBuilderOverlay.jsx';
 
 const SECONDARY = 'rounded-full border border-line px-4 py-1.5 text-sm text-ink transition hover:border-ink disabled:opacity-60';
 
-// The download is named for the employer, since a person tailoring for
-// several jobs ends up with several files.
-const fileNameFor = (company) => {
-  const slug = String(company || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-  return slug ? `resume-${slug}.txt` : 'resume-tailored.txt';
-};
-
-// "Tailor my resume for this job": sends the resume on file and the posting
-// to the CLI with no tools, and shows the rewrite behind the server's own
-// fact check of it. A saved rewrite collapses to one line naming whether
+// "Tailor my resume for this job": sends the career record and the posting
+// to the CLI with no tools, and shows the plan it picked behind the server's
+// own fact check of it. A saved plan collapses to one line naming whether
 // anything needs checking, so a page carrying all three AI results does not
-// have to show three full rewrites at once; a click opens it back up, and a
-// fresh rewrite opens it back up too, since the person who just asked for it
+// have to show three full results at once; a click opens it back up, and a
+// fresh run opens it back up too, since the person who just asked for it
 // wants to read it. The button becomes "Tailor again", so a posting already
 // tailored for never costs a second call by accident. While a CLI that went
 // missing is being reported, the button is withheld: it could only fail, and
 // the alert offers the re-probe.
 export default function ResumeTailor({ posting, cli }) {
-  const { saved, busy, progress, error, run, clearError } = usePostingAction({
+  const { saved, busy, progress, error, run, refine, clearError } = usePostingAction({
     postingId: posting.id, kind: 'resume-tailor', providers: cli.providers,
-    noun: 'Resume', doing: 'rewriting',
+    noun: 'Career record', doing: 'picking your best entries',
   });
   const [expanded, setExpanded] = useState(false);
+  // Which version is on screen; null means the newest, so a fresh run or
+  // refine shows what it just produced without this having to track length.
+  const [selected, setSelected] = useState(null);
+  const [builderOpen, setBuilderOpen] = useState(false);
 
   if (saved === undefined) return <p className="font-mono text-xs text-muted">Looking for an earlier rewrite...</p>;
   const blocked = error?.kind === 'not_found';
   const flagCount = saved?.result?.factCheck?.flags?.length ?? 0;
   const summary = saved
     && `Tailored ${relativeDay(saved.createdAt)}, ${flagCount ? `${flagCount} to check` : 'nothing flagged'}`;
+  const versions = versionsOf(saved);
+  const shown = saved && versions[selected ?? versions.length - 1];
 
   function onRun() {
     setExpanded(true);
+    setSelected(null);
     run();
+  }
+
+  function onRefine(instruction) {
+    setExpanded(true);
+    setSelected(null);
+    refine(instruction);
   }
 
   return (
     <div className="flex flex-col gap-2 py-3 first:pt-0 last:pb-0">
       {!saved && (
         <p className="text-xs leading-relaxed text-muted">
-          Sends the resume on file and this posting to {cli.ready.label} on this computer, with no tools.
-          Takes a minute or two. The rewrite is checked against your original before you see it.
+          Sends your career record and this posting to {cli.ready.label} on this computer, with no tools.
+          Takes a minute or two. It picks and reorders your best entries for this job, then rewords the
+          bullets it keeps; every reworded bullet is checked against that entry's own original before you see it.
         </p>
       )}
       {saved && (
@@ -55,8 +65,10 @@ export default function ResumeTailor({ posting, cli }) {
             <span className="text-sm text-ink">{summary}</span>
             <span aria-hidden="true" className="shrink-0 text-muted transition-transform group-open:rotate-180">&#8964;</span>
           </summary>
-          <div className="mt-2">
-            <ResumeTailorResult record={saved} providers={cli.providers} fileName={fileNameFor(posting.company)} />
+          <div className="mt-2 flex flex-col gap-3">
+            <ResumeTailorResult record={shown} providers={cli.providers} onOpenBuilder={() => setBuilderOpen(true)} />
+            <AiVersions record={saved} selected={selected} onSelect={setSelected} />
+            {!blocked && <AiRefine label={cli.ready.label} busy={busy} onRefine={onRefine} />}
           </div>
         </details>
       )}
@@ -69,6 +81,9 @@ export default function ResumeTailor({ posting, cli }) {
         <span aria-live="polite" className="text-sm text-muted">{busy ? progress : ''}</span>
       </div>
       <AiError error={error} checking={cli.checking} onRecheck={() => (clearError(), cli.refresh())} />
+      {builderOpen && shown && (
+        <ResumeBuilderOverlay jobTitle={posting.title} plan={shown.result} onClose={() => setBuilderOpen(false)} />
+      )}
     </div>
   );
 }
@@ -76,4 +91,4 @@ export default function ResumeTailor({ posting, cli }) {
 // The tool policy its server-side twin runs under, and the sentence the gate
 // shows when no installed CLI can take it (see AiGate).
 ResumeTailor.policy = 'none';
-ResumeTailor.intro = 'Tailoring the resume asks an AI CLI installed on this computer, on your own subscription.';
+ResumeTailor.intro = 'Tailoring your resume asks an AI CLI installed on this computer, on your own subscription.';

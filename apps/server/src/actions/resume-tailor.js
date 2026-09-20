@@ -1,20 +1,26 @@
 import { buildResumeTailorPrompt } from './resume-tailor-prompt.js'
+import { buildResumeTailorRefinePrompt } from './resume-tailor-refine-prompt.js'
 import { parseResumeTailor } from './resume-tailor-parse.js'
 
-// "Tailor my resume for this job": the CLI rewrites the resume on file so an
-// ATS scores it higher for this posting, and the server then checks the
-// rewrite against the original in code (see resume-fact-check.js) so nothing
-// invented reaches the person unflagged.
+// "Tailor my resume for this job": the CLI picks which of the person's own
+// career-record entries fit this posting, orders them, and rewords the
+// bullets it keeps; the server then checks every reworded bullet against the
+// one entry it claims to reword (see resume-tailor-validate.js) so nothing
+// invented reaches the person unflagged, and drops any entry id the profile
+// does not actually have.
 //
-// No tools, without exception: the prompt holds the resume, and the posting
-// in it is scraped text that could tell an agent with a browser or a shell
-// to send that resume somewhere. Three minutes because a full rewrite of a
-// two-page resume is a long reply, not because anything is looked up.
+// No tools, without exception: the prompt holds the whole career record, and
+// the posting in it is scraped text that could tell an agent with a browser
+// or a shell to send that record somewhere. Three minutes because picking
+// and rewording a multi-year record is a long reply, not because anything is
+// looked up.
 export const resumeTailor = {
   kind: 'resume-tailor',
   tools: 'none',
   timeoutMs: 3 * 60 * 1000,
-  context: ['resumeText'],
-  buildPrompt: (posting, context) => buildResumeTailorPrompt(posting, context.resumeText),
-  parse: parseResumeTailor,
+  context: ['profileEntries'],
+  buildPrompt: (posting, context) => buildResumeTailorPrompt(posting, context.profileEntries),
+  buildRefinePrompt: (posting, context, previous, instruction) =>
+    buildResumeTailorRefinePrompt(posting, context.profileEntries, previous, instruction),
+  parse: (raw, { posting, context }) => parseResumeTailor(raw, { posting, context: { profile: context.profileEntries } }),
 }

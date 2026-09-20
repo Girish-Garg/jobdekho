@@ -1,3 +1,11 @@
+import { ENTRY_SECTIONS } from '@jobdekho/store/profile-sections.js'
+
+// A profile with a name but nothing under experience, projects, education,
+// certifications or achievements has nothing to pick from - the same
+// emptiness check the resume builder API applies before it will render
+// anything (see apps/server/src/api/resume.js).
+const hasEntries = (profile) => ENTRY_SECTIONS.some((key) => (profile?.[key]?.length ?? 0) > 0)
+
 // What an action may ask for beside the posting, by name. An action declares
 // the names it needs and the route loads exactly those, so the resume is
 // never in the room for a call that has no use for it. That is what lets the
@@ -16,6 +24,16 @@ export const CONTEXT = {
   profile: {
     load: (dashboard, userId) => dashboard.getProfile(userId),
     missing: 'Fill in your profile first.',
+  },
+  // The resume tailoring picks entries out of the career record, so an empty
+  // one is caught here rather than costing a CLI call for a plan that could
+  // only ever come back with nothing to pick.
+  profileEntries: {
+    load: async (dashboard, userId) => {
+      const profile = await dashboard.getProfile(userId)
+      return hasEntries(profile) ? profile : null
+    },
+    missing: 'Add at least one entry to your career record first.',
   },
 }
 

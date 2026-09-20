@@ -23,9 +23,13 @@ export const FILES = {
   statuses: 'statuses.json',
   filters: 'filters.json',
   notifications: 'notifications.json',
-  users: 'users.json',
   runs: 'runs.ndjson',
   aiResults: 'ai-results.json',
+  aiProvider: 'ai-provider.json',
+  // Which template and entries the resume builder should render. Compiled
+  // PDFs are cached beside this, under a resumes/<userId>/ directory the
+  // same handle's `dir` points at (see apps/server/src/resume/cache.js).
+  resumeSelections: 'resume-selection.json',
 }
 
 export function openStore(dir) {
@@ -39,13 +43,13 @@ export function openStore(dir) {
     statuses: userFile(at('statuses')),
     filters: userFile(at('filters')),
     notifications: userFile(at('notifications')),
-    // Only written when somebody signs in with Google. A local install sets
-    // DEV_AUTH_USER_ID instead and this file never appears.
-    users: userFile(at('users')),
     runs: openRuns(at('runs')),
     // What the AI CLI answered about a posting, per user. Each answer cost a
     // call on the person's own subscription, which is why it is kept with
     // the things they made rather than with the corpus a scrape may reset.
     aiResults: userFile(at('aiResults')),
+    // Which CLI to prefer when more than one is installed. See ai-provider-pref.js.
+    aiProvider: userFile(at('aiProvider')),
+    resumeSelections: userFile(at('resumeSelections')),
   }
 }
