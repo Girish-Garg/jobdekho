@@ -63,7 +63,7 @@ describe('PostingRow click', () => {
 describe('PostingRow work mode', () => {
   it('names a mode that differs from the page-wide dominant mode', () => {
     render(<PostingRow posting={{ ...base, workMode: 'hybrid' }} dominantWorkMode="remote" {...handlers} />);
-    expect(screen.getByText('Hybrid')).toBeInTheDocument();
+    expect(screen.getByText(/Hybrid/)).toBeInTheDocument();
   });
 
   it('says nothing when the row matches the dominant mode', () => {
@@ -73,16 +73,22 @@ describe('PostingRow work mode', () => {
 });
 
 describe('PostingRow triage actions', () => {
-  it('are visually deferred to hover or focus when there is no status', () => {
+  it('are hidden until the row is hovered, focused or selected', () => {
     render(<PostingRow posting={base} {...handlers} />);
-    const group = screen.getByRole('button', { name: 'Save' }).parentElement;
-    expect(group.className).toContain('opacity-0');
+    const holder = screen.getByRole('button', { name: 'Save' }).closest('.absolute');
+    expect(holder.className).toContain('invisible');
+    expect(holder.className).toContain('group-hover:visible');
   });
 
-  it('are forced visible once a status is set, with aria-pressed on the active one', () => {
+  it('are shown outright on the selected row', () => {
+    render(<PostingRow posting={base} selected {...handlers} />);
+    const holder = screen.getByRole('button', { name: 'Save' }).closest('.absolute');
+    expect(holder.className).not.toContain('invisible');
+  });
+
+  it('names a set status on the row, with aria-pressed on the active button', () => {
     render(<PostingRow posting={{ ...base, status: 'saved' }} {...handlers} />);
-    const group = screen.getByRole('button', { name: 'Save' }).parentElement;
-    expect(group.className).toContain('opacity-100');
+    expect(screen.getByText('Saved')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Save' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('button', { name: 'Applied' })).toHaveAttribute('aria-pressed', 'false');
   });

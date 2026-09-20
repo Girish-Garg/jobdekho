@@ -23,8 +23,8 @@ export default function Topbar({ view, setView, q = '', onSearch, searchRef }) {
       </div>
 
       {onSearch && (
-        <div className="flex min-w-0 flex-1 justify-center">
-          <div className="relative w-full max-w-lg">
+        <div className="flex min-w-0 flex-1 justify-end">
+          <div className="relative w-full max-w-[300px]">
             <input
               ref={searchRef}
               value={q}
@@ -34,7 +34,7 @@ export default function Topbar({ view, setView, q = '', onSearch, searchRef }) {
               onKeyDown={(event) => event.key === 'Escape' && event.currentTarget.blur()}
               aria-label="Keyword"
               placeholder="Search titles and companies"
-              className="w-full rounded-full border border-line bg-paper px-4 py-1.5 text-sm outline-none transition focus:border-ink"
+              className="w-full rounded-md border border-line bg-paper px-3 py-1 text-sm outline-none transition-colors duration-fast ease focus:border-edge"
             />
             {!searchFocused && !q && (
               <span
@@ -48,7 +48,7 @@ export default function Topbar({ view, setView, q = '', onSearch, searchRef }) {
         </div>
       )}
 
-      <div className="flex shrink-0 items-center gap-3">
+      <div className="ml-auto flex shrink-0 items-center gap-3">
         <ThemeToggle />
       </div>
     </header>

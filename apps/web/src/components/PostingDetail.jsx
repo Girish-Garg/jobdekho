@@ -28,7 +28,7 @@ export default function PostingDetail({ posting, onClose, onStatus }) {
     <div className="flex flex-col gap-5">
       <div className="flex items-start gap-4">
         <div className="min-w-0 flex-1">
-          <h2 id={TITLE_ID} className="font-display text-2xl font-extrabold leading-tight tracking-tight">
+          <h2 id={TITLE_ID} className="font-display text-xl font-extrabold leading-tight tracking-tight">
             {posting.title}
           </h2>
           <p className="mt-1 text-sm text-muted">{posting.company}</p>

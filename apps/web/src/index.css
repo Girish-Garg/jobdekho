@@ -21,7 +21,7 @@
   --edge: 201 194 180;
   --ember: 184 67 15;
   --ring: 26 24 21;
-  --select: 240 234 222;
+  --select: 232 223 205;
 
   /* Seniority is an ordered ladder, so the rungs are one ramp: lightness falls
      a fixed step per rung, which keeps the order legible in greyscale and to a
@@ -33,12 +33,12 @@
   --level-staff: 97 48 64;
   --level-executive: 73 47 27;
 
-  /* What sits above the scrolling feed: the topbar and the filter bar are
-     outside it, the sort bar sticks to its top. The detail pane reads both
-     to know where to stick and how tall it may be, which it used to guess
-     at 48px and 80px, so its bottom fell off the screen. */
+  /* What sits above the scrolling feed: the topbar and the filter row are
+     outside it, and the pane reads their height to know how tall it may be.
+     It used to guess 80px, so its bottom fell off the screen. The second
+     value is the breathing room the pane keeps from the top of the scroll. */
   --chrome-above-feed: 92px;
-  --feed-header: 44px;
+  --feed-header: 8px;
 
   --duration-fast: 120ms;
   --duration-slow: 220ms;
@@ -60,7 +60,7 @@
   --edge: 74 66 55;
   --ember: 232 114 47;
   --ring: 242 236 224;
-  --select: 42 38 32;
+  --select: 58 52 41;
 
   /* The same six hues, lightness solved to step down 60, 54, 48, 42, 37, 32
      so the ramp keeps its order the way the light one does. Every rung clears

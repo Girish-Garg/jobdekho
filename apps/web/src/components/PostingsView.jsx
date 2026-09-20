@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { isNewToday } from '../lib/time.js';
 import { usePostingsFeed } from '../lib/usePostingsFeed.js';
-import { useViewMode } from '../lib/viewMode.js';
 import { useMediaQuery } from '../lib/useMediaQuery.js';
 import { useTriage } from '../lib/useTriage.js';
 import { useOpenPosting } from '../lib/useOpenPosting.js';
@@ -12,22 +11,20 @@ import PostingsHeader from './PostingsHeader.jsx';
 import FeedBody from './FeedBody.jsx';
 import PostingDetailSlot from './PostingDetailSlot.jsx';
 import RecommendedNotice from './RecommendedNotice.jsx';
-import DensityToggle from './DensityToggle.jsx';
 
 // Below this the pane has nowhere to sit beside the list, so a dialog takes
-// over instead; the chrome agent's own breakpoints are unrelated.
+// over instead.
 const WIDE_QUERY = '(min-width: 1100px)';
 
-export default function PostingsView({ filters, onOpenProfile }) {
-  // Best fit by default: the feed opens personalised, and the other sorts
-  // reorder the same ranked, fit-filtered set rather than replacing it.
-  const [sort, setSort] = useState('match');
-  const [viewMode, setViewMode] = useViewMode();
+// Sort and density are read here and set in the chrome: their controls sit
+// in the filter row beside the filters they belong with, and the command
+// palette changes the sort as well, so the state lives in Shell where all
+// three can reach it. The defaults are what a fresh install shows.
+export default function PostingsView({ filters, sort = 'match', viewMode = 'list', onOpenProfile }) {
   const { rows, loading, more, loadMore, onStatus } = usePostingsFeed(filters, sort);
   const triage = useTriage(rows, onStatus);
   const isWide = useMediaQuery(WIDE_QUERY);
   const { opened, openFromClick: openRow, openById, close: closeCard } = useOpenPosting(rows);
-
   const { fitFiltered, unranked } = rankingNotice(filters, sort, rows);
 
   // Selection (keyboard highlight) is separate from "open": only Enter or a
@@ -52,47 +49,38 @@ export default function PostingsView({ filters, onOpenProfile }) {
   });
 
   return (
-    <section>
-      <PostingsHeader
-        shown={rows.length}
-        fresh={rows.filter((p) => isNewToday(p.firstSeenAt)).length}
-        sort={sort}
-        setSort={setSort}
-      >
-        <DensityToggle mode={viewMode} setMode={setViewMode} />
-      </PostingsHeader>
-      <div className="flex gap-4 px-4 py-2">
-        <div className="min-w-0 flex-1">
-          {unranked && (
-            <div className="pb-5">
-              <RecommendedNotice fitFiltered={fitFiltered} onOpenProfile={onOpenProfile} />
-            </div>
-          )}
-          <FeedBody
-            loading={loading}
-            rows={rows}
-            viewMode={viewMode}
-            filters={filters}
-            selectedId={selectedId}
-            flashId={triage.flashId}
-            onOpen={openFromClick}
-            onSelect={setSelectedId}
-            onStatus={triage.setStatus}
-            onUndo={triage.undo}
-          />
-          {!loading && more && (
-            <div className="pt-6">
-              <button
-                onClick={loadMore}
-                className="rounded-full border border-line px-5 py-2 font-mono text-xs text-muted transition hover:border-ink hover:text-ink"
-              >
-                Load more
-              </button>
-            </div>
-          )}
-        </div>
-        <PostingDetailSlot isWide={isWide} opened={opened} onClose={closeCard} onStatus={triage.setStatus} />
+    <section className="flex gap-4 px-4 py-2">
+      <div className="min-w-0 flex-1">
+        <PostingsHeader shown={rows.length} fresh={rows.filter((p) => isNewToday(p.firstSeenAt)).length} />
+        {unranked && (
+          <div className="pb-4">
+            <RecommendedNotice fitFiltered={fitFiltered} onOpenProfile={onOpenProfile} />
+          </div>
+        )}
+        <FeedBody
+          loading={loading}
+          rows={rows}
+          viewMode={viewMode}
+          filters={filters}
+          selectedId={selectedId}
+          flashId={triage.flashId}
+          onOpen={openFromClick}
+          onSelect={setSelectedId}
+          onStatus={triage.setStatus}
+          onUndo={triage.undo}
+        />
+        {!loading && more && (
+          <div className="pt-6">
+            <button
+              onClick={loadMore}
+              className="rounded-md border border-line px-4 py-1.5 text-sm text-muted transition-colors duration-fast ease hover:border-edge hover:text-ink"
+            >
+              Load more
+            </button>
+          </div>
+        )}
       </div>
+      <PostingDetailSlot isWide={isWide} opened={opened} onClose={closeCard} onStatus={triage.setStatus} />
     </section>
   );
 }

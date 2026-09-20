@@ -1,6 +1,24 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, fireEvent, within, act } from '@testing-library/react';
+import { useState } from 'react';
 import PostingsView from './PostingsView.jsx';
+import SortSelect from './SortSelect.jsx';
+import DensityToggle from './DensityToggle.jsx';
+import { useViewMode } from '../lib/viewMode.js';
+
+// What Shell renders around the feed: the sort and density controls with
+// the state the feed reads, so a test can still change them.
+function Harness(props) {
+  const [sort, setSort] = useState('match');
+  const [viewMode, setViewMode] = useViewMode();
+  return (
+    <>
+      <DensityToggle mode={viewMode} setMode={setViewMode} />
+      <SortSelect sort={sort} setSort={setSort} />
+      <PostingsView {...props} sort={sort} viewMode={viewMode} />
+    </>
+  );
+}
 
 vi.mock('../api.js', () => ({
   getPostings: vi.fn(async () => []),
@@ -53,13 +71,13 @@ describe('PostingsView server-side filters', () => {
   // The feed opens personalised; the server's default is match too, but the
   // select needs to show the order the list actually has.
   it('asks for the best-fit ordering on the very first request', async () => {
-    render(<PostingsView filters={EMPTY} />);
+    render(<Harness filters={EMPTY} />);
     await waitFor(() => expect(getPostings).toHaveBeenCalled());
     expect(getPostings).toHaveBeenCalledWith(expect.objectContaining({ sort: 'match' }));
   });
 
   it('sends the fit floor as minFit', async () => {
-    render(<PostingsView filters={{ ...EMPTY, minFit: '30' }} />);
+    render(<Harness filters={{ ...EMPTY, minFit: '30' }} />);
     await waitFor(() => expect(getPostings).toHaveBeenCalled());
     expect(getPostings).toHaveBeenCalledWith(expect.objectContaining({ minFit: '30' }));
   });
@@ -67,7 +85,7 @@ describe('PostingsView server-side filters', () => {
   // The whole point of fit-as-a-filter: another sort reorders the matches, it
   // does not widen the feed back out.
   it('keeps the fit floor in the request when the sort changes to newest', async () => {
-    render(<PostingsView filters={{ ...EMPTY, minFit: '45' }} />);
+    render(<Harness filters={{ ...EMPTY, minFit: '45' }} />);
     await waitFor(() => expect(getPostings).toHaveBeenCalled());
     fireEvent.change(screen.getByLabelText(/sort/i), { target: { value: 'newest' } });
     await waitFor(() =>
@@ -78,7 +96,7 @@ describe('PostingsView server-side filters', () => {
   });
 
   it('sends levels comma-separated and maxDegree as query params', async () => {
-    render(<PostingsView filters={{ ...EMPTY, levels: ['mid', 'staff'], maxDegree: 'masters' }} />);
+    render(<Harness filters={{ ...EMPTY, levels: ['mid', 'staff'], maxDegree: 'masters' }} />);
     await waitFor(() => expect(getPostings).toHaveBeenCalled());
     expect(getPostings).toHaveBeenCalledWith(
       expect.objectContaining({ levels: 'mid,staff', maxDegree: 'masters' }),
@@ -86,20 +104,20 @@ describe('PostingsView server-side filters', () => {
   });
 
   it('sends the excluded sources comma-separated, never an include-list', async () => {
-    render(<PostingsView filters={{ ...EMPTY, excludedSources: ['lever', 'ashby'] }} />);
+    render(<Harness filters={{ ...EMPTY, excludedSources: ['lever', 'ashby'] }} />);
     await waitFor(() => expect(getPostings).toHaveBeenCalled());
     expect(getPostings).toHaveBeenCalledWith(expect.objectContaining({ excludedSources: 'lever,ashby' }));
     expect(getPostings.mock.calls[0][0]).not.toHaveProperty('sources');
   });
 
   it('sends the picked work modes comma-separated', async () => {
-    render(<PostingsView filters={{ ...EMPTY, workModes: ['remote', 'hybrid'] }} />);
+    render(<Harness filters={{ ...EMPTY, workModes: ['remote', 'hybrid'] }} />);
     await waitFor(() => expect(getPostings).toHaveBeenCalled());
     expect(getPostings).toHaveBeenCalledWith(expect.objectContaining({ workModes: 'remote,hybrid' }));
   });
 
   it('sends empty strings for the unset multi-selects', async () => {
-    render(<PostingsView filters={EMPTY} />);
+    render(<Harness filters={EMPTY} />);
     await waitFor(() => expect(getPostings).toHaveBeenCalled());
     expect(getPostings).toHaveBeenCalledWith(
       expect.objectContaining({ levels: '', excludedSources: '', workModes: '' }),
@@ -108,40 +126,40 @@ describe('PostingsView server-side filters', () => {
 
   it('does not filter by level or work mode on the client', async () => {
     getPostings.mockResolvedValueOnce([row({ level: 'executive', workMode: 'onsite' })]);
-    render(<PostingsView filters={{ ...EMPTY, levels: ['mid'], workModes: ['remote'] }} />);
+    render(<Harness filters={{ ...EMPTY, levels: ['mid'], workModes: ['remote'] }} />);
     expect(await screen.findByText('Engineer')).toBeInTheDocument();
   });
 });
 
 describe('PostingsView refetch triggers', () => {
   it('refetches when a server-side field changes', async () => {
-    const { rerender } = render(<PostingsView filters={EMPTY} />);
+    const { rerender } = render(<Harness filters={EMPTY} />);
     await waitFor(() => expect(getPostings).toHaveBeenCalledTimes(1));
 
-    rerender(<PostingsView filters={{ ...EMPTY, levels: ['senior'] }} />);
+    rerender(<Harness filters={{ ...EMPTY, levels: ['senior'] }} />);
     await waitFor(() => expect(getPostings).toHaveBeenCalledTimes(2));
 
-    rerender(<PostingsView filters={{ ...EMPTY, levels: ['senior'], maxDegree: 'phd' }} />);
+    rerender(<Harness filters={{ ...EMPTY, levels: ['senior'], maxDegree: 'phd' }} />);
     await waitFor(() => expect(getPostings).toHaveBeenCalledTimes(3));
   });
 
   it('refetches when the exclusions or the work modes change', async () => {
-    const { rerender } = render(<PostingsView filters={EMPTY} />);
+    const { rerender } = render(<Harness filters={EMPTY} />);
     await waitFor(() => expect(getPostings).toHaveBeenCalledTimes(1));
 
-    rerender(<PostingsView filters={{ ...EMPTY, excludedSources: ['lever'] }} />);
+    rerender(<Harness filters={{ ...EMPTY, excludedSources: ['lever'] }} />);
     await waitFor(() => expect(getPostings).toHaveBeenCalledTimes(2));
 
-    rerender(<PostingsView filters={{ ...EMPTY, excludedSources: ['lever'], workModes: ['remote'] }} />);
+    rerender(<Harness filters={{ ...EMPTY, excludedSources: ['lever'], workModes: ['remote'] }} />);
     await waitFor(() => expect(getPostings).toHaveBeenCalledTimes(3));
   });
 
   it('does not refetch when the same arrays arrive in new objects', async () => {
     const seed = { ...EMPTY, excludedSources: ['lever'], workModes: ['remote'] };
-    const { rerender } = render(<PostingsView filters={seed} />);
+    const { rerender } = render(<Harness filters={seed} />);
     await waitFor(() => expect(getPostings).toHaveBeenCalledTimes(1));
 
-    rerender(<PostingsView filters={{ ...EMPTY, excludedSources: ['lever'], workModes: ['remote'] }} />);
+    rerender(<Harness filters={{ ...EMPTY, excludedSources: ['lever'], workModes: ['remote'] }} />);
     await Promise.resolve();
     expect(getPostings).toHaveBeenCalledTimes(1);
   });
@@ -149,38 +167,38 @@ describe('PostingsView refetch triggers', () => {
   // These three used to be narrowed in the browser, which only ever filtered
   // the loaded page. They are server-side now, so each one must refetch.
   it('refetches when a measure filter changes', async () => {
-    const { rerender } = render(<PostingsView filters={EMPTY} />);
+    const { rerender } = render(<Harness filters={EMPTY} />);
     await waitFor(() => expect(getPostings).toHaveBeenCalledTimes(1));
 
-    rerender(<PostingsView filters={{ ...EMPTY, minStipend: '5000' }} />);
+    rerender(<Harness filters={{ ...EMPTY, minStipend: '5000' }} />);
     await waitFor(() => expect(getPostings).toHaveBeenCalledTimes(2));
-    rerender(<PostingsView filters={{ ...EMPTY, minStipend: '5000', maxExp: '2' }} />);
+    rerender(<Harness filters={{ ...EMPTY, minStipend: '5000', maxExp: '2' }} />);
     await waitFor(() => expect(getPostings).toHaveBeenCalledTimes(3));
-    rerender(<PostingsView filters={{ ...EMPTY, minStipend: '5000', maxExp: '2', maxMonths: '3' }} />);
+    rerender(<Harness filters={{ ...EMPTY, minStipend: '5000', maxExp: '2', maxMonths: '3' }} />);
     await waitFor(() => expect(getPostings).toHaveBeenCalledTimes(4));
   });
 
   it('does not refetch when an identical filters object is recreated', async () => {
-    const { rerender } = render(<PostingsView filters={{ ...EMPTY }} />);
+    const { rerender } = render(<Harness filters={{ ...EMPTY }} />);
     await waitFor(() => expect(getPostings).toHaveBeenCalledTimes(1));
 
-    rerender(<PostingsView filters={{ ...EMPTY }} />);
+    rerender(<Harness filters={{ ...EMPTY }} />);
     await Promise.resolve();
     expect(getPostings).toHaveBeenCalledTimes(1);
   });
 
   it('refetches when the fit floor changes', async () => {
-    const { rerender } = render(<PostingsView filters={EMPTY} />);
+    const { rerender } = render(<Harness filters={EMPTY} />);
     await waitFor(() => expect(getPostings).toHaveBeenCalledTimes(1));
 
-    rerender(<PostingsView filters={{ ...EMPTY, minFit: '30' }} />);
+    rerender(<Harness filters={{ ...EMPTY, minFit: '30' }} />);
     await waitFor(() => expect(getPostings).toHaveBeenCalledTimes(2));
   });
 });
 
 describe('PostingsView measure filters go to the server', () => {
   it('sends the three measures as query params instead of filtering locally', async () => {
-    render(<PostingsView filters={{ ...EMPTY, minStipend: '10000', maxExp: '2', maxMonths: '6' }} />);
+    render(<Harness filters={{ ...EMPTY, minStipend: '10000', maxExp: '2', maxMonths: '6' }} />);
     await waitFor(() => expect(getPostings).toHaveBeenCalled());
     expect(getPostings).toHaveBeenLastCalledWith(expect.objectContaining({
       minStipend: '10000', maxExperienceYears: '2', maxDurationMonths: '6',
@@ -194,7 +212,7 @@ describe('PostingsView measure filters go to the server', () => {
       row({ id: 'a', title: 'Rich', stipend: 'Rs 20,000' }),
       row({ id: 'b', title: 'Poor', stipend: 'Rs 1,000' }),
     ]);
-    render(<PostingsView filters={{ ...EMPTY, minStipend: '10000' }} />);
+    render(<Harness filters={{ ...EMPTY, minStipend: '10000' }} />);
     expect(await screen.findByText('Rich')).toBeInTheDocument();
     expect(screen.getByText('Poor')).toBeInTheDocument();
   });
@@ -203,14 +221,14 @@ describe('PostingsView measure filters go to the server', () => {
 describe('PostingsView rows and view mode', () => {
   it('renders rows in a grid by default', async () => {
     getPostings.mockResolvedValueOnce([row({ id: 'a', title: 'Alpha' }), row({ id: 'b', title: 'Beta' })]);
-    render(<PostingsView filters={EMPTY} />);
+    render(<Harness filters={EMPTY} />);
     const list = await screen.findByTestId('posting-list');
     expect(within(list).getAllByRole('row')).toHaveLength(2);
   });
 
   it('switches to the card grid via the density toggle and remembers the choice', async () => {
     getPostings.mockResolvedValueOnce([row({ id: 'a', title: 'Alpha' })]);
-    render(<PostingsView filters={EMPTY} />);
+    render(<Harness filters={EMPTY} />);
     await screen.findByTestId('posting-list');
 
     fireEvent.click(screen.getByRole('button', { name: 'Cards' }));
@@ -219,20 +237,20 @@ describe('PostingsView rows and view mode', () => {
   });
 
   it('says so when nothing matches', async () => {
-    render(<PostingsView filters={EMPTY} />);
+    render(<Harness filters={EMPTY} />);
     expect(await screen.findByText('Nothing matches these filters yet.')).toBeInTheDocument();
     expect(screen.queryByTestId('posting-list')).not.toBeInTheDocument();
   });
 
   it('names the active filter when nothing matches it', async () => {
-    render(<PostingsView filters={{ ...EMPTY, minFit: '44' }} />);
+    render(<Harness filters={{ ...EMPTY, minFit: '44' }} />);
     expect(await screen.findByText(/Good fit filter/)).toBeInTheDocument();
   });
 
   it('shows skeleton rows instead of a spinner or a loading line while the first page is in flight', async () => {
     let deliver;
     getPostings.mockReturnValueOnce(new Promise((resolve) => { deliver = resolve; }));
-    render(<PostingsView filters={EMPTY} />);
+    render(<Harness filters={EMPTY} />);
 
     expect(screen.getByTestId('feed-skeleton')).toBeInTheDocument();
     expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
@@ -248,7 +266,7 @@ describe('PostingsView best-fit ranking', () => {
 
   it('lets another sort replace the match ordering', async () => {
     getPostings.mockResolvedValue([row()]);
-    render(<PostingsView filters={EMPTY} onOpenProfile={() => {}} />);
+    render(<Harness filters={EMPTY} onOpenProfile={() => {}} />);
     await waitFor(() => expect(getPostings).toHaveBeenCalledTimes(1));
     pickSort('company');
     await waitFor(() =>
@@ -263,7 +281,7 @@ describe('PostingsView best-fit ranking', () => {
   it('says so on load when the rows come back unranked, and points at the profile section', async () => {
     getPostings.mockResolvedValue([row()]);
     const onOpenProfile = vi.fn();
-    render(<PostingsView filters={EMPTY} onOpenProfile={onOpenProfile} />);
+    render(<Harness filters={EMPTY} onOpenProfile={onOpenProfile} />);
 
     expect(await screen.findByText(/needs a profile/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Set up your profile' }));
@@ -274,7 +292,7 @@ describe('PostingsView best-fit ranking', () => {
   // it takes the banner away too.
   it('drops the notice when the user leaves the best-fit order', async () => {
     getPostings.mockResolvedValue([row()]);
-    render(<PostingsView filters={EMPTY} onOpenProfile={() => {}} />);
+    render(<Harness filters={EMPTY} onOpenProfile={() => {}} />);
     expect(await screen.findByText(/needs a profile/i)).toBeInTheDocument();
 
     pickSort('newest');
@@ -286,7 +304,7 @@ describe('PostingsView best-fit ranking', () => {
   // banner the control would just visibly do nothing.
   it('keeps the notice under a non-match sort while a fit floor is set', async () => {
     getPostings.mockResolvedValue([row()]);
-    render(<PostingsView filters={{ ...EMPTY, minFit: '30' }} onOpenProfile={() => {}} />);
+    render(<Harness filters={{ ...EMPTY, minFit: '30' }} onOpenProfile={() => {}} />);
     expect(await screen.findByText(/needs a profile/i)).toBeInTheDocument();
 
     pickSort('newest');
@@ -296,7 +314,7 @@ describe('PostingsView best-fit ranking', () => {
 
   it('never shows the notice when the rows came back ranked, floor or not', async () => {
     getPostings.mockResolvedValue([row({ fit: 58 })]);
-    render(<PostingsView filters={{ ...EMPTY, minFit: '30' }} onOpenProfile={() => {}} />);
+    render(<Harness filters={{ ...EMPTY, minFit: '30' }} onOpenProfile={() => {}} />);
     expect(await screen.findByText('Engineer')).toBeInTheDocument();
     expect(screen.queryByText(/needs a profile/i)).not.toBeInTheDocument();
 
@@ -311,7 +329,7 @@ describe('PostingsView best-fit ranking', () => {
   it('keeps the banner down while the first page loads, then reads the rows', async () => {
     let deliver;
     getPostings.mockReturnValueOnce(new Promise((resolve) => { deliver = resolve; }));
-    render(<PostingsView filters={{ ...EMPTY, minFit: '30' }} onOpenProfile={() => {}} />);
+    render(<Harness filters={{ ...EMPTY, minFit: '30' }} onOpenProfile={() => {}} />);
 
     expect(screen.getByTestId('feed-skeleton')).toBeInTheDocument();
     expect(screen.queryByText(/needs a profile/i)).not.toBeInTheDocument();
@@ -325,7 +343,7 @@ describe('PostingsView best-fit ranking', () => {
   // anyone whose filters simply matched nothing.
   it('keeps the banner down when nothing matched', async () => {
     getPostings.mockResolvedValue([]);
-    render(<PostingsView filters={{ ...EMPTY, minFit: '45' }} onOpenProfile={() => {}} />);
+    render(<Harness filters={{ ...EMPTY, minFit: '45' }} onOpenProfile={() => {}} />);
 
     expect(await screen.findByText(/Nothing matches/)).toBeInTheDocument();
     expect(screen.queryByText(/needs a profile/i)).not.toBeInTheDocument();
@@ -335,7 +353,7 @@ describe('PostingsView best-fit ranking', () => {
     getPostings.mockResolvedValue([
       row({ title: 'React Engineer', fit: 58, reasons: ['matches react, typescript', 'suits your experience'] }),
     ]);
-    render(<PostingsView filters={EMPTY} onOpenProfile={() => {}} />);
+    render(<Harness filters={EMPTY} onOpenProfile={() => {}} />);
     expect(await screen.findByText('React Engineer')).toBeInTheDocument();
 
     // The row stays a scan unit; the reasons live in the overlay.
@@ -352,7 +370,7 @@ describe('PostingsView best-fit ranking', () => {
     getPostings.mockResolvedValue([
       row({ title: 'React Engineer', fit: 58, reasons: ['matches react, typescript'] }),
     ]);
-    render(<PostingsView filters={EMPTY} onOpenProfile={() => {}} />);
+    render(<Harness filters={EMPTY} onOpenProfile={() => {}} />);
     expect(await screen.findByText('React Engineer')).toBeInTheDocument();
     pickSort('newest');
     expect(await screen.findByText('React Engineer')).toBeInTheDocument();
@@ -371,7 +389,7 @@ describe('PostingsView legitimacy and grade', () => {
         ghostSignals: ['no pay stated', 'posted 4 months ago'],
       }),
     ]);
-    render(<PostingsView filters={EMPTY} onOpenProfile={() => {}} />);
+    render(<Harness filters={EMPTY} onOpenProfile={() => {}} />);
     expect(await screen.findByText('Ghost Engineer')).toBeInTheDocument();
 
     // The row carries the warning; the evidence stays in the overlay.
@@ -395,7 +413,7 @@ describe('PostingsView legitimacy and grade', () => {
         ghostSignals: [],
       }),
     ]);
-    render(<PostingsView filters={EMPTY} onOpenProfile={() => {}} />);
+    render(<Harness filters={EMPTY} onOpenProfile={() => {}} />);
     expect(await screen.findByText('React Engineer')).toBeInTheDocument();
 
     fireEvent.click(card('React Engineer'));
@@ -408,7 +426,7 @@ describe('PostingsView legitimacy and grade', () => {
     getPostings.mockResolvedValue([
       row({ title: 'Engineer', legitimacy: 'high', ghostSignals: [] }),
     ]);
-    render(<PostingsView filters={EMPTY} onOpenProfile={() => {}} />);
+    render(<Harness filters={EMPTY} onOpenProfile={() => {}} />);
     expect(await screen.findByText('Engineer')).toBeInTheDocument();
 
     fireEvent.click(card('Engineer'));
@@ -421,7 +439,7 @@ describe('PostingsView overlay', () => {
   beforeEach(() => getPostings.mockResolvedValue([row({ title: 'Engineer' })]));
 
   it('opens the detail overlay from a row', async () => {
-    render(<PostingsView filters={EMPTY} />);
+    render(<Harness filters={EMPTY} />);
     expect(await screen.findByText('Engineer')).toBeInTheDocument();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
@@ -431,7 +449,7 @@ describe('PostingsView overlay', () => {
   });
 
   it('closes on Escape and hands focus back to the row that opened it', async () => {
-    render(<PostingsView filters={EMPTY} />);
+    render(<Harness filters={EMPTY} />);
     expect(await screen.findByText('Engineer')).toBeInTheDocument();
 
     const opener = card('Engineer');
@@ -444,7 +462,7 @@ describe('PostingsView overlay', () => {
   });
 
   it('closes on a backdrop click', async () => {
-    render(<PostingsView filters={EMPTY} />);
+    render(<Harness filters={EMPTY} />);
     expect(await screen.findByText('Engineer')).toBeInTheDocument();
 
     fireEvent.click(card('Engineer'));
@@ -453,7 +471,7 @@ describe('PostingsView overlay', () => {
   });
 
   it('applies a status from inside the overlay and keeps it optimistically', async () => {
-    render(<PostingsView filters={EMPTY} />);
+    render(<Harness filters={EMPTY} />);
     expect(await screen.findByText('Engineer')).toBeInTheDocument();
 
     fireEvent.click(card('Engineer'));
@@ -466,7 +484,7 @@ describe('PostingsView overlay', () => {
 
   it('rolls the status back when the write fails', async () => {
     setStatus.mockRejectedValueOnce(new Error('offline'));
-    render(<PostingsView filters={EMPTY} />);
+    render(<Harness filters={EMPTY} />);
     expect(await screen.findByText('Engineer')).toBeInTheDocument();
 
     fireEvent.click(card('Engineer'));
@@ -489,7 +507,7 @@ describe('PostingsView keyboard', () => {
   });
 
   it('moves the selection with j/k, shown through aria-selected', async () => {
-    render(<PostingsView filters={EMPTY} />);
+    render(<Harness filters={EMPTY} />);
     await screen.findByText('Alpha');
 
     fireEvent.keyDown(document, { key: 'j' });
@@ -502,7 +520,7 @@ describe('PostingsView keyboard', () => {
   });
 
   it('answers to the arrow keys the same way as j/k', async () => {
-    render(<PostingsView filters={EMPTY} />);
+    render(<Harness filters={EMPTY} />);
     await screen.findByText('Alpha');
 
     fireEvent.keyDown(document, { key: 'ArrowDown' });
@@ -514,7 +532,7 @@ describe('PostingsView keyboard', () => {
   });
 
   it('moving the selection alone never opens anything', async () => {
-    render(<PostingsView filters={EMPTY} />);
+    render(<Harness filters={EMPTY} />);
     await screen.findByText('Alpha');
     fireEvent.keyDown(document, { key: 'j' });
     fireEvent.keyDown(document, { key: 'j' });
@@ -522,7 +540,7 @@ describe('PostingsView keyboard', () => {
   });
 
   it('opens the selected row on Enter', async () => {
-    render(<PostingsView filters={EMPTY} />);
+    render(<Harness filters={EMPTY} />);
     await screen.findByText('Alpha');
     fireEvent.keyDown(document, { key: 'j' });
     fireEvent.keyDown(document, { key: 'Enter' });
@@ -531,7 +549,7 @@ describe('PostingsView keyboard', () => {
   });
 
   it('sets a status with s/a/d on the selected row', async () => {
-    render(<PostingsView filters={EMPTY} />);
+    render(<Harness filters={EMPTY} />);
     await screen.findByText('Alpha');
     fireEvent.keyDown(document, { key: 'j' });
     fireEvent.keyDown(document, { key: 's' });
@@ -539,7 +557,7 @@ describe('PostingsView keyboard', () => {
   });
 
   it('clears the selection on Escape', async () => {
-    render(<PostingsView filters={EMPTY} />);
+    render(<Harness filters={EMPTY} />);
     await screen.findByText('Alpha');
     fireEvent.keyDown(document, { key: 'j' });
     expect(card('Alpha')).toHaveAttribute('aria-selected', 'true');
@@ -565,7 +583,7 @@ describe('PostingsView keyboard', () => {
 describe('PostingsView triage from the row', () => {
   it('sets a status from the row action buttons without opening it', async () => {
     getPostings.mockResolvedValue([row({ id: 'a', title: 'Alpha' })]);
-    render(<PostingsView filters={EMPTY} />);
+    render(<Harness filters={EMPTY} />);
     await screen.findByText('Alpha');
 
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
@@ -575,7 +593,7 @@ describe('PostingsView triage from the row', () => {
 
   it('shows an inline "Dismissed. Undo" on the row itself, not a floating toast', async () => {
     getPostings.mockResolvedValue([row({ id: 'a', title: 'Alpha' })]);
-    render(<PostingsView filters={EMPTY} />);
+    render(<Harness filters={EMPTY} />);
     await screen.findByText('Alpha');
 
     fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
@@ -585,7 +603,7 @@ describe('PostingsView triage from the row', () => {
 
   it('undoes the dismiss from the inline affordance', async () => {
     getPostings.mockResolvedValue([row({ id: 'a', title: 'Alpha' })]);
-    render(<PostingsView filters={EMPTY} />);
+    render(<Harness filters={EMPTY} />);
     await screen.findByText('Alpha');
 
     fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
@@ -596,7 +614,7 @@ describe('PostingsView triage from the row', () => {
 
   it('undoes the last status change with u', async () => {
     getPostings.mockResolvedValue([row({ id: 'a', title: 'Alpha' })]);
-    render(<PostingsView filters={EMPTY} />);
+    render(<Harness filters={EMPTY} />);
     await screen.findByText('Alpha');
 
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
@@ -610,7 +628,7 @@ describe('PostingsView wide two-pane layout', () => {
   it('renders a right-hand pane instead of a dialog once something is open', async () => {
     mockWide(true);
     getPostings.mockResolvedValue([row({ id: 'a', title: 'Alpha', descriptionSnippet: 'Ship it.' })]);
-    render(<PostingsView filters={EMPTY} />);
+    render(<Harness filters={EMPTY} />);
 
     fireEvent.click(await screen.findByText('Alpha'));
     await waitFor(() => expect(screen.getByText('Ship it.')).toBeInTheDocument());
@@ -622,7 +640,7 @@ describe('PostingsView wide two-pane layout', () => {
   it('opens the first posting in the pane rather than standing empty', async () => {
     mockWide(true);
     getPostings.mockResolvedValue([row({ id: 'a', title: 'Alpha', descriptionSnippet: 'Ship it.' })]);
-    render(<PostingsView filters={EMPTY} />);
+    render(<Harness filters={EMPTY} />);
     await waitFor(() => expect(screen.getByText('Ship it.')).toBeInTheDocument());
     expect(screen.queryByText(/Nothing to show yet/)).not.toBeInTheDocument();
   });
@@ -630,7 +648,7 @@ describe('PostingsView wide two-pane layout', () => {
   it('leaves the narrow layout alone: no dialog opens on its own', async () => {
     mockWide(false);
     getPostings.mockResolvedValue([row({ id: 'a', title: 'Alpha' })]);
-    render(<PostingsView filters={EMPTY} />);
+    render(<Harness filters={EMPTY} />);
     await screen.findByText('Alpha');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
@@ -638,7 +656,7 @@ describe('PostingsView wide two-pane layout', () => {
   it('falls back to the dialog below the wide breakpoint', async () => {
     mockWide(false);
     getPostings.mockResolvedValue([row({ id: 'a', title: 'Alpha' })]);
-    render(<PostingsView filters={EMPTY} />);
+    render(<Harness filters={EMPTY} />);
     fireEvent.click(await screen.findByText('Alpha'));
     expect(screen.getByRole('dialog')).toBeInTheDocument();
   });

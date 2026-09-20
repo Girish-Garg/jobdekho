@@ -11,12 +11,12 @@ vi.mock('../api.js', () => ({
   getNotifications: vi.fn(async () => ({ channel: 'none' })),
   putNotifications: vi.fn(async () => null),
   getProfile: vi.fn(async () => null),
-  logout: vi.fn(async () => {}),
+  getProviders: vi.fn(async () => []),
+  getProviderPreference: vi.fn(async () => ({ provider: 'auto' })),
+  putProviderPreference: vi.fn(async () => null),
 }));
 
 import { getFilters, getPostings } from '../api.js';
-
-const user = { email: 'alice@example.com' };
 
 const open = (name) => fireEvent.click(screen.getByRole('button', { name: new RegExp(`^${name}`) }));
 const openMore = () => open('More filters');
@@ -35,7 +35,7 @@ describe('Shell saved filter hydration', () => {
       maxDurationMonths: 6,
       includeKeywords: ['react'],
     });
-    render(<Shell user={user} onLogout={() => {}} />);
+    render(<Shell />);
 
     await waitFor(() => expect(screen.getByRole('button', { name: 'Level (2)' })).toBeInTheDocument());
     open('Level');
@@ -58,7 +58,7 @@ describe('Shell saved filter hydration', () => {
     getFilters.mockResolvedValueOnce({
       levels: ['entry'], maxDegree: 'bachelors', excludedSources: ['lever'], workModes: ['remote', 'hybrid'],
     });
-    render(<Shell user={user} onLogout={() => {}} />);
+    render(<Shell />);
 
     await waitFor(() =>
       expect(getPostings).toHaveBeenCalledWith(
@@ -74,7 +74,7 @@ describe('Shell saved filter hydration', () => {
 
   it('falls back to empty defaults when the filter request fails', async () => {
     getFilters.mockRejectedValueOnce(new Error('offline'));
-    render(<Shell user={user} onLogout={() => {}} />);
+    render(<Shell />);
 
     await waitFor(() => expect(getPostings).toHaveBeenCalled());
     expect(screen.getByRole('button', { name: 'Level' })).toBeInTheDocument();
@@ -86,7 +86,7 @@ describe('Shell saved filter hydration', () => {
 
   it('tolerates a saved filter that predates the level and source fields', async () => {
     getFilters.mockResolvedValueOnce({ includeKeywords: ['intern'], excludeKeywords: [], locations: [] });
-    render(<Shell user={user} onLogout={() => {}} />);
+    render(<Shell />);
 
     await waitFor(() => expect(getPostings).toHaveBeenCalled());
     expect(screen.getByRole('button', { name: 'Level' })).toBeInTheDocument();
@@ -96,7 +96,7 @@ describe('Shell saved filter hydration', () => {
 
   it('keeps a saved Fresher ceiling of zero rather than reading it as unset', async () => {
     getFilters.mockResolvedValueOnce({ maxExperienceYears: 0 });
-    render(<Shell user={user} onLogout={() => {}} />);
+    render(<Shell />);
     await waitFor(() => expect(getPostings).toHaveBeenCalled());
     openMore();
     expect(screen.getByLabelText('Max experience')).toHaveValue('0');
@@ -107,7 +107,7 @@ describe('Shell saved filter hydration', () => {
 // cases wait for the whole first paint to settle before poking at it.
 async function mount() {
   await act(async () => {
-    render(<Shell user={user} onLogout={() => {}} />);
+    render(<Shell />);
   });
 }
 
@@ -190,3 +190,16 @@ describe('Shell global shortcuts', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });
+
+// The sort and the density toggle ride the filter row, not a band of their
+// own: three bands of chrome before the first job was the whole complaint.
+it('keeps the sort and the density toggle in the filter row', async () => {
+  render(<Shell />);
+  await screen.findByRole('button', { name: 'Level' });
+  // The same panel holds the filters and both controls, rather than a second
+  // bar underneath holding the count, the sort and the density toggle.
+  const panel = screen.getByLabelText('Sort').closest('.bg-panel');
+  expect(panel.contains(screen.getByRole('button', { name: 'More filters' }))).toBe(true);
+  expect(panel.contains(screen.getByRole('button', { name: 'Cards' }))).toBe(true);
+});
+

@@ -2,7 +2,6 @@ import { CHOICES, applyTheme, readChoice, writeChoice } from './theme.js';
 import { EMPTY_FILTERS } from './savedFilters.js';
 import { LEVEL_OPTIONS, STATUS_OPTIONS } from './taxonomy.js';
 import { FIT_RANGES } from './ranges.js';
-import { requestSort } from './commandBus.js';
 
 const SORTS = [
   ['match', 'Best fit'],
@@ -28,10 +27,8 @@ function cycleTheme() {
 }
 
 // Every action the palette can run, rebuilt from the live chrome state each
-// time it opens. Sort is the one axis this file cannot set directly: it
-// lives in PostingsView's own state, out of Shell's reach, so those five
-// commands go out over the command bus instead of calling a setter here.
-export function buildCommands({ view, setView, filters, setFilters, onOpenHelp }) {
+// time it opens.
+export function buildCommands({ view, setView, filters, setFilters, setSort, onOpenHelp }) {
   const commands = [];
 
   for (const [value, label] of VIEWS) {
@@ -45,7 +42,7 @@ export function buildCommands({ view, setView, filters, setFilters, onOpenHelp }
         id: `sort-${value}`,
         label: `Sort: ${label}`,
         category: 'Sort',
-        run: () => requestSort(value),
+        run: () => setSort?.(value),
       });
     }
   }

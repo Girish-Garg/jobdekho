@@ -11,7 +11,7 @@ import ActiveChips from './ActiveChips.jsx';
 
 const ADVANCED = ['maxDegree', 'minStipend', 'maxExp', 'maxMonths', 'includeStale'];
 
-export default function FilterBar({ filters, setFilters }) {
+export default function FilterBar({ filters, setFilters, trailing }) {
   const sources = useSources();
   const patch = (key, value) => setFilters({ ...filters, [key]: value });
 
@@ -28,11 +28,10 @@ export default function FilterBar({ filters, setFilters }) {
   const chips = activeChips(filters);
 
   return (
-    // No bottom border of its own: PostingsHeader sits flush underneath on the
-    // same bg-panel and carries the hairline, so the two read as one control
-    // panel (the filters line, then the count-and-sort line) rather than two
-    // separately boxed bars stacked on top of each other.
-    <div className="shrink-0 bg-panel px-6 py-1.5">
+    // The one control row over the feed: filters on the left, and on the
+    // right whatever the chrome hands in (the sort and the density toggle),
+    // which belong with the filters rather than in a band of their own.
+    <div className="shrink-0 border-b border-line bg-panel px-4 py-1.5">
       {/* One line at every width the grid is usable at; wrapping only kicks in
           on a phone, where the alternative is scrolling the page sideways. */}
       <div className="flex flex-wrap items-center gap-2">
@@ -69,9 +68,12 @@ export default function FilterBar({ filters, setFilters }) {
           excluded={filters.excludedSources}
           onChange={(next) => patch('excludedSources', next)}
         />
-        <Dropdown label="More filters" count={extra} align="right" width="w-[23rem]" className="ml-auto">
-          <MoreFilters filters={filters} setFilters={setFilters} />
-        </Dropdown>
+        <div className="ml-auto flex items-center gap-2">
+          <Dropdown label="More filters" count={extra} align="right" width="w-[23rem]">
+            <MoreFilters filters={filters} setFilters={setFilters} />
+          </Dropdown>
+          {trailing}
+        </div>
       </div>
 
       {chips.length > 0 && <ActiveChips chips={chips} filters={filters} setFilters={setFilters} />}

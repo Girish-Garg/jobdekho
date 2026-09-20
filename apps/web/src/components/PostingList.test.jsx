@@ -24,7 +24,7 @@ describe('PostingList', () => {
     ];
     render(<PostingList postings={postings} selectedId={null} {...handlers} />);
     expect(screen.queryByText('Remote')).not.toBeInTheDocument();
-    expect(screen.getByText('Hybrid')).toBeInTheDocument();
+    expect(screen.getByText(/Hybrid/)).toBeInTheDocument();
   });
 
   it('does not throw scrolling the selected row into view, jsdom or not', () => {

@@ -8,14 +8,14 @@ const TITLE_ID = 'command-palette-title';
 // One flat, fuzzy-filtered list rather than grouped sections: the category
 // tag on each row already says what it does, and a list this short does not
 // earn a second layout system.
-export default function CommandPalette({ open, onClose, view, setView, filters, setFilters, onOpenHelp }) {
+export default function CommandPalette({ open, onClose, view, setView, filters, setFilters, setSort, onOpenHelp }) {
   const [query, setQuery] = useState('');
   const [index, setIndex] = useState(0);
   const trapRef = useFocusTrap(open);
 
   const commands = useMemo(
-    () => (open ? buildCommands({ view, setView, filters, setFilters, onOpenHelp }) : []),
-    [open, view, setView, filters, setFilters, onOpenHelp],
+    () => (open ? buildCommands({ view, setView, filters, setFilters, setSort, onOpenHelp }) : []),
+    [open, view, setView, filters, setFilters, setSort, onOpenHelp],
   );
   const matches = useMemo(() => matchCommands(commands, query), [commands, query]);
 

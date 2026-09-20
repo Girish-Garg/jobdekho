@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import CommandPalette from './CommandPalette.jsx';
-import { onSortRequest } from '../lib/commandBus.js';
 import { EMPTY_FILTERS } from '../lib/savedFilters.js';
 import { KEY } from '../lib/theme.js';
 
@@ -107,13 +106,11 @@ describe('CommandPalette keyboard', () => {
 });
 
 describe('CommandPalette actions that reach outside the filter state', () => {
-  it('requests a sort change over the command bus rather than a prop', () => {
-    const handler = vi.fn();
-    const stop = onSortRequest(handler);
-    setup();
+  it('sets the sort through the setter the chrome owns', () => {
+    const setSort = vi.fn();
+    setup({ setSort });
     fireEvent.click(screen.getByRole('option', { name: /Sort: Newest posted/ }));
-    expect(handler).toHaveBeenCalledWith('newest');
-    stop();
+    expect(setSort).toHaveBeenCalledWith('newest');
   });
 
   it('clears every filter', () => {
