@@ -86,7 +86,7 @@ describe('POST /api/postings/:id/ai/cover-letter', () => {
     expect(call.input).toContain('JANE DOE RESUME')
     expect(call.input).toContain('Build the board with React')
     expect(store.setAiResult).toHaveBeenCalledWith('u1', {
-      kind: 'cover-letter', postingId: 'p1', provider: 'claude', result: REPLY_BODY,
+      kind: 'cover-letter', postingId: 'p1', provider: 'claude', result: REPLY_BODY, instruction: '',
     })
     expect(res.json()).toMatchObject({ kind: 'cover-letter', postingId: 'p1', createdAt: '2026-09-13T00:00:00.000Z' })
   })

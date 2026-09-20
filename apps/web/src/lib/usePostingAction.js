@@ -2,11 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import { runPostingAction, getPostingAiResults } from '../api.js';
 import { progressText } from './aiProgress.js';
 
-// One AI action on one posting: the answer already saved for it, and a run()
-// that asks for a fresh one while narrating the wait. Every action shares
-// this so that a cover letter and a scam check behave the same way at the
-// button: same progress line, same failure sentences, same saved record
-// { kind, postingId, provider, createdAt, result } coming back.
+// One AI action on one posting: the answer already saved for it, a run()
+// that asks for a fresh one while narrating the wait, and a refine() that
+// asks again with an instruction for what to change about it. Every action
+// shares this so that a cover letter and a scam check behave the same way at
+// the button: same progress line, same failure sentences, same saved record
+// { kind, postingId, provider, createdAt, result, versions, dropped } coming
+// back (see ai-results.js on the server for what `versions` holds).
 //
 // `saved` is undefined while the store is being asked, null when it has
 // nothing, else the record. `providers` is the list from useProviders, used
@@ -39,17 +41,34 @@ export function usePostingAction({ postingId, kind, providers, noun, doing }) {
     setProgress(progressText(event, label.current, { noun, doing }));
   }
 
-  async function run() {
+  // A plain run and a refine are the same call with or without an
+  // instruction; keeping the option out of the request entirely for a plain
+  // run is what keeps the bodyless POST a rerun always sent.
+  async function execute(instruction) {
     setBusy(true);
     setError(null);
     setProgress('Starting...');
     try {
-      setSaved(await runPostingAction(postingId, kind, { onEvent }));
+      setSaved(await runPostingAction(postingId, kind, instruction ? { onEvent, instruction } : { onEvent }));
     } catch (err) {
       setError(err);
     }
     setBusy(false);
   }
 
-  return { saved, busy, progress, error, run, clearError: () => setError(null) };
+  return {
+    saved, busy, progress, error,
+    run: () => execute(),
+    refine: (instruction) => execute(instruction),
+    clearError: () => setError(null),
+  };
+}
+
+// A record from before versions existed carries only its one answer.
+// Reading it as a one-entry history is the whole of the client's part in
+// that migration: the server already does the same (see ai-results.js), so
+// this only has to cover a record a test hands in directly.
+export function versionsOf(record) {
+  if (!record) return [];
+  return record.versions ?? [{ instruction: '', provider: record.provider, createdAt: record.createdAt, result: record.result }];
 }

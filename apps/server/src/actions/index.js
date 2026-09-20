@@ -14,6 +14,10 @@ import { resumeTailor } from './resume-tailor.js'
 //                sentence when the person has not supplied it yet
 //   buildPrompt  (posting, context) -> the prompt; the posting is the feed
 //                row plus descriptionText, status, legitimacy and ghostSignals
+//   buildRefinePrompt  (posting, context, previous, instruction) -> the
+//                prompt for a follow-up, carrying the answer already saved
+//                and the person's own words forward instead of starting
+//                fresh; runAction reaches for it only when both are given
 //   parse        (text, { posting, context }) -> the result to save, or null
 //                for an unreadable reply; the second argument is for an
 //                action that checks the reply against what it was given

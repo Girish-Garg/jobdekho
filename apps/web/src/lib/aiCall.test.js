@@ -57,4 +57,12 @@ describe('streamedPost', () => {
     ndjson(START, WAIT);
     await expect(streamedPost('/x')).rejects.toThrow(/connection dropped/);
   });
+
+  it('sends a refine instruction as a JSON body, content-type included only then', async () => {
+    const fetchMock = ndjson(RECORD);
+    await streamedPost('/api/postings/p1/ai/fake-check', { instruction: 'check the recruiter email' });
+    const [, opts] = fetchMock.mock.calls[0];
+    expect(opts.headers).toEqual({ accept: 'application/x-ndjson', 'content-type': 'application/json' });
+    expect(opts.body).toBe(JSON.stringify({ instruction: 'check the recruiter email' }));
+  });
 });

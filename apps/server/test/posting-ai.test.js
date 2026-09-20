@@ -52,9 +52,11 @@ async function makeApp(store, cli = NO_CLI) {
   return { app, cookie }
 }
 
-async function check(store, cli, headers = {}, url = '/api/postings/p1/ai/fake-check') {
+async function check(store, cli, headers = {}, url = '/api/postings/p1/ai/fake-check', body) {
   const { app, cookie } = await makeApp(store, cli)
-  return app.inject({ method: 'POST', url, headers: { cookie, ...headers } })
+  const payload = body ? JSON.stringify(body) : undefined
+  const extra = body ? { 'content-type': 'application/json' } : {}
+  return app.inject({ method: 'POST', url, payload, headers: { cookie, ...extra, ...headers } })
 }
 
 describe('GET /api/postings/:id/ai', () => {
@@ -113,7 +115,7 @@ describe('POST /api/postings/:id/ai/:kind', () => {
     expect(call.timeoutMs).toBe(300000)
     expect(call.input).toContain('Build the board with React.')
     expect(store.setAiResult).toHaveBeenCalledWith('u1', {
-      kind: 'fake-check', postingId: 'p1', provider: 'claude',
+      kind: 'fake-check', postingId: 'p1', provider: 'claude', instruction: '',
       result: { verdict: 'genuine', stillOpen: true, summary: 'Acme is real.', checks: [], redFlags: [] },
     })
     expect(res.json()).toMatchObject({ kind: 'fake-check', postingId: 'p1', createdAt: '2026-09-13T00:00:00.000Z' })
@@ -141,6 +143,47 @@ describe('POST /api/postings/:id/ai/:kind', () => {
     const res = await check(makeFakeStore(), cliAnswering(envelope('Failed to authenticate: OAuth session expired', { is_error: true })))
     expect(res.statusCode).toBe(503)
     expect(res.json().kind).toBe('login')
+  })
+})
+
+describe('POST /api/postings/:id/ai/:kind with an instruction', () => {
+  const PREVIOUS = {
+    kind: 'fake-check', postingId: 'p1', provider: 'claude', createdAt: '2026-09-12T00:00:00.000Z',
+    result: { verdict: 'unclear', stillOpen: null, summary: 'Too little to go on.', checks: [], redFlags: [] },
+  }
+
+  it('loads the saved answer and refines from it, into the prompt and the saved record', async () => {
+    const store = makeFakeStore()
+    store.getAiResult.mockResolvedValue(PREVIOUS)
+    const cli = cliAnswering(REPLY)
+    const res = await check(store, cli, {}, '/api/postings/p1/ai/fake-check', { instruction: 'check the recruiter email' })
+    expect(res.statusCode).toBe(200)
+    expect(store.getAiResult).toHaveBeenCalledWith('u1', 'p1', 'fake-check')
+    const call = cli.run.mock.calls.at(-1)[0]
+    expect(call.input).toContain('Too little to go on.')
+    expect(call.input).toContain('check the recruiter email')
+    expect(store.setAiResult).toHaveBeenCalledWith('u1', expect.objectContaining({ instruction: 'check the recruiter email' }))
+  })
+
+  it('does not look for a saved answer when there is no instruction', async () => {
+    const store = makeFakeStore()
+    await check(store, cliAnswering(REPLY))
+    expect(store.getAiResult).not.toHaveBeenCalled()
+  })
+
+  it('runs fresh, with an empty instruction on the saved record, when there is nothing yet to refine', async () => {
+    const store = makeFakeStore()
+    const cli = cliAnswering(REPLY)
+    const res = await check(store, cli, {}, '/api/postings/p1/ai/fake-check', { instruction: 'shorter' })
+    expect(res.statusCode).toBe(200)
+    expect(cli.run.mock.calls.at(-1)[0].input).not.toContain('<<<PREVIOUS')
+    expect(store.setAiResult).toHaveBeenCalledWith('u1', expect.objectContaining({ instruction: '' }))
+  })
+
+  it('treats a blank instruction as no instruction at all', async () => {
+    const store = makeFakeStore()
+    await check(store, cliAnswering(REPLY), {}, '/api/postings/p1/ai/fake-check', { instruction: '   ' })
+    expect(store.getAiResult).not.toHaveBeenCalled()
   })
 })
 

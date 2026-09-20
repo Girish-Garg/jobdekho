@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { usePostingAction } from './usePostingAction.js';
+import { usePostingAction, versionsOf } from './usePostingAction.js';
 
 vi.mock('../api.js', () => ({
   getPostingAiResults: vi.fn(async () => []),
@@ -81,5 +81,37 @@ describe('usePostingAction', () => {
     await waitFor(() => expect(result.current.saved).toBeNull());
     rerender({ ...ARGS, postingId: 'p2' });
     await waitFor(() => expect(getPostingAiResults).toHaveBeenLastCalledWith('p2'));
+  });
+
+  it('refines with the instruction in the request and keeps the fresh record', async () => {
+    getPostingAiResults.mockResolvedValue([SAVED]);
+    const { result } = renderHook(() => usePostingAction(ARGS));
+    await waitFor(() => expect(result.current.saved).toEqual(SAVED));
+    await act(async () => { await result.current.refine('check the recruiter email'); });
+    expect(runPostingAction).toHaveBeenCalledWith('p1', 'fake-check', { onEvent: expect.any(Function), instruction: 'check the recruiter email' });
+    expect(result.current.saved).toEqual(FRESH);
+  });
+
+  it('runs a plain rerun as a bodyless call, with no instruction key at all', async () => {
+    getPostingAiResults.mockResolvedValue([SAVED]);
+    const { result } = renderHook(() => usePostingAction(ARGS));
+    await waitFor(() => expect(result.current.saved).toEqual(SAVED));
+    await act(async () => { await result.current.run(); });
+    expect(runPostingAction).toHaveBeenCalledWith('p1', 'fake-check', { onEvent: expect.any(Function) });
+  });
+});
+
+describe('versionsOf', () => {
+  it('is empty for nothing saved', () => {
+    expect(versionsOf(null)).toEqual([]);
+  });
+
+  it('passes a record\'s own versions through unchanged', () => {
+    const versions = [{ instruction: '', provider: 'claude', createdAt: 'a', result: { verdict: 'unclear' } }];
+    expect(versionsOf({ ...SAVED, versions })).toBe(versions);
+  });
+
+  it('reads a record with no versions as its one answer, instruction empty', () => {
+    expect(versionsOf(SAVED)).toEqual([{ instruction: '', provider: 'claude', createdAt: 'x', result: { verdict: 'unclear' } }]);
   });
 });

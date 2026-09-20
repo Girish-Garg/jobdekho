@@ -1,7 +1,9 @@
 import { useState } from 'react';
-import { usePostingAction } from '../lib/usePostingAction.js';
+import { usePostingAction, versionsOf } from '../lib/usePostingAction.js';
 import { relativeDay } from '../lib/time.js';
 import AiError from './AiError.jsx';
+import AiRefine from './AiRefine.jsx';
+import AiVersions from './AiVersions.jsx';
 import CoverLetterResult from './CoverLetterResult.jsx';
 
 const SECONDARY = 'rounded-full border border-line px-4 py-1.5 text-sm text-ink transition hover:border-ink disabled:opacity-60';
@@ -15,19 +17,31 @@ const SECONDARY = 'rounded-full border border-line px-4 py-1.5 text-sm text-ink 
 // for it. The button becomes "Write again", so a posting already written
 // for never costs a second call by accident.
 export default function CoverLetter({ posting, cli }) {
-  const { saved, busy, progress, error, run, clearError } = usePostingAction({
+  const { saved, busy, progress, error, run, refine, clearError } = usePostingAction({
     postingId: posting.id, kind: 'cover-letter', providers: cli.providers,
     noun: 'Posting', doing: 'writing',
   });
   const [expanded, setExpanded] = useState(false);
+  // Which version is on screen; null means the newest, so a fresh run or
+  // refine shows what it just produced without this having to track length.
+  const [selected, setSelected] = useState(null);
 
   if (saved === undefined) return <p className="font-mono text-xs text-muted">Looking for an earlier letter...</p>;
   const blocked = error?.kind === 'not_found';
   const summary = saved && `Cover letter written ${relativeDay(saved.createdAt)}`;
+  const versions = versionsOf(saved);
+  const shown = saved && versions[selected ?? versions.length - 1];
 
   function onRun() {
     setExpanded(true);
+    setSelected(null);
     run();
+  }
+
+  function onRefine(instruction) {
+    setExpanded(true);
+    setSelected(null);
+    refine(instruction);
   }
 
   return (
@@ -43,8 +57,10 @@ export default function CoverLetter({ posting, cli }) {
             <span className="text-sm text-ink">{summary}</span>
             <span aria-hidden="true" className="shrink-0 text-muted transition-transform group-open:rotate-180">&#8964;</span>
           </summary>
-          <div className="mt-2">
-            <CoverLetterResult record={saved} providers={cli.providers} />
+          <div className="mt-2 flex flex-col gap-3">
+            <CoverLetterResult record={shown} providers={cli.providers} />
+            <AiVersions record={saved} selected={selected} onSelect={setSelected} />
+            {!blocked && <AiRefine label={cli.ready.label} busy={busy} onRefine={onRefine} />}
           </div>
         </details>
       )}

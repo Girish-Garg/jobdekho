@@ -141,4 +141,33 @@ describe('CoverLetter with a saved letter', () => {
     const draft = await screen.findByDisplayValue(/Fresh letter/);
     expect(draft).toBeVisible();
   });
+
+  it('refines the letter with the typed instruction', async () => {
+    getPostingAiResults.mockResolvedValue([SAVED]);
+    render(<CoverLetter posting={POSTING} cli={cli()} />);
+    fireEvent.click(await screen.findByText('Cover letter written today'));
+    fireEvent.change(screen.getByPlaceholderText('What should change?'), { target: { value: 'shorter' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Refine' }));
+    expect(runPostingAction).toHaveBeenCalledWith('p1', 'cover-letter', { onEvent: expect.any(Function), instruction: 'shorter' });
+    expect(await screen.findByDisplayValue(/Fresh letter/)).toBeInTheDocument();
+  });
+
+  it('shows a version strip once there is more than one answer, and switches on click', async () => {
+    const v2 = {
+      ...FRESH, dropped: false,
+      versions: [
+        { instruction: '', provider: 'claude', createdAt: SAVED.createdAt, result: SAVED.result },
+        { instruction: 'shorter', provider: 'claude', createdAt: FRESH.createdAt, result: FRESH.result },
+      ],
+    };
+    getPostingAiResults.mockResolvedValue([v2]);
+    render(<CoverLetter posting={POSTING} cli={cli()} />);
+    fireEvent.click(await screen.findByText(/Cover letter written/));
+    const v1Button = await screen.findByRole('button', { name: 'v1' });
+    expect(v1Button).toHaveAttribute('title', 'First version');
+    expect(screen.getByRole('button', { name: 'v2' })).toHaveAttribute('title', 'shorter');
+    expect(screen.getByDisplayValue(/Fresh letter/)).toBeInTheDocument();
+    fireEvent.click(v1Button);
+    expect(screen.getByDisplayValue(/Dear Hiring Team at Acme/)).toBeInTheDocument();
+  });
 });

@@ -99,7 +99,7 @@ describe('choosing the CLI for a posting action', () => {
     expect(line.message.content[0].text).toContain('JANE DOE RESUME')
     expect(line.message.content[0].text).toContain('Build the board with React')
     expect(call.input).toBe(encodeAgyInput(line.message.content[0].text))
-    expect(store.setAiResult).toHaveBeenCalledWith('u1', { kind: 'cover-letter', postingId: 'p1', provider: 'agy', result: LETTER })
+    expect(store.setAiResult).toHaveBeenCalledWith('u1', { kind: 'cover-letter', postingId: 'p1', provider: 'agy', result: LETTER, instruction: '' })
     expect(res.json()).toMatchObject({ kind: 'cover-letter', provider: 'agy', createdAt: '2026-09-13T00:00:00.000Z' })
   })
 

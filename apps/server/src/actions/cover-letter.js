@@ -1,4 +1,5 @@
 import { buildCoverLetterPrompt } from './cover-letter-prompt.js'
+import { buildCoverLetterRefinePrompt } from './cover-letter-refine-prompt.js'
 import { parseCoverLetter } from './cover-letter-parse.js'
 
 // "Write a cover letter": the prompt carries the resume, so this is the
@@ -11,5 +12,6 @@ export const coverLetter = {
   timeoutMs: 120000,
   context: ['resumeText'],
   buildPrompt: (posting, context) => buildCoverLetterPrompt(posting, context),
+  buildRefinePrompt: (posting, context, previous, instruction) => buildCoverLetterRefinePrompt(posting, context, previous, instruction),
   parse: parseCoverLetter,
 }

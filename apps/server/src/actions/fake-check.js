@@ -1,4 +1,5 @@
 import { buildFakeCheckPrompt } from './fake-check-prompt.js'
+import { buildFakeCheckRefinePrompt } from './fake-check-refine-prompt.js'
 import { parseFakeCheck } from './fake-check-parse.js'
 
 // "Is this job real?": the CLI goes and looks the company and the role up on
@@ -12,5 +13,6 @@ export const fakeCheck = {
   timeoutMs: 5 * 60 * 1000,
   context: [],
   buildPrompt: (posting) => buildFakeCheckPrompt(posting),
+  buildRefinePrompt: (posting, context, previous, instruction) => buildFakeCheckRefinePrompt(posting, previous, instruction),
   parse: parseFakeCheck,
 }

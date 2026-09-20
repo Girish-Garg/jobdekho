@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
-  getMe, getPostings, getSources, setStatus, putFilters, getNotifications, putNotifications,
-  getProfile, putProfile, deleteProfile, uploadResume, applyProfileFilter, getProviders, extractProfile,
+  getPostings, getSources, setStatus, putFilters, getNotifications, putNotifications,
+  getProfile, putProfile, deleteProfile, uploadResume, applyProfileFilter, getProviders,
+  getProviderPreference, putProviderPreference, extractProfile,
   runPostingAction, getPostingAiResults,
 } from './api.js';
 
@@ -19,15 +20,9 @@ beforeEach(() => vi.restoreAllMocks());
 
 describe('api client', () => {
   it('always sends credentials: include', async () => {
-    const fetchMock = mockFetch({});
-    await getMe();
+    const fetchMock = mockFetch({ sources: [] });
+    await getSources();
     expect(fetchMock.mock.calls[0][1]).toMatchObject({ credentials: 'include' });
-  });
-
-  it('getMe hits /auth/me', async () => {
-    const fetchMock = mockFetch({ id: 'u1' });
-    await getMe();
-    expect(fetchMock).toHaveBeenCalledWith('/auth/me', expect.objectContaining({ credentials: 'include' }));
   });
 
   it('getPostings encodes only truthy params and unwraps postings', async () => {
@@ -100,7 +95,7 @@ describe('api client', () => {
 
   it('throws a 401-tagged error on unauthorized', async () => {
     mockFetch(null, 401);
-    await expect(getMe()).rejects.toMatchObject({ status: 401 });
+    await expect(getSources()).rejects.toMatchObject({ status: 401 });
   });
 });
 
@@ -190,6 +185,19 @@ describe('ai api', () => {
     expect(fetchMock.mock.calls[0][0]).toBe('/api/ai/providers');
     await getProviders({ refresh: true });
     expect(fetchMock.mock.calls[1][0]).toBe('/api/ai/providers?refresh=true');
+  });
+
+  it('provider preference helpers hit /api/ai/provider', async () => {
+    const get = mockFetch({ provider: 'auto' });
+    expect(await getProviderPreference()).toEqual({ provider: 'auto' });
+    expect(get).toHaveBeenCalledWith('/api/ai/provider', expect.objectContaining({ credentials: 'include' }));
+
+    const put = mockFetch(null, 204);
+    await putProviderPreference({ provider: 'agy' });
+    const [url, opts] = put.mock.calls[0];
+    expect(url).toBe('/api/ai/provider');
+    expect(opts.method).toBe('PUT');
+    expect(JSON.parse(opts.body)).toEqual({ provider: 'agy' });
   });
 
   it('extractProfile asks for the stream with a bodyless POST', async () => {

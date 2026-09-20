@@ -130,4 +130,60 @@ describe('FakeCheck with a saved verdict', () => {
     await screen.findByText('Looks genuine');
     expect(screen.getByText('Acme is real and hiring.')).toBeVisible();
   });
+
+  it('offers to refine under the saved verdict, and names the CLI it costs another call to', async () => {
+    getPostingAiResults.mockResolvedValue([SAVED]);
+    render(<FakeCheck posting={POSTING} cli={cli()} />);
+    fireEvent.click(await screen.findByText('Could not tell · checked today'));
+    expect(screen.getByPlaceholderText('What should change?')).toBeInTheDocument();
+    expect(screen.getByText(/Refining asks Claude Code again, on your own subscription/)).toBeInTheDocument();
+  });
+
+  it('refines with the typed instruction and shows what came back', async () => {
+    getPostingAiResults.mockResolvedValue([SAVED]);
+    render(<FakeCheck posting={POSTING} cli={cli()} />);
+    fireEvent.click(await screen.findByText('Could not tell · checked today'));
+    fireEvent.change(screen.getByPlaceholderText('What should change?'), { target: { value: 'check the recruiter email' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Refine' }));
+    expect(runPostingAction).toHaveBeenCalledWith('p1', 'fake-check', { onEvent: expect.any(Function), instruction: 'check the recruiter email' });
+    expect(await screen.findByText('Looks genuine')).toBeInTheDocument();
+  });
+
+  it('shows a version strip once there is more than one answer, the instruction as its title', async () => {
+    const v2 = {
+      ...FRESH, dropped: false,
+      versions: [
+        { instruction: '', provider: 'claude', createdAt: SAVED.createdAt, result: SAVED.result },
+        { instruction: 'check the recruiter email', provider: 'claude', createdAt: FRESH.createdAt, result: FRESH.result },
+      ],
+    };
+    getPostingAiResults.mockResolvedValue([v2]);
+    render(<FakeCheck posting={POSTING} cli={cli()} />);
+    fireEvent.click(await screen.findByText(/Looks genuine · checked/));
+    const v1Button = await screen.findByRole('button', { name: 'v1' });
+    const v2Button = screen.getByRole('button', { name: 'v2' });
+    expect(v1Button).toHaveAttribute('title', 'First version');
+    expect(v2Button).toHaveAttribute('title', 'check the recruiter email');
+    // The newest version is shown until an older one is picked.
+    expect(screen.getByText('Looks genuine')).toBeInTheDocument();
+    fireEvent.click(v1Button);
+    expect(screen.getByText('Could not tell')).toBeInTheDocument();
+    expect(screen.queryByText('Looks genuine')).not.toBeInTheDocument();
+  });
+
+  it('does not show a version strip for a record with only one answer', async () => {
+    getPostingAiResults.mockResolvedValue([SAVED]);
+    render(<FakeCheck posting={POSTING} cli={cli()} />);
+    fireEvent.click(await screen.findByText('Could not tell · checked today'));
+    expect(screen.queryByRole('button', { name: 'v1' })).not.toBeInTheDocument();
+  });
+
+  it('withholds the refine input along with the run button while the CLI is missing', async () => {
+    getPostingAiResults.mockResolvedValue([SAVED]);
+    runPostingAction.mockRejectedValueOnce(failing(NOT_FOUND, 'not_found'));
+    render(<FakeCheck posting={POSTING} cli={cli()} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Check again' }));
+    await screen.findByRole('alert');
+    expect(screen.queryByPlaceholderText('What should change?')).not.toBeInTheDocument();
+  });
 });

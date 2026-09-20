@@ -20,10 +20,19 @@ import { ProviderError } from '../ai/errors.js'
 // tailoring checks its rewrite against the original resume and the posting
 // here, in code the model cannot talk its way past. An action that reads the
 // reply alone ignores the second argument.
-export async function runAction(action, { posting, context = {}, select, ...seams }) {
-  const prompt = action.buildPrompt(posting, context)
+//
+// `instruction` and `previous` are the refine step: when both are given, the
+// action's buildRefinePrompt takes over from buildPrompt, carrying the
+// earlier answer and the person's own words forward instead of starting
+// fresh. `instruction` on the returned record is '' unless a refine actually
+// happened, which is also what a first run or a plain rerun records.
+export async function runAction(action, { posting, context = {}, select, instruction = '', previous = null, ...seams }) {
+  const refining = Boolean(instruction && previous)
+  const prompt = refining
+    ? action.buildRefinePrompt(posting, context, previous, instruction)
+    : action.buildPrompt(posting, context)
   const { provider, text } = await callWithFallback({ select, policy: action.tools, prompt, timeoutMs: action.timeoutMs, ...seams })
   const result = action.parse(text, { posting, context })
   if (!result) throw new ProviderError('unreadable', provider)
-  return { kind: action.kind, postingId: posting.id, provider: provider.id, result }
+  return { kind: action.kind, postingId: posting.id, provider: provider.id, result, instruction: refining ? instruction : '' }
 }
