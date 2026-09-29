@@ -1,6 +1,7 @@
 import { fencedFeed } from './prompt-postings.js'
 import { profileBlock } from './prompt-profile.js'
 import { historyBlock } from './prompt-history.js'
+import { buildPagePrompt } from './prompt-pages.js'
 
 // This call sees the person's career record, so like cover-letter.js and
 // resume-tailor.js it runs with no tools at all (see apps/server/src/chat/
@@ -22,6 +23,9 @@ A "filters" action's "patch" may set any of these keys, only the ones you actual
 
 `
 
+// The feed's prompt is this one, unchanged; every other page has its own
+// (see prompt-pages.js), built from what that page's context holds.
 export function buildChatPrompt({ message, context, history }) {
+  if (context.page && context.page !== 'postings') return buildPagePrompt({ message, context, history })
   return `${INSTRUCTION}${historyBlock(history)}${profileBlock(context.profile)}${fencedFeed(context)}Question: ${message}\n`
 }

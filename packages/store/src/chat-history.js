@@ -14,6 +14,12 @@
 // whose search failed carries `webError` instead (see apps/server/src/chat/
 // run.js). Turns saved before that have `web: true`, the web's answer in
 // `answer` and `sources` beside it, which the panel still reads.
+//
+// A turn also carries `id`, `page` (where it was asked) and `proposals`: the
+// profile or document changes it offered, each pending until the person
+// presses Apply or Discard (see chat-proposals.js and apps/server/src/chat/
+// proposals.js). A turn saved before those existed has none of the three,
+// which reads as a turn that offered nothing.
 export const MAX_TURNS = 20
 
 export async function getChatHistory(store, userId) {

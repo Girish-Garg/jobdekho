@@ -18,4 +18,14 @@ const byId = new Map(TEMPLATES.map((t) => [t.id, t]))
 
 export const isKnownTemplate = (id) => byId.has(id)
 export const listTemplates = () => TEMPLATES
+export const templateById = (id) => byId.get(id) ?? null
 export const templatePath = (id) => join(HERE, `${id}.tex`)
+
+// The cover letter's own layout, kept apart from TEMPLATES because the
+// resume builder lists those and a letter is not a resume layout. Filled by
+// resume/render-letter.js from the same escaping helpers as the resumes.
+export const LETTER_TEMPLATES = [
+  { id: 'letter', name: 'Letter', description: 'A plain one-page letter set like the Classic resume.' },
+]
+
+export const isLetterTemplate = (id) => LETTER_TEMPLATES.some((t) => t.id === id)

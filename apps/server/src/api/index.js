@@ -5,6 +5,10 @@ import { profileRoutes } from './profile.js'
 import { postingAiRoutes } from './posting-ai.js'
 import { resumeRoutes } from './resume.js'
 import { chatRoutes } from './chat.js'
+import { chatProposalRoutes } from './chat-proposals.js'
+import { documentRoutes } from './documents.js'
+import { documentEditRoutes } from './document-edits.js'
+import { documentFileRoutes } from './document-files.js'
 import { aiRoutes } from '../ai/routes.js'
 import { createDetector } from '../ai/detect.js'
 import { createSelector } from '../ai/select.js'
@@ -38,5 +42,9 @@ export async function apiRoutes(app) {
   await app.register(postingAiRoutes)
   await app.register(resumeRoutes)
   await app.register(chatRoutes)
+  await app.register(chatProposalRoutes)
+  await app.register(documentRoutes)
+  await app.register(documentEditRoutes)
+  await app.register(documentFileRoutes)
   await app.register(aiRoutes)
 }

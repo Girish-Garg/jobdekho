@@ -1,9 +1,8 @@
-import { mkdtempSync, writeFileSync, rmSync, existsSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
-import { execFileSync } from 'node:child_process'
 import { renderTex } from './render.js'
-import { listTemplates } from './templates/registry.js'
+import { renderLetter, placeholderLetter } from './render-letter.js'
+import { compileTex } from './compile.js'
+import { checkTex } from './guard/check.js'
+import { listTemplates, LETTER_TEMPLATES } from './templates/registry.js'
 import { PROFILE_SHAPES } from './check-shapes.js'
 
 // `npm run resume:check`. The test suite deliberately never runs LaTeX (too
@@ -13,35 +12,49 @@ import { PROFILE_SHAPES } from './check-shapes.js'
 // matched perfectly. This compiles the real thing instead, one document per
 // template per profile shape, and is the check to run after touching a
 // template or the renderer.
-export function checkTemplates({ log = console.log } = {}) {
-  const dir = mkdtempSync(join(tmpdir(), 'jobdekho-resume-check-'))
-  const failures = []
-  try {
-    for (const { id } of listTemplates()) {
-      for (const [label, profile] of Object.entries(PROFILE_SHAPES)) {
-        const name = `${id}-${label.replace(/[^a-z]+/gi, '-')}`
-        writeFileSync(join(dir, `${name}.tex`), renderTex(id, profile, {}))
-        try {
-          execFileSync('pdflatex', ['-interaction=nonstopmode', '-halt-on-error', '-no-shell-escape', `${name}.tex`], {
-            cwd: dir, stdio: 'pipe', timeout: 90000,
-          })
-          if (!existsSync(join(dir, `${name}.pdf`))) failures.push(`${id} / ${label}: exit 0 but no PDF`)
-          else log(`  ok    ${id} / ${label}`)
-        } catch (err) {
-          const line = String(err.stdout || '').split('\n').find((l) => l.startsWith('! ')) ?? err.message
-          failures.push(`${id} / ${label}: ${line.trim()}`)
-          log(`  FAIL  ${id} / ${label}: ${line.trim()}`)
-        }
-      }
+//
+// Each document goes the way a real one does: through the LaTeX guard
+// first (a template the guard refused would make every first draft
+// unusable), then compileTex, with the same flags the app uses, MiKTeX's
+// package installer off included.
+const POSTING = { title: 'Backend Engineer & SRE', company: 'R&D #1 Labs', location: 'Pune' }
+
+function documents() {
+  const out = []
+  for (const { id } of listTemplates()) {
+    for (const [label, profile] of Object.entries(PROFILE_SHAPES)) out.push({ id, label, tex: renderTex(id, profile, {}) })
+  }
+  for (const { id } of LETTER_TEMPLATES) {
+    for (const [label, profile] of Object.entries(PROFILE_SHAPES)) {
+      const text = `${placeholderLetter(profile, POSTING)}\n\n[A line that starts with a bracket]\n100% of C# & R&D`
+      out.push({ id, label, tex: renderLetter(id, { profile, posting: label === 'name only' ? null : POSTING, text }) })
     }
-  } finally {
-    rmSync(dir, { recursive: true, force: true })
+  }
+  return out
+}
+
+export async function checkTemplates({ log = console.log, compile = compileTex } = {}) {
+  const failures = []
+  for (const { id, label, tex } of documents()) {
+    const { problems } = checkTex(tex)
+    if (problems.length) {
+      failures.push(`${id} / ${label}: refused by the guard: ${problems[0]}`)
+      log(`  FAIL  ${id} / ${label}: refused by the guard: ${problems[0]}`)
+      continue
+    }
+    try {
+      await compile(tex, { timeoutMs: 90000 })
+      log(`  ok    ${id} / ${label}`)
+    } catch (err) {
+      failures.push(`${id} / ${label}: ${err.message}`)
+      log(`  FAIL  ${id} / ${label}: ${err.message}`)
+    }
   }
   return failures
 }
 
 if (process.argv[1]?.endsWith('check-templates.js')) {
-  const failures = checkTemplates()
-  console.log(failures.length ? `\n${failures.length} failed` : '\nevery template compiled every shape')
+  const failures = await checkTemplates()
+  console.log(failures.length ? `\n${failures.length} failed` : '\nevery template passed the guard and compiled every shape')
   process.exit(failures.length ? 1 : 0)
 }

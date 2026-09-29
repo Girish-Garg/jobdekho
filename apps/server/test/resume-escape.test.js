@@ -69,4 +69,14 @@ describe('texLink', () => {
   it('returns an empty string for an empty value', () => {
     expect(texLink('')).toBe('')
   })
+
+  // Every link this writes sits inside another macro's argument, where %, #
+  // and ~ were already read as a comment, a parameter and a space, and the
+  // LaTeX guard takes only web links; such values stay visible as text.
+  it('makes a live link only of an http(s) address a macro argument and the LaTeX guard accept', () => {
+    for (const url of ['https://x.dev/a%20b', 'https://x.dev/#top', 'https://x.dev/~me', 'ftp://x.dev/f', 'file:///C:/secret']) {
+      expect(texLink(url)).not.toContain('\\href')
+    }
+    expect(texLink('http://x.dev/a?b=c&d=e')).toBe('\\href{http://x.dev/a?b=c&d=e}{http://x.dev/a?b=c\\&d=e}')
+  })
 })

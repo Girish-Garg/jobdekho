@@ -32,6 +32,9 @@ export const FILES = {
   // The chat panel's conversation, kept with the other things the person
   // made rather than with the corpus a scrape may reset. See chat-history.js.
   chatHistory: 'chat-history.json',
+  // The person's resumes and cover letters as LaTeX sources they own, each
+  // with its recent versions. See documents.js.
+  documents: 'documents.json',
 }
 
 export function openStore(dir) {
@@ -53,5 +56,6 @@ export function openStore(dir) {
     aiProvider: userFile(at('aiProvider')),
     resumeSelections: userFile(at('resumeSelections')),
     chatHistory: userFile(at('chatHistory')),
+    documents: userFile(at('documents')),
   }
 }

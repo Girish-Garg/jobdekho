@@ -60,7 +60,14 @@ export function escapeLine(value) {
 // and even then the visible text is the same URL, never a substituted label.
 // Anything else - including anything with a brace, a backslash or a dollar
 // sign - falls back to plain escaped text, which is always safe.
-const SAFE_URL = /^[a-z][a-z0-9+.-]*:\/\/[A-Za-z0-9\-._~:/?#[\]@!$&'()*+,;=%]+$/i
+//
+// Only http and https, and no %, # or ~: every link this writes sits inside
+// another macro's argument (\resMetaLine, the header's contact line), where
+// TeX has already read % as a comment, # as a parameter and ~ as a space
+// before hyperref ever sees them, so such a link either broke the compile
+// or pointed somewhere else. It also keeps every rendered document inside
+// what the LaTeX guard accepts as a link (see guard/links.js).
+const SAFE_URL = /^https?:\/\/[A-Za-z0-9\-._:/?[\]@!$&'()*+,;=]+$/i
 
 export function texLink(value) {
   const text = escapeLine(value)

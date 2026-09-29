@@ -1,5 +1,7 @@
 import { readFileSync } from 'node:fs'
-import { escapeLine, texLink } from './escape.js'
+import { escapeLine } from './escape.js'
+import { fill } from './fill.js'
+import { contactLine } from './contact.js'
 import { applySelection } from './selection.js'
 import { buildEntrySection, buildSkillsSection } from './sections.js'
 import { isKnownTemplate, templatePath } from './templates/registry.js'
@@ -7,20 +9,6 @@ import { isKnownTemplate, templatePath } from './templates/registry.js'
 const SECTION_TITLES = {
   experience: 'Experience', projects: 'Projects', education: 'Education',
   certifications: 'Certifications', achievements: 'Achievements',
-}
-
-// Most profiles hold a link as typed from a browser bar ("github.com/x"),
-// with no scheme, which the SAFE_URL check in texLink would otherwise reject
-// outright. Adding https:// when one is missing is the only normalisation
-// this file does to a link; anything already carrying a scheme is left alone.
-const withScheme = (value) => (/^[a-z][a-z0-9+.-]*:\/\//i.test(value) ? value : `https://${value}`)
-
-function contactLine(basics) {
-  const plain = [basics.location, basics.email, basics.phone].filter(Boolean).map(escapeLine)
-  const links = [basics.links?.github, basics.links?.linkedin, basics.links?.portfolio]
-    .filter(Boolean)
-    .map((value) => texLink(withScheme(value)))
-  return [...plain, ...links].filter(Boolean).join(' | ')
 }
 
 function buildBody(picked) {
@@ -33,15 +21,6 @@ function buildBody(picked) {
     buildEntrySection(SECTION_TITLES.achievements, picked.achievements),
   ]
   return sections.filter(Boolean).join('\n\n')
-}
-
-// A single pass over the ORIGINAL template text: each @@TOKEN@@ is replaced
-// from a lookup, so a value that itself happens to contain the literal text
-// "@@BODY@@" (a name pasted from somewhere strange) is never rescanned and
-// substituted a second time. Doing this as four sequential .replace() calls
-// instead would have exactly that bug.
-function fill(tex, values) {
-  return tex.replace(/@@([A-Z]+)@@/g, (_, key) => values[key] ?? '')
 }
 
 // The public entry point the API route - and, later, the job-specific

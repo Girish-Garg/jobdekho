@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { runCli } from '../ai/spawn.js'
 import { locatePdflatex } from './locate-latex.js'
+import { installerFlags, isMiktex } from './miktex.js'
 import { excerptLog } from './log-excerpt.js'
 import { LatexError } from './errors.js'
 
@@ -34,15 +35,18 @@ function readIfPresent(path) {
 // nothing at all: a fake `run` can write a made-up resume.pdf and
 // resume.log into the real temp `cwd` it is handed and return synchronously,
 // which exercises this file's own temp-directory and error-handling logic
-// without spawning pdflatex or being slow or machine-dependent.
-export async function compileTex(tex, { timeoutMs = DEFAULT_TIMEOUT_MS, env, locate = locatePdflatex, run = runCli } = {}) {
+// without spawning pdflatex or being slow or machine-dependent. `miktex`
+// answers whether that binary is MiKTeX, whose package installer is turned
+// off for the run (see miktex.js); a test passes its own.
+export async function compileTex(tex, { timeoutMs = DEFAULT_TIMEOUT_MS, env, locate = locatePdflatex, run = runCli, miktex = isMiktex } = {}) {
   const pdflatex = locate(env)
   if (!pdflatex) throw new LatexError('not_found')
+  const flags = await installerFlags(pdflatex, miktex)
 
   const dir = mkdtempSync(join(tmpdir(), 'jobdekho-resume-'))
   try {
     writeFileSync(join(dir, TEX_NAME), tex, 'utf8')
-    const args = ['-interaction=nonstopmode', '-halt-on-error', '-no-shell-escape', `-output-directory=${dir}`, TEX_NAME]
+    const args = ['-interaction=nonstopmode', '-halt-on-error', '-no-shell-escape', ...flags, `-output-directory=${dir}`, TEX_NAME]
     let result
     try {
       result = await run({ file: pdflatex, args, input: '', timeoutMs, cwd: dir })

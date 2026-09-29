@@ -1,0 +1,49 @@
+% Letter: a plain one-page cover letter, set in the same face and margins as
+% the Classic resume so the two read as one application.
+%
+% ATS-safe by construction, like the resumes: one column, no tables, plain
+% selectable text, links printed as themselves. Every package below is one
+% the Classic template already loads, so a machine that compiles a resume
+% compiles this with nothing more to install.
+%
+% Placeholders (filled by resume/render-letter.js, never edited by hand):
+%   NAME, CONTACT, RECIPIENT, BODY - see resume/render-letter.js
+\documentclass[11pt]{article}
+
+% cmap before fontenc: keeps "fi"/"fl" ligatures copy-pasting and
+% ATS-parsing back out as themselves instead of vanishing from the text.
+\usepackage{cmap}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{charter}
+\usepackage[hidelinks]{hyperref}
+
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{9pt}
+\raggedright
+
+% A break belongs before content that exists, never after content that may
+% not: an empty contact line or recipient must print nothing at all, not an
+% empty line, which is the "There's no line here to end" error the resume
+% headers once had. The test is e-TeX's \detokenize, as in the resumes.
+\newcommand{\letterContact}[1]{\if\relax\detokenize{#1}\relax\else\\[3pt]{\small #1}\fi}
+\newcommand{\letterHeader}[2]{%
+  {\LARGE\bfseries #1}%
+  \letterContact{#2}%
+  \par\vspace{2pt}\hrule
+}
+\newcommand{\letterTo}[1]{\if\relax\detokenize{#1}\relax\else#1\par\fi}
+
+\begin{document}
+
+\letterHeader{@@NAME@@}{@@CONTACT@@}
+
+\vspace{6pt}
+\today
+
+\letterTo{@@RECIPIENT@@}
+
+@@BODY@@
+
+\end{document}
