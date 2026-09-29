@@ -3,6 +3,7 @@ import PostingFacts from './PostingFacts.jsx';
 import MatchReasons from './MatchReasons.jsx';
 import GhostSignals from './GhostSignals.jsx';
 import PostingDescription from './PostingDescription.jsx';
+import StaleNote from './StaleNote.jsx';
 import AskAiButton from './AskAiButton.jsx';
 import { CloseIcon } from './Icon.jsx';
 import { isDoubtful } from '../lib/chatActionKinds.js';
@@ -51,6 +52,7 @@ export default function PostingDetail({ posting, onClose, onStatus, onAsked }) {
       </div>
 
       <PostingFacts posting={posting} />
+      <StaleNote posting={posting} />
 
       {/* Whenever the server ranked the feed, whatever the sort. The card
           stays a scan unit; the room for "why" is here. */}

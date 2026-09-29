@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useOpenPosting } from './useOpenPosting.js';
 import { currentOpenPosting, requestOpenPosting } from './openPostingSignal.js';
@@ -65,14 +65,29 @@ describe('useOpenPosting', () => {
     expect(currentOpenPosting()).toBe(rows[1]);
   });
 
-  it('says so out loud when the chat asks for a posting the feed no longer has', () => {
+  // The chat names jobs from the whole corpus, which the filters on screen
+  // may hide; telling the person it was "not in the feed" was no answer.
+  it('fetches and opens a posting the chat names that the feed does not hold', async () => {
+    const elsewhere = { id: 'r1', title: 'Forward Deployed Engineer', status: null };
+    const fetchPosting = vi.fn(async () => elsewhere);
+    const { result } = renderHook(() => useOpenPosting(rows, { fetchPosting }));
+    await act(async () => { requestOpenPosting('r1'); });
+    expect(fetchPosting).toHaveBeenCalledWith('r1');
+    expect(result.current.opened).toBe(elsewhere);
+    expect(currentOpenPosting()).toBe(elsewhere);
+    act(() => result.current.patchOutside('r1', 'saved'));
+    expect(result.current.opened).toEqual({ ...elsewhere, status: 'saved' });
+  });
+
+  it('says so out loud when JobDekho no longer holds the posting at all', async () => {
     const notices = [];
     const stop = onNotice((n) => notices.push(n));
-    const { result } = renderHook(() => useOpenPosting(rows));
-    act(() => requestOpenPosting('gone'));
+    const fetchPosting = vi.fn(async () => { throw Object.assign(new Error('no such posting'), { status: 404 }); });
+    const { result } = renderHook(() => useOpenPosting(rows, { fetchPosting }));
+    await act(async () => { requestOpenPosting('gone'); });
     expect(result.current.opened).toBe(null);
     expect(notices).toHaveLength(1);
-    expect(notices[0].title).toBe('Not in the feed right now');
+    expect(notices[0].title).toBe('That job is gone');
     stop();
   });
 });
