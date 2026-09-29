@@ -3,6 +3,7 @@ import { sectionId } from '../lib/profileIndex.js';
 import ProfileSection, { AddControl } from './ProfileSection.jsx';
 import { BOX, Labelled } from './ProfileField.jsx';
 import TagInput from './TagInput.jsx';
+import { TagIcon } from './Icon.jsx';
 
 const HINT = 'Group your skills the way a resume would: Languages, Frameworks, Tools. Feeds the Skills field under Best fit too.';
 
@@ -19,12 +20,13 @@ export default function SkillGroupsSection({ groups, onChange }) {
     <ProfileSection
       id={sectionId('skills')}
       title="Skills"
+      icon={TagIcon}
       count={groups.length}
       hint={groups.length === 0 ? HINT : null}
       action={<AddControl label="Add group" onClick={add} />}
     >
       {groups.length > 0 && (
-        <div className="flex flex-col divide-y divide-line border-t border-line">
+        <div className="flex flex-col divide-y divide-line">
           {groups.map((group, i) => (
             <div key={group.id} className="flex flex-col gap-3 py-3 sm:flex-row sm:items-start sm:gap-6">
               <div className="sm:w-48 sm:shrink-0">
@@ -43,7 +45,7 @@ export default function SkillGroupsSection({ groups, onChange }) {
               <button
                 type="button"
                 onClick={() => remove(i)}
-                className="self-start text-sm text-muted transition-colors duration-fast ease-ease hover:text-ink sm:mt-6"
+                className="self-start text-sm text-muted transition-colors duration-fast ease-ease hover:text-ember sm:mt-7"
               >
                 Remove
               </button>

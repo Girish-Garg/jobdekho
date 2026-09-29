@@ -18,14 +18,15 @@ describe('ProfileSection', () => {
   it('leaves the count off a heading that has none, and the hint off when there is none', () => {
     render(<ProfileSection id="profile-basics" title="Basics" />);
     expect(screen.getByRole('heading', { name: 'Basics' })).toBeInTheDocument();
-    expect(screen.getByRole('heading').parentElement.querySelector('p')).toBeNull();
+    expect(document.getElementById('profile-basics').querySelector('p')).toBeNull();
   });
 
-  it('puts the add control in the same line as the heading, not at the far edge', () => {
+  // Same row as the heading, at its far end, so every section adds the same way.
+  it('puts the add control on the heading\'s row', () => {
     const onClick = vi.fn();
     render(<ProfileSection id="p" title="Projects" count={0} action={<AddControl label="Add project" onClick={onClick} />} />);
     const button = screen.getByRole('button', { name: 'Add project' });
-    expect(button.parentElement).toBe(screen.getByRole('heading').parentElement);
+    expect(button.parentElement).toBe(screen.getByRole('heading').parentElement.parentElement);
     fireEvent.click(button);
     expect(onClick).toHaveBeenCalled();
   });

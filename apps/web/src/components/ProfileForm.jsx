@@ -4,20 +4,21 @@ import ProfileSection from './ProfileSection.jsx';
 import { BOX, Labelled } from './ProfileField.jsx';
 import Select from './Select.jsx';
 import TagInput from './TagInput.jsx';
-import SaveBar from './SaveBar.jsx';
+import { TargetIcon } from './Icon.jsx';
 
 const HINT = 'What Best fit on Postings scores against. Skills from the groups above fold in here when you save.';
 
 // Every field the extractor fills is editable here: extraction gets things
 // wrong, and the profile drives the ranking, so hand edits are the primary
-// path rather than a fallback. The save sits at the end of the record, so
-// the whole of it, entries included, goes up in one write.
-export default function ProfileForm({ profile, onChange, onSave }) {
+// path rather than a fallback. The save is the sticky bar the page shows
+// whenever anything is unsaved (see ProfileSaveBar.jsx), so the whole record,
+// entries included, still goes up in one write.
+export default function ProfileForm({ profile, onChange }) {
   const set = (key) => (value) => onChange({ ...profile, [key]: value });
 
   return (
-    <ProfileSection id={sectionId('fit')} title="Best fit" hint={HINT}>
-      <div className="flex max-w-2xl flex-col gap-4">
+    <ProfileSection id={sectionId('fit')} title="Best fit" icon={TargetIcon} hint={HINT}>
+      <div className="flex max-w-3xl flex-col gap-4">
         <TagInput plain label="Skills" values={profile.skills} onChange={set('skills')} />
         <TagInput plain label="Target titles" values={profile.titles} onChange={set('titles')} />
         <TagInput plain label="Locations" values={profile.locations} onChange={set('locations')} />
@@ -45,7 +46,6 @@ export default function ProfileForm({ profile, onChange, onSave }) {
           </Labelled>
         </div>
       </div>
-      <SaveBar onSave={onSave} label="Save profile" />
     </ProfileSection>
   );
 }

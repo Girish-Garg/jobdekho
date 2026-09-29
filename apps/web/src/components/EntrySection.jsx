@@ -2,6 +2,12 @@ import { makeEntry } from '../lib/newEntry.js';
 import { sectionId } from '../lib/profileIndex.js';
 import ProfileSection, { AddControl } from './ProfileSection.jsx';
 import EntryCard from './EntryCard.jsx';
+import { BriefcaseIcon, FolderIcon, GraduationCapIcon, ShieldCheckIcon, TrophyIcon } from './Icon.jsx';
+
+const ICONS = {
+  experience: BriefcaseIcon, projects: FolderIcon, education: GraduationCapIcon,
+  certifications: ShieldCheckIcon, achievements: TrophyIcon,
+};
 
 // Every generic section (experience, projects, education, certifications,
 // achievements) is this same shell around a list of EntryCard; only the
@@ -25,12 +31,13 @@ export default function EntrySection({ meta, entries, onChange }) {
     <ProfileSection
       id={sectionId(meta.key)}
       title={meta.label}
+      icon={ICONS[meta.key]}
       count={entries.length}
       hint={entries.length === 0 ? meta.hint : null}
       action={<AddControl label={meta.add} onClick={add} />}
     >
       {entries.length > 0 && (
-        <div className="flex flex-col divide-y divide-line border-t border-line">
+        <div className="flex flex-col divide-y divide-line">
           {entries.map((entry, i) => (
             <EntryCard
               key={entry.id}

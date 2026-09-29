@@ -46,17 +46,17 @@ export default function ProfileView() {
   );
 
   return (
-    <section className="px-8 py-8">
-      <h2 className="font-display text-xl font-extrabold tracking-tight">Profile</h2>
-      <p className="mt-1 max-w-2xl text-sm text-muted">
+    <section className="mx-auto max-w-[1400px] px-6 pb-10 pt-6 sm:px-8">
+      <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink">Profile</h1>
+      <p className="mt-0.5 max-w-2xl text-sm text-muted">
         Your full career record. The Resume tab builds from it; Best fit on Postings scores against the fields at the end.
       </p>
 
       {profile === undefined ? (
         <p className="py-10 text-sm text-muted">Loading your profile...</p>
       ) : wide ? (
-        <div className="mt-8 grid grid-cols-[260px_minmax(0,1fr)] items-start gap-x-12 min-[1500px]:gap-x-16">
-          <ProfileRail basics={profile.basics} rows={rows} current={current} onJump={jumpTo}>
+        <div className="mt-6 grid grid-cols-[250px_minmax(0,1fr)] items-start gap-x-8 min-[1500px]:gap-x-10">
+          <ProfileRail rows={rows} current={current} onJump={jumpTo}>
             {resume}
           </ProfileRail>
           {body}

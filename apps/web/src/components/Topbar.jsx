@@ -14,10 +14,7 @@ export default function Topbar({ view, setView, q = '', onSearch, searchRef, cha
   return (
     <header className="flex h-12 shrink-0 items-center gap-4 border-b border-line bg-panel px-5">
       <div className="flex shrink-0 items-center gap-6">
-        <span className="flex items-center gap-2">
-          <span aria-hidden="true" className="grid h-7 w-7 place-items-center rounded-lg bg-primary font-display text-sm font-extrabold text-on-primary">J</span>
-          <span className="hidden font-display text-lg font-extrabold tracking-tight text-ink sm:inline">Job<span className="text-primary">Dekho</span></span>
-        </span>
+        <span className="hidden font-display text-lg font-extrabold tracking-tight text-ink sm:inline">Job<span className="text-primary">Dekho</span></span>
         <nav className="flex items-center gap-1">
           <NavItem active={view === 'postings'} onClick={() => setView?.('postings')}>Postings</NavItem>
           <NavItem active={view === 'profile'} onClick={() => setView?.('profile')}>Profile</NavItem>

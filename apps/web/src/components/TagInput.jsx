@@ -17,14 +17,14 @@ export default function TagInput({ label, values, onChange, plain = false }) {
   return (
     <label className={plain ? 'flex flex-col gap-1' : 'flex flex-col gap-2'}>
       <span className={plain ? 'text-sm text-muted' : 'font-mono text-[11px] uppercase tracking-[0.2em] text-muted'}>{label}</span>
-      <div className={`flex flex-wrap gap-1.5 rounded-md border border-line p-2 ${plain ? 'bg-panel' : 'bg-paper'}`}>
+      <div className={`flex flex-wrap gap-1.5 rounded-lg border border-line p-2 transition duration-fast ease-ease focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/15 ${plain ? 'bg-panel' : 'bg-paper'}`}>
         {values.map((v) => (
           <button
             key={v}
             type="button"
             onClick={() => onChange(values.filter((x) => x !== v))}
             aria-label={`Remove ${v}`}
-            className="inline-flex items-center gap-1.5 rounded-full bg-ink/90 px-2.5 py-1 text-xs text-paper"
+            className="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/10 px-2.5 py-1 text-xs font-medium text-accent transition-colors duration-fast ease hover:border-ember/40 hover:bg-ember/10 hover:text-ember"
           >
             {v}
             <CloseIcon size={10} />

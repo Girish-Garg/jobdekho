@@ -15,11 +15,14 @@ export function useProfileState() {
   // Proposals from the last extraction, held apart from the profile so they
   // can be reviewed - and discarded - without ever becoming part of it.
   const [proposed, setProposed] = useState(null);
+  // The last copy the server has, to tell an edited record from a saved one
+  // (see ProfileSaveBar.jsx) and to put an edit back.
+  const [lastSaved, setLastSaved] = useState(null);
 
   useEffect(() => {
     let alive = true;
     getProfile()
-      .then((p) => alive && (setProfile(withDefaults(p)), setExists(p !== null)))
+      .then((p) => alive && (setProfile(withDefaults(p)), setLastSaved(withDefaults(p)), setExists(p !== null)))
       .catch(() => alive && setProfile(withDefaults(null)));
     return () => {
       alive = false;
@@ -30,6 +33,7 @@ export function useProfileState() {
     const { resumeName, ...body } = profile;
     const saved = await putProfile({ ...body, skills: deriveSkills(body.skills, body.skillGroups) });
     setProfile(withDefaults(saved));
+    setLastSaved(withDefaults(saved));
     setExists(true);
   }
 
@@ -45,6 +49,7 @@ export function useProfileState() {
   function adopt(result) {
     const { proposed: found, experience, projects, education, basics, skillGroups, certifications, achievements, ...flat } = result;
     setProfile((p) => ({ ...withDefaults(p), ...flat }));
+    setLastSaved((p) => ({ ...withDefaults(p), ...flat }));
     setExists(true);
     const any = found && (found.experience.length || found.projects.length || found.education.length);
     setProposed(any ? found : null);
@@ -62,8 +67,15 @@ export function useProfileState() {
 
   function reset() {
     setProfile(withDefaults(null));
+    setLastSaved(withDefaults(null));
     setExists(false);
   }
 
-  return { profile, setProfile, exists, proposed, save, adopt, addProposals, dismissProposed: () => setProposed(null), reset };
+  // Compared as written, so a field typed and typed back reads as unchanged.
+  const dirty = Boolean(profile && lastSaved) && JSON.stringify(profile) !== JSON.stringify(lastSaved);
+  const discard = () => lastSaved && setProfile(lastSaved);
+
+  return {
+    profile, setProfile, exists, proposed, save, adopt, addProposals, dismissProposed: () => setProposed(null), reset, dirty, discard,
+  };
 }

@@ -1,5 +1,6 @@
 import { useId, useRef, useState } from 'react';
 import { uploadResume } from '../api.js';
+import { DocumentIcon } from './Icon.jsx';
 
 const CONTROL = 'cursor-pointer text-sm text-ink underline decoration-edge underline-offset-4 transition-colors duration-fast ease-ease hover:decoration-ink';
 
@@ -38,10 +39,13 @@ export default function ResumeUpload({ resumeName, onUploaded, children }) {
         event.preventDefault();
         send(event.dataTransfer?.files?.[0]);
       }}
-      className="flex flex-col gap-3 rounded-md border border-line bg-panel p-4 transition-colors duration-fast ease-ease focus-within:border-edge"
+      className="flex flex-col gap-3 rounded-2xl border border-line bg-panel p-4 transition-colors duration-fast ease-ease focus-within:border-edge"
     >
       <div className="flex flex-col gap-1">
-        <label htmlFor={inputId} className="text-sm font-medium text-ink">Resume (PDF)</label>
+        <label htmlFor={inputId} className="flex items-center gap-2 text-sm font-semibold text-ink">
+          <DocumentIcon size={15} className="text-primary" />
+          Resume (PDF)
+        </label>
         <input
           id={inputId}
           ref={inputRef}

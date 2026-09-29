@@ -48,10 +48,4 @@ describe('ProfileForm', () => {
     expect(values).toEqual(['none', 'bachelors', 'masters', 'phd']);
   });
 
-  it('saves through the save bar', async () => {
-    const onSave = vi.fn(async () => {});
-    render(<ProfileForm profile={P} onChange={() => {}} onSave={onSave} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Save profile' }));
-    await waitFor(() => expect(onSave).toHaveBeenCalled());
-  });
 });

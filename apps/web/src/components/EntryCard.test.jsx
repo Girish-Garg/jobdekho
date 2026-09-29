@@ -30,7 +30,7 @@ describe('EntryCard', () => {
   it('collapses to one summary line naming the title, organisation and dates', () => {
     renderCard();
     expect(screen.getByText('Backend Engineer')).toBeInTheDocument();
-    expect(screen.getByText('at Acme')).toBeInTheDocument();
+    expect(screen.getByText(/^Acme/)).toBeInTheDocument();
     expect(screen.getByText('2020 - Present')).toBeInTheDocument();
     // <details> keeps its content in the DOM even when closed; jest-dom's
     // visibility check is the one that understands a closed <details>.
@@ -67,7 +67,7 @@ describe('EntryCard', () => {
 
   it('shows a pinned marker on the collapsed row once pinned', () => {
     renderCard({ pinned: true });
-    expect(screen.getByText('pinned')).toBeInTheDocument();
+    expect(screen.getByText('Pinned', { selector: 'summary span' })).toBeInTheDocument();
   });
 
   it('calls onRemove and onMove from their buttons', () => {

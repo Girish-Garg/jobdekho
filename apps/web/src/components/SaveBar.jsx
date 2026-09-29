@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { notifyError } from '../lib/toast.js';
 
-// Primary-action save button with transient confirmation. Ink, not ember:
-// ember is the colour of errors, and a save is not one.
+// Primary-action save button with transient confirmation, in saffron, the
+// colour the app gives the thing you act with.
 export default function SaveBar({ onSave, label: idleLabel = 'Save changes' }) {
   const [state, setState] = useState('idle');
 
@@ -28,7 +28,7 @@ export default function SaveBar({ onSave, label: idleLabel = 'Save changes' }) {
       <button
         onClick={save}
         disabled={state === 'saving'}
-        className="rounded-full bg-ink px-5 py-2 text-sm font-medium text-paper transition hover:opacity-90 disabled:opacity-60"
+        className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-on-primary transition-colors duration-fast ease hover:bg-primary/90 disabled:opacity-60"
       >
         {label}
       </button>

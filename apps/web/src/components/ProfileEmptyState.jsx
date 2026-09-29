@@ -1,21 +1,27 @@
-// A user landing here with nothing needs to know why they would bother
-// before being shown a pile of blank inputs.
+import { SparkleIcon } from './Icon.jsx';
+
+// A person landing here with nothing needs to know why they would bother
+// before being shown a pile of blank inputs, and the quickest way in: the
+// resume card beside this reads a PDF and fills the record from it.
 export default function ProfileEmptyState({ onStart }) {
   return (
-    <div className="flex max-w-xl flex-col items-start gap-4">
-      <h3 className="font-display text-lg font-bold tracking-tight">No profile yet</h3>
+    <div className="flex max-w-2xl flex-col items-start gap-4 rounded-2xl border border-line bg-panel p-6">
+      <span aria-hidden="true" className="grid h-11 w-11 place-items-center rounded-2xl bg-primary/15 text-primary">
+        <SparkleIcon size={18} />
+      </span>
+      <h2 className="font-display text-xl font-extrabold tracking-tight text-ink">Start your profile</h2>
       <p className="text-sm leading-relaxed text-muted">
         Your profile is your full career record: experience, projects, education, skills, certifications and
         achievements, each holding as many entries as you need. The skills, target titles, experience and degree
-        you bring are what the Best fit ranking on Postings scores against. Upload a resume and fill the record
-        in from it, or write it yourself. Once it is saved you can also use it to seed your notification filter.
+        in it are what Best fit on Postings ranks jobs by, and the Resume tab builds from it. The quickest start
+        is to upload your resume and let the AI on this computer fill it in.
       </p>
       <button
         type="button"
         onClick={onStart}
-        className="rounded-full border border-line px-4 py-1.5 text-sm text-ink transition-colors duration-fast ease-ease hover:border-ink"
+        className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-on-primary transition-colors duration-fast ease-ease hover:bg-primary/90"
       >
-        Fill it in by hand
+        Start writing it
       </button>
     </div>
   );

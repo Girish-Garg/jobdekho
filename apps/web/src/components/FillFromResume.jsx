@@ -8,7 +8,7 @@ import OverwriteConfirm from './OverwriteConfirm.jsx';
 import AiError from './AiError.jsx';
 
 // Text-weight, like the Replace control it sits under in the resume card.
-const SECONDARY = 'text-sm text-ink underline decoration-edge underline-offset-4 transition-colors duration-fast ease-ease hover:decoration-ink disabled:opacity-60';
+const SECONDARY = 'rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1.5 text-sm font-semibold text-primary transition-colors duration-fast ease-ease hover:bg-primary/15 disabled:opacity-60';
 
 const INTRO = 'Filling in from the resume asks an AI CLI installed on this computer, on your own subscription.';
 

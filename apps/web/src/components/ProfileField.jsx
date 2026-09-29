@@ -1,6 +1,6 @@
 // The one input style the record uses: a panel-coloured well on the paper
 // page, so a field reads as a field without a caption shouting at it.
-export const BOX = 'rounded-md border border-line bg-panel px-2.5 py-1.5 text-sm text-ink outline-none transition-colors duration-fast ease-ease focus:border-ink';
+export const BOX = 'rounded-lg border border-line bg-panel px-3 py-2 text-sm text-ink outline-none transition duration-fast ease-ease hover:border-edge focus:border-primary/60 focus:ring-2 focus:ring-primary/15';
 
 // A plain caption, as a real <label>, above whatever control it names.
 export function Labelled({ label, children }) {
