@@ -1,7 +1,7 @@
 import { locateBinary } from './locate.js'
 import { runCli } from './spawn.js'
 import { inEmptyDir } from './scratch-dir.js'
-import { ProviderError } from './errors.js'
+import { ProviderError, classify } from './errors.js'
 import { startEvent, progressEvent } from './events.js'
 
 const DEFAULT_TIMEOUT_MS = 120000
@@ -9,6 +9,12 @@ const DEFAULT_TIMEOUT_MS = 120000
 // Long enough that a browser watching the stream sees the call is alive, short
 // enough that nobody wonders whether it hung.
 const HEARTBEAT_MS = 5000
+
+// A busy CLI is waiting on its own token refresh, which settles in seconds.
+// Two retries cover it; past that the person is told to wait a minute rather
+// than have JobDekho hold the request open indefinitely.
+const BUSY_WAITS_MS = [2000, 5000]
+const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 // One prompt to one provider, answered with the model's text. Reading a shape
 // out of that text is the feature's job, because every feature asks for a
@@ -20,12 +26,12 @@ const HEARTBEAT_MS = 5000
 // cannot honour the policy is the same kind of bug: select.js never picks
 // one, so reaching here with it is a caller wiring the wrong CLI in.
 //
-// `run`, `locate` and `scratch` are injectable so a test never spawns a real
-// CLI or touches the real temp directory, and so the route layer can hand in
-// fakes through one decorator.
+// `run`, `locate`, `scratch` and `sleep` are injectable so a test never
+// spawns a real CLI, touches the real temp directory or waits in real time.
 export async function callProvider({
   provider, prompt, tools, timeoutMs = DEFAULT_TIMEOUT_MS, emit = () => {},
   run = runCli, locate = locateBinary, scratch = inEmptyDir, heartbeatMs = HEARTBEAT_MS, now = Date.now,
+  sleep = pause, busyWaits = BUSY_WAITS_MS,
 }) {
   const args = provider.promptArgs(tools)
   if (!args) throw new Error(`${provider.label} cannot honour the "${tools}" tool policy and should not have been chosen for it`)
@@ -37,6 +43,22 @@ export async function callProvider({
   emit(startEvent({ provider: provider.id, path: file }))
   emit(progressEvent({ stage: 'send', chars: prompt.length }))
   const started = now()
+  const call = { file, args, provider, prompt, timeoutMs, run, scratch, emit, heartbeatMs, now, started }
+
+  for (let tries = 0; ; tries += 1) {
+    try {
+      const text = await once(call)
+      emit(progressEvent({ stage: 'reply', elapsedMs: now() - started, chars: text.length }))
+      return { provider: provider.id, text }
+    } catch (err) {
+      if (err?.kind !== 'busy' || tries >= busyWaits.length) throw err
+      emit(progressEvent({ stage: 'retry', elapsedMs: now() - started, attempt: tries + 2 }))
+      await sleep(busyWaits[tries])
+    }
+  }
+}
+
+async function once({ file, args, provider, prompt, timeoutMs, run, scratch, emit, heartbeatMs, now, started }) {
   const beat = setInterval(() => emit(progressEvent({ stage: 'wait', elapsedMs: now() - started })), heartbeatMs)
   let result
   try {
@@ -46,11 +68,8 @@ export async function callProvider({
   } finally {
     clearInterval(beat)
   }
-
   if (result.code !== 0) throw exited(result, provider)
-  const text = provider.unwrap(result.stdout, provider)
-  emit(progressEvent({ stage: 'reply', elapsedMs: now() - started, chars: text.length }))
-  return { provider: provider.id, text }
+  return provider.unwrap(result.stdout, provider)
 }
 
 function notRun(err, provider, timeoutMs) {
@@ -60,10 +79,9 @@ function notRun(err, provider, timeoutMs) {
 }
 
 // A CLI that is installed but not signed in usually says so on stderr and
-// exits non-zero, which is the other route an expired login takes. Claude
-// Code 2.1 takes both at once: it prints its is_error envelope on stdout AND
-// exits 1 with nothing on stderr, so the envelope is read first or the
-// person sees "exited with code 1" where "OAuth session expired" was.
+// exits non-zero. Claude Code 2.1 prints its is_error envelope on stdout AND
+// exits 1 with nothing on stderr, so the envelope is read first or the person
+// sees "exited with code 1" where the real sentence was.
 function exited({ stdout, stderr, code }, provider) {
   try {
     provider.unwrap(stdout, provider)
@@ -71,5 +89,5 @@ function exited({ stdout, stderr, code }, provider) {
     if (err instanceof ProviderError) return err
   }
   const detail = stderr.trim().slice(0, 200) || `exited with code ${code}`
-  return new ProviderError(provider.loginPattern.test(detail) ? 'login' : 'failed', provider, detail)
+  return new ProviderError(classify(provider, detail), provider, detail)
 }

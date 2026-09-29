@@ -1,5 +1,5 @@
 import { parseJsonObject } from './loose-json.js'
-import { ProviderError } from './errors.js'
+import { ProviderError, classify } from './errors.js'
 
 // --safe-mode drops the person's own hooks, MCP servers, CLAUDE.md, skills and
 // plugins for this one call while leaving their login alone (--bare would
@@ -28,7 +28,7 @@ export function unwrapClaude(stdout, provider) {
   const envelope = parseJsonObject(stdout)
   if (envelope?.is_error) {
     const detail = String(envelope.result || 'the CLI reported an error').slice(0, 200)
-    throw new ProviderError(provider.loginPattern.test(detail) ? 'login' : 'failed', provider, detail)
+    throw new ProviderError(classify(provider, detail), provider, detail)
   }
   if (envelope && typeof envelope.result === 'string') return envelope.result
   return String(stdout || '')

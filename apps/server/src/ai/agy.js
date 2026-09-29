@@ -1,5 +1,5 @@
 import { parseJsonObject } from './loose-json.js'
-import { ProviderError } from './errors.js'
+import { ProviderError, classify } from './errors.js'
 
 // Antigravity's agy, measured at 1.1.22 and confirmed unchanged on 1.2.2.
 // Its -p takes the prompt as its VALUE, so `-p=` with an empty value plus
@@ -69,7 +69,7 @@ export function unwrapAgy(stdout, provider) {
   if (!result) return String(stdout || '')
   if (result.status !== 'SUCCESS') {
     const detail = String(result.error || `status ${result.status}`).slice(0, 200)
-    throw new ProviderError(provider.loginPattern.test(detail) ? 'login' : 'failed', provider, detail)
+    throw new ProviderError(classify(provider, detail), provider, detail)
   }
   const response = String(result.response ?? '')
   const denied = (Array.isArray(result.denied_actions) ? result.denied_actions : [])

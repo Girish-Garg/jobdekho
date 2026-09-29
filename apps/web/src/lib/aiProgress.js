@@ -13,5 +13,8 @@ export function progressText(event, label, { noun, doing = 'reading' } = {}) {
   if (event.stage === 'send') return `${noun} handed to ${label}. Waiting for it to read...`;
   if (event.stage === 'wait') return `${label} is ${doing}... ${seconds}s`;
   if (event.stage === 'reply') return `${label} answered after ${seconds}s. Saving...`;
+  // The CLI was mid token refresh and is being asked again; without a line
+  // for it the progress went blank for the wait, which reads as a hang.
+  if (event.stage === 'retry') return `${label} was busy signing itself in. Trying again (attempt ${event.attempt})...`;
   return '';
 }

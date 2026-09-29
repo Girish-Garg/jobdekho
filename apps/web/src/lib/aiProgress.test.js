@@ -32,6 +32,12 @@ describe('progressText', () => {
   });
 
   it('says nothing for a stage it does not know, rather than guessing', () => {
-    expect(progressText({ event: 'progress', stage: 'retry' }, 'Claude Code', RESUME)).toBe('');
+    expect(progressText({ event: 'progress', stage: 'rewinding' }, 'Claude Code', RESUME)).toBe('');
+  });
+
+  // A blank line while the CLI waits on its own token refresh read as a hang.
+  it('says the CLI is being asked again after it was busy', () => {
+    expect(progressText({ event: 'progress', stage: 'retry', attempt: 2 }, 'Claude Code', RESUME))
+      .toBe('Claude Code was busy signing itself in. Trying again (attempt 2)...');
   });
 });

@@ -39,6 +39,10 @@ export const CLAUDE = {
   ...underPolicies(CLAUDE_ARGS),
   encodeInput: (prompt) => prompt,
   loginPattern: /authenticat|oauth|logged in|\/login|api key|credential/i,
+  // Measured on 2.1.281, while this very session held the token: "Failed to
+  // refresh OAuth token: another Claude Code process is refreshing it or
+  // exited mid-refresh. This is usually transient".
+  busyPattern: /is refreshing it|mid-refresh/i,
   unwrap: unwrapClaude,
 }
 
