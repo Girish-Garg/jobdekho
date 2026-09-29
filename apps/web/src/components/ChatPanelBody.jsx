@@ -27,7 +27,7 @@ export default function ChatPanelBody({ onClose, context, apply }) {
   }
 
   return (
-    <aside aria-label="Ask about your feed" className="flex w-[22rem] shrink-0 flex-col border-r border-line bg-panel">
+    <aside aria-label="Ask about your feed" className="slide-in-left absolute inset-y-0 left-0 z-30 flex w-[22rem] max-w-full flex-col border-r border-line bg-panel shadow-pop">
       <div className="flex items-center justify-between gap-2 border-b border-line px-4 py-2">
         <p className="text-sm font-semibold">Ask</p>
         <div className="flex items-center gap-3">

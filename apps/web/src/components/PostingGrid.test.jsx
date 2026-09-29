@@ -25,3 +25,13 @@ describe('PostingGrid', () => {
     expect(() => render(<PostingGrid postings={postings} selectedId="b" onOpen={noop} />)).not.toThrow();
   });
 });
+
+// Three columns at most: at four and five a card was too narrow for a title
+// to finish on two lines.
+it('never lays the cards out wider than three columns', () => {
+  render(<PostingGrid postings={[]} onOpen={() => {}} />);
+  const cls = screen.getByTestId('posting-grid').className;
+  expect(cls).toContain('lg:grid-cols-3');
+  expect(cls).not.toMatch(/grid-cols-[4-9]/);
+});
+

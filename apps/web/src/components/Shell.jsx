@@ -12,6 +12,7 @@ import ShortcutsHelp from './ShortcutsHelp.jsx';
 import AiChatPanel from './AiChatPanel.jsx';
 import ToastHost from './ToastHost.jsx';
 import ShellMain from './ShellMain.jsx';
+import { OVERLAY_HOST_ID } from '../lib/overlayHost.js';
 
 // Full-viewport app frame: topbar, filter bar, scrolling main region. The
 // filters sit above the feed rather than beside it so the grid gets the width.
@@ -72,7 +73,7 @@ export default function Shell() {
           )}
         />
       )}
-      <div className="flex min-h-0 flex-1">
+      <div id={OVERLAY_HOST_ID} className="relative flex min-h-0 flex-1">
         {postings && <AiChatPanel
             open={chatOpen}
             onClose={() => setChatOpen(false)}

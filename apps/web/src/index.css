@@ -33,13 +33,6 @@
   --level-staff: 97 48 64;
   --level-executive: 73 47 27;
 
-  /* What sits above the scrolling feed: the topbar and the filter row are
-     outside it, and the pane reads their height to know how tall it may be.
-     It used to guess 80px, so its bottom fell off the screen. The second
-     value is the breathing room the pane keeps from the top of the scroll. */
-  --chrome-above-feed: 92px;
-  --feed-header: 8px;
-
   --duration-fast: 120ms;
   --duration-slow: 220ms;
   --ease: cubic-bezier(0.2, 0, 0, 1);
@@ -111,6 +104,30 @@ body {
 
 .rise {
   animation: rise var(--duration-slow) var(--ease) both;
+}
+
+/* A side panel arrives from the edge it lives on, so the eye knows where it
+   came from and where it will go when closed. */
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+}
+
+.slide-in-right {
+  animation: slide-in-right var(--duration-slow) var(--ease) both;
+}
+
+.slide-in-left {
+  animation: slide-in-left var(--duration-slow) var(--ease) both;
 }
 
 @keyframes breathe {

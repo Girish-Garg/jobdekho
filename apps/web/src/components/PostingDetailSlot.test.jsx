@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import PostingDetailSlot from './PostingDetailSlot.jsx';
+import { OVERLAY_HOST_ID } from '../lib/overlayHost.js';
 
 const posting = { id: 'p1', title: 'Engineer', company: 'Acme', status: null };
 const noop = () => {};
@@ -31,3 +32,19 @@ describe('PostingDetailSlot at the wide breakpoint', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });
+
+// The pane floats over the feed: rendered into the area under the chrome,
+// never into the feed's own row, where it used to take a column and reflow
+// every card beside it.
+describe('PostingDetailSlot floating over the feed', () => {
+  it('renders into the overlay host when the shell provides one', () => {
+    const host = document.createElement('div');
+    host.id = OVERLAY_HOST_ID;
+    document.body.appendChild(host);
+    const { container } = render(<PostingDetailSlot isWide opened={posting} onClose={noop} onStatus={noop} />);
+    expect(container).toBeEmptyDOMElement();
+    expect(host.querySelector('[aria-label="Posting"]')).not.toBeNull();
+    host.remove();
+  });
+});
+
