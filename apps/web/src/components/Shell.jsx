@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSavedFilters } from '../lib/useSavedFilters.js';
 import { useChatDock } from '../lib/useChatDock.js';
 import { useGlobalKeys } from '../lib/useGlobalKeys.js';
@@ -10,6 +10,7 @@ import AiChatPanel from './AiChatPanel.jsx';
 import ToastHost from './ToastHost.jsx';
 import ShellMain from './ShellMain.jsx';
 import { OVERLAY_HOST_ID } from '../lib/overlayHost.js';
+import { WIDE_QUERY } from '../lib/chatLayout.js';
 
 // Full-viewport app frame: the topbar and the scrolling page under it. The
 // feed's filters live in the feed's own column (see FeedTop.jsx), so they
@@ -31,6 +32,14 @@ export default function Shell() {
   const chat = useChatDock();
   const searchRef = useRef(null);
   const postings = view === 'postings';
+
+  // The Resume page is built around the chat: every change to a document is
+  // asked for there, so arriving opens it, docked beside the documents (see
+  // useChatLayout.js). Closing it there holds until the next arrival. Not on
+  // a narrow window, where the chat would cover the documents entirely.
+  useEffect(() => {
+    if (view === 'resume' && globalThis.matchMedia?.(WIDE_QUERY)?.matches) chat.show();
+  }, [view]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // The chrome's three global shortcuts. j/k/Enter/s/a/d/u belong to the feed
   // and are bound in its own hook, not here.
@@ -58,6 +67,7 @@ export default function Shell() {
           open={chat.open}
           onClose={chat.close}
           request={chat.request}
+          draft={chat.draft}
           context={{ filters, sort, page: view }}
           apply={{ setFilters, setSort, setView }}
         />

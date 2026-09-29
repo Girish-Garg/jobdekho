@@ -4,12 +4,15 @@ import { initials } from './CompanyMark.jsx';
 import ContactChips from './ContactChips.jsx';
 import ProfileStrength from './ProfileStrength.jsx';
 import BasicsForm from './BasicsForm.jsx';
+import AskAiControl from './AskAiControl.jsx';
 import { PenIcon } from './Icon.jsx';
 
 // Who the record is about, as a card rather than eight open inputs: the name
 // and headline large, the ways to reach them as chips, and how complete the
 // record is. The basics are edited in place under it, on demand, since they
 // change once in a long while; a record with no name yet opens with them.
+// "Add with AI" here is the open door: whatever the person tells the chat
+// about themselves, it offers back as a change to apply.
 export default function ProfileHero({ basics, profile, onChange }) {
   const [editing, setEditing] = useState(!basics.name);
 
@@ -26,15 +29,18 @@ export default function ProfileHero({ basics, profile, onChange }) {
         </div>
         <div className="flex w-full flex-col items-stretch gap-3 sm:w-auto sm:items-end">
           <ProfileStrength profile={profile} />
-          <button
-            type="button"
-            aria-expanded={editing}
-            onClick={() => setEditing(!editing)}
-            className="inline-flex items-center justify-center gap-1.5 self-start rounded-full border border-line px-3.5 py-1.5 text-sm font-medium text-ink transition-colors duration-fast ease hover:border-edge sm:self-end"
-          >
-            <PenIcon size={13} />
-            {editing ? 'Done editing' : 'Edit basics'}
-          </button>
+          <div className="flex flex-wrap items-center gap-2 self-start sm:self-end">
+            <AskAiControl prompt="Add to my profile: " where="your profile" />
+            <button
+              type="button"
+              aria-expanded={editing}
+              onClick={() => setEditing(!editing)}
+              className="inline-flex items-center justify-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-ink transition-colors duration-fast ease hover:border-edge"
+            >
+              <PenIcon size={12} />
+              {editing ? 'Done editing' : 'Edit basics'}
+            </button>
+          </div>
         </div>
       </div>
       {editing && (

@@ -23,21 +23,23 @@ export default function ProfileSection({ id, title, count, hint, action, icon: I
           </h3>
           {hint && <p className="mt-0.5 max-w-2xl text-sm text-muted">{hint}</p>}
         </div>
-        {action}
+        {action && <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">{action}</div>}
       </div>
       {children}
     </section>
   );
 }
 
-// At the far end of the heading's line, in saffron: adding is the one thing
-// every section offers, so it looks the same in each.
+// At the far end of the heading's line: adding by hand is something every
+// section offers, so it looks the same in each. Quiet beside the saffron
+// "Add with AI" (see AskAiControl.jsx), which is the quicker way in now;
+// this one opens an empty entry to type into.
 export function AddControl({ label, onClick }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-colors duration-fast ease hover:bg-primary/15"
+      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-line bg-panel px-3 py-1.5 text-xs font-semibold text-ink transition-colors duration-fast ease hover:border-edge"
     >
       <PlusIcon size={12} />
       {label}

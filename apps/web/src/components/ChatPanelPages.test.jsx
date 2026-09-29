@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import AiChatPanel from './AiChatPanel.jsx';
 import { announceOpenPosting, onOpenPostingRequest } from '../lib/openPostingSignal.js';
+import { announceOpenDocument } from '../lib/openDocumentSignal.js';
 
 vi.mock('../api.js', () => ({
   getProviders: vi.fn(),
@@ -51,9 +52,33 @@ describe('the chat on a page other than the feed', () => {
     expect(getPostingAiResults).not.toHaveBeenCalled();
   });
 
-  it('suggests resume questions on the resume page', async () => {
+  it('suggests document requests on the resume page', async () => {
     setup('resume');
-    expect(await screen.findByRole('button', { name: 'Make my resume fit one page' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Make it fit one page' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Write a cover letter' })).toBeInTheDocument();
+  });
+
+  it('names the open document on the resume page and sends its id with the question', async () => {
+    announceOpenDocument({ id: 'd1', name: 'Classic resume', kind: 'resume' });
+    setup('resume');
+    expect(await screen.findByText('Classic resume')).toBeInTheDocument();
+    fireEvent.click(await screen.findByRole('button', { name: 'Make it fit one page' }));
+    await waitFor(() => expect(sendChatMessage).toHaveBeenCalledWith(
+      { message: 'Make it fit one page', filters: FILTERS, sort: 'match', openPostingId: null, page: 'resume', documentId: 'd1' },
+      { onEvent: expect.any(Function) },
+    ));
+    announceOpenDocument(null);
+  });
+
+  it('sends no document on the resume page when none is open, so the chat can offer a new one', async () => {
+    announceOpenDocument(null);
+    setup('resume');
+    fireEvent.click(await screen.findByRole('button', { name: 'Write a cover letter' }));
+    await waitFor(() => expect(sendChatMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ page: 'resume', documentId: null }),
+      expect.anything(),
+    ));
+    expect(screen.queryByText('Working on')).not.toBeInTheDocument();
   });
 
   it('takes the person to the feed when an answer\'s feed action is applied there', async () => {

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { onAskAboutPosting } from './askAiSignal.js';
+import { onChatDraft } from './chatDraftSignal.js';
 import { opensDocked, saveLayout } from './chatLayout.js';
 
 // Whether the chat panel is open, and the job pane's latest "Ask AI about
@@ -13,9 +14,17 @@ import { opensDocked, saveLayout } from './chatLayout.js';
 export function useChatDock() {
   const [open, setOpen] = useState(() => opensDocked());
   const [request, setRequest] = useState(null);
+  // "Add with AI" on the Profile page: words to start the box with, which
+  // open the panel the same way the pane's ask does (see chatDraftSignal.js).
+  const [draft, setDraft] = useState(null);
 
   useEffect(() => onAskAboutPosting((next) => {
     setRequest(next);
+    setOpen(true);
+  }), []);
+
+  useEffect(() => onChatDraft((next) => {
+    setDraft(next);
     setOpen(true);
   }), []);
 
@@ -24,7 +33,8 @@ export function useChatDock() {
   function close() {
     setOpen(false);
     setRequest(null);
+    setDraft(null);
   }
 
-  return { open, request, close, toggle: () => (open ? close() : setOpen(true)) };
+  return { open, request, draft, close, show: () => setOpen(true), toggle: () => (open ? close() : setOpen(true)) };
 }

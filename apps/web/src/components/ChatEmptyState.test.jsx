@@ -20,8 +20,8 @@ describe('ChatEmptyState', () => {
 
   it('suggests questions that fit the page it is open on', () => {
     render(<ChatEmptyState page="resume" posting={null} busy={false} onSend={vi.fn()} />);
-    expect(screen.getByRole('heading', { name: 'Ask about your resume' })).toBeInTheDocument();
-    expect(questions()).toContain('Make my resume fit one page');
+    expect(screen.getByRole('heading', { name: 'Change your documents' })).toBeInTheDocument();
+    expect(questions()).toContain('Make it fit one page');
   });
 
   it('says it is looking for earlier answers while a job\'s saved ones load', () => {

@@ -84,3 +84,12 @@ describe('EntryCard', () => {
     expect(screen.getByRole('button', { name: 'Move down' })).toBeDisabled();
   });
 });
+
+// A project with no organisation used to show its field label, "Org
+// (optional)", as though that were the organisation.
+describe('EntryCard with no organisation', () => {
+  it('leaves the second line out rather than showing the field label', () => {
+    render(<EntryCard entry={{ ...BASE, organisation: '', location: '' }} titleLabel="Project name" orgLabel="Org (optional)" onChange={() => {}} onRemove={() => {}} onMove={() => {}} />);
+    expect(screen.queryByText('Org (optional)', { selector: 'summary span' })).not.toBeInTheDocument();
+  });
+});

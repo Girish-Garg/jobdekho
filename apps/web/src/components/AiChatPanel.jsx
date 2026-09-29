@@ -11,8 +11,9 @@ import ChatPanelBody from './ChatPanelBody.jsx';
 // plain gate: the real component is ChatPanelBody, mounted only while open,
 // so its hooks - loading the conversation, probing for a CLI - never run
 // while the panel is closed. `request` is the job pane's "Ask AI about this
-// job" (see lib/askAiSignal.js), handed through by Shell.
-export default function AiChatPanel({ open, onClose, context, apply, request = null }) {
+// job" (see lib/askAiSignal.js), handed through by Shell, and `draft` the
+// Profile page's "Add with AI" words for the box (see lib/chatDraftSignal.js).
+export default function AiChatPanel({ open, onClose, context, apply, request = null, draft = null }) {
   if (!open) return null;
-  return <ChatPanelBody onClose={onClose} context={context} apply={apply} request={request} />;
+  return <ChatPanelBody onClose={onClose} context={context} apply={apply} request={request} draft={draft} />;
 }

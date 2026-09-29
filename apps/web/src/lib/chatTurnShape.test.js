@@ -8,7 +8,7 @@ describe('turnShape', () => {
     const turn = turnShape({ ...BASE, answer: 'Two roles here.', refs: [{ id: 'p1' }], actions: [{ type: 'sort', value: 'newest' }] });
     expect(turn).toEqual({
       question: 'Is Acme hiring?', answer: 'Two roles here.', refs: [{ id: 'p1' }], actions: [{ type: 'sort', value: 'newest' }],
-      provider: 'claude', createdAt: BASE.createdAt, web: null, webError: null,
+      provider: 'claude', createdAt: BASE.createdAt, web: null, webError: null, proposals: [],
     });
   });
 
@@ -36,5 +36,13 @@ describe('turnShape', () => {
     expect(turn.refs).toEqual([]);
     expect(turn.actions).toEqual([]);
     expect(turn.provider).toBeNull();
+  });
+
+  it('carries the changes a turn offered as cards, and none for a turn saved before them', () => {
+    const proposal = { id: 'p1', kind: 'profile', summary: 'Add Go', status: 'applied', diff: [{ label: 'Skills', before: 'node', after: 'node, go' }] };
+    expect(turnShape({ ...BASE, answer: 'Here it is.', proposals: [proposal] }).proposals).toEqual([
+      { id: 'p1', kind: 'profile', summary: 'Add Go', status: 'applied', appliedAt: null, diff: [{ label: 'Skills', change: 'change', before: ['node'], after: ['node, go'] }] },
+    ]);
+    expect(turnShape({ ...BASE, answer: 'x' }).proposals).toEqual([]);
   });
 });

@@ -27,7 +27,8 @@ function HeaderButton({ label, active = false, onClick, children }) {
 }
 
 // The panel's title row: what it is and who answers, a fresh start, where it
-// sits (only on a window wide enough to have a choice), and the way out.
+// sits (only on a window wide enough to have a choice, and not on a page
+// that docks it, see useChatLayout.js), and the way out.
 export default function ChatHeader({ providers, answerer, layout, onNew, onClose }) {
   const now = status(providers, answerer);
   return (
@@ -42,7 +43,7 @@ export default function ChatHeader({ providers, answerer, layout, onNew, onClose
       </div>
       <div className="flex shrink-0 items-center gap-0.5">
         <HeaderButton label="New chat" onClick={onNew}><PlusIcon size={16} /></HeaderButton>
-        {layout.wide && (
+        {layout.wide && !layout.docked && (
           <HeaderButton label={layout.pinned ? 'Float over the page' : 'Pin to the side'} active={layout.pinned} onClick={layout.togglePinned}>
             {layout.pinned ? <PinOffIcon size={16} /> : <PinIcon size={16} />}
           </HeaderButton>

@@ -16,7 +16,7 @@ import ChatInput from './ChatInput.jsx';
 // works except the fake check, and asking for that shows its own hint
 // instead of a call that could only fail; the server makes the same choice
 // (ai/select.js). Both CLIs search today, so this is for one added later.
-export default function ChatComposer({ cli, scoped, runner, actions, target, onClearTarget, onSend }) {
+export default function ChatComposer({ cli, scoped, runner, actions, target, onClearTarget, onSend, draft = null }) {
   const { providers, checking, refresh } = cli;
   const known = Array.isArray(providers);
   const hint = (intro, policy) => (
@@ -48,6 +48,7 @@ export default function ChatComposer({ cli, scoped, runner, actions, target, onC
         placeholder={changing?.ask}
         submitLabel={changing ? 'Change' : 'Ask'}
         focusKey={target}
+        draft={draft}
       />
     </div>
   );

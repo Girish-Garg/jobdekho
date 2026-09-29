@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent, act, within } from '@testing-library/react';
 import Shell from './Shell.jsx';
 import { askAboutPosting } from '../lib/askAiSignal.js';
+import { startChatDraft } from '../lib/chatDraftSignal.js';
 
 vi.mock('../api.js', () => ({
   getFilters: vi.fn(async () => ({})),
@@ -18,6 +19,8 @@ vi.mock('../api.js', () => ({
   getChatHistory: vi.fn(async () => ({ turns: [] })),
   getPostingAiResults: vi.fn(async () => []),
   runPostingAction: vi.fn(() => new Promise(() => {})),
+  listDocuments: vi.fn(async () => []),
+  getDocumentTemplates: vi.fn(async () => []),
 }));
 
 import { getFilters, getPostings, getProviders, getPostingAiResults, runPostingAction } from '../api.js';
@@ -243,5 +246,35 @@ describe('Shell and the chat', () => {
     await act(async () => askAboutPosting(JOB));
     fireEvent.click(within(screen.getByRole('banner')).getByRole('button', { name: 'Ask AI' }));
     expect(screen.queryByRole('complementary', { name: 'Ask AI' })).not.toBeInTheDocument();
+  });
+
+  // The Resume page is built around the chat, so arriving there opens it.
+  it('opens the chat on arriving at the Resume page, with requests about documents', async () => {
+    getProviders.mockResolvedValue([{ id: 'claude', label: 'Claude Code', policies: ['none', 'web'], present: true, runs: true }]);
+    window.matchMedia = vi.fn(() => ({ matches: true, addEventListener() {}, removeEventListener() {} }));
+    await mount();
+    expect(screen.queryByRole('complementary', { name: 'Ask AI' })).not.toBeInTheDocument();
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Resume' })));
+    const chat = screen.getByRole('complementary', { name: 'Ask AI' });
+    expect(await within(chat).findByRole('heading', { name: 'Change your documents' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Your resumes and cover letters' })).toBeInTheDocument();
+    delete window.matchMedia;
+  });
+
+  it('leaves the chat closed on the Resume page of a narrow window, where it would cover the documents', async () => {
+    await mount();
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Resume' })));
+    expect(await screen.findByRole('heading', { name: 'Your resumes and cover letters' })).toBeInTheDocument();
+    expect(screen.queryByRole('complementary', { name: 'Ask AI' })).not.toBeInTheDocument();
+  });
+
+  it('opens the chat with the words the Profile page started, in the box', async () => {
+    getProviders.mockResolvedValue([{ id: 'claude', label: 'Claude Code', policies: ['none', 'web'], present: true, runs: true }]);
+    await mount();
+    await act(async () => startChatDraft('Add a project: '));
+    const chat = screen.getByRole('complementary', { name: 'Ask AI' });
+    const box = await within(chat).findByRole('textbox', { name: 'Ask about what is on screen' });
+    await waitFor(() => expect(box).toHaveValue('Add a project: '));
+    expect(box).toHaveFocus();
   });
 });

@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { takeDraft } from '../lib/chatDraftSignal.js';
 import { ArrowUpIcon } from './Icon.jsx';
 
 const ASK = 'Ask about what is on screen';
@@ -22,19 +23,35 @@ const SEND = 'grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary t
 // so the box itself says the words will change that card; `focusKey`
 // changing moves focus here, since picking a card to change is always
 // followed by typing what to change.
-export default function ChatInput({ busy, onSend, placeholder = ASK, submitLabel = 'Ask', focusKey = null }) {
+//
+// `draft` is the start of a request put in the box from elsewhere ("Add a
+// project: " from the Profile page), taken once, with the caret left at its
+// end for the person to finish the sentence.
+export default function ChatInput({ busy, onSend, placeholder = ASK, submitLabel = 'Ask', focusKey = null, draft = null }) {
   const [value, setValue] = useState('');
   const box = useRef(null);
+  const caretToEnd = useRef(false);
 
   useEffect(() => {
     if (focusKey) box.current?.focus();
   }, [focusKey]);
+
+  useEffect(() => {
+    if (!takeDraft(draft)) return;
+    caretToEnd.current = true;
+    setValue(draft.text);
+    box.current?.focus();
+  }, [draft]);
 
   useLayoutEffect(() => {
     const el = box.current;
     if (!el) return;
     el.style.height = 'auto';
     el.style.height = `${el.scrollHeight}px`;
+    if (!caretToEnd.current) return;
+    caretToEnd.current = false;
+    el.focus();
+    el.setSelectionRange?.(value.length, value.length);
   }, [value]);
 
   function submit() {

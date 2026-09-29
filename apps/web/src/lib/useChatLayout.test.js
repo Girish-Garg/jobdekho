@@ -60,4 +60,19 @@ describe('useChatLayout', () => {
     expect(result.current.wide).toBe(false);
     expect(result.current.pinned).toBe(false);
   });
+
+  // The Resume page docks the panel beside the documents whatever was saved,
+  // and leaves the saved choice alone for every other page.
+  it('pins a docked panel without changing the saved choice', () => {
+    windowOf({ wide: true, width: 1440 });
+    const { result } = renderHook(() => useChatLayout({ docked: true }));
+    expect(result.current).toMatchObject({ pinned: true, docked: true });
+    expect(readLayout().pinned).toBe(false);
+  });
+
+  it('does not dock on a narrow window, where the panel covers the page anyway', () => {
+    windowOf({ wide: false, width: 900 });
+    const { result } = renderHook(() => useChatLayout({ docked: true }));
+    expect(result.current).toMatchObject({ pinned: false, docked: false });
+  });
 });

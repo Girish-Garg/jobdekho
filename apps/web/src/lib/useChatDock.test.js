@@ -3,6 +3,7 @@ import { renderHook, act } from '@testing-library/react';
 import { useChatDock } from './useChatDock.js';
 import { readLayout, saveLayout } from './chatLayout.js';
 import { askAboutPosting } from './askAiSignal.js';
+import { startChatDraft } from './chatDraftSignal.js';
 
 function wideWindow(wide) {
   window.matchMedia = vi.fn(() => ({ matches: wide, addEventListener() {}, removeEventListener() {} }));
@@ -44,5 +45,21 @@ describe('useChatDock', () => {
     wideWindow(true);
     saveLayout({ pinned: false, open: true });
     expect(renderHook(() => useChatDock()).result.current.open).toBe(false);
+  });
+
+  it('opens with the words to start the box with, and drops them on close', () => {
+    const { result } = renderHook(() => useChatDock());
+    act(() => startChatDraft('Add a project: '));
+    expect(result.current.open).toBe(true);
+    expect(result.current.draft.text).toBe('Add a project: ');
+    act(() => result.current.close());
+    expect(result.current.draft).toBeNull();
+  });
+
+  it('opens on show without a request or a draft', () => {
+    const { result } = renderHook(() => useChatDock());
+    act(() => result.current.show());
+    expect(result.current.open).toBe(true);
+    expect(result.current.request).toBeNull();
   });
 });

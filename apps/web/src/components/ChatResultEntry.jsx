@@ -22,7 +22,7 @@ export default function ChatResultEntry({ entry, card }) {
           providers={card.providers}
           targeted={entry.latest && card.target === entry.kind}
           onTarget={card.onTarget}
-          onOpenBuilder={card.onOpenBuilder}
+          onMakeResume={card.onMakeResume}
         />
       </ChatAssistant>
     </div>

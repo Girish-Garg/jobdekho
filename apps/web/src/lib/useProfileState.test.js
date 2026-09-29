@@ -81,4 +81,27 @@ describe('useProfileState', () => {
     expect(result.current.profile).toEqual(EMPTY_PROFILE);
     expect(result.current.exists).toBe(false);
   });
+
+  it('replace shows a record the server already saved, as saved', async () => {
+    getProfile.mockResolvedValue(null);
+    const { result } = renderHook(() => useProfileState());
+    await waitFor(() => expect(result.current.profile).toBeDefined());
+    act(() => result.current.replace({ ...EMPTY_PROFILE, skills: ['go'] }));
+    expect(result.current.profile.skills).toEqual(['go']);
+    expect(result.current.exists).toBe(true);
+    expect(result.current.dirty).toBe(false);
+  });
+
+  it('rebase keeps unsaved edits on screen, measured against the new saved copy', async () => {
+    getProfile.mockResolvedValue(SAVED);
+    const { result } = renderHook(() => useProfileState());
+    await waitFor(() => expect(result.current.exists).toBe(true));
+    act(() => result.current.setProfile((p) => ({ ...p, years: 5 })));
+    act(() => result.current.rebase({ ...SAVED, skills: ['go'] }));
+    expect(result.current.profile.years).toBe(5);
+    expect(result.current.dirty).toBe(true);
+    act(() => result.current.discard());
+    expect(result.current.profile.skills).toEqual(['go']);
+    expect(result.current.dirty).toBe(false);
+  });
 });

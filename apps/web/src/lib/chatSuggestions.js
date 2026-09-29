@@ -2,7 +2,9 @@
 // rather than a blank box. The chat is open on every page, and the server
 // answers from the page it was asked on, so each page gets questions that
 // page can answer: the feed on screen, the job in scope (the company ones
-// are the questions that send the web a search), the profile, the resume.
+// are the questions that send the web a search), the profile, the documents
+// on the Resume page. On the last two a change comes back as a card to
+// apply, so the questions there are requests rather than questions.
 const PAGES = {
   postings: {
     title: 'Ask about your feed',
@@ -11,13 +13,13 @@ const PAGES = {
   },
   profile: {
     title: 'Ask about your profile',
-    intro: 'Ask what to add, what is missing, or how your profile reads.',
+    intro: 'Tell it what to add or fix, or ask what is missing. Changes come back as cards you apply.',
     questions: ['Add a project I built', 'What skills am I missing for backend roles?', 'How can I make my profile stronger?'],
   },
   resume: {
-    title: 'Ask about your resume',
-    intro: 'Ask what to cut, what to rewrite, or how it reads for a role.',
-    questions: ['Make my resume fit one page', 'Rewrite my summary for backend roles', 'Which entries should I cut first?'],
+    title: 'Change your documents',
+    intro: 'Ask for a change to the open document, or for a new one. Every change comes back as a card you apply.',
+    questions: ['Make it fit one page', 'Tailor it for a job I saved', 'Write a cover letter'],
   },
   settings: {
     title: 'Ask about JobDekho',

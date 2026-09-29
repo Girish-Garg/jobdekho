@@ -9,9 +9,9 @@ const SECTIONS = [
 ];
 
 // Which of the person's own entries the plan picked, per section, in the
-// order it put them: not the reworded bullets themselves, which live in the
-// resume builder once opened - this pane is too narrow for a PDF, so it only
-// has to say what got chosen before the person decides whether to open it.
+// order it put them: not the reworded bullets themselves, which are in the
+// resume document made from this plan - the chat is too narrow for a PDF,
+// so it only has to say what got chosen before the person makes one.
 export default function TailoredPicks({ sections }) {
   const used = SECTIONS.filter(([key]) => (sections?.[key] ?? []).length > 0);
   if (!used.length) {

@@ -2,6 +2,7 @@ import { makeEntry } from '../lib/newEntry.js';
 import { sectionId } from '../lib/profileIndex.js';
 import ProfileSection, { AddControl } from './ProfileSection.jsx';
 import EntryCard from './EntryCard.jsx';
+import AskAiControl from './AskAiControl.jsx';
 import { BriefcaseIcon, FolderIcon, GraduationCapIcon, ShieldCheckIcon, TrophyIcon } from './Icon.jsx';
 
 const ICONS = {
@@ -34,7 +35,12 @@ export default function EntrySection({ meta, entries, onChange }) {
       icon={ICONS[meta.key]}
       count={entries.length}
       hint={entries.length === 0 ? meta.hint : null}
-      action={<AddControl label={meta.add} onClick={add} />}
+      action={(
+        <>
+          <AskAiControl prompt={meta.ask} where={meta.label} />
+          <AddControl label={meta.add} onClick={add} />
+        </>
+      )}
     >
       {entries.length > 0 && (
         <div className="flex flex-col divide-y divide-line">

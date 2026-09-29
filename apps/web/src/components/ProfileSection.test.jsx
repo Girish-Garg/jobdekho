@@ -26,7 +26,7 @@ describe('ProfileSection', () => {
     const onClick = vi.fn();
     render(<ProfileSection id="p" title="Projects" count={0} action={<AddControl label="Add project" onClick={onClick} />} />);
     const button = screen.getByRole('button', { name: 'Add project' });
-    expect(button.parentElement).toBe(screen.getByRole('heading').parentElement.parentElement);
+    expect(button.parentElement.parentElement).toBe(screen.getByRole('heading').parentElement.parentElement);
     fireEvent.click(button);
     expect(onClick).toHaveBeenCalled();
   });

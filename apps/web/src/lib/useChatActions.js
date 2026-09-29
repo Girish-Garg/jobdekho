@@ -14,7 +14,7 @@ import { useScopedResults } from './useScopedResults.js';
 // for the job pane's "Check whether this job is real", which asks before the
 // saved answers are known: it runs once they are, and only if nothing of that
 // kind was saved, since a verdict already paid for is shown, not bought again.
-export function useChatActions(posting, { runner, providers, onTailored }) {
+export function useChatActions(posting, { runner, providers }) {
   const { results, put } = useScopedResults(posting?.id ?? null);
   const [blocked, setBlocked] = useState(null);
   const [queued, setQueued] = useState(null);
@@ -36,7 +36,6 @@ export function useChatActions(posting, { runner, providers, onTailored }) {
       runPostingAction(job.id, kind, instruction ? { onEvent, instruction } : { onEvent }));
     if (!record) return;
     put(record);
-    if (kind === 'resume-tailor') onTailored?.({ jobTitle: job.title, plan: record.result });
   }
 
   useEffect(() => {

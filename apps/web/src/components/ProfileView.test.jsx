@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within, act } from '@testing-library/react';
 import ProfileView from './ProfileView.jsx';
 import { EMPTY_PROFILE } from '../lib/emptyProfile.js';
+import { announceApplied } from '../lib/proposalAppliedSignal.js';
+import { onChatDraft } from '../lib/chatDraftSignal.js';
 
 vi.mock('../api.js', () => ({
   getProfile: vi.fn(async () => null),
@@ -304,3 +306,61 @@ describe('ProfileView index below 1100px', () => {
     expect(screen.queryByRole('navigation', { name: 'Sections' })).not.toBeInTheDocument();
   });
 });
+
+// A chat proposal applied while the page is open (see useAppliedProfile.js).
+describe('ProfileView and the chat', () => {
+  const APPLIED = {
+    ...PROFILE,
+    projects: [{ id: 'x1', title: 'CLI tool', organisation: '', location: '', startDate: '2024', endDate: '', bullets: ['Built a CLI in Go'], tech: ['Go'], link: '' }],
+  };
+  beforeEach(() => getProfile.mockResolvedValue(PROFILE));
+
+  it('shows the record the chat saved as soon as it is applied, with nothing to save', async () => {
+    render(<ProfileView />);
+    await screen.findByText('react');
+    act(() => announceApplied({ kind: 'profile', profile: APPLIED }));
+    expect(await screen.findByText('CLI tool')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Save profile' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  it('asks before replacing unsaved edits, and loads the applied version on request', async () => {
+    render(<ProfileView />);
+    await screen.findByText('react');
+    fireEvent.change(screen.getByLabelText('Years of experience'), { target: { value: '4' } });
+    act(() => announceApplied({ kind: 'profile', profile: APPLIED }));
+    const notice = await screen.findByRole('status');
+    expect(notice).toHaveTextContent('The chat changed your profile while you had unsaved edits');
+    expect(screen.getByLabelText('Years of experience')).toHaveValue(4);
+    expect(screen.queryByText('CLI tool')).not.toBeInTheDocument();
+    fireEvent.click(within(notice).getByRole('button', { name: 'Load the applied version' }));
+    expect(await screen.findByText('CLI tool')).toBeInTheDocument();
+    expect(screen.getByLabelText('Years of experience')).toHaveValue(1);
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  it('keeps the edits on request, and Discard then goes back to the applied version', async () => {
+    render(<ProfileView />);
+    await screen.findByText('react');
+    fireEvent.change(screen.getByLabelText('Years of experience'), { target: { value: '4' } });
+    act(() => announceApplied({ kind: 'profile', profile: APPLIED }));
+    fireEvent.click(within(await screen.findByRole('status')).getByRole('button', { name: 'Keep editing' }));
+    expect(screen.getByLabelText('Years of experience')).toHaveValue(4);
+    fireEvent.click(screen.getByRole('button', { name: 'Discard' }));
+    expect(await screen.findByText('CLI tool')).toBeInTheDocument();
+    expect(screen.getByLabelText('Years of experience')).toHaveValue(1);
+  });
+
+  it('opens the chat from the record with the start of a request, per section and from the top', async () => {
+    const heard = vi.fn();
+    const stop = onChatDraft(heard);
+    render(<ProfileView />);
+    await screen.findByText('react');
+    fireEvent.click(screen.getByRole('button', { name: 'Add with AI: Projects' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Add with AI: Skills' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Add with AI: your profile' }));
+    stop();
+    expect(heard.mock.calls.map(([draft]) => draft.text)).toEqual(['Add a project: ', 'Add these skills: ', 'Add to my profile: ']);
+  });
+});
+

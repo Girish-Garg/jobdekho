@@ -1,7 +1,7 @@
 import { TextField } from './ProfileField.jsx';
 
-// Name, contact and links: the header a resume builder puts at the top of
-// every document, kept apart from the ranking fields at the end because
+// Name, contact and links: the header a resume puts at the top of every
+// document, kept apart from the ranking fields at the end because
 // none of this feeds Best fit. The fields alone; ProfileHero shows them on
 // demand inside its card.
 export default function BasicsForm({ basics, onChange }) {

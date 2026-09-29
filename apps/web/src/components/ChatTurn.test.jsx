@@ -56,4 +56,14 @@ describe('ChatTurn', () => {
     expect(screen.getByText('Jobs in JobDekho')).toHaveTextContent('2');
     expect(within(screen.getByRole('list', { name: 'Jobs in this answer' })).getAllByRole('button')).toHaveLength(2);
   });
+
+  it('offers the changes an answer proposed as cards right under it, and none for a turn saved before them', () => {
+    const proposal = { id: 'p1', kind: 'profile', summary: 'Add Go to your skills', status: 'pending', diff: [{ label: 'Skills', before: 'node', after: 'node, go' }] };
+    turn({ answer: 'Here is Go as a change you can apply.', proposals: [proposal], refs: [{ id: 'p9', title: 'Go Engineer', company: 'Acme' }] });
+    const card = screen.getByRole('region', { name: 'Profile change: Add Go to your skills' });
+    const answer = screen.getByText('Here is Go as a change you can apply.');
+    expect(answer.compareDocumentPosition(card) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(card.compareDocumentPosition(screen.getByRole('button', { name: /Go Engineer/ })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
 });
+

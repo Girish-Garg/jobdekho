@@ -18,6 +18,7 @@ export default function EntryCard({ entry, titleLabel, orgLabel, startOpen, isFi
   const set = (key) => (value) => onChange({ ...entry, [key]: value });
   const dates = [entry.startDate, entry.endDate].filter(Boolean).join(' - ');
   const bullets = entry.bullets.filter((line) => line.trim()).length;
+  const place = [entry.organisation, entry.location].filter(Boolean).join('  ·  ');
 
   return (
     <details className="group" open={open} onToggle={(event) => setOpen(event.currentTarget.open)}>
@@ -25,9 +26,9 @@ export default function EntryCard({ entry, titleLabel, orgLabel, startOpen, isFi
         <CompanyMark company={entry.organisation || entry.title} size="sm" />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[15px] font-semibold text-ink">{entry.title || `Untitled ${titleLabel.toLowerCase()}`}</span>
-          <span className="block truncate text-[13px] text-muted">
-            {[entry.organisation, entry.location].filter(Boolean).join('  ·  ') || orgLabel}
-          </span>
+          {/* Only what is filled in: the field's own label here read as though
+              it were the organisation ("Org (optional)"). */}
+          {place && <span className="block truncate text-[13px] text-muted">{place}</span>}
         </span>
         <span className="flex shrink-0 items-center gap-3 text-sm text-muted">
           {entry.pinned && <span className="rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">Pinned</span>}

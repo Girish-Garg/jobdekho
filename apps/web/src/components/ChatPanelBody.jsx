@@ -7,14 +7,17 @@ import { useChatActions } from '../lib/useChatActions.js';
 import { useChatLayout } from '../lib/useChatLayout.js';
 import { useChatAnswerer } from '../lib/useChatAnswerer.js';
 import { useChatFeedLinks } from '../lib/useChatFeedLinks.js';
+import { useOpenDocument } from '../lib/useOpenDocument.js';
+import { openTailoredResume } from '../lib/openTailoredResume.js';
 import { buildConversation } from '../lib/conversation.js';
 import { takeRequest } from '../lib/askAiSignal.js';
+import { notifyError } from '../lib/toast.js';
 import ChatFrame from './ChatFrame.jsx';
 import ChatHeader from './ChatHeader.jsx';
 import ChatScopeCard from './ChatScopeCard.jsx';
+import ChatDocumentScope from './ChatDocumentScope.jsx';
 import ChatMessages from './ChatMessages.jsx';
 import ChatComposer from './ChatComposer.jsx';
-import ResumeBuilderOverlay from './ResumeBuilderOverlay.jsx';
 
 // The actual panel, split out of AiChatPanel.jsx so its hooks - loading the
 // conversation, probing for a CLI - only ever run while the panel is open.
@@ -23,20 +26,21 @@ import ResumeBuilderOverlay from './ResumeBuilderOverlay.jsx';
 // is that action's refine instruction; without one it is a question, sent
 // with the page it was asked on so the server answers from what is on
 // screen. A job is only in scope on the feed, where it is open beside the
-// list; on the other pages the scope waits, unshown, for the way back. A
-// tailoring that arrives opens the resume builder beside the panel.
-export default function ChatPanelBody({ onClose, context, apply, request }) {
+// list; on the Resume page the open document is, and its id goes with the
+// question. A tailored resume becomes a document there on request.
+export default function ChatPanelBody({ onClose, context, apply, request, draft }) {
   const cli = useProviders();
   const answerer = useChatAnswerer(cli.providers);
-  const layout = useChatLayout();
+  const page = context.page ?? 'postings';
+  const onResume = page === 'resume';
+  const layout = useChatLayout({ docked: onResume });
   const runner = useAiRunner(cli.providers);
   const chat = useChat(runner);
   const scope = useChatScope();
-  const page = context.page ?? 'postings';
+  const openDoc = useOpenDocument();
   const onFeed = page === 'postings';
   const posting = onFeed ? scope.posting : null;
-  const [builder, setBuilder] = useState(null);
-  const actions = useChatActions(posting, { runner, providers: cli.providers, onTailored: setBuilder });
+  const actions = useChatActions(posting, { runner, providers: cli.providers });
   const [target, setTarget] = useState(null);
   const links = useChatFeedLinks({ onFeed, filters: context.filters, apply });
 
@@ -53,23 +57,25 @@ export default function ChatPanelBody({ onClose, context, apply, request }) {
 
   function onSend(message) {
     actions.clearBlocked();
-    if (target) actions.refine(target, message);
-    else chat.ask(message, { filters: context.filters, sort: context.sort, openPostingId: posting?.id ?? null, page });
+    if (target) return actions.refine(target, message);
+    const where = { filters: context.filters, sort: context.sort, openPostingId: posting?.id ?? null, page };
+    return chat.ask(message, onResume ? { ...where, documentId: openDoc?.id ?? null } : where);
   }
 
   const card = {
     providers: cli.providers,
     target,
     onTarget: setTarget,
-    onOpenBuilder: (plan) => setBuilder({ jobTitle: posting?.title ?? '', plan }),
+    onMakeResume: () => openTailoredResume(posting, () => apply.setView?.('resume'))
+      .catch((err) => notifyError(err, 'Could not make the resume')),
   };
   const empty = { page, posting, loading: Boolean(posting) && actions.results === undefined, busy: runner.busy, onSend };
-  const beside = builder && <ResumeBuilderOverlay jobTitle={builder.jobTitle} plan={builder.plan} onClose={() => setBuilder(null)} />;
 
   return (
-    <ChatFrame layout={layout} beside={beside}>
+    <ChatFrame layout={layout}>
       <ChatHeader providers={cli.providers} answerer={answerer} layout={layout} onNew={chat.startNew} onClose={onClose} />
       {posting && <ChatScopeCard posting={posting} onClear={scope.clear} />}
+      {onResume && openDoc && <ChatDocumentScope doc={openDoc} />}
       <ChatMessages
         entries={buildConversation(chat.turns, actions.results ?? [])}
         pending={runner.pending}
@@ -80,7 +86,7 @@ export default function ChatPanelBody({ onClose, context, apply, request }) {
         onApply={links.onApply}
         onOpenRef={links.onOpenRef}
       />
-      <ChatComposer cli={cli} scoped={Boolean(posting)} runner={runner} actions={actions} target={target} onClearTarget={() => setTarget(null)} onSend={onSend} />
+      <ChatComposer cli={cli} scoped={Boolean(posting)} runner={runner} actions={actions} target={target} onClearTarget={() => setTarget(null)} onSend={onSend} draft={draft} />
     </ChatFrame>
   );
 }

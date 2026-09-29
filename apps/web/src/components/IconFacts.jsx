@@ -75,3 +75,19 @@ export function TagIcon(props) {
 export function TargetIcon(props) {
   return <Svg {...props}><circle cx="8" cy="8" r="6" /><circle cx="8" cy="8" r="3.2" /><circle cx="8" cy="8" r="0.6" /></Svg>;
 }
+
+export function DownloadIcon(props) {
+  return <Svg {...props}><path d="M8 2.5v8M4.8 7.5L8 10.5l3.2-3M2.5 10.5v2a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-2" /></Svg>;
+}
+
+export function CodeIcon(props) {
+  return <Svg {...props}><path d="M5.5 4.5L2 8l3.5 3.5M10.5 4.5L14 8l-3.5 3.5M9 3l-2 10" /></Svg>;
+}
+
+export function HistoryIcon(props) {
+  return <Svg {...props}><path d="M2.5 8a5.5 5.5 0 1 0 1.6-3.9M2.5 2.5v2.5H5M8 5v3l2 1.5" /></Svg>;
+}
+
+export function TrashIcon(props) {
+  return <Svg {...props}><path d="M2.5 4.5h11M6.5 4.5V3h3v1.5M4 4.5l.7 8.5a1 1 0 0 0 1 1h4.6a1 1 0 0 0 1-1l.7-8.5M6.8 7v4.5M9.2 7v4.5" /></Svg>;
+}

@@ -32,7 +32,7 @@ const TARGETED = 'border-primary ring-4 ring-primary/15';
 // rings it in saffron so the person sees what their next words will change;
 // an older one folds to a line, since the answer after it is the one to
 // read, and cannot be targeted, since a refine always starts from the newest.
-export default function ChatResultCard({ entry, providers, targeted, onTarget, onOpenBuilder }) {
+export default function ChatResultCard({ entry, providers, targeted, onTarget, onMakeResume }) {
   const { kind, record, latest } = entry;
   const [open, setOpen] = useState(latest);
   const Body = BODY[kind];
@@ -79,7 +79,7 @@ export default function ChatResultCard({ entry, providers, targeted, onTarget, o
       </div>
       {open && (
         <div className="border-t border-line bg-panel px-3 py-3">
-          <Body record={record} providers={providers ?? []} onOpenBuilder={() => onOpenBuilder(record.result)} />
+          <Body record={record} providers={providers ?? []} onMakeResume={onMakeResume} />
         </div>
       )}
     </section>

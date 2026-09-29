@@ -1,8 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import EntrySection from './EntrySection.jsx';
+import { onChatDraft } from '../lib/chatDraftSignal.js';
 
-const META = { key: 'experience', label: 'Experience', add: 'Add role', titleLabel: 'Role', orgLabel: 'Company', hint: 'Jobs and internships.' };
+const META = { key: 'experience', label: 'Experience', add: 'Add role', ask: 'Add a job: ', titleLabel: 'Role', orgLabel: 'Company', hint: 'Jobs and internships.' };
 
 const ENTRY = (id, title) => ({ id, title, organisation: '', location: '', startDate: '', endDate: '', bullets: [], tech: [], link: '', pinned: false, weight: 0 });
 
@@ -42,5 +43,18 @@ describe('EntrySection', () => {
     fireEvent.click(screen.getByText('First')); // opens the first card
     fireEvent.click(screen.getAllByRole('button', { name: 'Move down' })[0]);
     expect(onChange).toHaveBeenCalledWith([entries[1], entries[0]]);
+  });
+
+  // The quick way in: the chat opens with the start of the request in its
+  // box, and nothing is added here until a card there is applied.
+  it('opens the chat with this section\'s request started, adding nothing itself', () => {
+    const heard = vi.fn();
+    const stop = onChatDraft(heard);
+    const onChange = vi.fn();
+    render(<EntrySection meta={META} entries={[]} onChange={onChange} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Add with AI: Experience' }));
+    stop();
+    expect(heard).toHaveBeenCalledWith(expect.objectContaining({ text: 'Add a job: ' }));
+    expect(onChange).not.toHaveBeenCalled();
   });
 });

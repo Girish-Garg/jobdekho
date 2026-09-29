@@ -71,11 +71,23 @@ export function useProfileState() {
     setExists(false);
   }
 
+  // A whole record the server already saved (a chat proposal applied, see
+  // useAppliedProfile.js): shown as is, and taken as the saved copy.
+  function replace(record) {
+    setProfile(withDefaults(record));
+    setLastSaved(withDefaults(record));
+    setExists(true);
+  }
+
+  // The saved copy moved on under unsaved local edits: they stay on screen,
+  // now measured (and discarded) against the new saved copy.
+  const rebase = (record) => (setLastSaved(withDefaults(record)), setExists(true));
+
   // Compared as written, so a field typed and typed back reads as unchanged.
   const dirty = Boolean(profile && lastSaved) && JSON.stringify(profile) !== JSON.stringify(lastSaved);
   const discard = () => lastSaved && setProfile(lastSaved);
 
   return {
-    profile, setProfile, exists, proposed, save, adopt, addProposals, dismissProposed: () => setProposed(null), reset, dirty, discard,
+    profile, setProfile, exists, proposed, save, adopt, addProposals, dismissProposed: () => setProposed(null), reset, dirty, discard, replace, rebase,
   };
 }

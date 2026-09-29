@@ -4,14 +4,17 @@ import CareerSections from './CareerSections.jsx';
 import ProfileForm from './ProfileForm.jsx';
 import ProfileSaveBar from './ProfileSaveBar.jsx';
 import DeleteProfile from './DeleteProfile.jsx';
+import ChangedNotice from './ChangedNotice.jsx';
 import { notify } from '../lib/toast.js';
 
 // The record itself, top to bottom: whatever the resume proposed and still
 // needs a decision, who the record is about, the entry sections, skills, the
 // ranking fields, and last the control that acts on the saved copy, which
 // only exists once there is one. The save floats at the bottom while
-// anything is unsaved (see ProfileSaveBar.jsx).
-export default function ProfileRecord({ state, onDeleted }) {
+// anything is unsaved (see ProfileSaveBar.jsx); a chat change applied over
+// unsaved edits asks at the top, and stays in view while scrolling, since
+// the person may be anywhere in a long record when it lands.
+export default function ProfileRecord({ state, applied = null, onDeleted }) {
   const { profile, setProfile, exists, proposed, save, addProposals, dismissProposed, dirty, discard } = state;
 
   // The bar goes the moment nothing is unsaved, so the confirmation is a
@@ -25,6 +28,16 @@ export default function ProfileRecord({ state, onDeleted }) {
     // Capped rather than left to fill whatever the rail leaves over: a field
     // wide enough to hold a sentence is plenty, however much paper is spare.
     <div className="flex min-w-0 max-w-[1080px] flex-col gap-5 min-[1500px]:max-w-[1200px]">
+      {applied?.incoming && (
+        <ChangedNotice
+          className="sticky top-4 z-20 shadow-pop"
+          title="The chat changed your profile while you had unsaved edits"
+          detail="Loading the applied version drops your edits. Keeping yours means your next save writes over the chat's change."
+          loadLabel="Load the applied version"
+          onLoad={applied.load}
+          onKeep={applied.keep}
+        />
+      )}
       {proposed && <ExtractedEntriesReview proposed={proposed} onAdd={addProposals} onDismiss={dismissProposed} />}
       <ProfileHero basics={profile.basics} profile={profile} onChange={(basics) => setProfile({ ...profile, basics })} />
       <CareerSections profile={profile} onChange={setProfile} />

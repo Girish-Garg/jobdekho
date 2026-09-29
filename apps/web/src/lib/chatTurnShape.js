@@ -1,3 +1,5 @@
+import { proposalsOf } from './proposalShape.js';
+
 // One chat turn in the shape the panel draws, whichever shape it was saved in.
 //
 // Today a turn's `answer` is always the answer from JobDekho's own data (its
@@ -8,6 +10,9 @@
 // with `web: true` and kept `sources` at the top level. Those were a web
 // answer and nothing else, so they come out with no main answer at all rather
 // than the web text shown twice.
+//
+// `proposals` are the changes the turn offered as cards (see proposalShape.js);
+// a turn saved before those existed offers none.
 function cleanSources(sources) {
   if (!Array.isArray(sources)) return [];
   return [...new Set(sources.filter((url) => typeof url === 'string' && url))];
@@ -31,5 +36,6 @@ export function turnShape(turn = {}) {
     createdAt: turn.createdAt ?? null,
     web: webPart(turn),
     webError: typeof turn.webError === 'string' && turn.webError ? turn.webError : null,
+    proposals: proposalsOf(turn),
   };
 }

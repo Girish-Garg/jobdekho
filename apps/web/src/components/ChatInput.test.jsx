@@ -89,4 +89,16 @@ describe('ChatInput', () => {
     fireEvent.change(box, { target: { value: 'one\ntwo\nthree\nfour' } });
     expect(box.style.height).toBe('88px');
   });
+
+  it('takes a draft once, with the caret at its end, and leaves the box alone after that', () => {
+    const draft = { id: 9001, text: 'Add a project: ' };
+    const { rerender } = render(<ChatInput busy={false} onSend={() => {}} draft={draft} />);
+    const box = screen.getByPlaceholderText(PLACEHOLDER);
+    expect(box).toHaveValue('Add a project: ');
+    expect(box).toHaveFocus();
+    expect(box.selectionStart).toBe('Add a project: '.length);
+    fireEvent.change(box, { target: { value: '' } });
+    rerender(<ChatInput busy={false} onSend={() => {}} draft={draft} />);
+    expect(box).toHaveValue('');
+  });
 });

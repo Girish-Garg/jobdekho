@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import AiChatPanel from './AiChatPanel.jsx';
 import { announceOpenPosting } from '../lib/openPostingSignal.js';
+import { onNotice } from '../lib/toast.js';
 
 vi.mock('../api.js', () => ({
   getProviders: vi.fn(),
@@ -11,17 +12,11 @@ vi.mock('../api.js', () => ({
   clearChatHistory: vi.fn(async () => null),
   getPostingAiResults: vi.fn(),
   runPostingAction: vi.fn(),
-  // The builder the tailoring opens loads these; left pending, it only has
-  // to be there, not finish.
-  getProfile: vi.fn(() => new Promise(() => {})),
-  getResumeTemplates: vi.fn(() => new Promise(() => {})),
-  getResumeSelection: vi.fn(() => new Promise(() => {})),
-  putResumeSelection: vi.fn(),
-  getResumePdf: vi.fn(),
-  getResumeTex: vi.fn(),
+  createDocument: vi.fn(),
 }));
 
-import { getProviders, sendChatMessage, getPostingAiResults, runPostingAction } from '../api.js';
+import { getProviders, sendChatMessage, getPostingAiResults, runPostingAction, createDocument } from '../api.js';
+import { takeOpenRequest } from '../lib/openDocumentSignal.js';
 
 const CLAUDE = { id: 'claude', label: 'Claude Code', install: 'https://claude.ai/code', policies: ['none', 'web'], present: true, runs: true, error: null };
 const AGY = { id: 'agy', label: 'Antigravity', install: 'https://antigravity.google', policies: ['none', 'web'], present: true, runs: true, error: null };
@@ -84,21 +79,37 @@ describe('quick actions', () => {
     expect(within(card).getByRole('button', { name: 'Copy' })).toBeInTheDocument();
   });
 
-  it('tailors the resume, leads the card with the fact check, and opens the builder beside the chat', async () => {
+  it('tailors the resume, leads the card with the fact check, and makes a resume document from it on request', async () => {
     runPostingAction.mockResolvedValueOnce(record('resume-tailor', [version(PLAN, 1)]));
-    setup();
+    createDocument.mockResolvedValue({ id: 'd7', name: 'Resume for Staff Engineer at Initech' });
+    const apply = { setView: vi.fn() };
+    setup({ apply });
     fireEvent.click(await screen.findByRole('button', { name: 'Tailor my resume' }));
-    const builder = await screen.findByRole('dialog', { name: 'Resume builder, tailored for Staff Engineer' });
+    const card = await screen.findByRole('region', { name: 'Tailored resume' });
     expect(runPostingAction).toHaveBeenCalledWith('p9', 'resume-tailor', { onEvent: expect.any(Function) });
-    const card = screen.getByRole('region', { name: 'Tailored resume' });
     const flags = within(card).getByText('Check these before using it');
     expect(flags.compareDocumentPosition(within(card).getByText(/Matches 5 of 8/)) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    // The chat is still there, beside the builder, not behind a backdrop.
-    expect(screen.getByRole('complementary', { name: 'Ask AI' })).toBeInTheDocument();
-    fireEvent.click(within(builder).getByRole('button', { name: 'Close' }));
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    fireEvent.click(within(card).getByRole('button', { name: 'Open in the resume builder' }));
-    expect(await screen.findByRole('dialog', { name: /tailored for Staff Engineer/ })).toBeInTheDocument();
+    // Nothing is made until asked: a tailoring is often refined first.
+    expect(createDocument).not.toHaveBeenCalled();
+    expect(apply.setView).not.toHaveBeenCalled();
+    fireEvent.click(within(card).getByRole('button', { name: 'Make a resume from this' }));
+    await waitFor(() => expect(apply.setView).toHaveBeenCalledWith('resume'));
+    expect(createDocument).toHaveBeenCalledWith({ kind: 'resume', templateId: 'classic', postingId: 'p9', fromPlan: true });
+    expect(takeOpenRequest()).toBe('d7');
+  });
+
+  it('stays put and says why when the resume cannot be made', async () => {
+    getPostingAiResults.mockResolvedValue([record('resume-tailor', [version(PLAN, 1)])]);
+    createDocument.mockRejectedValue(new Error('Tailor your resume for this job first.'));
+    const apply = { setView: vi.fn() };
+    const heard = vi.fn();
+    const stop = onNotice(heard);
+    setup({ apply });
+    const card = await screen.findByRole('region', { name: 'Tailored resume' });
+    fireEvent.click(within(card).getByRole('button', { name: 'Make a resume from this' }));
+    await waitFor(() => expect(heard).toHaveBeenCalledWith(expect.objectContaining({ detail: 'Tailor your resume for this job first.' })));
+    stop();
+    expect(apply.setView).not.toHaveBeenCalled();
   });
 
   it('shows the answers already saved for the job as soon as the chat opens on it, without asking again', async () => {

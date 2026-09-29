@@ -6,10 +6,14 @@
 // they become the message rather than a status line. `kind` rides along when
 // an AI call names which action fixes it (see apps/server/src/ai/errors.js),
 // so a screen can offer the matching button without parsing prose.
+// `problems` rides along too: the LaTeX guard's list of lines it refused
+// (see the server's resume/guard), which a document screen lists under the
+// sentence rather than folding into it.
 export function failure(body, fallback, status) {
   const err = new Error(body?.error || fallback);
   if (status) err.status = status;
   if (body?.kind) err.kind = body.kind;
+  if (Array.isArray(body?.problems)) err.problems = body.problems.filter((p) => typeof p === 'string');
   return err;
 }
 

@@ -24,8 +24,7 @@ describe('chatSuggestions', () => {
   it('fits the questions to the page it is open on', () => {
     expect(chatSuggestions({ page: 'profile' }).questions).toContain('Add a project I built');
     expect(chatSuggestions({ page: 'profile' }).questions).toContain('What skills am I missing for backend roles?');
-    expect(chatSuggestions({ page: 'resume' }).questions).toContain('Make my resume fit one page');
-    expect(chatSuggestions({ page: 'resume' }).questions).toContain('Rewrite my summary for backend roles');
+    expect(chatSuggestions({ page: 'resume' }).questions).toEqual(['Make it fit one page', 'Tailor it for a job I saved', 'Write a cover letter']);
     expect(chatSuggestions({ page: 'settings' }).title).toBe('Ask about JobDekho');
   });
 

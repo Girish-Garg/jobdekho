@@ -50,4 +50,10 @@ describe('ChatHeader', () => {
     setup({ layout: layout({ wide: false }) });
     expect(screen.queryByRole('button', { name: /Pin to the side|Float over/ })).not.toBeInTheDocument();
   });
+
+  it('has nothing to pin on a page that docks the panel', () => {
+    setup({ layout: layout({ pinned: true, docked: true }) });
+    expect(screen.queryByRole('button', { name: /Pin to the side|Float over/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Close the chat' })).toBeInTheDocument();
+  });
 });

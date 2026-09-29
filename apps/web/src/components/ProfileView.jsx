@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useProfileState } from '../lib/useProfileState.js';
+import { useAppliedProfile } from '../lib/useAppliedProfile.js';
 import { useMediaQuery } from '../lib/useMediaQuery.js';
 import { useCurrentSection } from '../lib/useCurrentSection.js';
 import { indexRows } from '../lib/profileIndex.js';
@@ -18,6 +19,8 @@ const WIDE_QUERY = '(min-width: 1100px)';
 export default function ProfileView() {
   const state = useProfileState();
   const { profile, exists, adopt, reset } = state;
+  // A chat proposal applied while this page is open (see useAppliedProfile.js).
+  const applied = useAppliedProfile(state);
   // Local, not part of the hook: starting the blank form by hand is a pure
   // UI choice that never touches the server until Save actually runs.
   const [editing, setEditing] = useState(false);
@@ -38,6 +41,7 @@ export default function ProfileView() {
   ) : (
     <ProfileRecord
       state={state}
+      applied={applied}
       onDeleted={() => {
         reset();
         setEditing(false);
@@ -49,7 +53,7 @@ export default function ProfileView() {
     <section className="mx-auto max-w-[1400px] px-6 pb-10 pt-6 sm:px-8">
       <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink">Profile</h1>
       <p className="mt-0.5 max-w-2xl text-sm text-muted">
-        Your full career record. The Resume tab builds from it; Best fit on Postings scores against the fields at the end.
+        Your full career record. New resumes start from it, the chat can add to it for you, and Best fit on Postings scores against the fields at the end.
       </p>
 
       {profile === undefined ? (

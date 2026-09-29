@@ -18,7 +18,12 @@ function useViewportWidth(view = globalThis) {
 // minute gives the panel back its width when it grows again. Pinning and
 // resizing only mean anything on a wide window; below it the panel covers
 // the feed whatever was saved.
-export function useChatLayout() {
+//
+// `docked` pins the panel whatever was saved, on a page built around the
+// chat (the Resume workspace, where every change is asked for in it and a
+// floating panel would sit over the document list). The saved choice is
+// left alone, so the other pages still float or pin as the person chose.
+export function useChatLayout({ docked = false } = {}) {
   const wide = useMediaQuery(WIDE_QUERY);
   const viewport = useViewportWidth();
   const [saved, setSaved] = useState(readLayout);
@@ -30,7 +35,8 @@ export function useChatLayout() {
 
   return {
     wide,
-    pinned: wide && saved.pinned,
+    pinned: wide && (docked || saved.pinned),
+    docked: wide && docked,
     width: clampWidth(saved.width, viewport),
     min: CHAT_WIDTH.min,
     max: maxWidth(viewport),

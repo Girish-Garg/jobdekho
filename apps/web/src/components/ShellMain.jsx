@@ -1,6 +1,6 @@
 import PostingsView from './PostingsView.jsx';
 import ProfileView from './ProfileView.jsx';
-import ResumeBuilderView from './ResumeBuilderView.jsx';
+import ResumeWorkspace from './ResumeWorkspace.jsx';
 import SettingsView from './SettingsView.jsx';
 
 // Which of the four surfaces the nav is pointing at. Split out of Shell so
@@ -9,6 +9,6 @@ import SettingsView from './SettingsView.jsx';
 export default function ShellMain({ view, setView, feed }) {
   if (view === 'postings') return <PostingsView {...feed} onOpenProfile={() => setView('profile')} />;
   if (view === 'profile') return <ProfileView />;
-  if (view === 'resume') return <ResumeBuilderView />;
+  if (view === 'resume') return <ResumeWorkspace />;
   return <SettingsView />;
 }
