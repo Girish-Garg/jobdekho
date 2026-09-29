@@ -3,6 +3,7 @@ import DescriptionBlocks from './DescriptionBlocks.jsx';
 import { ChevronDownIcon, ChevronUpIcon } from './Icon.jsx';
 import { useFullDescription } from '../lib/useFullDescription.js';
 import { scrubLeakedTags } from '../lib/scrubLeakedTags.js';
+import { legacyText } from '../lib/legacyText.js';
 import { descriptionBlocks } from '../lib/descriptionBlocks.js';
 import { foldBlocks, totalSize, FOLD_OVER } from '../lib/descriptionFold.js';
 
@@ -25,7 +26,7 @@ export default function PostingDescription({ posting }) {
   const [open, setOpen] = useState(false);
   const snippet = posting.descriptionSnippet || '';
   const full = status === 'ready' && text ? text : '';
-  const blocks = useMemo(() => descriptionBlocks(scrubLeakedTags(full || snippet)), [full, snippet]);
+  const blocks = useMemo(() => descriptionBlocks(scrubLeakedTags(legacyText(full || snippet))), [full, snippet]);
 
   if (!blocks.length) return null;
   const folds = Boolean(full) && totalSize(blocks) > FOLD_OVER;
