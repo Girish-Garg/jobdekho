@@ -40,4 +40,9 @@ describe('progressText', () => {
     expect(progressText({ event: 'progress', stage: 'retry', attempt: 2 }, 'Claude Code', RESUME))
       .toBe('Claude Code was busy signing itself in. Trying again (attempt 2)...');
   });
+
+  it('says the chat is searching the web, and what went out', () => {
+    expect(progressText({ event: 'progress', stage: 'web' }, 'Claude Code', RESUME))
+      .toBe('Searching the web with your question, not your profile...');
+  });
 });

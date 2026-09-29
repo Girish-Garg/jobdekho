@@ -49,4 +49,25 @@ describe('useAiRunner', () => {
     act(() => result.current.clearError());
     expect(result.current.error).toBeNull();
   });
+
+  // The chat's second call is a search (see the server's chat/web-answer.js),
+  // and its heartbeats should not go on saying the CLI is thinking.
+  it('changes its words once a chat question goes to the web', async () => {
+    let finish;
+    const { result } = renderHook(() => useAiRunner(PROVIDERS));
+    act(() => {
+      result.current.run({ say: 'Is Acme funded?', noun: 'Question', doing: 'thinking' }, async (onEvent) => {
+        onEvent({ event: 'start', provider: 'claude' });
+        onEvent({ event: 'progress', stage: 'wait', elapsedMs: 3000 });
+        onEvent({ event: 'progress', stage: 'web' });
+        onEvent({ event: 'start', provider: 'claude' });
+        onEvent({ event: 'progress', stage: 'send', chars: 40 });
+        onEvent({ event: 'progress', stage: 'wait', elapsedMs: 12000 });
+        await new Promise((r) => { finish = r; });
+        return 'done';
+      });
+    });
+    await waitFor(() => expect(result.current.progress).toBe('Claude Code is searching the web... 12s'));
+    await act(async () => finish());
+  });
 });

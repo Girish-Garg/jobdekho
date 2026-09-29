@@ -157,6 +157,14 @@ describe('parseFakeCheck', () => {
     expect(out.redFlags).toEqual(['Fee asked'])
   })
 
+  // Antigravity's search passes Google redirects through as sources: not
+  // the page, and dead within days (see actions/http-link.js).
+  it('leaves out search redirects', () => {
+    const redirect = 'https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQ'
+    const out = parseFakeCheck(JSON.stringify({ verdict: 'genuine', checks: [{ label: 'Site', sources: [redirect, 'https://acme.in'] }] }))
+    expect(out.checks[0].sources).toEqual(['https://acme.in'])
+  })
+
   it('caps the lists and the text', () => {
     const out = parseFakeCheck(JSON.stringify({
       verdict: 'suspicious', summary: 's'.repeat(1000),

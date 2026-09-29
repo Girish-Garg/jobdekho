@@ -9,6 +9,9 @@
 // actions.js), the postings the answer named (see chat/refs.js), and which
 // CLI answered - the same shape the chat route returns to the browser, saved
 // as is. A turn saved before refs existed has none, which reads as no chips.
+// An answer from a web search also carries `web: true` and its `sources`;
+// one whose search failed carries `webError` beside the answer that stood
+// (see apps/server/src/chat/run.js).
 export const MAX_TURNS = 20
 
 export async function getChatHistory(store, userId) {

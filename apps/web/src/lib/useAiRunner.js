@@ -27,9 +27,13 @@ export function useAiRunner(providers) {
     setPending(what);
     setError(null);
     setProgress('Starting...');
+    // After a chat question goes to the web, the same CLI events describe a
+    // search rather than a read, so the words change for the rest of the run.
+    const words = { ...what };
     const onEvent = (event) => {
       if (event.event === 'start') label.current = providers?.find((p) => p.id === event.provider)?.label ?? event.provider;
-      setProgress(progressText(event, label.current, what));
+      if (event.stage === 'web') Object.assign(words, { noun: 'Your question', doing: 'searching the web' });
+      setProgress(progressText(event, label.current, words));
     };
     try {
       return await call(onEvent);

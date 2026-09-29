@@ -25,7 +25,7 @@ export function compactPosting(row) {
 export function trimOpenPosting(row) {
   if (!row) return null
   return {
-    id: row.id, title: row.title, company: row.company, location: row.location,
+    id: row.id, title: row.title, company: row.company, location: row.location, url: row.url,
     level: row.level, workMode: row.workMode, stipend: row.stipend,
     degreeMin: row.degreeMin, degreeRequired: row.degreeRequired,
     duration: row.duration, experience: row.experience, source: row.source,

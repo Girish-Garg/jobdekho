@@ -1,4 +1,5 @@
 import { parseJsonObject } from '../ai/loose-json.js'
+import { isSourceLink } from './http-link.js'
 
 export const VERDICTS = ['genuine', 'probably_genuine', 'unclear', 'suspicious', 'likely_scam']
 
@@ -11,22 +12,10 @@ const MAX_FLAGS = 12
 const MAX_SOURCES = 5
 const MAX_TEXT = 600
 const MAX_LABEL = 120
-const MAX_URL = 500
 
 const text = (value, max) => (typeof value === 'string' ? value.trim().slice(0, max) : '')
 const tri = (value) => (value === true || value === false ? value : null)
 const list = (value, max) => (Array.isArray(value) ? value.slice(0, max) : [])
-
-// Only links a browser can open safely: a javascript: or file: URL in a
-// source list would otherwise render as a link on the page.
-function isHttp(value) {
-  if (typeof value !== 'string' || value.length > MAX_URL) return false
-  try {
-    return ['http:', 'https:'].includes(new URL(value).protocol)
-  } catch {
-    return false
-  }
-}
 
 function check(raw) {
   if (!raw || typeof raw !== 'object') return null
@@ -36,7 +25,7 @@ function check(raw) {
     label,
     finding: text(raw.finding, MAX_TEXT),
     ok: tri(raw.ok),
-    sources: list(raw.sources, MAX_SOURCES).filter(isHttp),
+    sources: list(raw.sources, MAX_SOURCES).filter(isSourceLink),
   }
 }
 

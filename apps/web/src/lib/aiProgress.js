@@ -15,6 +15,8 @@ export function progressText(event, label, { noun, doing = 'reading' } = {}) {
   if (event.stage === 'reply') return `${label} answered after ${seconds}s. Saving...`;
   // The CLI was mid token refresh and is being asked again; without a line
   // for it the progress went blank for the wait, which reads as a hang.
+  // The chat handing a question to the web (see the server's chat/web-answer.js).
+  if (event.stage === 'web') return 'Searching the web with your question, not your profile...';
   if (event.stage === 'retry') return `${label} was busy signing itself in. Trying again (attempt ${event.attempt})...`;
   return '';
 }

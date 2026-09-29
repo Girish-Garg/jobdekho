@@ -26,7 +26,7 @@ Reply with ONE JSON object and nothing else. No prose, no markdown fence. Shape:
 
 verdict: "genuine" only when the company checks out AND this role is on its own careers page or ATS. "likely_scam" only with a concrete red flag from check 4 or a scam report. "unclear" when the web gave too little to say either way.
 stillOpen: null when the posting URL could not be reached.
-checks: one entry per numbered check, ok null when it could not be completed. sources: only URLs you actually read, or that your search results cited, that support the finding; an empty list if none.
+checks: one entry per numbered check, ok null when it could not be completed. sources: only URLs you actually read, or that your search results cited, that support the finding, as the page's own address rather than a search redirect; an empty list if none. Name the site in the finding too.
 
 `
 const OPEN = '<<<POSTING'
