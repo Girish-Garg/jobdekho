@@ -2,10 +2,14 @@ import { stripHtml } from '../html.js'
 import { internLevel } from './employment-type.js'
 import { toIso } from '../iso-date.js'
 
-// descriptionPlain is the documented field; the HTML variant is the fallback
-// for boards that only publish the rich body.
+// The HTML body comes first now that stripHtml keeps its structure. Ashby's
+// own plain text writes every link out after its words ("Auth
+// https://supabase.com/auth, written in Go https://github.com/..."), which
+// the pane showed as it was and the scorer and fingerprints read as words.
+// descriptionPlain stays the fallback for a board that publishes only that.
 function body(j) {
-  return j.descriptionPlain ? String(j.descriptionPlain) : stripHtml(j.descriptionHtml || j.description)
+  const html = j.descriptionHtml || j.description
+  return html ? stripHtml(html) : String(j.descriptionPlain || '')
 }
 
 export function ashby({ slug }) {

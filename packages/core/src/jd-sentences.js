@@ -10,7 +10,11 @@ import { normalizeJdText } from './fingerprint.js'
 // the closing-tag residue ("/p", "/li") that the Greenhouse strip leaves
 // standing as bare tokens, bullet characters, and the "1. ... 2. ..." lists
 // Internshala writes. The dash bullets are matched by code point.
-const BOUNDARY = /[.!?;:]+(?=\s|$)|\s\/[a-z0-9]+(?=\s|$)|\s[-*\u2022\u2013\u2014]\s|\s\d{1,2}[.)]\s/gi
+//
+// A line break is one too. Once stripHtml kept paragraphs and list items as
+// lines, the "/p" residue that used to end an unpunctuated heading was gone,
+// and "About us" would have run into the first sentence under it.
+const BOUNDARY = /[.!?;:]+(?=\s|$)|\s\/[a-z0-9]+(?=\s|$)|\s[-*\u2022\u2013\u2014]\s|\s\d{1,2}[.)]\s|\n/gi
 
 // Tag names left standing after the angle brackets went. Dropped from the
 // sentence rather than split on, so "p strong About us /strong /p" from one

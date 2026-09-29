@@ -1,4 +1,5 @@
 import { usePopover } from '../lib/usePopover.js';
+import { ChevronDownIcon } from './Icon.jsx';
 
 // Shared by every trigger in the bar, including the source picker, so the row
 // stays one uniform line of controls. No background here: triggerTone owns
@@ -18,8 +19,14 @@ export function triggerTone(hasValue, isOpen) {
   return 'border-line bg-paper text-muted hover:border-ink hover:text-ink';
 }
 
-export function Caret() {
-  return <span aria-hidden="true" className="text-[10px] text-muted">&#9662;</span>;
+// Turns over while the menu is open, so the trigger says which way it goes.
+export function Caret({ open = false }) {
+  return (
+    <ChevronDownIcon
+      size={12}
+      className={`text-muted transition-transform duration-fast ease-ease ${open ? 'rotate-180' : ''}`}
+    />
+  );
 }
 
 // A filter control folded behind a trigger. The pill rows used to sit open in a
@@ -37,7 +44,7 @@ export default function Dropdown({ label, count = 0, width = 'w-64', align = 'le
         className={`${TRIGGER} ${triggerTone(count > 0, open)}`}
       >
         {count > 0 ? `${label} (${count})` : label}
-        <Caret />
+        <Caret open={open} />
       </button>
       {open && (
         <div

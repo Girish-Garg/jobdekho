@@ -66,4 +66,11 @@ describe('classifyLevel', () => {
     expect(levelRank('internship')).toBeLessThan(levelRank('executive'))
     expect(levelRank('nonsense')).toBe(LEVELS.indexOf('mid'))
   })
+
+  // A stored body now starts each list item with "- ", so a number ending one
+  // line and a bullet opening the next must not read as a range.
+  it('does not read a range across a line break', () => {
+    expect(classifyLevel('Engineer', 'Openings: 12\n- 5 years in Go')).toBe('senior')
+    expect(classifyLevel('Engineer', 'Need 2 - 4 years of experience')).toBe('mid')
+  })
 })

@@ -2,6 +2,7 @@ import { DEGREE_OPTIONS } from '../lib/taxonomy.js';
 import { STIPEND_RANGES, EXPERIENCE_RANGES, DURATION_RANGES } from '../lib/ranges.js';
 import { Field } from './FilterField.jsx';
 import SaveDefaultFilters from './SaveDefaultFilters.jsx';
+import Select from './Select.jsx';
 
 const SEL = 'w-full rounded-md border border-line bg-paper px-2 py-1.5 text-sm outline-none focus:border-ink';
 
@@ -21,11 +22,11 @@ export default function MoreFilters({ filters, setFilters }) {
       <div className="grid grid-cols-2 gap-3">
         {FIELDS.map(([label, key, options]) => (
           <Field key={key} label={label}>
-            <select value={filters[key]} onChange={set(key)} className={SEL}>
+            <Select block value={filters[key]} onChange={set(key)} className={SEL}>
               {options.map(([value, text]) => (
                 <option key={value} value={value}>{text}</option>
               ))}
-            </select>
+            </Select>
           </Field>
         ))}
       </div>

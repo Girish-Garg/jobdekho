@@ -32,7 +32,7 @@ export default function SourceSelect({ options, excluded, onChange }) {
         className={`${TRIGGER} ${triggerTone(count > 0, open)}`}
       >
         {count === 0 ? 'All sources' : `${count} excluded`}
-        <Caret />
+        <Caret open={open} />
       </button>
       {open && <SourceMenu options={ranked} excluded={excluded} onChange={onChange} />}
     </div>

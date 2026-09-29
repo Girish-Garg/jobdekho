@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { CloseIcon } from './Icon.jsx';
 
 // Comma/enter to add, click to remove. Stores a string[]. The filter bar and
 // Settings caption this as a legend, in mono caps; a form on the paper page
@@ -22,9 +23,11 @@ export default function TagInput({ label, values, onChange, plain = false }) {
             key={v}
             type="button"
             onClick={() => onChange(values.filter((x) => x !== v))}
-            className="rounded-full bg-ink/90 px-2.5 py-1 text-xs text-paper"
+            aria-label={`Remove ${v}`}
+            className="inline-flex items-center gap-1.5 rounded-full bg-ink/90 px-2.5 py-1 text-xs text-paper"
           >
-            {v} <span aria-hidden="true">x</span>
+            {v}
+            <CloseIcon size={10} />
           </button>
         ))}
         <input

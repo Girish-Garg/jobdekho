@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { canRecheck, recheckProviders } from '../lib/noticeAction.js';
+import { CloseIcon } from './Icon.jsx';
 
 // One notice on its own: the dismiss control every kind gets, the repeat
 // count when the host has bumped one onto it, and the recheck button only
@@ -33,9 +34,9 @@ export default function Toast({ notice, onDismiss }) {
           type="button"
           onClick={() => onDismiss(notice.id)}
           aria-label="Dismiss"
-          className="text-muted transition-colors duration-fast ease-ease hover:text-ink"
+          className="grid h-5 w-5 shrink-0 place-items-center text-muted transition-colors duration-fast ease-ease hover:text-ink"
         >
-          &#215;
+          <CloseIcon size={12} />
         </button>
       </div>
       {notice.detail && <p className="mt-1 text-sm leading-relaxed text-ink/80">{notice.detail}</p>}

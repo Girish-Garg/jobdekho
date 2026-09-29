@@ -44,4 +44,11 @@ describe('jdSentences', () => {
     expect(jdSentences(null)).toEqual([])
     expect(jdSentences('')).toEqual([])
   })
+
+  // stripHtml keeps paragraphs as lines now, so an unpunctuated heading no
+  // longer has a "/p" after it to end it.
+  it('ends a sentence at a line break', () => {
+    expect(jdSentences('About the platform team\nWe build payment rails for India'))
+      .toEqual(['about the platform team', 'we build payment rails for india'])
+  })
 })

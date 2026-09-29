@@ -1,11 +1,12 @@
 import { EMPTY_FILTERS } from '../lib/savedFilters.js';
+import { CloseIcon } from './Icon.jsx';
 
 // border-edge, not the hairline border-line: a chip is a piece of active
 // state, not a resting surface, so it carries the heavier of the two border
 // tokens to read as a thing rather than a divider.
 const CHIP = 'inline-flex items-center gap-1 rounded-full border border-edge bg-paper py-0.5 pl-3 pr-1 text-xs text-ink';
-// A glyph this small needs a target bigger than itself to stay clickable.
-const REMOVE = 'grid h-5 w-5 place-items-center rounded-full text-sm leading-none text-muted transition hover:bg-ink hover:text-paper';
+// An icon this small needs a target bigger than itself to stay clickable.
+const REMOVE = 'grid h-5 w-5 place-items-center rounded-full text-muted transition hover:bg-ink hover:text-paper';
 
 export default function ActiveChips({ chips, filters, setFilters }) {
   return (
@@ -19,7 +20,7 @@ export default function ActiveChips({ chips, filters, setFilters }) {
             onClick={() => setFilters({ ...filters, ...chip.patch })}
             className={REMOVE}
           >
-            &#215;
+            <CloseIcon size={10} />
           </button>
         </span>
       ))}

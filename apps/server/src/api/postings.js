@@ -71,6 +71,15 @@ export async function postingsRoutes(app) {
     return { postings }
   })
 
+  // One posting whole, for the pane a person opens it in. The feed withholds
+  // descriptionText (see store/posting-fit.js), and a job read only as its
+  // 280-character snippet is two lines cut off mid-sentence.
+  app.get('/api/postings/:id', { preHandler: app.requireAuth }, async (request, reply) => {
+    const posting = await app.dashboard.getPosting(request.user.sub, request.params.id)
+    if (!posting) return reply.code(404).send({ error: 'no such posting' })
+    return { posting }
+  })
+
   app.get('/api/sources', { preHandler: app.requireAuth }, async () => ({
     sources: await app.dashboard.listSources(),
   }))

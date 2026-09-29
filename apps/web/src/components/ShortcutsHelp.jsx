@@ -1,4 +1,5 @@
 import { useFocusTrap } from '../lib/useFocusTrap.js';
+import { CloseIcon } from './Icon.jsx';
 
 const GLOBAL = [
   ['Ctrl K / Cmd K', 'Open the command palette'],
@@ -44,8 +45,8 @@ export default function ShortcutsHelp({ open, onClose }) {
       >
         <div className="flex items-center justify-between">
           <h2 id={TITLE_ID} className="text-md font-semibold text-ink">Keyboard shortcuts</h2>
-          <button type="button" onClick={onClose} aria-label="Close" className="text-muted transition hover:text-ink">
-            &#215;
+          <button type="button" onClick={onClose} aria-label="Close" className="grid h-6 w-6 place-items-center text-muted transition hover:text-ink">
+            <CloseIcon />
           </button>
         </div>
         <ShortcutGroup title="Global" rows={GLOBAL} />

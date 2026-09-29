@@ -1,5 +1,10 @@
+import { tagBreak, layoutLines } from './html-layout.js'
+import { decodeEntities } from './html-entities.js'
+
 // Most ATS APIs return the job body as HTML. The level and degree classifiers
 // read plain text, so tags and entities have to go before the body is stored.
+// What a tag was for is kept as line breaks (see html-layout.js), because a
+// body stored as one line reads as one wall wherever it is shown.
 
 // Some boards escape their HTML before sending it, so a body arrives as
 // "&lt;p&gt;Job Title&lt;/p&gt;" rather than "<p>Job Title</p>". Greenhouse
@@ -28,12 +33,20 @@
 // test that shipped with it used a literal quote, so it passed while the
 // real data did not. Escaped quotes and ampersands may now sit inside a tag;
 // a bare &lt; or &gt; still ends it, which is what keeps one match to one tag.
-const ESCAPED_TAG = /&lt;\/?[a-z](?:[^&<>]|&(?:quot|#39|#x27|apos|amp|nbsp);)*?&gt;/gi
+const ESCAPED_TAG = /&lt;(\/?)([a-z][a-z0-9]*)(?:[^&<>]|&(?:quot|#39|#x27|apos|amp|nbsp);)*?&gt;/gi
+const REAL_TAG = /<(\/?)([a-z][a-z0-9]*)\b[^>]*>/gi
+
+// A newline in HTML source is markup layout, not text layout: a browser shows
+// "<p>one\ntwo</p>" on one line. So source newlines only count as structure
+// when the body carries no tags at all, where they are the only structure.
+const LOOKS_HTML = /<\/?[a-z!]|&lt;\/?[a-z]/i
 
 export function stripHtml(s) {
-  return String(s || '')
-    .replace(ESCAPED_TAG, ' ')
+  const text = String(s || '')
+  const source = LOOKS_HTML.test(text) ? text.replace(/\s+/g, ' ') : text
+  const bare = source
+    .replace(ESCAPED_TAG, (_, closing, name) => tagBreak(name, closing))
+    .replace(REAL_TAG, (_, closing, name) => tagBreak(name, closing))
     .replace(/<[^>]+>/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&[a-z]+;|&#\d+;/g, ' ')
+  return layoutLines(decodeEntities(bare))
 }

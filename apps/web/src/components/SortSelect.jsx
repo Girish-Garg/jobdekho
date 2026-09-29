@@ -1,3 +1,5 @@
+import Select from './Select.jsx';
+
 // Best fit leads because it is the default. Each option is named for the
 // axis it orders by: "Recommended" once claimed the whole feed, and now that
 // fit is also a filter the sort is just one dimension of it.
@@ -11,7 +13,7 @@ const SORTS = [
 
 export default function SortSelect({ sort, setSort }) {
   return (
-    <select
+    <Select
       aria-label="Sort"
       value={sort}
       onChange={(event) => setSort(event.target.value)}
@@ -20,6 +22,6 @@ export default function SortSelect({ sort, setSort }) {
       {SORTS.map(([value, label]) => (
         <option key={value} value={value}>{label}</option>
       ))}
-    </select>
+    </Select>
   );
 }

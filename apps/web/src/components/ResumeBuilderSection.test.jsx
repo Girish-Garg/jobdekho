@@ -44,14 +44,14 @@ describe('ResumeBuilderSection', () => {
   it('Up and Down swap an included entry with its neighbour', async () => {
     const onChange = vi.fn();
     render(<ResumeBuilderSection title="Experience" entries={ENTRIES} selectedIds={['a', 'b', 'c']} onChange={onChange} />);
-    fireEvent.click(screen.getAllByRole('button', { name: 'Down' })[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Move down' })[0]);
     expect(onChange).toHaveBeenCalledWith(['b', 'a', 'c']);
   });
 
   it('disables Up on the first row and Down on the last row', () => {
     render(<ResumeBuilderSection title="Experience" entries={ENTRIES} selectedIds={['a', 'b']} onChange={() => {}} />);
-    const ups = screen.getAllByRole('button', { name: 'Up' });
-    const downs = screen.getAllByRole('button', { name: 'Down' });
+    const ups = screen.getAllByRole('button', { name: 'Move up' });
+    const downs = screen.getAllByRole('button', { name: 'Move down' });
     expect(ups[0]).toBeDisabled();
     expect(downs[1]).toBeDisabled();
   });

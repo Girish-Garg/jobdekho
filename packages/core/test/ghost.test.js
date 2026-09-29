@@ -103,3 +103,12 @@ describe('legitimacy', () => {
     expect(legitimacy(bare, NOW)).toBe('medium')
   })
 })
+
+describe('ghostSignals on a body with list markers', () => {
+  // Each list item now starts with "- ". Counted as words, the markers let a
+  // thin JD of many short bullets clear the 150-word bar.
+  it('does not count the "- " markers as words', () => {
+    const bullets = Array.from({ length: 70 }, () => '- Ship react').join('\n')
+    expect(ghostSignals(solid({ descriptionText: bullets }), NOW)).toEqual(['very short job description'])
+  })
+})

@@ -36,7 +36,8 @@ export const TOOL_TERMS = [
   'unity', 'blender',
 ]
 
-const wordCount = (text) => text.split(/\s+/).length
+// The "- " opening each stored list item is not a word, and would pad a thin JD.
+const wordCount = (text) => text.split(/\s+/).filter((token) => /[\p{L}\p{N}]/u.test(token)).length
 
 function daysOld(postedAt, now) {
   if (!postedAt) return null

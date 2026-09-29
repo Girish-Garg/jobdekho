@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import TagInput from './TagInput.jsx';
 import { BOX, TextField } from './ProfileField.jsx';
+import { ChevronDownIcon, ArrowUpIcon, ArrowDownIcon } from './Icon.jsx';
 
 const TEXT_BTN = 'text-sm text-muted transition-colors duration-fast ease-ease hover:text-ink disabled:opacity-30 disabled:hover:text-muted';
 
@@ -27,7 +28,7 @@ export default function EntryCard({ entry, titleLabel, orgLabel, startOpen, isFi
           {entry.pinned && <span className="text-xs font-medium text-ink">pinned</span>}
           {bullets > 0 && <span className="text-xs group-open:hidden">{bullets} {bullets === 1 ? 'bullet' : 'bullets'}</span>}
           {dates && <span className="tnum">{dates}</span>}
-          <span aria-hidden="true" className="transition-transform duration-fast ease-ease group-open:rotate-180">&#8964;</span>
+          <ChevronDownIcon className="self-center transition-transform duration-fast ease-ease group-open:rotate-180" />
         </span>
       </summary>
       <div className="flex flex-col gap-3 pb-5 pt-1">
@@ -63,8 +64,14 @@ export default function EntryCard({ entry, titleLabel, orgLabel, startOpen, isFi
           <button type="button" aria-pressed={entry.pinned} onClick={() => set('pinned')(!entry.pinned)} className={TEXT_BTN}>
             {entry.pinned ? 'Pinned' : 'Pin'}
           </button>
-          <button type="button" disabled={isFirst} onClick={() => onMove(-1)} className={TEXT_BTN}>Move up</button>
-          <button type="button" disabled={isLast} onClick={() => onMove(1)} className={TEXT_BTN}>Move down</button>
+          <button type="button" disabled={isFirst} onClick={() => onMove(-1)} className={`${TEXT_BTN} inline-flex items-center gap-1`}>
+            <ArrowUpIcon size={12} />
+            Move up
+          </button>
+          <button type="button" disabled={isLast} onClick={() => onMove(1)} className={`${TEXT_BTN} inline-flex items-center gap-1`}>
+            <ArrowDownIcon size={12} />
+            Move down
+          </button>
           <button type="button" onClick={onRemove} className={`${TEXT_BTN} ml-auto`}>Remove</button>
         </div>
       </div>

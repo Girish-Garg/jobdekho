@@ -4,6 +4,7 @@ import { detectCurrency } from './currency.js'
 import { classifyLevel } from './level.js'
 import { classifyDegree } from './degree.js'
 import { classifyWorkMode } from './work-mode.js'
+import { tidyLines, oneLine, clipText } from './text-layout.js'
 
 const SNIPPET_MAX = 280
 
@@ -11,7 +12,8 @@ const SNIPPET_MAX = 280
 // ranking needs far more than an opening paragraph: skills are named in the
 // requirements, which sit well past 280 characters, and matching against the
 // snippet alone meant only 3% of postings matched a skill at all. This is the
-// text the scorer reads, and it is never sent to the browser.
+// text the scorer reads. The feed never sends it; the pane fetches it for the
+// one posting a person opens (GET /api/postings/:id).
 const TEXT_MAX = 4000
 
 export function normalize(raw, source) {
@@ -27,7 +29,7 @@ export function normalize(raw, source) {
   const tags = raw.tags || []
   // Classify against the full body: degree requirements usually sit far past
   // the snippet cutoff. Only the truncated form is stored.
-  const description = (raw.description || '').replace(/\s+/g, ' ').trim()
+  const description = tidyLines(raw.description)
   const level = raw.level || classifyLevel(title, description)
   const { degreeMin, degreeRequired } = classifyDegree(title, description)
   const company = (raw.company || '').trim()
@@ -40,8 +42,8 @@ export function normalize(raw, source) {
     company,
     location,
     url: raw.url || '',
-    descriptionSnippet: description.slice(0, SNIPPET_MAX),
-    descriptionText: description.slice(0, TEXT_MAX),
+    descriptionSnippet: oneLine(description).slice(0, SNIPPET_MAX),
+    descriptionText: clipText(description, TEXT_MAX),
     tags,
     postedAt: raw.postedAt || null,
     stipend: raw.stipend ?? null,

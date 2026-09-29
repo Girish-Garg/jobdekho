@@ -7,6 +7,13 @@ export function getPostings(params = {}) {
   return announced(req(`/api/postings${qs ? `?${qs}` : ''}`), 'Postings').then((d) => d.postings);
 }
 
+// One posting whole, with the full description the feed leaves out. Not
+// announced: the pane already shows the snippet and says so in place when
+// the rest does not arrive (see PostingDescription.jsx).
+export function getPosting(id) {
+  return req(`/api/postings/${encodeURIComponent(id)}`).then((d) => d.posting);
+}
+
 export function getSources() {
   return announced(req('/api/sources'), 'Sources').then((d) => d.sources);
 }

@@ -3,10 +3,17 @@ import { stripHtml } from '../html.js'
 // companyDescription is the same boilerplate on every posting from one
 // employer, so folding it in would make unrelated roles at that company look
 // like the same job to fit scoring and content fingerprints.
+//
+// Each section keeps its title ("Qualifications") as a heading line over its
+// text: once the sections are one body, that title is all that says where
+// the duties end and the requirements begin.
 export function descriptionFromSections(sections) {
   const s = sections || {}
-  const parts = [s.jobDescription?.text, s.qualifications?.text, s.additionalInformation?.text]
-  return stripHtml(parts.filter(Boolean).join(' '))
+  return [s.jobDescription, s.qualifications, s.additionalInformation]
+    .map((section) => ({ title: section?.title, body: stripHtml(section?.text) }))
+    .filter(({ body }) => body)
+    .map(({ title, body }) => [title, body].filter(Boolean).join('\n\n'))
+    .join('\n\n')
 }
 
 const detailUrl = (slug, id) =>

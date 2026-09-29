@@ -68,4 +68,22 @@ describe('normalize', () => {
     expect(p.descriptionSnippet.length).toBe(280)
     expect(p.degreeMin).toBe('masters')
   })
+
+  // Collapsing every run of whitespace here is what flattened all 2612 stored
+  // bodies into one line, whatever structure the board or stripHtml gave them.
+  it('keeps the line breaks of a description and collapses spaces within a line', () => {
+    const description = '  About us \r\n\n\n\nWe   build.\n  - Ship\t fast \n- Learn '
+    const p = normalize({ externalId: '1', title: 'T', company: 'C', url: 'u', description }, 's')
+    expect(p.descriptionText).toBe('About us\n\nWe build.\n- Ship fast\n- Learn')
+  })
+  it('keeps the snippet on one line', () => {
+    const p = normalize({ externalId: '1', title: 'T', company: 'C', url: 'u', description: 'About us\n\n- Ship\n- Learn' }, 's')
+    expect(p.descriptionSnippet).toBe('About us - Ship - Learn')
+  })
+  it('still reads a degree and a level across line breaks', () => {
+    const description = 'Requirements:\n- 3+ years of experience in Go\n- B.Tech in Computer Science'
+    const p = normalize({ externalId: '1', title: 'Engineer', company: 'C', url: 'u', description }, 's')
+    expect(p.level).toBe('mid')
+    expect(p.degreeMin).toBe('bachelors')
+  })
 })

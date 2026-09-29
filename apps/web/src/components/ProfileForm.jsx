@@ -2,6 +2,7 @@ import { PROFILE_DEGREE_OPTIONS } from '../lib/taxonomy.js';
 import { sectionId } from '../lib/profileIndex.js';
 import ProfileSection from './ProfileSection.jsx';
 import { BOX, Labelled } from './ProfileField.jsx';
+import Select from './Select.jsx';
 import TagInput from './TagInput.jsx';
 import SaveBar from './SaveBar.jsx';
 
@@ -36,11 +37,11 @@ export default function ProfileForm({ profile, onChange, onSave }) {
             />
           </Labelled>
           <Labelled label="Highest degree">
-            <select value={profile.degree} onChange={(event) => set('degree')(event.target.value)} className={BOX}>
+            <Select block value={profile.degree} onChange={(event) => set('degree')(event.target.value)} className={BOX}>
               {PROFILE_DEGREE_OPTIONS.map(([value, text]) => (
                 <option key={value} value={value}>{text}</option>
               ))}
-            </select>
+            </Select>
           </Labelled>
         </div>
       </div>

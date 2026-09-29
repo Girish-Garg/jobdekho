@@ -33,6 +33,25 @@ describe('ashby adapter', () => {
     expect(r.description).toBe('Own our services. B.Tech in CS required.')
   })
 
+  // The plain body writes each link's URL out after its words.
+  it('prefers the html body, so links read as their words', async () => {
+    const both = async () => ({
+      json: async () => ({ jobs: [{
+        id: 'a4', title: 'X',
+        descriptionPlain: 'Auth https://supabase.com/auth, written in Go',
+        descriptionHtml: '<p><a href="https://supabase.com/auth">Auth</a>, written in Go</p>',
+      }] }),
+    })
+    const [r] = await ashby({ slug: 'acme' }).fetch(both)
+    expect(r.description).toBe('Auth, written in Go')
+  })
+
+  it('falls back to the plain body when there is no html', async () => {
+    const plainOnly = async () => ({ json: async () => ({ jobs: [{ id: 'a5', title: 'X', descriptionPlain: 'About us\n\nWe ship.' }] }) })
+    const [r] = await ashby({ slug: 'acme' }).fetch(plainOnly)
+    expect(r.description).toBe('About us\n\nWe ship.')
+  })
+
   it('falls back to the html body when descriptionPlain is absent', async () => {
     const htmlOnly = async () => ({
       json: async () => ({ jobs: [{ id: 'a2', title: 'X', descriptionHtml: '<p>Ship &amp; learn</p>' }] }),

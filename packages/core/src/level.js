@@ -25,7 +25,9 @@ const RANK_LEVEL = {
 // Prose mentions years too ("we were founded 12 years ago"), which used to set
 // seniority. A number only counts when it reads as a requirement: a range or a
 // plus ("2-4 years", "5+ years"), or the word experience next to it.
-const YEARS_RANGE = /(\d{1,2})\s*(?:\+|(?:to|-)\s*\d{1,2})\s*(?:years?|yrs?)\b/i
+// The range never spans a line: a stored body now starts each list item with
+// "- ", so "Openings: 2" over "- 5 years in Go" would otherwise read "2-5 years".
+const YEARS_RANGE = /(\d{1,2})[^\S\n]*(?:\+|(?:to|-)[^\S\n]*\d{1,2})\s*(?:years?|yrs?)\b/i
 const YEARS_AFTER = /(\d{1,2})\s*(?:years?|yrs?)\.?\s*(?:of\s+)?(?:experience|exp\b|in\b)/i
 const YEARS_BEFORE = /(?:experience|exp)\s*(?::|of)?\s*(\d{1,2})\s*(?:years?|yrs?)/i
 
