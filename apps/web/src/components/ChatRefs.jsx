@@ -1,30 +1,52 @@
+import ChatMonogram from './ChatMonogram.jsx';
 import { ArrowRightIcon } from './Icon.jsx';
 
+// How far along the fit is, drawn the way the feed's own meter reads, with
+// the number beside it so the bar is never the only way to tell.
+function Fit({ fit }) {
+  return (
+    <span className="flex shrink-0 items-center gap-1.5 text-xs text-muted tnum">
+      <span aria-hidden="true" className="h-1 w-8 overflow-hidden rounded-full bg-ink/10">
+        <span className="block h-full rounded-full bg-primary" style={{ width: `${Math.max(0, Math.min(100, fit))}%` }} />
+      </span>
+      fit {fit}
+    </span>
+  );
+}
+
 // The postings an answer named, as the server checked them (see
-// apps/server/src/chat/refs.js): only ids the question's own feed carried,
-// worded from the store rather than by the model. A click opens that posting
-// in the pane, the one thing an answer could not do before.
+// apps/server/src/chat/refs.js): only ids that turn put in front of the
+// model, worded from the store rather than by it. A click opens that posting
+// in the pane, the one thing an answer could not do before. The title gets
+// the whole first line, since it is what tells two roles at one company apart.
 export default function ChatRefs({ refs, onOpen }) {
   return (
-    <ul aria-label="Jobs in this answer" className="flex flex-col divide-y divide-line rounded-md border border-line bg-paper">
-      {refs.map((ref) => (
-        <li key={ref.id}>
-          <button
-            type="button"
-            onClick={() => onOpen(ref.id)}
-            className="group flex w-full items-center gap-3 px-2.5 py-1.5 text-left transition-colors duration-fast ease hover:bg-select"
-          >
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-medium text-ink">{ref.title}</span>
-              <span className="block truncate text-xs text-muted">{ref.company}</span>
-            </span>
-            {ref.fit !== null && ref.fit !== undefined && (
-              <span className="shrink-0 font-mono text-xs text-muted">fit {ref.fit}</span>
-            )}
-            <ArrowRightIcon className="text-muted transition-colors duration-fast ease group-hover:text-ink" />
-          </button>
-        </li>
-      ))}
-    </ul>
+    <div className="flex flex-col gap-1.5">
+      <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-muted">
+        Jobs in JobDekho
+        <span className="rounded-full bg-primary/10 px-1.5 text-[10px] font-bold normal-case leading-4 tracking-normal text-primary tnum">{refs.length}</span>
+      </p>
+      <ul aria-label="Jobs in this answer" className="flex flex-col divide-y divide-line overflow-hidden rounded-xl border border-line bg-paper">
+        {refs.map((ref) => (
+          <li key={ref.id}>
+            <button
+              type="button"
+              onClick={() => onOpen(ref.id)}
+              className="group flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors duration-fast ease hover:bg-select"
+            >
+              <ChatMonogram name={ref.company} size="sm" />
+              <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <span className="truncate text-sm font-semibold text-ink" title={ref.title}>{ref.title}</span>
+                <span className="flex items-center justify-between gap-3">
+                  <span className="truncate text-xs text-muted">{ref.company}</span>
+                  {ref.fit !== null && ref.fit !== undefined && <Fit fit={ref.fit} />}
+                </span>
+              </span>
+              <ArrowRightIcon className="text-muted transition duration-fast ease group-hover:translate-x-0.5 group-hover:text-primary" />
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

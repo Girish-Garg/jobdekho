@@ -35,7 +35,7 @@ export default function ResumeBuilderOverlay({ jobTitle, plan, onClose }) {
       data-testid="resume-builder-overlay"
       role="dialog"
       aria-label={`Resume builder, tailored for ${jobTitle}`}
-      className="rise absolute inset-y-0 left-0 right-0 z-40 flex min-h-0 flex-col border-l border-line bg-panel shadow-pop md:left-[26rem]"
+      className="rise absolute inset-y-0 left-0 right-0 z-40 flex min-h-0 flex-col border-l border-line bg-panel shadow-pop md:left-[var(--chat-width,26rem)]"
     >
       <div className="flex items-center justify-between gap-3 border-b border-line px-6 py-4">
         <div className="min-w-0">

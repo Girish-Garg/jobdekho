@@ -5,6 +5,7 @@ import { announceOpenPosting, onOpenPostingRequest } from '../lib/openPostingSig
 
 vi.mock('../api.js', () => ({
   getProviders: vi.fn(),
+  getProviderPreference: vi.fn(async () => ({ provider: 'auto' })),
   getChatHistory: vi.fn(),
   sendChatMessage: vi.fn(),
   clearChatHistory: vi.fn(async () => null),
@@ -12,7 +13,7 @@ vi.mock('../api.js', () => ({
   runPostingAction: vi.fn(),
 }));
 
-import { getProviders, getChatHistory, sendChatMessage, clearChatHistory, getPostingAiResults } from '../api.js';
+import { getProviders, getProviderPreference, getChatHistory, sendChatMessage, clearChatHistory, getPostingAiResults } from '../api.js';
 
 const CLAUDE = { id: 'claude', label: 'Claude Code', install: 'https://claude.ai/code', policies: ['none', 'web'], present: true, runs: true };
 const FILTERS = { levels: [], workModes: [], q: '', minFit: '' };
@@ -39,6 +40,7 @@ async function ask(text) {
 beforeEach(() => {
   vi.clearAllMocks();
   getProviders.mockResolvedValue([CLAUDE]);
+  getProviderPreference.mockResolvedValue({ provider: 'auto' });
   getChatHistory.mockResolvedValue({ turns: [] });
   getPostingAiResults.mockResolvedValue([]);
   sendChatMessage.mockResolvedValue(TURN);
@@ -62,7 +64,7 @@ describe('AiChatPanel, plain questions', () => {
     await ask('which are remote?');
     await screen.findByText('Two of these are remote.');
     expect(sendChatMessage).toHaveBeenCalledWith(
-      { message: 'which are remote?', filters: FILTERS, sort: 'match', openPostingId: null },
+      { message: 'which are remote?', filters: FILTERS, sort: 'match', openPostingId: null, page: 'postings' },
       { onEvent: expect.any(Function) },
     );
   });
@@ -103,7 +105,7 @@ describe('AiChatPanel, plain questions', () => {
     getChatHistory.mockResolvedValue({ turns: [TURN] });
     setup();
     await screen.findByText('Two of these are remote.');
-    fireEvent.click(screen.getByRole('button', { name: 'New' }));
+    fireEvent.click(screen.getByRole('button', { name: 'New chat' }));
     await waitFor(() => expect(clearChatHistory).toHaveBeenCalled());
     await screen.findByText(/Ask about the postings on screen/);
   });
@@ -129,6 +131,56 @@ describe('AiChatPanel, plain questions', () => {
     await screen.findByText('The chat asks an AI CLI installed on this computer, on your own subscription.');
     expect(screen.queryByPlaceholderText('Ask about what is on screen')).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'https://claude.ai/code' })).toBeInTheDocument();
+  });
+});
+
+describe('AiChatPanel, the redesigned panel', () => {
+  const AGY = { ...CLAUDE, id: 'agy', label: 'Antigravity', install: 'https://antigravity.google' };
+
+  it('names the CLI that will answer, honouring the preferred one', async () => {
+    getProviders.mockResolvedValue([CLAUDE, AGY]);
+    getProviderPreference.mockResolvedValue({ provider: 'agy' });
+    setup();
+    expect(await screen.findByText('Antigravity on this computer')).toBeInTheDocument();
+  });
+
+  it('sends a suggested question on click, and shows it as the person\'s own words', async () => {
+    sendChatMessage.mockResolvedValueOnce({ ...TURN, question: 'Which of these fit me best?' });
+    setup();
+    fireEvent.click(await screen.findByRole('button', { name: 'Which of these fit me best?' }));
+    await waitFor(() => expect(sendChatMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'Which of these fit me best?', page: 'postings' }),
+      { onEvent: expect.any(Function) },
+    ));
+    await screen.findByText('Two of these are remote.');
+    expect(screen.getByText('Which of these fit me best?')).toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'Suggested questions' })).not.toBeInTheDocument();
+  });
+
+  it('shows the question at once, then a typing row with the progress line, until the answer lands', async () => {
+    let finish;
+    sendChatMessage.mockImplementationOnce(async (_body, { onEvent }) => {
+      onEvent({ event: 'start', provider: 'claude' });
+      onEvent({ event: 'progress', stage: 'web' });
+      await new Promise((r) => { finish = r; });
+      return TURN;
+    });
+    const { container } = setup();
+    await ask('is Acme funded?');
+    expect(await screen.findByText('Searching the web with your question, not your profile...')).toHaveAttribute('aria-live', 'polite');
+    expect(screen.getByText('is Acme funded?')).toBeInTheDocument();
+    expect(container.querySelectorAll('.typing-dot')).toHaveLength(3);
+    await waitFor(() => finish());
+    await screen.findByText('Two of these are remote.');
+    expect(container.querySelectorAll('.typing-dot')).toHaveLength(0);
+  });
+
+  it('draws a saved turn that also searched the web as the answer, then the web card', async () => {
+    getChatHistory.mockResolvedValue({ turns: [{ ...TURN, web: { answer: 'Acme raised a Series B.', sources: ['https://acme.example'], provider: 'claude' } }] });
+    setup();
+    const card = await screen.findByRole('region', { name: 'From the web' });
+    expect(card).toHaveTextContent('Acme raised a Series B.');
+    expect(screen.getByText('Two of these are remote.')).toBeInTheDocument();
   });
 });
 

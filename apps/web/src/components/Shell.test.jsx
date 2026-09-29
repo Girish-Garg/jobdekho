@@ -225,6 +225,17 @@ describe('Shell and the chat', () => {
     expect(within(screen.getByRole('banner')).getByRole('button', { name: 'Ask AI' })).toHaveAttribute('aria-pressed', 'true');
   });
 
+  it('offers the chat on every page, and keeps it open across them', async () => {
+    await mount();
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Profile' })));
+    await act(async () => fireEvent.click(within(screen.getByRole('banner')).getByRole('button', { name: 'Ask AI' })));
+    const chat = screen.getByRole('complementary', { name: 'Ask AI' });
+    expect(await within(chat).findByRole('heading', { name: 'Ask about your profile' })).toBeInTheDocument();
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Settings' })));
+    expect(screen.getByRole('complementary', { name: 'Ask AI' })).toBe(chat);
+    expect(within(chat).getByRole('heading', { name: 'Ask about JobDekho' })).toBeInTheDocument();
+  });
+
   it('closes from the topbar like any other time', async () => {
     getProviders.mockResolvedValue([]);
     await mount();

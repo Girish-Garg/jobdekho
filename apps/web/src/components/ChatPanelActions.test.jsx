@@ -5,6 +5,7 @@ import { announceOpenPosting } from '../lib/openPostingSignal.js';
 
 vi.mock('../api.js', () => ({
   getProviders: vi.fn(),
+  getProviderPreference: vi.fn(async () => ({ provider: 'auto' })),
   getChatHistory: vi.fn(async () => ({ turns: [] })),
   sendChatMessage: vi.fn(),
   clearChatHistory: vi.fn(async () => null),

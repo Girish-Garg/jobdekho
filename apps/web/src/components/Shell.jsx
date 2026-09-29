@@ -26,8 +26,9 @@ export default function Shell() {
   // feed's own state.
   const [sort, setSort] = useState('match');
   const [viewMode, setViewMode] = useViewMode();
-  // The chat is where every AI action happens; the job pane asks it to open
-  // on a posting (see useChatDock.js), so its state lives here beside both.
+  // The chat is where every AI action happens, on every page; the job pane
+  // asks it to open on a posting (see useChatDock.js), so its state lives
+  // here beside both.
   const chat = useChatDock();
   const searchRef = useRef(null);
   const postings = view === 'postings';
@@ -49,7 +50,7 @@ export default function Shell() {
         onSearch={postings ? (value) => setFilters({ ...filters, q: value }) : null}
         searchRef={searchRef}
         chatOpen={chat.open}
-        onToggleChat={postings ? chat.toggle : null}
+        onToggleChat={chat.toggle}
       />
       {postings && (
         <FilterBar
@@ -63,16 +64,18 @@ export default function Shell() {
           )}
         />
       )}
+      {/* The chat is on every page and the page area is its row: floating, it
+          sits over the page; pinned, the page makes room beside it. */}
       <div id={OVERLAY_HOST_ID} className="relative flex min-h-0 flex-1">
-        {postings && <AiChatPanel
-            open={chat.open}
-            onClose={chat.close}
-            request={chat.request}
-            context={{ filters, sort }}
-            apply={{ setFilters, setSort }}
-          />}
-        <main className="min-h-0 flex-1 overflow-y-auto">
-        <ShellMain view={view} filters={filters} sort={sort} viewMode={viewMode} setView={setView} />
+        <AiChatPanel
+          open={chat.open}
+          onClose={chat.close}
+          request={chat.request}
+          context={{ filters, sort, page: view }}
+          apply={{ setFilters, setSort, setView }}
+        />
+        <main className="min-h-0 min-w-0 flex-1 overflow-y-auto">
+          <ShellMain view={view} filters={filters} sort={sort} viewMode={viewMode} setView={setView} />
         </main>
       </div>
       <CommandPalette

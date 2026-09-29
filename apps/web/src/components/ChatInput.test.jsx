@@ -63,4 +63,30 @@ describe('ChatInput', () => {
     render(<ChatInput busy={false} onSend={() => {}} />);
     expect(screen.getByText(/on your own subscription/)).toBeInTheDocument();
   });
+
+  it('sends from the round button, which is held back until there is something to send', () => {
+    const onSend = vi.fn();
+    render(<ChatInput busy={false} onSend={onSend} />);
+    const send = screen.getByRole('button', { name: 'Ask' });
+    expect(send).toHaveAttribute('title', 'Ask');
+    expect(send).toBeDisabled();
+    fireEvent.change(screen.getByPlaceholderText(PLACEHOLDER), { target: { value: 'hi' } });
+    fireEvent.click(send);
+    expect(onSend).toHaveBeenCalledWith('hi');
+  });
+
+  it('names the button for what it does while a card is the reply target', () => {
+    render(<ChatInput busy={false} onSend={() => {}} placeholder="What should change in the letter?" submitLabel="Change" />);
+    expect(screen.getByRole('button', { name: 'Change' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'What should change in the letter?' })).toBeInTheDocument();
+  });
+
+  it('starts one line tall and grows to fit what is typed', () => {
+    render(<ChatInput busy={false} onSend={() => {}} />);
+    const box = screen.getByPlaceholderText(PLACEHOLDER);
+    expect(box).toHaveAttribute('rows', '1');
+    Object.defineProperty(box, 'scrollHeight', { configurable: true, value: 88 });
+    fireEvent.change(box, { target: { value: 'one\ntwo\nthree\nfour' } });
+    expect(box.style.height).toBe('88px');
+  });
 });

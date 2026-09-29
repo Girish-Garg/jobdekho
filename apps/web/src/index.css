@@ -173,8 +173,69 @@ body {
 .breathe {
   animation: breathe 1.4s ease-in-out infinite;
 }
+
+/* Three dots waiting on an answer, each a beat behind the one before, so
+   the row reads as "still going" without a spinner's urgency. */
+@keyframes typing {
+  0%,
+  60%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+.typing-dot {
+  animation: typing 1.2s var(--ease) infinite;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.typing-dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
 .tnum {
   font-variant-numeric: tabular-nums;
+}
+
+/* One thin scrollbar for every scrolling area in the app (the feed, the
+   chat, the job pane, the builder, the menus), drawn in the hairline tokens
+   so it sits in the page instead of on it. The -webkit- rules draw it in
+   Chromium and Safari: a 6px rounded thumb with no arrow buttons. The
+   standard properties are only for engines without those rules (Firefox),
+   because once they are set Chromium ignores the -webkit- ones and draws
+   its own thin bar, arrows and all, on Windows. */
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--edge)) transparent;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--edge));
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--muted));
 }
 
 /* Wired once, globally, so a component cannot forget it. Motion here is only
@@ -187,5 +248,12 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  /* Stopped mid-beat the dots would sit at their faintest; this keeps them
+     plainly visible, still, for as long as the answer is pending. */
+  .typing-dot {
+    animation: none;
+    opacity: 0.7;
   }
 }

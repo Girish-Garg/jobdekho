@@ -1,33 +1,39 @@
-import ChatActions from './ChatActions.jsx';
+import { turnShape } from '../lib/chatTurnShape.js';
+import { providerLabel } from '../lib/chatAnswerer.js';
+import { relativeDay } from '../lib/time.js';
+import ChatBubble from './ChatBubble.jsx';
+import ChatAssistant from './ChatAssistant.jsx';
+import ChatText from './ChatText.jsx';
 import ChatRefs from './ChatRefs.jsx';
-import ChatSources from './ChatSources.jsx';
+import ChatActions from './ChatActions.jsx';
+import ChatWebCard from './ChatWebCard.jsx';
+import { WarningIcon } from './Icon.jsx';
 
-// One question and its answer. Weight and size carry the difference between
-// them - the question bold and dense, the answer regular and roomier -
-// rather than a bubble or an avatar standing in for who said which. The jobs
-// the answer named sit right under it, before any offer to change the feed,
-// since reading on about one of them is the likelier next step.
+// One question and its answer. The answer from JobDekho's own data comes
+// first, with the jobs it named right under it and any offer to change the
+// feed after those, since reading on about one of them is the likelier next
+// step. What the web added is a card of its own after all of that, marked as
+// the web's, because it was written from a different, public, set of facts.
 //
-// An answer from a web search says so above it, and says what went out: the
-// question and the job's public details, never the profile (see the server's
-// chat/web-prompt.js). A search that failed left the answer from the
-// person's own data standing, and says why under it.
-export default function ChatTurn({ turn, onApply, onOpenRef }) {
+// A search that failed left the answer from the person's own data standing,
+// and says why in a quiet line rather than an alarm.
+export default function ChatTurn({ turn: saved, providers, onApply, onOpenRef }) {
+  const turn = turnShape(saved);
   return (
-    <div className="flex flex-col gap-2 py-3">
-      <p className="text-sm font-semibold text-ink">{turn.question}</p>
-      {turn.web && (
-        <p className="text-xs font-medium text-accent">
-          Searched the web with your question and the job&apos;s public details, not your profile.
-        </p>
-      )}
-      <p className="whitespace-pre-wrap text-sm leading-relaxed text-ink/80">{turn.answer}</p>
-      {turn.sources?.length > 0 && <ChatSources sources={turn.sources} />}
-      {turn.webError && (
-        <p className="text-xs text-muted">Answered from your own data. The web search did not work: {turn.webError}</p>
-      )}
-      {turn.refs?.length > 0 && <ChatRefs refs={turn.refs} onOpen={onOpenRef} />}
-      {turn.actions?.length > 0 && <ChatActions actions={turn.actions} onApply={onApply} />}
+    <div className="flex flex-col gap-4">
+      <ChatBubble>{turn.question}</ChatBubble>
+      <ChatAssistant name={providerLabel(providers, turn.provider)} when={relativeDay(turn.createdAt)}>
+        {turn.answer && <ChatText text={turn.answer} />}
+        {turn.refs.length > 0 && <ChatRefs refs={turn.refs} onOpen={onOpenRef} />}
+        {turn.actions.length > 0 && <ChatActions actions={turn.actions} onApply={onApply} />}
+        {turn.web && <ChatWebCard web={turn.web} />}
+        {turn.webError && (
+          <p className="flex items-start gap-1.5 text-xs text-muted">
+            <WarningIcon size={13} className="mt-px text-ember" />
+            <span>Could not search the web: {turn.webError}</span>
+          </p>
+        )}
+      </ChatAssistant>
     </div>
   );
 }
