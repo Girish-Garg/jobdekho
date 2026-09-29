@@ -23,7 +23,7 @@ export default function PostingsView({ filters, sort = 'match', viewMode = 'list
   const { rows, loading, more, loadMore, onStatus } = usePostingsFeed(filters, sort);
   const triage = useTriage(rows, onStatus);
   const isWide = useMediaQuery(WIDE_QUERY);
-  const { opened, openFromClick: openRow, openById, close: closeCard } = useOpenPosting(rows);
+  const { opened, openFromClick: openRow, openById, close: closeCard, patchOutside } = useOpenPosting(rows);
   const { fitFiltered, unranked } = rankingNotice(filters, sort, rows);
 
   // Selection (keyboard highlight) is separate from "open": only Enter or a
@@ -45,9 +45,13 @@ export default function PostingsView({ filters, sort = 'match', viewMode = 'list
     onClear: () => (opened ? closeCard() : setSelectedId(null)),
   });
 
+  // The feed keeps a reading width, centred, rather than running edge to
+  // edge: full-width rows and cards spread a title, its company and its fit
+  // too far apart to read as one line, and the empty sides are where the
+  // chat and the job pane float without covering a card.
   return (
     <section className="flex gap-4 px-4 py-2">
-      <div className="min-w-0 flex-1">
+      <div className="mx-auto w-full min-w-0 max-w-[68rem]">
         <PostingsHeader shown={rows.length} fresh={rows.filter((p) => isNewToday(p.firstSeenAt)).length} />
         {unranked && (
           <div className="pb-4">
@@ -77,7 +81,12 @@ export default function PostingsView({ filters, sort = 'match', viewMode = 'list
           </div>
         )}
       </div>
-      <PostingDetailSlot isWide={isWide} opened={opened} onClose={closeCard} onStatus={triage.setStatus} />
+      <PostingDetailSlot
+        isWide={isWide}
+        opened={opened}
+        onClose={closeCard}
+        onStatus={(id, value) => { patchOutside(id, value); triage.setStatus(id, value); }}
+      />
     </section>
   );
 }
