@@ -17,7 +17,7 @@ function fakeDashboard() {
   return {
     listPostingsForUser: vi.fn().mockResolvedValue([ROW]), getPosting: vi.fn().mockResolvedValue(OPEN),
     getProfile: vi.fn().mockResolvedValue(PROFILE), listAiResults: vi.fn().mockResolvedValue([]),
-    setPostingStatus: vi.fn(), listSources: vi.fn().mockResolvedValue([]), getResumeText: none, upsertProfile: vi.fn(),
+    setPostingStatus: vi.fn(), listSources: vi.fn().mockResolvedValue([]), listCompanies: vi.fn().mockResolvedValue(['Acme']), getResumeText: none, upsertProfile: vi.fn(),
     deleteProfile: vi.fn(), getUserFilters: none, upsertUserFilters: vi.fn(), getAiResult: none, setAiResult: vi.fn(),
     getProviderPref: none, upsertProviderPref: vi.fn(),
   }
@@ -72,14 +72,26 @@ describe('a chat question that needs the web', () => {
     expect(search.input).not.toMatch(/Jane|jane@|90000|JANE DOE|react|frontend developer|55%|saved|Build the board/i)
   })
 
-  it('answers with what the search found, its safe sources, and nothing left over from the first answer', async () => {
+// What JobDekho holds comes first; the web is added after it, never in its
+  // place (answered only from the web, "is Razorpay hiring?" hid the ten
+  // Razorpay openings JobDekho had).
+  it('keeps the answer from JobDekho\'s own data and adds what the search found after it', async () => {
     const store = fakeChatStore()
     const res = await ask({ store })
     expect(res.json()).toMatchObject({
-      question: 'Is Acme doing well as a company?', answer: 'Acme raised a Series B in 2026.',
-      sources: ['https://news.example/acme'], web: true, refs: [], actions: [], provider: 'claude',
+      question: 'Is Acme doing well as a company?', answer: 'You fit Acme at 55%, Jane.',
+      refs: [{ id: 'p1', title: 'Frontend Intern', company: 'Acme', fit: 55 }], actions: [{ type: 'sort', value: 'newest' }],
+      provider: 'claude',
+      web: { answer: 'Acme raised a Series B in 2026.', sources: ['https://news.example/acme'], provider: 'claude' },
     })
     expect(store.chatHistory.get('u1').turns[0]).toEqual(res.json())
+  })
+
+  it('puts every opening of a company the question names in front of the first call', async () => {
+    const fake = cli()
+    await ask({ fake })
+    const [first] = prompts(fake)
+    expect(first.input).toContain('"companiesTheQuestionNames":[{"company":"Acme","openCount":1,"notSeenRecently":0,"postings":[{"id":"p1"')
   })
 
   it('keeps the first answer, and says why, when the search cannot be read', async () => {

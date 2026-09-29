@@ -9,9 +9,11 @@
 // actions.js), the postings the answer named (see chat/refs.js), and which
 // CLI answered - the same shape the chat route returns to the browser, saved
 // as is. A turn saved before refs existed has none, which reads as no chips.
-// An answer from a web search also carries `web: true` and its `sources`;
-// one whose search failed carries `webError` beside the answer that stood
-// (see apps/server/src/chat/run.js).
+// A turn whose question also went to the web carries `web`: { answer,
+// sources, provider }, shown after the answer from JobDekho's own data; one
+// whose search failed carries `webError` instead (see apps/server/src/chat/
+// run.js). Turns saved before that have `web: true`, the web's answer in
+// `answer` and `sources` beside it, which the panel still reads.
 export const MAX_TURNS = 20
 
 export async function getChatHistory(store, userId) {

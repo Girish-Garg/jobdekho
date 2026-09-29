@@ -10,6 +10,9 @@ const MAX_REFS = 6
 function knownRows(context) {
   const rows = new Map()
   for (const row of context?.top ?? []) rows.set(row.id, row)
+  // So are the openings of a company the question named, looked up across
+  // the whole corpus (see question-search.js).
+  for (const { postings } of context?.named ?? []) for (const row of postings) if (!rows.has(row.id)) rows.set(row.id, row)
   // The posting the chat is scoped to is in the prompt as well, often as
   // "this job", so naming it is as legitimate as naming a row of the feed.
   const open = context?.open

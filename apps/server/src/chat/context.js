@@ -3,6 +3,7 @@ import { toListOpts } from './filter-opts.js'
 import { compactPosting, trimOpenPosting } from './postings-summary.js'
 import { summarizeProfile } from './profile-summary.js'
 import { summarizeResults } from './results-summary.js'
+import { postingsForNamedCompanies } from './question-search.js'
 
 // How many rows of the matching set the model actually sees - the same
 // "first screenful" a person scans before scrolling, not the whole feed.
@@ -19,7 +20,9 @@ const TOP_N = 25
 //
 // `openPostingId` is the posting the chat is scoped to, which is usually the
 // one open in the pane; its saved AI answers ride along (results-summary.js).
-export async function assembleChatContext(dashboard, userId, { filters, sort, openPostingId } = {}) {
+// `question` is read for the companies it names, whose openings come from
+// the whole corpus rather than the screen (see question-search.js).
+export async function assembleChatContext(dashboard, userId, { filters, sort, openPostingId, question = '', now } = {}) {
   const knownSort = SORTS.includes(sort) ? sort : 'match'
   const profile = await dashboard.getProfile(userId)
   const matching = await dashboard.listPostingsForUser(userId, toListOpts(filters, knownSort, profile))
@@ -32,5 +35,6 @@ export async function assembleChatContext(dashboard, userId, { filters, sort, op
     open: trimOpenPosting(open),
     openResults: summarizeResults(saved),
     profile: summarizeProfile(profile),
+    named: await postingsForNamedCompanies(dashboard, userId, question, profile, now),
   }
 }

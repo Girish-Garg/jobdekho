@@ -3,14 +3,57 @@ import { assembleChatContext } from '@jobdekho/server/chat/context.js'
 
 const row = (n) => ({ id: `p${n}`, title: `Job ${n}`, company: 'Acme', location: 'Pune', level: 'mid', fit: 50 + n, grade: 'B' })
 
-function fakeDashboard({ postings = [], profile = null, open = null, saved = [] } = {}) {
+function fakeDashboard({ postings = [], profile = null, open = null, saved = [], companies = [] } = {}) {
   return {
+    listCompanies: vi.fn().mockResolvedValue(companies),
     getProfile: vi.fn().mockResolvedValue(profile),
     listPostingsForUser: vi.fn().mockResolvedValue(postings),
     getPosting: vi.fn().mockResolvedValue(open),
     listAiResults: vi.fn().mockResolvedValue(saved),
   }
 }
+
+// Razorpay is scraped under its legal name; a row from another company
+// whose title mentions it must not be counted as one of its openings.
+const RAZORPAY = 'Razorpay Software Private Limited'
+const rzp = (n) => ({ id: `r${n}`, title: `Backend Engineer ${n}`, company: RAZORPAY, location: 'Bengaluru', level: 'mid', fit: 70 - n, grade: 'A' })
+const MENTION = { id: 'x1', title: 'Payments engineer (ex-Razorpay welcome)', company: 'Acme', location: 'Pune', level: 'mid', fit: 60, grade: 'B' }
+
+describe('assembleChatContext: companies the question names', () => {
+  it('looks their openings up across the whole corpus, whatever the feed shows', async () => {
+    const dashboard = fakeDashboard({ companies: [RAZORPAY, 'Acme'], profile: { skills: ['node'] } })
+    dashboard.listPostingsForUser.mockImplementation(async (_u, opts) => (opts.q === 'razorpay' ? [...Array.from({ length: 18 }, (_, i) => rzp(i)), MENTION] : [row(1)]))
+    const context = await assembleChatContext(dashboard, 'u1', { filters: { q: 'react' }, sort: 'newest', question: "Is Razorpay's team hiring backend engineers?" })
+    expect(dashboard.listPostingsForUser).toHaveBeenCalledWith('u1', expect.objectContaining({ q: 'razorpay', sort: 'match', includeStale: true, limit: 1000 }))
+    expect(context.named).toHaveLength(1)
+    expect(context.named[0].company).toBe(RAZORPAY)
+    expect(context.named[0].openCount).toBe(18)
+    expect(context.named[0].notSeenRecently).toBe(0)
+    expect(context.named[0].postings).toHaveLength(15)
+    expect(context.named[0].postings[0]).toEqual({ id: 'r0', title: 'Backend Engineer 0', company: RAZORPAY, location: 'Bengaluru', level: 'mid', workMode: null, pay: null, fit: 70, grade: 'A' })
+    expect(context.named[0].postings.map((p) => p.id)).not.toContain('x1')
+  })
+
+  // The feed hides a posting unlisted for three weeks; asking without those
+  // turned "ten postings, last seen in August" into "none", which is false.
+  it('keeps stale postings, after the fresh ones, marked with the day they were last seen', async () => {
+    const now = Date.parse('2026-09-30T00:00:00.000Z')
+    const dashboard = fakeDashboard({ companies: ['Razorpaysoftwareprivatelimited'] })
+    dashboard.listPostingsForUser.mockImplementation(async (_u, opts) => (opts.q === 'razorpay'
+      ? [{ ...rzp(1), company: 'Razorpaysoftwareprivatelimited', lastSeenAt: '2026-08-24T20:14:48.079Z' }, { ...rzp(2), company: 'Razorpaysoftwareprivatelimited', lastSeenAt: '2026-09-28T00:00:00.000Z' }]
+      : []))
+    const { named } = await assembleChatContext(dashboard, 'u1', { filters: {}, sort: 'match', question: 'Is Razorpay hiring?', now })
+    expect(named[0]).toMatchObject({ company: 'Razorpaysoftwareprivatelimited', openCount: 1, notSeenRecently: 1 })
+    expect(named[0].postings.map((p) => [p.id, p.notSeenSince])).toEqual([['r2', undefined], ['r1', '2026-08-24']])
+  })
+
+  it('names nothing, and asks the store for nothing more, when the question names no company', async () => {
+    const dashboard = fakeDashboard({ companies: [RAZORPAY, 'Acme'] })
+    const context = await assembleChatContext(dashboard, 'u1', { filters: {}, sort: 'match', question: 'Which of these fit me best?' })
+    expect(context.named).toEqual([])
+    expect(dashboard.listPostingsForUser).toHaveBeenCalledTimes(1)
+  })
+})
 
 describe('assembleChatContext', () => {
   it('counts every matching posting and lists only the top 25, compact', async () => {

@@ -34,7 +34,7 @@ export async function chatRoutes(app) {
     const message = String(request.body?.message || '').trim().slice(0, MAX_MESSAGE)
     if (!message) return reply.code(400).send({ error: 'Type a question first.' })
     const { filters, sort, openPostingId } = request.body ?? {}
-    const context = await assembleChatContext(app.dashboard, userId, { filters, sort, openPostingId })
+    const context = await assembleChatContext(app.dashboard, userId, { filters, sort, openPostingId, question: message })
     const history = await getChatHistory(store, userId)
     return answer(request, reply, async (emit) => {
       const turn = await runChatTurn({ message, context, history, select: app.ai.select, emit, ...cli })

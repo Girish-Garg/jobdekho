@@ -16,6 +16,7 @@ function fakeDashboard({ postings = [ROW], profile = null, open = null } = {}) {
     getPosting: vi.fn().mockResolvedValue(open),
     setPostingStatus: vi.fn(),
     listSources: vi.fn().mockResolvedValue([]),
+    listCompanies: vi.fn().mockResolvedValue(['Acme']),
     getProfile: vi.fn().mockResolvedValue(profile),
     getResumeText: vi.fn().mockResolvedValue(null),
     upsertProfile: vi.fn(),
