@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import PostingDetail from './PostingDetail.jsx';
 import { onAskAboutPosting } from '../lib/askAiSignal.js';
 
@@ -29,28 +29,36 @@ beforeEach(() => {
 afterEach(() => stop());
 
 describe('PostingDetail and AI', () => {
-  it('has no AI section of its own: no run buttons, no results, no refine box', () => {
+  // The mocks above fail the test if anything here reaches the server for AI.
+  it('runs no AI of its own: no results, no refine box, only hand-offs to the chat', () => {
     setup();
-    expect(screen.queryByText('AI')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Is this job real?' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /cover letter/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /tailor/i })).not.toBeInTheDocument();
     expect(screen.queryByPlaceholderText('What should change?')).not.toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'AI' })).toBeInTheDocument();
   });
 
-  it('offers one control that opens the chat on this job, without starting anything', () => {
+  it('opens the chat on this job without starting anything', () => {
     setup();
-    const buttons = screen.getAllByRole('button', { name: /AI|real/ });
-    expect(buttons).toHaveLength(1);
     fireEvent.click(screen.getByRole('button', { name: 'Ask AI about this job' }));
     expect(asked).toHaveBeenCalledWith(expect.objectContaining({ posting: expect.objectContaining({ id: 'p1' }), action: null }));
+  });
+
+  // The likeliest next steps are one click, but still run in the chat.
+  it('hands each action to the chat by name', () => {
+    setup();
+    fireEvent.click(screen.getByRole('button', { name: 'Cover letter' }));
+    expect(asked).toHaveBeenLastCalledWith(expect.objectContaining({ action: 'cover-letter' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Tailor resume' }));
+    expect(asked).toHaveBeenLastCalledWith(expect.objectContaining({ action: 'resume-tailor' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Is it real?' }));
+    expect(asked).toHaveBeenLastCalledWith(expect.objectContaining({ action: 'fake-check' }));
   });
 
   it('asks whether a doubtful job is real instead, beside the evidence, and starts that check', () => {
     setup({ legitimacy: 'suspicious', ghostSignals: SIGNALS });
     const button = screen.getByRole('button', { name: 'Check whether this job is real' });
-    expect(screen.getByText('Caution').parentElement).toContainElement(button);
+    expect(screen.getByRole('region', { name: 'Caution' })).toContainElement(button);
     expect(screen.queryByRole('button', { name: 'Ask AI about this job' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Is it real?' })).not.toBeInTheDocument();
     fireEvent.click(button);
     expect(asked).toHaveBeenCalledWith(expect.objectContaining({ action: 'fake-check' }));
   });
@@ -63,7 +71,7 @@ describe('PostingDetail and AI', () => {
   it('keeps a single caution signal where it was, with the ordinary control further down', () => {
     setup({ legitimacy: 'medium', ghostSignals: ['no pay stated'] });
     const button = screen.getByRole('button', { name: 'Ask AI about this job' });
-    expect(screen.getByText('Caution').parentElement).not.toContainElement(button);
+    expect(screen.getByRole('region', { name: 'Caution' })).not.toContainElement(button);
   });
 
   it('still offers the check for a doubtful job that came with no listed signals', () => {
@@ -73,7 +81,18 @@ describe('PostingDetail and AI', () => {
 
   it('still shows the facts and the posting link', () => {
     setup();
-    expect(screen.getByText('internshala')).toBeInTheDocument();
+    expect(screen.getByText('Internshala')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Open posting' })).toHaveAttribute('href', 'https://example.com/p1');
+  });
+
+  it('names the job in the header, with a monogram and its level as a chip', () => {
+    setup();
+    expect(screen.getByRole('heading', { name: 'Frontend Intern' })).toBeInTheDocument();
+    expect(within(screen.getByRole('list', { name: 'About this job' })).getByText('Internship')).toBeInTheDocument();
+  });
+
+  it('says so when a job states no pay, since that is a fact about it', () => {
+    setup();
+    expect(screen.getByText('Not stated')).toBeInTheDocument();
   });
 });

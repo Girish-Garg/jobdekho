@@ -8,7 +8,7 @@ import GhostSignals from './GhostSignals.jsx';
 describe('GhostSignals', () => {
   it('lists each signal under the caution label', () => {
     render(<GhostSignals signals={['no pay stated', 'posted 4 months ago', 'listed on 6 job boards']} />);
-    expect(screen.getByText('Caution')).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Caution' })).toBeInTheDocument();
     expect(screen.getAllByRole('listitem')).toHaveLength(3);
     expect(screen.getByText('no pay stated')).toBeInTheDocument();
     expect(screen.getByText('listed on 6 job boards')).toBeInTheDocument();
@@ -26,7 +26,7 @@ describe('GhostSignals', () => {
 
   it('seats whatever it is given under the list, inside the same block', () => {
     render(<GhostSignals signals={['no pay stated']}><button type="button">Is this job real?</button></GhostSignals>);
-    expect(screen.getByText('Caution').parentElement).toContainElement(screen.getByRole('button', { name: 'Is this job real?' }));
+    expect(screen.getByRole('region', { name: 'Caution' })).toContainElement(screen.getByRole('button', { name: 'Is this job real?' }));
   });
 
   it('renders nothing even with children when there are no signals to seat them under', () => {

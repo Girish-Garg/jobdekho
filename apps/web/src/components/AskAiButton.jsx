@@ -1,36 +1,52 @@
 import { askAboutPosting } from '../lib/askAiSignal.js';
 import { isDoubtful } from '../lib/chatActionKinds.js';
-import { ArrowRightIcon } from './Icon.jsx';
+import { ArrowRightIcon, SparkleIcon, ShieldCheckIcon, PenIcon, DocumentIcon } from './Icon.jsx';
 
-// The job pane's one way into AI: it hands this posting to the chat panel,
-// where every AI action and its answer lives now, instead of running any of
-// them here. On a posting the feed already doubts, the question on the
-// person's mind is "is this real?", so that check is started on arrival.
-// `onAsked` is for the dialog on a narrow screen, which has to get out of the
-// way for the chat to be seen at all.
+// The pane's way into AI: it hands this posting to the chat panel, where
+// every AI action and its answer lives, instead of running any of them here.
+// The three actions are offered by name as well, so the likeliest next step
+// is one click rather than "open the chat, then find the button". On a
+// posting the feed already doubts, the question on the person's mind is "is
+// this real?", so that is the main control there. `onAsked` is for the dialog
+// on a narrow screen, which has to get out of the way for the chat to show.
+const QUICK = [
+  ['fake-check', 'Is it real?', ShieldCheckIcon],
+  ['cover-letter', 'Cover letter', PenIcon],
+  ['resume-tailor', 'Tailor resume', DocumentIcon],
+];
+
+const CHIP = 'inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-panel px-3 py-1.5 text-xs font-medium text-ink transition-colors duration-fast ease hover:border-primary hover:text-primary';
+
 export default function AskAiButton({ posting, onAsked }) {
   const doubtful = isDoubtful(posting);
-
-  function ask() {
-    askAboutPosting(posting, doubtful ? 'fake-check' : null);
+  const title = doubtful ? 'Check whether this job is real' : 'Ask AI about this job';
+  const ask = (action) => {
+    askAboutPosting(posting, action);
     onAsked?.();
-  }
+  };
 
   return (
-    <div className="flex flex-col gap-1.5">
-      <button
-        type="button"
-        onClick={ask}
-        className="flex w-full items-center justify-between gap-3 rounded-md border border-line bg-paper px-3 py-2.5 text-left text-base font-medium text-ink transition-colors duration-fast ease hover:border-edge"
-      >
-        {doubtful ? 'Check whether this job is real' : 'Ask AI about this job'}
-        <ArrowRightIcon />
+    <section aria-label="AI" className="rounded-xl border border-primary/25 bg-primary/5 p-4">
+      <button type="button" aria-label={title} onClick={() => ask(doubtful ? 'fake-check' : null)} className="group flex w-full items-center gap-3 text-left">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary text-on-primary">
+          <SparkleIcon size={16} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-semibold text-ink">{title}</span>
+          <span className="block text-xs leading-relaxed text-muted">
+            {doubtful ? 'Looks the company and role up on the web. Only the posting is sent.' : 'Opens the chat on this job, on the AI CLI on this computer.'}
+          </span>
+        </span>
+        <ArrowRightIcon className="text-muted transition-transform duration-fast ease group-hover:translate-x-0.5 group-hover:text-primary" />
       </button>
-      <p className="text-xs leading-relaxed text-muted">
-        {doubtful
-          ? 'Opens the chat and, unless it was checked before, has the AI CLI on this computer look the company and role up on the web. Only the posting is sent.'
-          : 'Opens the chat on this job: check it is real, write a cover letter, tailor your resume, or just ask.'}
-      </p>
-    </div>
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        {QUICK.filter(([kind]) => !(doubtful && kind === 'fake-check')).map(([kind, label, Icon]) => (
+          <button key={kind} type="button" onClick={() => ask(kind)} className={CHIP}>
+            <Icon size={13} />
+            {label}
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }

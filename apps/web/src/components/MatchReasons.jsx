@@ -1,51 +1,41 @@
 import FitBreakdown from './FitBreakdown.jsx';
-
-const GRADE_RANK = { A: 4, B: 3, C: 2, D: 1 };
-
-// Four ticks, filled by rank rather than by hue, so the grade still reads in
-// grayscale or to a dichromat exactly as it does at a glance - the same
-// reasoning behind the seniority ramp's lightness steps, applied here
-// because a fit grade is not a colour question either. The letter itself is
-// still the thing being asserted; the ticks are corroboration, not the only
-// copy of the fact.
-function GradeBadge({ grade }) {
-  const rank = GRADE_RANK[grade] || 0;
-  return (
-    <span className="flex items-center gap-1.5">
-      <span aria-hidden="true" className="flex items-end gap-0.5">
-        {[1, 2, 3, 4].map((tick) => (
-          <span
-            key={tick}
-            className={`w-1 rounded-sm ${tick <= rank ? 'bg-ink' : 'bg-line'}`}
-            style={{ height: `${3 + tick * 2}px` }}
-          />
-        ))}
-      </span>
-      <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink">Grade {grade}</span>
-    </span>
-  );
-}
+import { gradeTone } from '../lib/gradeTone.js';
 
 // The phrases are the server's, verbatim: it scores the full description, and
 // a reason recomputed here against the snippet could disagree with the very
-// ranking it is explaining. Reasons are what make the score worth trusting,
-// and some of them ("well outside your experience") are warnings, which is
-// why the label says fit rather than recommended. The grade and the breakdown
-// ride the same block: they are one judgement at three zoom levels, and a
-// second heading would read as a second score.
-export default function MatchReasons({ reasons, grade, breakdown }) {
+// ranking it is explaining. Some of them ("well outside your experience") are
+// warnings, which is why the heading says fit rather than recommended, and
+// why each reason gets a plain dot rather than a tick. Their text stays
+// verbatim; only the first letter is raised, by CSS. The score, the grade
+// and the breakdown are one judgement at three zoom levels, so they share
+// one card.
+//
+// The number is printed without "out of 100": real scores rarely pass the
+// 70s, and the grade is what answers "is 58 good?".
+export default function MatchReasons({ fit, reasons, grade, breakdown }) {
   if (!reasons?.length && !grade && !breakdown?.length) return null;
+  const tone = gradeTone(grade);
 
   return (
-    <div className="rounded-md bg-paper px-3 py-2">
-      <div className="flex items-baseline justify-between gap-2">
-        <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">Fit</p>
-        {/* The letter answers "is 58 good?", which the bare number cannot: its
-            scale tops out in the low 60s, not at 100. */}
-        {grade && <GradeBadge grade={grade} />}
+    <section aria-label="Fit" className="rounded-xl border border-line bg-paper/60 p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold text-muted">How you fit</p>
+          {Number.isInteger(fit) && <p className="tnum mt-1 font-display text-3xl font-extrabold leading-none text-ink">{fit}</p>}
+        </div>
+        {grade && <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${tone.soft} ${tone.text}`}>Grade {grade}</span>}
       </div>
-      {reasons?.length > 0 && <p className="mt-0.5 text-sm text-ink/80">{reasons.join(' / ')}</p>}
-      <FitBreakdown breakdown={breakdown} />
-    </div>
+      {reasons?.length > 0 && (
+        <ul className="mt-3 flex flex-col gap-1 text-sm text-ink/85">
+          {reasons.map((reason) => (
+            <li key={reason} className="flex gap-2">
+              <span aria-hidden="true" className={`mt-2 h-1.5 w-1.5 shrink-0 rounded-full ${tone.fill}`} />
+              <span className="block first-letter:uppercase">{reason}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <FitBreakdown breakdown={breakdown} fill={tone.fill} />
+    </section>
   );
 }

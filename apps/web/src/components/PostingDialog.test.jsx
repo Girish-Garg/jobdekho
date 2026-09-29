@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import PostingDialog from './PostingDialog.jsx';
 import { onAskAboutPosting } from '../lib/askAiSignal.js';
 
@@ -66,7 +66,7 @@ describe('PostingDialog detail', () => {
     expect(screen.getByText('Build the board.')).toBeInTheDocument();
     expect(screen.getByText('6 Months')).toBeInTheDocument();
     expect(screen.getByText("Bachelor's (required)")).toBeInTheDocument();
-    expect(screen.getByText('internshala')).toBeInTheDocument();
+    expect(screen.getByText('Internshala')).toBeInTheDocument();
     expect(screen.getByText('Rs 20,000')).toBeInTheDocument();
     expect(screen.getByText('Remote')).toBeInTheDocument();
   });
@@ -96,15 +96,14 @@ describe('PostingDialog detail', () => {
 
   // The card only calls out remote and hybrid, so onsite has to be readable
   // somewhere.
-  it('spells out the work mode, onsite included', () => {
+  it('spells out the work mode as a chip, onsite included', () => {
     setup({ location: 'Bengaluru', workMode: 'onsite' });
-    expect(screen.getByText('Work mode')).toBeInTheDocument();
-    expect(screen.getByText('Onsite')).toBeInTheDocument();
+    expect(within(screen.getByRole('list', { name: 'About this job' })).getByText('Onsite')).toBeInTheDocument();
   });
 
-  it('drops the work mode row when the posting was never classified', () => {
-    setup({ workMode: undefined });
-    expect(screen.queryByText('Work mode')).not.toBeInTheDocument();
+  it('drops the work mode chip when the posting was never classified', () => {
+    setup({ workMode: undefined, level: undefined });
+    expect(screen.queryByText('Onsite')).not.toBeInTheDocument();
   });
 });
 

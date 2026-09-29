@@ -1,40 +1,37 @@
-import { levelLabel, degreeLabel, workModeLabel } from '../lib/taxonomy.js';
-import { levelTone } from '../lib/levelColor.js';
+import { degreeLabel } from '../lib/taxonomy.js';
 import { relativeDay } from '../lib/time.js';
+import { sourceName } from '../lib/sourceName.js';
+import { MapPinIcon, WalletIcon, BriefcaseIcon, GraduationCapIcon, CalendarIcon, ClockIcon, BuildingIcon } from './Icon.jsx';
 
-// Level, location and pay lead because those three plus the header are "what
-// the job is" - the rest is context a person checks once they are already
-// interested. "Also listed in" and "last seen" are cut outright rather than
-// just filtered when empty: the card already carries the location count, and
-// a last-seen date next to a posted date said the same thing twice. A field
-// the scraper never filled still drops out rather than printing "unknown".
-function detailRows(posting) {
+// Level and work mode moved up into the header chips; what is left is the
+// context a person checks once interested. Pay is always shown, and says so
+// when the board did not state it, since that absence is itself a fact about
+// the job. Any other field the scraper never filled drops out rather than
+// printing "unknown".
+function facts(posting) {
   return [
-    ['Level', levelLabel(posting.level), levelTone(posting.level).text],
-    ['Location', posting.location],
-    ['Stipend', posting.stipend],
-    ['Work mode', workModeLabel(posting.workMode)],
-    ['Degree', degreeLabel(posting.degreeMin, posting.degreeRequired)],
-    ['Duration', posting.duration],
-    ['Experience', posting.experience],
-    ['Posted', relativeDay(posting.postedAt || posting.firstSeenAt)],
-    ['Source', posting.source],
+    ['Location', posting.location, MapPinIcon, { wide: true }],
+    ['Pay', posting.stipend || 'Not stated', WalletIcon, { quiet: !posting.stipend }],
+    ['Experience', posting.experience, BriefcaseIcon],
+    ['Degree', degreeLabel(posting.degreeMin, posting.degreeRequired), GraduationCapIcon],
+    ['Duration', posting.duration, CalendarIcon],
+    ['Posted', relativeDay(posting.postedAt || posting.firstSeenAt), ClockIcon],
+    ['Listed on', sourceName(posting.source), BuildingIcon],
   ].filter(([, value]) => value);
 }
 
-// A scannable strip, not a form: a quiet label runs straight into a strong
-// value and the pair wraps as one unit, so a narrow column reflows this into
-// several short lines instead of the two-column grid it used to be. Labels
-// stay sentence case rather than the app's mono-caps treatment - that
-// treatment marks a handful of section landmarks (Fit, Caution, AI), and
-// nine of them in a row would just be noise wearing the same costume.
+// Tiles in two columns, location across both since a city, state and
+// country rarely fit half the pane.
 export default function PostingFacts({ posting }) {
   return (
-    <dl className="flex flex-wrap gap-x-5 gap-y-2 border-y border-line py-3">
-      {detailRows(posting).map(([label, value, tone]) => (
-        <div key={label} className="flex min-w-0 items-baseline gap-1.5">
-          <dt className="shrink-0 text-xs text-muted">{label}</dt>
-          <dd className={`truncate text-sm font-semibold ${tone || 'text-ink'}`}>{value}</dd>
+    <dl className="grid grid-cols-2 gap-2">
+      {facts(posting).map(([label, value, Icon, { wide, quiet } = {}]) => (
+        <div key={label} className={`flex min-w-0 items-start gap-2.5 rounded-lg border border-line bg-paper/60 px-3 py-2.5 ${wide ? 'col-span-2' : ''}`}>
+          <Icon size={15} className="mt-0.5 text-muted" />
+          <div className="min-w-0">
+            <dt className="text-[11px] leading-tight text-muted">{label}</dt>
+            <dd title={value} className={`truncate text-sm font-semibold ${quiet ? 'text-muted' : 'text-ink'}`}>{value}</dd>
+          </div>
         </div>
       ))}
     </dl>

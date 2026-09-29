@@ -10,7 +10,7 @@ import { foldBlocks, totalSize, FOLD_OVER } from '../lib/descriptionFold.js';
 // The snippet is exactly this long when the store cut it short.
 const SNIPPET_MAX = 280;
 
-const CAPTION = 'font-mono text-xs uppercase tracking-[0.18em] text-muted';
+const CAPTION = 'text-xs font-semibold text-muted';
 const NOTE = 'mt-3 text-sm text-muted';
 const TOGGLE = 'mt-3 inline-flex items-center gap-1.5 text-sm text-ink underline decoration-edge underline-offset-4 transition-colors duration-fast ease-ease hover:decoration-ink';
 
@@ -35,7 +35,7 @@ export default function PostingDescription({ posting }) {
 
   return (
     <section aria-labelledby="posting-description-title" aria-busy={status === 'loading'}>
-      <h3 id="posting-description-title" className={`${CAPTION} mb-2`}>Description</h3>
+      <h3 id="posting-description-title" className={`${CAPTION} mb-2`}>About the job</h3>
       <DescriptionBlocks blocks={shown} />
       {folds && (
         <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} className={TOGGLE}>
