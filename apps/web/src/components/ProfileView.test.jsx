@@ -61,7 +61,7 @@ describe('ProfileView with no profile', () => {
     pickFile();
     expect(await screen.findByText('react')).toBeInTheDocument();
     expect(uploadResume).toHaveBeenCalled();
-    expect(screen.getByText('On file: cv.pdf')).toBeInTheDocument();
+    expect(screen.getByText('cv.pdf')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Delete profile' })).toBeInTheDocument();
   });
 
@@ -94,7 +94,7 @@ describe('ProfileView with a saved profile', () => {
     expect(await screen.findByText('react')).toBeInTheDocument();
     expect(screen.getByLabelText('Years of experience')).toHaveValue(1);
     expect(screen.getByLabelText('Highest degree')).toHaveValue('bachelors');
-    expect(screen.getByText('On file: cv.pdf')).toBeInTheDocument();
+    expect(screen.getByText('cv.pdf')).toBeInTheDocument();
   });
 
   it('saves the whole career record, deriving skills and never sending resumeName', async () => {

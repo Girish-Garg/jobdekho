@@ -6,9 +6,11 @@ import { progressText } from '../lib/aiProgress.js';
 import InstallHint from './InstallHint.jsx';
 import OverwriteConfirm from './OverwriteConfirm.jsx';
 import AiError from './AiError.jsx';
+import { SparkleIcon } from './Icon.jsx';
 
-// Text-weight, like the Replace control it sits under in the resume card.
-const SECONDARY = 'rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1.5 text-sm font-semibold text-primary transition-colors duration-fast ease-ease hover:bg-primary/15 disabled:opacity-60';
+// The card's one call to action, the width of the card: reading the resume
+// is what the file is on file for.
+const SECONDARY = 'inline-flex w-full items-center justify-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary transition-colors duration-fast ease-ease hover:bg-primary/15 disabled:opacity-60';
 
 const INTRO = 'Filling in from the resume asks an AI CLI installed on this computer, on your own subscription.';
 
@@ -65,22 +67,23 @@ export default function FillFromResume({ profile, onFilled }) {
   if (step === 'confirm') return <OverwriteConfirm label={ready.label} onConfirm={run} onCancel={() => setStep('idle')} />;
 
   return (
-    <div className="flex flex-col gap-1">
-      <div className="flex flex-wrap items-center gap-3">
+    <div className="flex flex-col gap-2 border-t border-line pt-4">
+      <div className="flex flex-col gap-2">
         <button
           type="button"
           disabled={step === 'busy'}
           onClick={() => (hasFields(profile) ? setStep('confirm') : run())}
           className={SECONDARY}
         >
+          <SparkleIcon size={14} />
           {step === 'busy' ? 'Filling in...' : 'Fill in from resume'}
         </button>
-        <span aria-live="polite" className="text-sm text-muted">
+        <span aria-live="polite" className="text-xs text-muted empty:hidden">
           {step === 'busy' ? progress : step === 'done' ? 'Filled in. Check the fields, then save.' : ''}
         </span>
       </div>
       <AiError error={error} checking={checking} onRecheck={() => (setError(null), refresh())} />
-      <p className="text-xs leading-relaxed text-muted">
+      <p className="text-center text-xs leading-relaxed text-muted">
         Asks {ready.label} on this computer to read the resume on file. Takes twenty seconds or so.
       </p>
     </div>

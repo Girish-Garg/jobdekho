@@ -1,14 +1,13 @@
 import { useId, useRef, useState } from 'react';
 import { uploadResume } from '../api.js';
-import { DocumentIcon } from './Icon.jsx';
-
-const CONTROL = 'cursor-pointer text-sm text-ink underline decoration-edge underline-offset-4 transition-colors duration-fast ease-ease hover:decoration-ink';
+import { DocumentIcon, UploadIcon } from './Icon.jsx';
 
 // Upload is how a profile usually starts, but it only proposes values: the
-// record beside it stays the place where wrong extractions get fixed. A
-// quiet card rather than a dropzone: the whole card still takes a dropped
-// file, it just does not look like a hole in the page. `children` is the
-// fill-in control, which belongs with the file it reads.
+// record beside it stays the place where wrong extractions get fixed. With a
+// file on file the card shows it as a file (its name, its kind, a replace
+// control); without one, the card is a drop zone that says so. The whole
+// card takes a dropped file either way. `children` is the fill-in control,
+// which belongs with the file it reads.
 export default function ResumeUpload({ resumeName, onUploaded, children }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -39,33 +38,37 @@ export default function ResumeUpload({ resumeName, onUploaded, children }) {
         event.preventDefault();
         send(event.dataTransfer?.files?.[0]);
       }}
-      className="flex flex-col gap-3 rounded-2xl border border-line bg-panel p-4 transition-colors duration-fast ease-ease focus-within:border-edge"
+      className="flex flex-col gap-4 rounded-2xl border border-line bg-panel p-4 transition-colors duration-fast ease-ease focus-within:border-edge"
     >
-      <div className="flex flex-col gap-1">
-        <label htmlFor={inputId} className="flex items-center gap-2 text-sm font-semibold text-ink">
-          <DocumentIcon size={15} className="text-primary" />
-          Resume (PDF)
+      <label htmlFor={inputId} className="text-xs font-semibold text-muted">Resume (PDF)</label>
+      <input id={inputId} ref={inputRef} type="file" accept="application/pdf" disabled={busy} onChange={(event) => send(event.target.files?.[0])} className="sr-only" />
+
+      {resumeName || busy ? (
+        <div className="flex items-center gap-3">
+          <span aria-hidden="true" className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/15 text-primary">
+            <DocumentIcon size={18} />
+          </span>
+          <span aria-live="polite" className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-semibold text-ink">{busy ? 'Reading your resume...' : resumeName}</span>
+            <span className="block text-xs text-muted">{busy ? 'Pulling the text out of the PDF' : 'PDF on file'}</span>
+          </span>
+          {!busy && (
+            <label htmlFor={inputId} title="Replace the resume" className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs font-medium text-ink transition-colors duration-fast ease hover:border-edge">
+              <UploadIcon size={12} />
+              Replace
+            </label>
+          )}
+        </div>
+      ) : (
+        <label htmlFor={inputId} className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed border-edge bg-paper/60 px-4 py-6 text-center transition-colors duration-fast ease hover:border-primary/50 hover:bg-primary/5">
+          <span aria-hidden="true" className="grid h-10 w-10 place-items-center rounded-full bg-primary/15 text-primary">
+            <UploadIcon size={16} />
+          </span>
+          <span className="text-sm font-medium text-ink">Drop a PDF here or choose one</span>
+          <span className="text-xs text-muted">Text PDFs only, 5MB max</span>
         </label>
-        <input
-          id={inputId}
-          ref={inputRef}
-          type="file"
-          accept="application/pdf"
-          disabled={busy}
-          onChange={(event) => send(event.target.files?.[0])}
-          className="sr-only"
-        />
-        <span aria-live="polite" className="text-sm text-muted">
-          {busy ? 'Reading your resume...' : resumeName ? `On file: ${resumeName}` : ''}
-        </span>
-        {!busy && (resumeName ? (
-          <label htmlFor={inputId} className={`${CONTROL} self-start`}>Replace</label>
-        ) : (
-          <label htmlFor={inputId} className="cursor-pointer text-sm text-muted">
-            Drop a PDF here or <span className={CONTROL}>choose one</span>. 5MB max.
-          </label>
-        ))}
-      </div>
+      )}
+
       {error && <p role="alert" className="text-sm text-ember">{error}</p>}
       {children}
     </div>

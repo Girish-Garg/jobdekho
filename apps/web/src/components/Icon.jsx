@@ -73,3 +73,7 @@ export function PenIcon(props) {
 export function DocumentIcon(props) {
   return <Svg {...props}><path d="M4 2.5h5l3 3v8H4zM9 2.5v3h3M6 8.5h4M6 11h4" /></Svg>;
 }
+
+export function UploadIcon(props) {
+  return <Svg {...props}><path d="M8 10.5V2.5M4.8 5.5L8 2.5l3.2 3M2.5 10.5v2a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-2" /></Svg>;
+}

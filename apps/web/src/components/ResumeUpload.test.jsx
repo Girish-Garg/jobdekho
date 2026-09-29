@@ -56,7 +56,7 @@ describe('ResumeUpload', () => {
 
   it('names the resume already on file', () => {
     render(<ResumeUpload resumeName="girish.pdf" onUploaded={() => {}} />);
-    expect(screen.getByText('On file: girish.pdf')).toBeInTheDocument();
+    expect(screen.getByText('girish.pdf')).toBeInTheDocument();
   });
 
   it('offers Replace as a second label for the same input once a file is on file', () => {
@@ -72,7 +72,7 @@ describe('ResumeUpload', () => {
         <button type="button">Fill in from resume</button>
       </ResumeUpload>,
     );
-    const card = screen.getByText('On file: girish.pdf').closest('.bg-panel');
+    const card = screen.getByText('girish.pdf').closest('.bg-panel');
     expect(card).not.toHaveClass('border-dashed');
     expect(card).toContainElement(screen.getByRole('button', { name: 'Fill in from resume' }));
   });
