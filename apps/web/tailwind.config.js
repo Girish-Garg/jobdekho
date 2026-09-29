@@ -22,6 +22,17 @@ export default {
         edge: withAlpha('edge'),
         ember: withAlpha('ember'),
         select: withAlpha('select'),
+        primary: withAlpha('primary'),
+        'on-primary': withAlpha('on-primary'),
+        accent: withAlpha('accent'),
+        'on-accent': withAlpha('on-accent'),
+        applied: withAlpha('applied'),
+        grade: {
+          a: withAlpha('grade-a'),
+          b: withAlpha('grade-b'),
+          c: withAlpha('grade-c'),
+          d: withAlpha('grade-d'),
+        },
         level: {
           internship: withAlpha('level-internship'),
           entry: withAlpha('level-entry'),

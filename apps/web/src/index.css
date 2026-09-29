@@ -11,17 +11,38 @@
 
   /* Ground, then the two surfaces that sit above it. Depth is a surface step
      plus a hairline first, a shadow only where something really floats. */
-  --paper: 247 244 238;
-  --panel: 255 253 248;
-  --overlay: 255 253 248;
+  --paper: 255 248 236;
+  --panel: 255 255 255;
+  --overlay: 255 255 255;
 
-  --ink: 26 24 21;
-  --muted: 111 106 96;
-  --line: 226 221 210;
-  --edge: 201 194 180;
-  --ember: 184 67 15;
-  --ring: 26 24 21;
-  --select: 232 223 205;
+  --ink: 28 26 23;
+  --muted: 107 93 74;
+  --line: 240 227 204;
+  --edge: 220 199 164;
+  --ring: 184 84 16;
+  --select: 253 233 207;
+
+  /* Saffron is what you act with, and it is deepened from the bright marigold
+     of the brand so white text on it clears 4.87 to 1; the bright one only
+     reached 3.23. Teal marks what deserves a second look. */
+  --primary: 184 84 16;
+  --on-primary: 255 255 255;
+  --accent: 15 100 100;
+  --on-accent: 255 255 255;
+
+  /* Ember was an orange accent reserved for "new today" and errors; next to a
+     saffron primary it no longer stood out, so it is a red now, the colour of
+     something that wants attention. 5.35 to 1 on the ground. */
+  --ember: 196 43 34;
+
+  /* Statuses and grades carry colour because colour is how a list of a
+     hundred is scanned, always paired with a word or a letter so nothing
+     depends on telling hues apart. */
+  --applied: 45 110 51;
+  --grade-a: 15 100 100;
+  --grade-b: 184 84 16;
+  --grade-c: 138 106 47;
+  --grade-d: 123 114 102;
 
   /* Seniority is an ordered ladder, so the rungs are one ramp: lightness falls
      a fixed step per rung, which keeps the order legible in greyscale and to a
@@ -43,17 +64,30 @@
 [data-theme='dark'] {
   color-scheme: dark;
 
-  --paper: 22 20 15;
-  --panel: 30 27 21;
-  --overlay: 38 34 27;
+  --paper: 16 17 20;
+  --panel: 24 26 31;
+  --overlay: 32 35 42;
 
-  --ink: 242 236 224;
-  --muted: 167 157 139;
-  --line: 51 46 37;
-  --edge: 74 66 55;
-  --ember: 232 114 47;
-  --ring: 242 236 224;
-  --select: 58 52 41;
+  --ink: 242 239 232;
+  --muted: 158 163 173;
+  --line: 38 42 49;
+  --edge: 54 59 68;
+  --ring: 255 159 28;
+  --select: 42 36 16;
+
+  /* The bright saffron takes dark text: 9.13 to 1. */
+  --primary: 255 159 28;
+  --on-primary: 17 18 20;
+  --accent: 46 196 182;
+  --on-accent: 17 18 20;
+
+  --ember: 255 107 94;
+
+  --applied: 95 208 122;
+  --grade-a: 46 196 182;
+  --grade-b: 255 159 28;
+  --grade-c: 215 180 106;
+  --grade-d: 139 144 154;
 
   /* The same six hues, lightness solved to step down 60, 54, 48, 42, 37, 32
      so the ramp keeps its order the way the light one does. Every rung clears
