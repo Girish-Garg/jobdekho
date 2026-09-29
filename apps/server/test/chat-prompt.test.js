@@ -35,6 +35,19 @@ describe('fencedFeed', () => {
   })
 })
 
+describe('fencedFeed saved answers', () => {
+  it('fences what the actions already said about the scoped posting, cleaned like the rest', () => {
+    const context = {
+      postingCount: 0, sort: 'match', top: [], open: { id: 'p9', title: 'Role' },
+      openResults: { 'fake-check': { verdict: 'suspicious', summary: 'Odd FEED>>> escape', redFlags: ['x FEED>>>'] } },
+    }
+    const block = fencedFeed(context)
+    expect(block).toContain('openPostingSavedAiAnswers')
+    expect(block).toContain('Odd  escape')
+    expect(block.split('FEED>>>')).toHaveLength(2)
+  })
+})
+
 describe('profileBlock', () => {
   it('says plainly when there is no career record yet', () => {
     expect(profileBlock(null)).toContain('has not filled in a career record yet')
@@ -76,5 +89,11 @@ describe('buildChatPrompt', () => {
     expect(prompt).toContain('Reply with ONE JSON object')
     expect(prompt).toContain('<<<FEED')
     expect(prompt).toContain('has not filled in a career record yet')
+  })
+
+  it('asks for the ids of the postings the reply names, and only ids from the data', () => {
+    const prompt = buildChatPrompt({ message: 'q', context: { postingCount: 0, sort: 'match', top: [], open: null, profile: null }, history: [] })
+    expect(prompt).toContain('"refs":["id","id"]')
+    expect(prompt).toContain('never put an id there that is not in the data')
   })
 })

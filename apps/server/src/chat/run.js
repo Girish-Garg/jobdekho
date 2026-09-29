@@ -17,7 +17,8 @@ const TIMEOUT_MS = 3 * 60 * 1000
 export async function runChatTurn({ message, context, history, select, emit, ...seams }) {
   const prompt = buildChatPrompt({ message, context, history })
   const { provider, text } = await callWithFallback({ select, policy: 'none', prompt, timeoutMs: TIMEOUT_MS, emit, ...seams })
-  const parsed = parseChatReply(text)
+  const parsed = parseChatReply(text, context)
   if (!parsed) throw new ProviderError('unreadable', provider)
-  return { question: message, answer: parsed.reply, actions: parsed.actions, provider: provider.id, createdAt: toIso(new Date()) }
+  const { reply, actions, refs } = parsed
+  return { question: message, answer: reply, actions, refs, provider: provider.id, createdAt: toIso(new Date()) }
 }

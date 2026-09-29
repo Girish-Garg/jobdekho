@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, act, within } from '@testing-library/react';
 import Shell from './Shell.jsx';
+import { askAboutPosting } from '../lib/askAiSignal.js';
 
 vi.mock('../api.js', () => ({
   getFilters: vi.fn(async () => ({})),
@@ -14,9 +15,12 @@ vi.mock('../api.js', () => ({
   getProviders: vi.fn(async () => []),
   getProviderPreference: vi.fn(async () => ({ provider: 'auto' })),
   putProviderPreference: vi.fn(async () => null),
+  getChatHistory: vi.fn(async () => ({ turns: [] })),
+  getPostingAiResults: vi.fn(async () => []),
+  runPostingAction: vi.fn(() => new Promise(() => {})),
 }));
 
-import { getFilters, getPostings } from '../api.js';
+import { getFilters, getPostings, getProviders, getPostingAiResults, runPostingAction } from '../api.js';
 
 const open = (name) => fireEvent.click(screen.getByRole('button', { name: new RegExp(`^${name}`) }));
 const openMore = () => open('More filters');
@@ -203,3 +207,29 @@ it('keeps the sort and the density toggle in the filter row', async () => {
   expect(panel.contains(screen.getByRole('button', { name: 'Cards' }))).toBe(true);
 });
 
+
+// The job pane's "Ask AI about this job" is what opens the chat, so the
+// person never has to find the chat first.
+describe('Shell and the chat', () => {
+  const JOB = { id: 'p9', title: 'Staff Engineer', company: 'Initech', legitimacy: 'suspicious' };
+
+  it('opens the chat on the job the pane asked about, with the asked action started', async () => {
+    getProviders.mockResolvedValue([{ id: 'claude', label: 'Claude Code', policies: ['none', 'web'], present: true, runs: true }]);
+    await mount();
+    expect(screen.queryByRole('complementary', { name: 'Ask AI' })).not.toBeInTheDocument();
+    await act(async () => askAboutPosting(JOB, 'fake-check'));
+    expect(screen.getByRole('complementary', { name: 'Ask AI' })).toBeInTheDocument();
+    expect(screen.getByText('Staff Engineer')).toBeInTheDocument();
+    await waitFor(() => expect(getPostingAiResults).toHaveBeenCalledWith('p9'));
+    await waitFor(() => expect(runPostingAction).toHaveBeenCalledWith('p9', 'fake-check', expect.anything()));
+    expect(within(screen.getByRole('banner')).getByRole('button', { name: 'Ask AI' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('closes from the topbar like any other time', async () => {
+    getProviders.mockResolvedValue([]);
+    await mount();
+    await act(async () => askAboutPosting(JOB));
+    fireEvent.click(within(screen.getByRole('banner')).getByRole('button', { name: 'Ask AI' }));
+    expect(screen.queryByRole('complementary', { name: 'Ask AI' })).not.toBeInTheDocument();
+  });
+});

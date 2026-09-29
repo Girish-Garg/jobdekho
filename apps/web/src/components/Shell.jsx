@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
-import { getFilters } from '../api.js';
-import { EMPTY_FILTERS, toFilterState } from '../lib/savedFilters.js';
+import { useRef, useState } from 'react';
+import { useSavedFilters } from '../lib/useSavedFilters.js';
+import { useChatDock } from '../lib/useChatDock.js';
 import { useGlobalKeys } from '../lib/useGlobalKeys.js';
 import { useViewMode } from '../lib/viewMode.js';
 import FilterBar from './FilterBar.jsx';
@@ -18,7 +18,7 @@ import { OVERLAY_HOST_ID } from '../lib/overlayHost.js';
 // filters sit above the feed rather than beside it so the grid gets the width.
 export default function Shell() {
   const [view, setView] = useState('postings');
-  const [filters, setFilters] = useState(EMPTY_FILTERS);
+  const [filters, setFilters] = useSavedFilters();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   // The feed reads these; the filter row and the command palette set them.
@@ -26,21 +26,11 @@ export default function Shell() {
   // feed's own state.
   const [sort, setSort] = useState('match');
   const [viewMode, setViewMode] = useViewMode();
-  const [chatOpen, setChatOpen] = useState(false);
+  // The chat is where every AI action happens; the job pane asks it to open
+  // on a posting (see useChatDock.js), so its state lives here beside both.
+  const chat = useChatDock();
   const searchRef = useRef(null);
   const postings = view === 'postings';
-
-  // The saved filter is what the user should see on sign-in; if it cannot be
-  // read we stay on the empty defaults rather than blocking the feed.
-  useEffect(() => {
-    let alive = true;
-    getFilters()
-      .then((saved) => alive && setFilters({ ...EMPTY_FILTERS, ...toFilterState(saved) }))
-      .catch(() => {});
-    return () => {
-      alive = false;
-    };
-  }, []);
 
   // The chrome's three global shortcuts. j/k/Enter/s/a/d/u belong to the feed
   // and are bound in its own hook, not here.
@@ -58,8 +48,8 @@ export default function Shell() {
         q={filters.q}
         onSearch={postings ? (value) => setFilters({ ...filters, q: value }) : null}
         searchRef={searchRef}
-        chatOpen={chatOpen}
-        onToggleChat={postings ? () => setChatOpen((on) => !on) : null}
+        chatOpen={chat.open}
+        onToggleChat={postings ? chat.toggle : null}
       />
       {postings && (
         <FilterBar
@@ -75,8 +65,9 @@ export default function Shell() {
       )}
       <div id={OVERLAY_HOST_ID} className="relative flex min-h-0 flex-1">
         {postings && <AiChatPanel
-            open={chatOpen}
-            onClose={() => setChatOpen(false)}
+            open={chat.open}
+            onClose={chat.close}
+            request={chat.request}
             context={{ filters, sort }}
             apply={{ setFilters, setSort }}
           />}

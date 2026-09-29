@@ -4,10 +4,11 @@
 // back-and-forth still fits. There is one conversation, not many, because
 // "start a new one" is a request to forget the old one, not to file it away.
 //
-// A turn is { question, answer, actions, provider, createdAt }: what was
-// asked, what came back, the offered actions (see apps/server/src/chat/
-// actions.js), and which CLI answered - the same shape the chat route
-// returns to the browser, saved as is.
+// A turn is { question, answer, actions, refs, provider, createdAt }: what
+// was asked, what came back, the offered actions (see apps/server/src/chat/
+// actions.js), the postings the answer named (see chat/refs.js), and which
+// CLI answered - the same shape the chat route returns to the browser, saved
+// as is. A turn saved before refs existed has none, which reads as no chips.
 export const MAX_TURNS = 20
 
 export async function getChatHistory(store, userId) {

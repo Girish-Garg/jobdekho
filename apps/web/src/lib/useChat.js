@@ -1,20 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getChatHistory, sendChatMessage, clearChatHistory } from '../api.js';
-import { progressText } from './aiProgress.js';
 import { notifyError } from './toast.js';
 
-// One conversation, held the way usePostingAction.js holds one AI action: the
-// history already on disk, a send() that narrates the wait, and the error a
-// failed call leaves behind for AiError to show. There is no id to key this
-// by - the whole conversation is the person's, not any one posting's - so
-// history loads once on mount rather than per prop change.
-export function useChat(providers) {
+// The plain questions of the conversation: the history already on disk, and
+// an ask() that sends one through the panel's runner (see useAiRunner.js),
+// which owns the wait and the failure. There is no id to key this by - the
+// whole conversation is the person's, not any one posting's - so history
+// loads once on mount rather than per prop change.
+export function useChat(runner) {
   const [turns, setTurns] = useState([]);
-  const [busy, setBusy] = useState(false);
-  const [progress, setProgress] = useState('');
-  const [error, setError] = useState(null);
-  // Only the start event names the CLI; kept for the rest of one turn's progress line.
-  const label = useRef('');
 
   useEffect(() => {
     let alive = true;
@@ -22,32 +16,22 @@ export function useChat(providers) {
     return () => { alive = false; };
   }, []);
 
-  function onEvent(event) {
-    if (event.event === 'start') {
-      label.current = providers?.find((p) => p.id === event.provider)?.label ?? event.provider;
-    }
-    setProgress(progressText(event, label.current, { noun: 'Question', doing: 'thinking' }));
-  }
-
-  async function send(message, screen) {
-    setBusy(true);
-    setError(null);
-    setProgress('Starting...');
-    try {
-      const turn = await sendChatMessage({ message, ...screen }, { onEvent });
-      setTurns((all) => [...all, turn]);
-    } catch (err) {
-      setError(err);
-      notifyError(err, 'The assistant could not answer');
-    }
-    setBusy(false);
+  // A posting action's stream announces its own failure (lib/aiCall.js);
+  // the chat's does not, so the notice is raised here.
+  async function ask(message, screen) {
+    const turn = await runner.run({ say: message, noun: 'Question', doing: 'thinking' }, (onEvent) =>
+      sendChatMessage({ message, ...screen }, { onEvent }).catch((err) => {
+        notifyError(err, 'The assistant could not answer');
+        throw err;
+      }));
+    if (turn) setTurns((all) => [...all, turn]);
   }
 
   async function startNew() {
     await clearChatHistory().catch(() => {});
     setTurns([]);
-    setError(null);
+    runner.clearError();
   }
 
-  return { turns, busy, progress, error, send, startNew, clearError: () => setError(null) };
+  return { turns, ask, startNew };
 }

@@ -58,7 +58,7 @@ export default function Topbar({ view, setView, q = '', onSearch, searchRef, cha
               chatOpen ? 'border-ink bg-ink text-paper' : 'border-line text-muted hover:border-edge hover:text-ink'
             }`}
           >
-            Ask
+            Ask AI
           </button>
         )}
         <ThemeToggle />

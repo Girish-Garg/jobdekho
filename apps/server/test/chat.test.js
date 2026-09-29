@@ -156,6 +156,27 @@ describe('POST /api/chat', () => {
     expect(res.json().actions).toEqual([])
   })
 
+  it('keeps only the refs the context carried, worded from the store, and saves them with the turn', async () => {
+    const store = fakeChatStore()
+    const reply = envelope(JSON.stringify({ reply: 'Acme fits best.', refs: ['p1', 'invented-id', 'p1'] }))
+    const res = await ask({ chatStore: store, cli: cliAnswering(reply) })
+    expect(res.statusCode).toBe(200)
+    expect(res.json().refs).toEqual([{ id: 'p1', title: 'Frontend Intern', company: 'Acme', fit: 55 }])
+    expect((await store.chatHistory.get('u1')).turns[0].refs).toEqual(res.json().refs)
+  })
+
+  it('carries the scoped posting and what its actions already said into the prompt', async () => {
+    const open = { ...ROW, id: 'p9', title: 'Staff Engineer', descriptionText: 'Build things.' }
+    const dashboard = fakeDashboard({ open })
+    dashboard.listAiResults.mockResolvedValue([{ kind: 'fake-check', postingId: 'p9', result: { verdict: 'suspicious', summary: 'No such office.' } }])
+    const cli = cliAnswering(REPLY)
+    await ask({ dashboard, cli }, { message: 'is it real?', filters: {}, sort: 'match', openPostingId: 'p9' })
+    expect(dashboard.listAiResults).toHaveBeenCalledWith('u1', 'p9')
+    const input = cli.run.mock.calls.at(-1)[0].input
+    expect(input).toContain('Staff Engineer')
+    expect(input).toContain('No such office.')
+  })
+
   it('streams progress and ends on exactly the body a plain caller gets', async () => {
     const plain = await ask({ cli: cliAnswering(REPLY) })
     const streamed = await ask({ cli: cliAnswering(REPLY) }, { message: 'which are remote?', filters: {}, sort: 'match' }, { accept: NDJSON_TYPE })

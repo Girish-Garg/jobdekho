@@ -3,11 +3,12 @@ import { assembleChatContext } from '@jobdekho/server/chat/context.js'
 
 const row = (n) => ({ id: `p${n}`, title: `Job ${n}`, company: 'Acme', location: 'Pune', level: 'mid', fit: 50 + n, grade: 'B' })
 
-function fakeDashboard({ postings = [], profile = null, open = null } = {}) {
+function fakeDashboard({ postings = [], profile = null, open = null, saved = [] } = {}) {
   return {
     getProfile: vi.fn().mockResolvedValue(profile),
     listPostingsForUser: vi.fn().mockResolvedValue(postings),
     getPosting: vi.fn().mockResolvedValue(open),
+    listAiResults: vi.fn().mockResolvedValue(saved),
   }
 }
 
@@ -45,6 +46,32 @@ describe('assembleChatContext', () => {
     expect(dashboard.getPosting).toHaveBeenCalledWith('u1', 'p9')
     expect(context.open.id).toBe('p9')
     expect(context.open.description).toHaveLength(4000)
+  })
+
+  it('carries what the actions already said about the scoped posting, newest answer of each', async () => {
+    const open = { id: 'p9', title: 'Staff Engineer', company: 'Acme', ghostSignals: [] }
+    const saved = [
+      { kind: 'fake-check', postingId: 'p9', result: { verdict: 'likely_scam', summary: 'No office.', stillOpen: false, redFlags: ['asks for a fee'] } },
+      { kind: 'cover-letter', postingId: 'p9', result: { letter: 'Dear team,' } },
+      { kind: 'resume-tailor', postingId: 'p9', result: { factCheck: { flags: [{ type: 'number', value: '40%' }] }, coverage: { before: 2, after: 4, total: 6, gained: [] } } },
+    ]
+    const dashboard = fakeDashboard({ open, saved })
+    const context = await assembleChatContext(dashboard, 'u1', { filters: {}, sort: 'match', openPostingId: 'p9' })
+    expect(dashboard.listAiResults).toHaveBeenCalledWith('u1', 'p9')
+    expect(context.openResults).toEqual({
+      'fake-check': { verdict: 'likely_scam', summary: 'No office.', stillOpen: false, redFlags: ['asks for a fee'] },
+      'cover-letter': { letter: 'Dear team,' },
+      'resume-tailor': { thingsToCheck: ['40%'], coverage: { before: 2, after: 4, total: 6 } },
+    })
+  })
+
+  it('says nothing about saved answers when the scoped posting has none, or nothing is scoped', async () => {
+    const scoped = await assembleChatContext(fakeDashboard({ open: { id: 'p9' } }), 'u1', { openPostingId: 'p9' })
+    expect(scoped.openResults).toBeNull()
+    const dashboard = fakeDashboard()
+    const unscoped = await assembleChatContext(dashboard, 'u1', {})
+    expect(unscoped.openResults).toBeNull()
+    expect(dashboard.listAiResults).not.toHaveBeenCalled()
   })
 
   it('leaves the open posting null when nothing is open, without asking the store for one', async () => {

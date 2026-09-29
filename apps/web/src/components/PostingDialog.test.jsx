@@ -1,10 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import PostingDialog from './PostingDialog.jsx';
+import { onAskAboutPosting } from '../lib/askAiSignal.js';
 
-// The detail view probes for an AI CLI on mount. Left pending here so the
-// dialog's own behaviour is what these tests see; the probe and what follows
-// it have their own suites (AiGate, AiSection, PostingDetail).
+// The detail view runs no AI itself (the chat does), so nothing here should
+// reach the server; the mock only makes sure of that.
 vi.mock('../api.js', () => ({
   getProviders: vi.fn(() => new Promise(() => {})),
   getPostingAiResults: vi.fn(() => new Promise(() => {})),
@@ -151,5 +151,17 @@ describe('PostingDialog actions', () => {
     const { onStatus } = setup({ status: 'applied' });
     fireEvent.click(screen.getByRole('button', { name: 'Applied' }));
     expect(onStatus).toHaveBeenCalledWith('p1', null);
+  });
+
+  // On a narrow screen the dialog covers the chat, so handing the job to the
+  // chat has to close it or the person would see nothing happen.
+  it('hands the job to the chat and gets out of its way', () => {
+    const asked = vi.fn();
+    const stop = onAskAboutPosting(asked);
+    const { onClose } = setup();
+    fireEvent.click(screen.getByRole('button', { name: 'Ask AI about this job' }));
+    expect(asked).toHaveBeenCalledWith(expect.objectContaining({ posting: expect.objectContaining({ id: 'p1' }), action: null }));
+    expect(onClose).toHaveBeenCalled();
+    stop();
   });
 });

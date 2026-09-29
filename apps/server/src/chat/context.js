@@ -2,6 +2,7 @@ import { SORTS } from '@jobdekho/store/posting-order.js'
 import { toListOpts } from './filter-opts.js'
 import { compactPosting, trimOpenPosting } from './postings-summary.js'
 import { summarizeProfile } from './profile-summary.js'
+import { summarizeResults } from './results-summary.js'
 
 // How many rows of the matching set the model actually sees - the same
 // "first screenful" a person scans before scrolling, not the whole feed.
@@ -15,16 +16,21 @@ const TOP_N = 25
 // browser tab someone tampered with - the worst it can do is ask about a
 // different filter or a posting id that is not theirs, and getPosting scopes
 // that to the signed-in user like every other route already does.
+//
+// `openPostingId` is the posting the chat is scoped to, which is usually the
+// one open in the pane; its saved AI answers ride along (results-summary.js).
 export async function assembleChatContext(dashboard, userId, { filters, sort, openPostingId } = {}) {
   const knownSort = SORTS.includes(sort) ? sort : 'match'
   const profile = await dashboard.getProfile(userId)
   const matching = await dashboard.listPostingsForUser(userId, toListOpts(filters, knownSort, profile))
   const open = openPostingId ? await dashboard.getPosting(userId, openPostingId) : null
+  const saved = open ? await dashboard.listAiResults(userId, open.id) : []
   return {
     postingCount: matching.length,
     sort: knownSort,
     top: matching.slice(0, TOP_N).map(compactPosting),
     open: trimOpenPosting(open),
+    openResults: summarizeResults(saved),
     profile: summarizeProfile(profile),
   }
 }

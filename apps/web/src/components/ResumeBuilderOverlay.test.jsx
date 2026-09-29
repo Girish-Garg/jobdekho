@@ -31,19 +31,37 @@ describe('ResumeBuilderOverlay', () => {
     await waitFor(() => expect(api.getResumePdf).toHaveBeenCalledWith(expect.objectContaining({ plan: PLAN })));
   });
 
-  it('closes on Escape, on the close button, and on a click on the backdrop itself', async () => {
+  it('closes on Escape and on the close button', async () => {
     const onClose = vi.fn();
-    const { rerender } = render(<ResumeBuilderOverlay jobTitle="Backend Engineer" plan={PLAN} onClose={onClose} />);
+    render(<ResumeBuilderOverlay jobTitle="Backend Engineer" plan={PLAN} onClose={onClose} />);
     await screen.findByText('Classic');
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(onClose).toHaveBeenCalledTimes(1);
-
-    rerender(<ResumeBuilderOverlay jobTitle="Backend Engineer" plan={PLAN} onClose={onClose} />);
     fireEvent.click(screen.getByRole('button', { name: 'Close' }));
     expect(onClose).toHaveBeenCalledTimes(2);
+  });
 
-    fireEvent.click(screen.getByTestId('resume-builder-overlay'));
-    expect(onClose).toHaveBeenCalledTimes(3);
+  // It opens beside the chat, which stays usable, so it is not a modal and
+  // has no backdrop covering the rest of the window.
+  it('sits beside the chat rather than over the whole window', async () => {
+    render(<ResumeBuilderOverlay jobTitle="Backend Engineer" plan={PLAN} onClose={() => {}} />);
+    await screen.findByText('Classic');
+    const frame = screen.getByRole('dialog');
+    expect(frame).not.toHaveAttribute('aria-modal', 'true');
+    expect(frame.className).toMatch(/\babsolute\b/);
+    expect(frame.className).not.toMatch(/\bfixed\b/);
+  });
+
+  // While it is open, Escape is its own: the job pane underneath would
+  // otherwise close too.
+  it('keeps Escape from reaching the feed underneath', async () => {
+    const feed = vi.fn();
+    window.addEventListener('keydown', feed);
+    render(<ResumeBuilderOverlay jobTitle="Backend Engineer" plan={PLAN} onClose={() => {}} />);
+    await screen.findByText('Classic');
+    fireEvent.keyDown(document.body, { key: 'Escape' });
+    expect(feed).not.toHaveBeenCalled();
+    window.removeEventListener('keydown', feed);
   });
 
   it('does not close on a click inside the builder itself', async () => {

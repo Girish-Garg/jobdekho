@@ -36,7 +36,7 @@ export async function getAiResult(store, userId, postingId, kind) {
 }
 
 // Appends one version rather than overwriting, so the previous answer is
-// still there for the version strip and for the next refine to build on.
+// still there in the chat's conversation and for the next refine to build on.
 // `instruction` is '' for a first run or a plain rerun; the caller passes it
 // only when this call followed the person's own words. Caps the history at
 // MAX_VERSIONS, dropping the oldest; `dropped` records that this happened at

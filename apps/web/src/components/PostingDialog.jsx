@@ -34,7 +34,7 @@ export default function PostingDialog({ posting, onClose, onStatus }) {
         tabIndex={-1}
         className="mx-auto w-full max-w-2xl overflow-hidden rounded-xl border border-line bg-panel shadow-pop outline-none"
       >
-        <PostingDetail posting={posting} onClose={onClose} onStatus={onStatus} />
+        <PostingDetail posting={posting} onClose={onClose} onStatus={onStatus} onAsked={onClose} />
       </div>
     </div>
   );
