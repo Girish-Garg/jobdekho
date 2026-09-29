@@ -83,9 +83,9 @@ export default function FillFromResume({ profile, onFilled }) {
         </span>
       </div>
       <AiError error={error} checking={checking} onRecheck={() => (setError(null), refresh())} />
-      <p className="text-center text-xs leading-relaxed text-muted">
-        Asks {ready.label} on this computer to read the resume on file. Takes twenty seconds or so.
-      </p>
+      {/* Short and not tied to one CLI: which one runs is a setting, and the
+          button says the rest. The name is still one hover away. */}
+      <p title={`Runs on ${ready.label}`} className="text-center text-[11px] text-muted">Uses the AI on this computer, about 20 seconds</p>
     </div>
   );
 }

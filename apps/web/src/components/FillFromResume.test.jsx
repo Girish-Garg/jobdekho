@@ -90,7 +90,7 @@ describe('FillFromResume with a CLI ready', () => {
     getProviders.mockResolvedValue([MISSING, AGY]);
     render(<FillFromResume profile={EMPTY} onFilled={() => {}} />);
     await screen.findByRole('button', { name: 'Fill in from resume' });
-    expect(screen.getByText(/asks antigravity on this computer to read the resume/i)).toBeInTheDocument();
+    expect(screen.getByText('Uses the AI on this computer, about 20 seconds')).toHaveAttribute('title', 'Runs on Antigravity');
   });
 
   it('asks the server on first load without forcing a re-probe', async () => {
