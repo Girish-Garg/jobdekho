@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { notifyError } from '../lib/toast.js';
 
-// Primary-action save button with transient confirmation. Ink, not ember: the
-// accent is reserved for "new today" in the feed, and a second ember element on
-// screen means there is no accent, only two loud things.
+// Primary-action save button with transient confirmation. Ink, not ember:
+// ember is the colour of errors, and a save is not one.
 export default function SaveBar({ onSave, label: idleLabel = 'Save changes' }) {
   const [state, setState] = useState('idle');
 

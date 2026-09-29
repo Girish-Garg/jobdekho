@@ -2,26 +2,19 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, fireEvent, within, act } from '@testing-library/react';
 import { useState } from 'react';
 import PostingsView from './PostingsView.jsx';
-import SortSelect from './SortSelect.jsx';
-import DensityToggle from './DensityToggle.jsx';
 import { useViewMode } from '../lib/viewMode.js';
 
-// What Shell renders around the feed: the sort and density controls with
-// the state the feed reads, so a test can still change them.
+// The state Shell keeps for the feed; the feed draws its own sort and
+// density controls (see FeedTop.jsx), so a test changes them there.
 function Harness(props) {
   const [sort, setSort] = useState('match');
   const [viewMode, setViewMode] = useViewMode();
-  return (
-    <>
-      <DensityToggle mode={viewMode} setMode={setViewMode} />
-      <SortSelect sort={sort} setSort={setSort} />
-      <PostingsView {...props} sort={sort} viewMode={viewMode} />
-    </>
-  );
+  return <PostingsView setFilters={() => {}} {...props} sort={sort} setSort={setSort} viewMode={viewMode} setViewMode={setViewMode} />;
 }
 
 vi.mock('../api.js', () => ({
   getPostings: vi.fn(async () => []),
+  getSources: vi.fn(async () => []),
   setStatus: vi.fn(async () => null),
 }));
 

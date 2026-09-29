@@ -6,7 +6,7 @@ import { useTriage } from '../lib/useTriage.js';
 import { useOpenPosting } from '../lib/useOpenPosting.js';
 import { useListKeys } from '../lib/useListKeys.js';
 import { rankingNotice } from '../lib/rankingNotice.js';
-import PostingsHeader from './PostingsHeader.jsx';
+import FeedTop from './FeedTop.jsx';
 import FeedBody from './FeedBody.jsx';
 import PostingDetailSlot from './PostingDetailSlot.jsx';
 import RecommendedNotice from './RecommendedNotice.jsx';
@@ -15,11 +15,12 @@ import RecommendedNotice from './RecommendedNotice.jsx';
 // over instead.
 const WIDE_QUERY = '(min-width: 1100px)';
 
-// Sort and density are read here and set in the chrome: their controls sit
-// in the filter row beside the filters they belong with, and the command
-// palette changes the sort as well, so the state lives in Shell where all
-// three can reach it. The defaults are what a fresh install shows.
-export default function PostingsView({ filters, sort = 'match', viewMode = 'list', onOpenProfile }) {
+// Filters, sort and density live in Shell, where the command palette and the
+// chat change them too; this view shows and sets them (see FeedTop.jsx). The
+// defaults are what a fresh install shows.
+export default function PostingsView({
+  filters, setFilters, sort = 'match', setSort, viewMode = 'list', setViewMode, onOpenProfile,
+}) {
   const { rows, loading, more, loadMore, onStatus } = usePostingsFeed(filters, sort);
   const triage = useTriage(rows, onStatus);
   const isWide = useMediaQuery(WIDE_QUERY);
@@ -50,9 +51,12 @@ export default function PostingsView({ filters, sort = 'match', viewMode = 'list
   // too far apart to read as one line, and the empty sides are where the
   // chat and the job pane float without covering a card.
   return (
-    <section className="flex gap-4 px-4 py-2">
+    <section className="flex gap-4 px-4 pb-10">
       <div className="mx-auto w-full min-w-0 max-w-[68rem]">
-        <PostingsHeader shown={rows.length} fresh={rows.filter((p) => isNewToday(p.firstSeenAt)).length} />
+        <FeedTop
+          filters={filters} setFilters={setFilters} sort={sort} setSort={setSort} viewMode={viewMode} setViewMode={setViewMode}
+          shown={rows.length} fresh={rows.filter((p) => isNewToday(p.firstSeenAt)).length}
+        />
         {unranked && (
           <div className="pb-4">
             <RecommendedNotice fitFiltered={fitFiltered} onOpenProfile={onOpenProfile} />
@@ -71,10 +75,10 @@ export default function PostingsView({ filters, sort = 'match', viewMode = 'list
           onUndo={triage.undo}
         />
         {!loading && more && (
-          <div className="pt-6">
+          <div className="flex justify-center pt-6">
             <button
               onClick={loadMore}
-              className="rounded-md border border-line px-4 py-1.5 text-sm text-muted transition-colors duration-fast ease hover:border-edge hover:text-ink"
+              className="rounded-full border border-line bg-panel px-6 py-2 text-sm font-medium text-ink transition-colors duration-fast ease hover:border-primary/50 hover:text-primary"
             >
               Load more
             </button>

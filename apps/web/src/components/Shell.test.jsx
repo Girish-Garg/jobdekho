@@ -197,14 +197,15 @@ describe('Shell global shortcuts', () => {
 
 // The sort and the density toggle ride the filter row, not a band of their
 // own: three bands of chrome before the first job was the whole complaint.
-it('keeps the sort and the density toggle in the filter row', async () => {
+// The filters, the sort and the view switch sit in the feed's own column, so
+// they line up with the rows instead of in a full-width band of chrome.
+it('keeps the filters, the sort and the density toggle with the feed', async () => {
   render(<Shell />);
   await screen.findByRole('button', { name: 'Level' });
-  // The same panel holds the filters and both controls, rather than a second
-  // bar underneath holding the count, the sort and the density toggle.
-  const panel = screen.getByLabelText('Sort').closest('.bg-panel');
-  expect(panel.contains(screen.getByRole('button', { name: 'More filters' }))).toBe(true);
-  expect(panel.contains(screen.getByRole('button', { name: 'Cards' }))).toBe(true);
+  const main = screen.getByRole('main');
+  expect(main.contains(screen.getByRole('button', { name: 'More filters' }))).toBe(true);
+  expect(main.contains(screen.getByLabelText('Sort'))).toBe(true);
+  expect(main.contains(screen.getByRole('button', { name: 'Cards' }))).toBe(true);
 });
 
 

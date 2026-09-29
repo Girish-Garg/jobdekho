@@ -17,7 +17,7 @@ export default function SortSelect({ sort, setSort }) {
       aria-label="Sort"
       value={sort}
       onChange={(event) => setSort(event.target.value)}
-      className="rounded-md border border-line bg-paper px-2 py-1 text-xs text-ink outline-none transition-colors duration-fast ease focus:border-edge"
+      className="rounded-full border border-line bg-panel py-1.5 pl-3.5 text-sm text-ink outline-none transition-colors duration-fast ease hover:border-edge focus:border-primary/60"
     >
       {SORTS.map(([value, label]) => (
         <option key={value} value={value}>{label}</option>

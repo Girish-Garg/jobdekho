@@ -23,11 +23,17 @@ function tintFor(company) {
   return TINTS[hash % TINTS.length];
 }
 
-export default function CompanyMark({ company }) {
+// Large in the job pane's header, small beside a row or on a card.
+const SIZES = {
+  md: 'h-11 w-11 rounded-xl text-sm',
+  sm: 'h-9 w-9 rounded-lg text-xs',
+};
+
+export default function CompanyMark({ company, size = 'md' }) {
   return (
     <span
       aria-hidden="true"
-      className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl font-display text-sm font-extrabold tracking-tight ${tintFor(company)}`}
+      className={`grid shrink-0 place-items-center font-display font-extrabold tracking-tight ${SIZES[size] ?? SIZES.md} ${tintFor(company)}`}
     >
       {initials(company)}
     </span>

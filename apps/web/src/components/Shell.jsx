@@ -3,9 +3,6 @@ import { useSavedFilters } from '../lib/useSavedFilters.js';
 import { useChatDock } from '../lib/useChatDock.js';
 import { useGlobalKeys } from '../lib/useGlobalKeys.js';
 import { useViewMode } from '../lib/viewMode.js';
-import FilterBar from './FilterBar.jsx';
-import SortSelect from './SortSelect.jsx';
-import DensityToggle from './DensityToggle.jsx';
 import Topbar from './Topbar.jsx';
 import CommandPalette from './CommandPalette.jsx';
 import ShortcutsHelp from './ShortcutsHelp.jsx';
@@ -14,8 +11,10 @@ import ToastHost from './ToastHost.jsx';
 import ShellMain from './ShellMain.jsx';
 import { OVERLAY_HOST_ID } from '../lib/overlayHost.js';
 
-// Full-viewport app frame: topbar, filter bar, scrolling main region. The
-// filters sit above the feed rather than beside it so the grid gets the width.
+// Full-viewport app frame: the topbar and the scrolling page under it. The
+// feed's filters live in the feed's own column (see FeedTop.jsx), so they
+// line up with the rows and move with them when the chat is pinned; their
+// state stays here, where the chat and the command palette change it too.
 export default function Shell() {
   const [view, setView] = useState('postings');
   const [filters, setFilters] = useSavedFilters();
@@ -52,18 +51,6 @@ export default function Shell() {
         chatOpen={chat.open}
         onToggleChat={chat.toggle}
       />
-      {postings && (
-        <FilterBar
-          filters={filters}
-          setFilters={setFilters}
-          trailing={(
-            <>
-              <DensityToggle mode={viewMode} setMode={setViewMode} />
-              <SortSelect sort={sort} setSort={setSort} />
-            </>
-          )}
-        />
-      )}
       {/* The chat is on every page and the page area is its row: floating, it
           sits over the page; pinned, the page makes room beside it. */}
       <div id={OVERLAY_HOST_ID} className="relative flex min-h-0 flex-1">
@@ -75,7 +62,7 @@ export default function Shell() {
           apply={{ setFilters, setSort, setView }}
         />
         <main className="min-h-0 min-w-0 flex-1 overflow-y-auto">
-          <ShellMain view={view} filters={filters} sort={sort} viewMode={viewMode} setView={setView} />
+          <ShellMain view={view} setView={setView} feed={{ filters, setFilters, sort, setSort, viewMode, setViewMode }} />
         </main>
       </div>
       <CommandPalette

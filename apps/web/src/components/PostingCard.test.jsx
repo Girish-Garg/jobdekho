@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import PostingCard from './PostingCard.jsx';
 import { isNewToday } from '../lib/time.js';
+import { compactPay } from '../lib/compactPay.js';
 
 const now = new Date('2026-06-28T12:00:00Z').getTime();
 
@@ -46,9 +47,10 @@ describe('PostingCard', () => {
     expect(onOpen).toHaveBeenCalledWith(base, card);
   });
 
-  it('shows the stipend when the posting has one', () => {
+  // In the same compact form the rows use, so a card and a row agree.
+  it('shows the pay, compact, when the posting has one', () => {
     render(<PostingCard posting={{ ...base, stipend: 'Rs 20,000' }} onOpen={() => {}} />);
-    expect(screen.getByText('Rs 20,000')).toBeInTheDocument();
+    expect(screen.getByText(compactPay('Rs 20,000'))).toBeInTheDocument();
   });
 
   // The description is the field that turned every tile into grey text, so it
@@ -75,50 +77,49 @@ describe('PostingCard new-today mark', () => {
     expect(screen.queryByLabelText('New today')).not.toBeInTheDocument();
   });
 
-  it('is the only element carrying the ember accent', () => {
+  // Saffron marks what is new; ember is kept for warnings, so a fine posting
+  // carries none of it.
+  it('marks a new posting in saffron, and carries no warning colour when fine', () => {
     const { container } = render(<PostingCard posting={base} onOpen={() => {}} />);
-    const ember = container.querySelectorAll('.bg-ember, .text-ember');
-    expect(ember).toHaveLength(1);
-    expect(ember[0]).toHaveAttribute('aria-label', 'New today');
+    expect(screen.getByLabelText('New today').className).toContain('text-primary');
+    expect(container.querySelectorAll('.bg-ember, .text-ember')).toHaveLength(0);
   });
 });
 
 describe('PostingCard fit score', () => {
-  it('shows the score with its unit when the feed is ranked', () => {
-    render(<PostingCard posting={{ ...base, fit: 78 }} onOpen={() => {}} />);
-    expect(screen.getByText('78 fit')).toBeInTheDocument();
+  it('shows the score, named as fit, when the feed is ranked', () => {
+    render(<PostingCard posting={{ ...base, fit: 78, grade: 'A' }} onOpen={() => {}} />);
+    expect(screen.getByLabelText('Fit 78, grade A')).toHaveTextContent('78');
   });
 
   // 0 is a real score on a ranked feed, so a truthiness check would hide
   // exactly the postings the number is most useful on.
   it('shows a zero score rather than dropping it', () => {
     render(<PostingCard posting={{ ...base, fit: 0 }} onOpen={() => {}} />);
-    expect(screen.getByText('0 fit')).toBeInTheDocument();
+    expect(screen.getByLabelText('Fit 0')).toHaveTextContent('0');
   });
 
   it('leaves no fit slot on an unranked feed', () => {
     render(<PostingCard posting={base} onOpen={() => {}} />);
-    expect(screen.queryByText(/fit/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/^Fit/)).not.toBeInTheDocument();
   });
 
-  // Ember stays the one accent on the card, so the score cannot borrow it.
-  it('never carries the ember accent', () => {
-    const { container } = render(<PostingCard posting={{ ...base, fit: 91 }} onOpen={() => {}} />);
-    const ember = container.querySelectorAll('.bg-ember, .text-ember');
-    expect(ember).toHaveLength(1);
-    expect(ember[0]).toHaveAttribute('aria-label', 'New today');
+  // Ember is for warnings, so a score, however low, never borrows it.
+  it('never carries the warning colour', () => {
+    const { container } = render(<PostingCard posting={{ ...base, fit: 12, grade: 'D' }} onOpen={() => {}} />);
+    expect(container.querySelectorAll('.bg-ember, .text-ember')).toHaveLength(0);
   });
 });
 
 describe('PostingCard legitimacy warning', () => {
   it('flags a low-legitimacy posting', () => {
     render(<PostingCard posting={{ ...base, legitimacy: 'low' }} onOpen={() => {}} />);
-    expect(screen.getByText('May not be a live opening')).toBeInTheDocument();
+    expect(screen.getByText('Caution')).toBeInTheDocument();
   });
 
   it('flags a suspicious posting', () => {
     render(<PostingCard posting={{ ...base, legitimacy: 'suspicious' }} onOpen={() => {}} />);
-    expect(screen.getByText('May not be a live opening')).toBeInTheDocument();
+    expect(screen.getByText('Caution')).toBeInTheDocument();
   });
 
   // Most postings are fine, so high and medium show nothing at all: a badge on
@@ -126,19 +127,15 @@ describe('PostingCard legitimacy warning', () => {
   it('says nothing for high or medium legitimacy', () => {
     for (const legitimacy of ['high', 'medium']) {
       const { unmount } = render(<PostingCard posting={{ ...base, legitimacy }} onOpen={() => {}} />);
-      expect(screen.queryByText(/live opening/)).not.toBeInTheDocument();
+      expect(screen.queryByText('Caution')).not.toBeInTheDocument();
       unmount();
     }
   });
 
-  // A warning is not the accent: ember still belongs to "new today" alone.
-  it('never borrows the ember accent', () => {
-    const { container } = render(
-      <PostingCard posting={{ ...base, legitimacy: 'suspicious' }} onOpen={() => {}} />,
-    );
-    const ember = container.querySelectorAll('.bg-ember, .text-ember');
-    expect(ember).toHaveLength(1);
-    expect(ember[0]).toHaveAttribute('aria-label', 'New today');
+  // The same colour the job pane's caution card uses for the same evidence.
+  it('marks the caution in ember, the colour of warnings', () => {
+    render(<PostingCard posting={{ ...base, legitimacy: 'suspicious' }} onOpen={() => {}} />);
+    expect(screen.getByText('Caution').className).toContain('text-ember');
   });
 });
 
@@ -171,12 +168,12 @@ describe('PostingCard level label', () => {
 describe('PostingCard work mode', () => {
   it('names a remote posting next to its level', () => {
     render(<PostingCard posting={{ ...base, workMode: 'remote' }} onOpen={() => {}} />);
-    expect(screen.getByText('/ Remote')).toBeInTheDocument();
+    expect(screen.getByText('Remote', { selector: 'span.rounded-full' })).toBeInTheDocument();
   });
 
   it('names a hybrid posting', () => {
     render(<PostingCard posting={{ ...base, workMode: 'hybrid' }} onOpen={() => {}} />);
-    expect(screen.getByText('/ Hybrid')).toBeInTheDocument();
+    expect(screen.getByText('Hybrid')).toBeInTheDocument();
   });
 
   // Onsite is also what an un-classified posting reads as, so putting it on the

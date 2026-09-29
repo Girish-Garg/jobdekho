@@ -1,6 +1,7 @@
 // Slim top strip: wordmark, section nav, keyword search, theme toggle.
 import { useState } from 'react';
 import ThemeToggle from './ThemeToggle.jsx';
+import { SearchIcon, SparkleIcon } from './Icon.jsx';
 
 export default function Topbar({ view, setView, q = '', onSearch, searchRef, chatOpen, onToggleChat }) {
   // Drives the "/" hint: it is only useful before anyone has found the box,
@@ -13,7 +14,10 @@ export default function Topbar({ view, setView, q = '', onSearch, searchRef, cha
   return (
     <header className="flex h-12 shrink-0 items-center gap-4 border-b border-line bg-panel px-5">
       <div className="flex shrink-0 items-center gap-6">
-        <span className="hidden font-display text-lg font-extrabold tracking-tight sm:inline">JobDekho</span>
+        <span className="flex items-center gap-2">
+          <span aria-hidden="true" className="grid h-7 w-7 place-items-center rounded-lg bg-primary font-display text-sm font-extrabold text-on-primary">J</span>
+          <span className="hidden font-display text-lg font-extrabold tracking-tight text-ink sm:inline">Job<span className="text-primary">Dekho</span></span>
+        </span>
         <nav className="flex items-center gap-1">
           <NavItem active={view === 'postings'} onClick={() => setView?.('postings')}>Postings</NavItem>
           <NavItem active={view === 'profile'} onClick={() => setView?.('profile')}>Profile</NavItem>
@@ -24,7 +28,8 @@ export default function Topbar({ view, setView, q = '', onSearch, searchRef, cha
 
       {onSearch && (
         <div className="flex min-w-0 flex-1 justify-end">
-          <div className="relative w-full max-w-[300px]">
+          <div className="relative w-full max-w-[320px]">
+            <SearchIcon size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
             <input
               ref={searchRef}
               value={q}
@@ -34,7 +39,7 @@ export default function Topbar({ view, setView, q = '', onSearch, searchRef, cha
               onKeyDown={(event) => event.key === 'Escape' && event.currentTarget.blur()}
               aria-label="Keyword"
               placeholder="Search titles and companies"
-              className="w-full rounded-md border border-line bg-paper px-3 py-1 text-sm outline-none transition-colors duration-fast ease focus:border-edge"
+              className="w-full rounded-full border border-line bg-paper py-1.5 pl-9 pr-9 text-sm outline-none transition-colors duration-fast ease hover:border-edge focus:border-primary/60 focus:ring-2 focus:ring-primary/15"
             />
             {!searchFocused && !q && (
               <span
@@ -54,10 +59,11 @@ export default function Topbar({ view, setView, q = '', onSearch, searchRef, cha
             type="button"
             onClick={onToggleChat}
             aria-pressed={Boolean(chatOpen)}
-            className={`rounded-md border px-2.5 py-1 text-sm transition-colors duration-fast ease ${
-              chatOpen ? 'border-ink bg-ink text-paper' : 'border-line text-muted hover:border-edge hover:text-ink'
+            className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors duration-fast ease ${
+              chatOpen ? 'border-primary bg-primary text-on-primary' : 'border-primary/30 bg-primary/10 text-primary hover:bg-primary/15'
             }`}
           >
+            <SparkleIcon size={14} />
             Ask AI
           </button>
         )}
@@ -68,8 +74,8 @@ export default function Topbar({ view, setView, q = '', onSearch, searchRef, cha
 }
 
 function NavItem({ active, onClick, children }) {
-  const cls = `rounded-full px-2.5 py-1 text-sm font-medium transition sm:px-3.5 ${
-    active ? 'bg-ink text-paper' : 'text-muted hover:text-ink'
+  const cls = `rounded-full px-2.5 py-1.5 text-sm font-medium transition-colors duration-fast ease sm:px-3.5 ${
+    active ? 'bg-select font-semibold text-ink' : 'text-muted hover:bg-select/50 hover:text-ink'
   }`;
   return (
     <button type="button" onClick={onClick} aria-current={active ? 'page' : undefined} className={cls}>

@@ -28,10 +28,10 @@ export default function FilterBar({ filters, setFilters, trailing }) {
   const chips = activeChips(filters);
 
   return (
-    // The one control row over the feed: filters on the left, and on the
-    // right whatever the chrome hands in (the sort and the density toggle),
-    // which belong with the filters rather than in a band of their own.
-    <div className="shrink-0 border-b border-line bg-panel px-4 py-1.5">
+    // The one control row over the feed: filters on the left, More filters
+    // on the right, and anything a caller hands in as `trailing` after it.
+    // FeedTop gives it its sticky surface.
+    <div>
       {/* One line at every width the grid is usable at; wrapping only kicks in
           on a phone, where the alternative is scrolling the page sideways. */}
       <div className="flex flex-wrap items-center gap-2">

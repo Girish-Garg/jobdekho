@@ -26,7 +26,7 @@ export default function PostingChips({ posting }) {
     <ul aria-label="About this job" className="mt-2.5 flex flex-wrap gap-1.5">
       {level && <li className={`${CHIP} ${levelTone(posting.level).outline}`}>{level}</li>}
       {mode && <li className={`${CHIP} border-line text-ink`}>{mode}</li>}
-      {fresh && <li className={`${CHIP} border-ember/40 bg-ember/10 text-ember`}>New today</li>}
+      {fresh && <li className={`${CHIP} border-primary/40 bg-primary/10 text-primary`}>New today</li>}
       {status && <li className={`${CHIP} ${status[1]}`}>{status[0]}</li>}
     </ul>
   );

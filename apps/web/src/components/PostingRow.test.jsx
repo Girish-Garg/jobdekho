@@ -18,8 +18,8 @@ describe('PostingRow content', () => {
   it('renders title, company and location', () => {
     render(<PostingRow posting={base} {...handlers} />);
     expect(screen.getByText('Frontend Intern')).toBeInTheDocument();
-    expect(screen.getByText('Acme')).toBeInTheDocument();
-    expect(screen.getByText('Bengaluru')).toBeInTheDocument();
+    // Company, place and age share the quiet second line.
+    expect(screen.getByText(/Acme/)).toHaveTextContent(/Acme.*Bengaluru/);
   });
 
   it('is an option carrying its id, so the list can drive its own keyboard scheme', () => {

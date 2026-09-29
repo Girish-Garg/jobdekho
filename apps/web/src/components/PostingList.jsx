@@ -29,7 +29,7 @@ export default function PostingList({ postings, selectedId, flashId, onOpen, onS
   }, [selectedId]);
 
   return (
-    <div ref={containerRef} role="grid" aria-label="Postings" data-testid="posting-list">
+    <div ref={containerRef} role="grid" aria-label="Postings" data-testid="posting-list" className="overflow-hidden rounded-xl border border-line bg-panel">
       {postings.map((posting) => (
         <PostingRow
           key={posting.id}

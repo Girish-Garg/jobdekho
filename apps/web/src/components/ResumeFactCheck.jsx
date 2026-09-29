@@ -3,8 +3,7 @@ const LABEL = 'font-mono text-[10px] uppercase tracking-[0.18em]';
 // What each flag type means, in the person's words. The server found these
 // by comparing the rewrite with the original in code, so they are shown as
 // findings and not as the model's opinion. Emphasis is by weight, not colour:
-// ember is "new today" and errors, and a rewrite that needs checking is
-// neither.
+// ember is for errors, and a rewrite that needs checking is not one.
 const MEANING = {
   number: 'a number your original does not have',
   skill: 'a skill your resume does not show',
