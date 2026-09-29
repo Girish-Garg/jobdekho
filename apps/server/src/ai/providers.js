@@ -1,5 +1,6 @@
 import { CLAUDE_ARGS, unwrapClaude } from './claude.js'
 import { AGY_ARGS, encodeAgyInput, unwrapAgy } from './agy.js'
+import { AGENT_LOG, agentFiles, checkAgentRun } from './agy-agent.js'
 import { agyUnusable } from './agy-settings.js'
 import { TOOL_POLICIES, underPolicies } from './policies.js'
 
@@ -21,8 +22,11 @@ export { TOOL_POLICIES }
 //                 the prompt inside the line the CLI's input protocol wants
 //   loginPattern  how this CLI words "you are not signed in", in stderr or its envelope
 //   unwrap        (stdout, provider) -> the model's text, or throw a ProviderError
-//   cannot        optional, policy -> the sentence for why this CLI is not
-//                 offered for it, shown when nothing that can is installed
+//   stage         optional, (tools) -> { path: text } written into the call's
+//                 directory before the CLI starts
+//   collect       optional, files read back from that directory after it exits
+//   verify        optional, ({ stdout, collected, tools }, provider) -> throw
+//                 a ProviderError when the answer cannot be vouched for
 //   unusable      optional, ({ home }) -> a sentence when the install must
 //                 not be used at all, asked at detection time (see detect.js)
 //
@@ -46,12 +50,13 @@ export const CLAUDE = {
   unwrap: unwrapClaude,
 }
 
-// Antigravity's CLI, for the actions whose prompt carries the resume and
-// nothing else. Headless agy honours 'none' by auto-denying every tool (see
-// agy.js), and 'web' is not offered because giving it a browser means a
-// permanent allow-rule in the person's own global config. Its sign-in
-// wording, measured: "Please sign in to view available models" in the
-// result, "not authenticated" in the print-mode log.
+// Antigravity's CLI. Each call gets an agent whose tool list is the policy,
+// written into the call's directory and confirmed from agy's own log before
+// the answer is used (see agy-agent.js). Under 'web' it searches but does not
+// open pages. Its sign-in wording, measured: "Please sign in to view
+// available models" in the result, "not authenticated" in the print-mode log.
+// The log itself says "You are not logged into Antigravity" on runs that
+// succeed, which is why it is never read for the sign-in state.
 export const AGY = {
   id: 'agy',
   label: 'Antigravity',
@@ -62,10 +67,9 @@ export const AGY = {
   encodeInput: encodeAgyInput,
   loginPattern: /sign in|authenticat/i,
   unwrap: unwrapAgy,
-  cannot: {
-    web: 'This action needs a CLI that can browse, and Antigravity\'s headless mode cannot be given '
-      + 'web access without permanent allow-rules in its own config.',
-  },
+  stage: agentFiles,
+  collect: [AGENT_LOG],
+  verify: checkAgentRun,
   unusable: agyUnusable,
 }
 

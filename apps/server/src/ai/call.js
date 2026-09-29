@@ -1,5 +1,5 @@
 import { locateBinary } from './locate.js'
-import { runCli } from './spawn.js'
+import { runStaged } from './staged-run.js'
 import { inEmptyDir } from './scratch-dir.js'
 import { ProviderError, classify } from './errors.js'
 import { startEvent, progressEvent } from './events.js'
@@ -30,7 +30,7 @@ const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 // spawns a real CLI, touches the real temp directory or waits in real time.
 export async function callProvider({
   provider, prompt, tools, timeoutMs = DEFAULT_TIMEOUT_MS, emit = () => {},
-  run = runCli, locate = locateBinary, scratch = inEmptyDir, heartbeatMs = HEARTBEAT_MS, now = Date.now,
+  run = runStaged, locate = locateBinary, scratch = inEmptyDir, heartbeatMs = HEARTBEAT_MS, now = Date.now,
   sleep = pause, busyWaits = BUSY_WAITS_MS,
 }) {
   const args = provider.promptArgs(tools)
@@ -43,7 +43,7 @@ export async function callProvider({
   emit(startEvent({ provider: provider.id, path: file }))
   emit(progressEvent({ stage: 'send', chars: prompt.length }))
   const started = now()
-  const call = { file, args, provider, prompt, timeoutMs, run, scratch, emit, heartbeatMs, now, started }
+  const call = { file, args, provider, prompt, tools, timeoutMs, run, scratch, emit, heartbeatMs, now, started }
 
   for (let tries = 0; ; tries += 1) {
     try {
@@ -58,18 +58,24 @@ export async function callProvider({
   }
 }
 
-async function once({ file, args, provider, prompt, timeoutMs, run, scratch, emit, heartbeatMs, now, started }) {
+// A CLI that takes its toolset from a file in its directory gets the file
+// there, and its word on what ran is checked once it has answered: an answer
+// it cannot vouch for is not used (see agy-agent.js).
+async function once({ file, args, provider, prompt, tools, timeoutMs, run, scratch, emit, heartbeatMs, now, started }) {
   const beat = setInterval(() => emit(progressEvent({ stage: 'wait', elapsedMs: now() - started })), heartbeatMs)
+  const staged = provider.stage ? { files: provider.stage(tools), collect: provider.collect } : {}
   let result
   try {
-    result = await scratch((cwd) => run({ file, args, input: provider.encodeInput(prompt), timeoutMs, cwd }))
+    result = await scratch((cwd) => run({ file, args, input: provider.encodeInput(prompt), timeoutMs, cwd, ...staged }))
   } catch (err) {
     throw notRun(err, provider, timeoutMs)
   } finally {
     clearInterval(beat)
   }
   if (result.code !== 0) throw exited(result, provider)
-  return provider.unwrap(result.stdout, provider)
+  const text = provider.unwrap(result.stdout, provider)
+  provider.verify?.({ ...result, tools }, provider)
+  return text
 }
 
 function notRun(err, provider, timeoutMs) {

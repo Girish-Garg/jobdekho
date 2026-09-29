@@ -3,9 +3,9 @@ import { buildFakeCheckRefinePrompt } from './fake-check-refine-prompt.js'
 import { parseFakeCheck } from './fake-check-parse.js'
 
 // "Is this job real?": the CLI goes and looks the company and the role up on
-// the web. The only action with tools, so the only one that gets a browser
+// the web. The only action with tools, so the only one that gets web search
 // and no personal data at all (context is empty, and the prompt reads fixed
-// posting fields). It browses, so it gets the long timeout: a company site,
+// posting fields). It searches, so it gets the long timeout: a company site,
 // the posting URL and a few searches take a couple of minutes on a good day.
 export const fakeCheck = {
   kind: 'fake-check',

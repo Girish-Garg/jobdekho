@@ -7,13 +7,13 @@ const CLAUDE = {
   present: false, path: null, runs: false, version: null, error: null,
 };
 const AGY = {
-  id: 'agy', label: 'Antigravity', install: 'https://antigravity.google', policies: ['none'],
+  id: 'agy', label: 'Antigravity', install: 'https://antigravity.google', policies: ['none', 'web'],
   present: false, path: null, runs: false, version: null, error: null,
 };
 const installed = (p) => ({ ...p, present: true, path: `C:\\${p.id}.exe`, runs: true, version: '1.0' });
 
-const LIMIT = 'this action needs a CLI that can browse, and Antigravity\'s headless mode cannot be given '
-  + 'web access without permanent allow-rules in its own config';
+// A CLI that takes plain calls but cannot search, as a later one might.
+const NO_WEB = { ...AGY, id: 'other', label: 'Other CLI', install: 'https://other.example', policies: ['none'] };
 
 const hint = (over = {}) => render(
   <InstallHint intro="Intro." policies={['none']} providers={[CLAUDE, AGY]} checking={false} onRecheck={() => {}} {...over} />,
@@ -32,17 +32,24 @@ describe('InstallHint', () => {
     expect(screen.queryByText(/would not help/)).not.toBeInTheDocument();
   });
 
-  // Only the fake check needs a browser, so only its hint explains the limit.
-  it('for a web action, offers Claude Code alone and says why Antigravity would not help', () => {
+  // Both search, so a web action offers both, the same as a plain one.
+  it('for a web action, offers both CLIs since either can search', () => {
     hint({ policies: ['web'] });
     expect(screen.getByRole('link', { name: 'https://claude.ai/code' })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'https://antigravity.google' })).not.toBeInTheDocument();
-    expect(screen.getByText(`Antigravity would not help here: ${LIMIT}.`)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'https://antigravity.google' })).toBeInTheDocument();
+    expect(screen.queryByText(/would not help/)).not.toBeInTheDocument();
   });
 
-  it('says Antigravity is installed but cannot take a web action, and what to install instead', () => {
-    hint({ policies: ['web'], providers: [CLAUDE, installed(AGY)] });
-    expect(screen.getByText(`Antigravity is installed, but ${LIMIT}.`)).toBeInTheDocument();
+  it('offers only the CLIs that can take the action, and says the other would not help', () => {
+    hint({ policies: ['web'], providers: [CLAUDE, NO_WEB] });
+    expect(screen.getByRole('link', { name: 'https://claude.ai/code' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'https://other.example' })).not.toBeInTheDocument();
+    expect(screen.getByText('Other CLI would not help here: it cannot take this action.')).toBeInTheDocument();
+  });
+
+  it('says an installed CLI cannot take the action, and what to install instead', () => {
+    hint({ policies: ['web'], providers: [CLAUDE, installed(NO_WEB)] });
+    expect(screen.getByText('Other CLI is installed, but it cannot take this action.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'https://claude.ai/code' })).toBeInTheDocument();
   });
 

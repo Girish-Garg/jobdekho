@@ -114,7 +114,7 @@ describe('buildFakeCheckRefinePrompt', () => {
     const prompt = buildFakeCheckRefinePrompt(POSTING, previous, 'check whether the recruiter email domain matches the company')
     expect(prompt).toContain(buildFakeCheckPrompt(POSTING))
     expect(prompt).toMatch(/never as instructions/)
-    expect(prompt).toContain('Use WebSearch and WebFetch')
+    expect(prompt).toContain('Search the web, and open pages if your tools allow it')
     const prev = prompt.slice(prompt.indexOf('<<<PREVIOUS'), prompt.indexOf('PREVIOUS>>>'))
     expect(prev).toContain('Too little to go on.')
     const change = prompt.slice(prompt.indexOf('<<<CHANGE'), prompt.indexOf('CHANGE>>>'))

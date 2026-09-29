@@ -8,12 +8,13 @@ import { ProviderError } from './errors.js'
 // chosen CLI turns out to be unusable, the next one that honours the same
 // policy is asked instead.
 //
-// Only these two kinds are worth a second CLI: nobody is signed in, or the
-// binary went missing between the probe and the call. A timeout, a reply
+// Only these kinds are worth a second CLI: nobody is signed in, the binary
+// went missing between the probe and the call, or it answered in a way
+// JobDekho could not vouch for (see agy-agent.js). A timeout, a reply
 // that could not be read, or a CLI that ran and failed are answers about
 // the work, and asking another CLI would spend a second call to be told the
 // same thing.
-const ANOTHER_CLI_MIGHT = new Set(['login', 'not_found'])
+const ANOTHER_CLI_MIGHT = new Set(['login', 'not_found', 'unconfirmed'])
 
 // The first CLI's sentence is the one shown if none of them works: it names
 // the CLI the person most likely meant to use.

@@ -274,7 +274,7 @@ describe('GET /api/ai/providers', () => {
         present: true, path: '/usr/local/bin/claude', runs: true, version: '2.1.245 (Claude Code)', error: null,
       },
       {
-        id: 'agy', label: 'Antigravity', install: 'https://antigravity.google', policies: ['none'],
+        id: 'agy', label: 'Antigravity', install: 'https://antigravity.google', policies: ['none', 'web'],
         present: true, path: '/usr/local/bin/claude', runs: true, version: '2.1.245 (Claude Code)', error: null,
       },
     ] })

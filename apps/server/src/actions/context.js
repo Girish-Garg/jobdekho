@@ -9,9 +9,9 @@ const hasEntries = (profile) => ENTRY_SECTIONS.some((key) => (profile?.[key]?.le
 // What an action may ask for beside the posting, by name. An action declares
 // the names it needs and the route loads exactly those, so the resume is
 // never in the room for a call that has no use for it. That is what lets the
-// one tool-enabled action (the fake check, which browses) promise it carries
-// no personal data: the guarantee is structural, not a matter of the prompt
-// leaving a field out.
+// one tool-enabled action (the fake check, which searches the web) promise
+// it carries no personal data: the guarantee is structural, not a matter of
+// the prompt leaving a field out.
 //
 //   load     (dashboard, userId) -> the value, or null when the person has not
 //            supplied it yet

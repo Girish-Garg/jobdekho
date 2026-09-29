@@ -3,8 +3,9 @@
 // job description) that could tell an agent to read files and post them
 // somewhere. The policies, and what they mean:
 //   none  no tools at all: the model reads the prompt and answers
-//   web   WebSearch and WebFetch and nothing else, pre-approved because a
-//         one-shot call cannot ask and would deny them silently
+//   web   searching the web and nothing else: Claude Code gets WebSearch and
+//         WebFetch, pre-approved because a one-shot call cannot ask and would
+//         deny them silently; Antigravity gets search_web alone (agy-agent.js)
 //
 // A CLI honours a policy or it does not, and honouring one means being able
 // to hand the call exactly that set of tools. A CLI that cannot is not a

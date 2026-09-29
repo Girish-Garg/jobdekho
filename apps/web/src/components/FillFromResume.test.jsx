@@ -15,7 +15,7 @@ const CLAUDE = {
 };
 const MISSING = { ...CLAUDE, present: false, path: null, runs: false, version: null };
 const AGY = {
-  id: 'agy', label: 'Antigravity', install: 'https://antigravity.google', policies: ['none'],
+  id: 'agy', label: 'Antigravity', install: 'https://antigravity.google', policies: ['none', 'web'],
   present: true, path: 'C:\\agy\\bin\\agy.exe', runs: true, version: '1.1.22', error: null,
 };
 const BROKEN = {

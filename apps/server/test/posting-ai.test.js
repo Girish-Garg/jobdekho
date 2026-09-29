@@ -99,7 +99,7 @@ describe('POST /api/postings/:id/ai/:kind', () => {
     const res = await check(makeFakeStore(), NO_CLI)
     expect(res.statusCode).toBe(503)
     expect(res.json().kind).toBe('not_found')
-    expect(res.json().error).toMatch(/Claude Code is not installed.*claude\.ai\/code/)
+    expect(res.json().error).toMatch(/^Neither Claude Code nor Antigravity is installed.*claude\.ai\/code.*antigravity\.google/)
   })
 
   it('runs the check with only web tools, saves the record and returns it', async () => {

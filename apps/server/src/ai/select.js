@@ -5,9 +5,9 @@ import { ProviderError } from './errors.js'
 // ai-provider-pref.js) if it is installed, running and honours the action's
 // policy; otherwise the first in PROVIDERS order that does, same as before
 // the preference existed. A preference for a CLI that cannot honour this
-// policy (Antigravity for 'web') is not a candidate at all, so it never
-// overrides the "only Claude Code browses" rule; it just falls through to
-// the ordinary fallback below.
+// policy is not a candidate at all, so a preference never hands an action
+// to a CLI that cannot do it; it just falls through to the ordinary fallback
+// below. Both CLIs honour both policies today.
 export function pickProvider(detected, policy, after = [], preferredId = null) {
   const eligible = detected.filter((p) => p.present && p.runs && p.policies.includes(policy) && !after.includes(p.id))
   const fit = eligible.find((p) => p.id === preferredId) ?? eligible[0]
@@ -33,8 +33,7 @@ function whyNone(detected, policy) {
   const capable = detected.filter((p) => p.policies.includes(policy))
   const stuck = capable.find((p) => p.present)
   if (stuck) return stuck.error
-  const excuses = detected.filter((p) => !p.policies.includes(policy)).map((p) => providerById(p.id)?.cannot?.[policy])
-  return [...excuses.filter(Boolean), missing(capable), install(capable)].join(' ')
+  return [missing(capable), install(capable)].join(' ')
 }
 
 const missing = (capable) => (capable.length === 1

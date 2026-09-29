@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { buildApp } from '@jobdekho/server/app.js'
-import { agyReply } from './fixtures/agy-stream.js'
+import { agyRan, agyReply } from './fixtures/agy-stream.js'
 
 // End-to-end proof that a saved preference (packages/store/src/ai-provider-pref.js)
 // actually reaches select.js through the app, not just pickProvider in isolation.
@@ -31,7 +31,9 @@ function bothInstalled() {
   return {
     locate: (name) => `/usr/local/bin/${name}`,
     run: vi.fn(async ({ file, args }) => {
-      if (args[0] !== '--version') return { stdout: file.endsWith('claude') ? CLAUDE_REPLY : AGY_REPLY, stderr: '', code: 0 }
+      if (args[0] !== '--version') {
+        return file.endsWith('claude') ? { stdout: CLAUDE_REPLY, stderr: '', code: 0 } : { stdout: AGY_REPLY, stderr: '', code: 0, collected: agyRan() }
+      }
       return { stdout: '1.0.0\n', stderr: '', code: 0 }
     }),
     scratch: (work) => work('/scratch'),

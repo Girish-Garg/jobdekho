@@ -5,7 +5,7 @@ import SettingsView from './SettingsView.jsx';
 vi.mock('../api.js', () => ({
   getProviders: vi.fn(async () => [
     { id: 'claude', label: 'Claude Code', policies: ['none', 'web'], present: true, runs: true, version: '2.1.245', error: null },
-    { id: 'agy', label: 'Antigravity', policies: ['none'], present: false, runs: false, version: null, error: null },
+    { id: 'agy', label: 'Antigravity', policies: ['none', 'web'], present: false, runs: false, version: null, error: null },
   ]),
   getProviderPreference: vi.fn(async () => ({ provider: 'auto' })),
   putProviderPreference: vi.fn(async () => null),

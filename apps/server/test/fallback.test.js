@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { callWithFallback } from '@jobdekho/server/ai/fallback.js'
 import { CLAUDE, AGY } from '@jobdekho/server/ai/providers.js'
 import { ProviderError } from '@jobdekho/server/ai/errors.js'
+import { agyRan } from './fixtures/agy-stream.js'
 
 const scratch = (work) => work('/scratch')
 const locate = () => '/usr/local/bin/cli'
@@ -20,9 +21,11 @@ const chooser = (...order) => vi.fn(async (policy, { after = [] } = {}) => {
   return left[0]
 })
 
-const runner = (byBinary) => vi.fn(async ({ file, args }) => ({
-  stdout: byBinary[args.includes('-p=') ? 'agy' : 'claude'] ?? '', stderr: '', code: 0, file,
-}))
+// agy's runs also hand back the log line that vouches for its agent.
+const runner = (byBinary) => vi.fn(async ({ file, args }) => {
+  const agy = args.includes('-p=')
+  return { stdout: byBinary[agy ? 'agy' : 'claude'] ?? '', stderr: '', code: 0, file, ...(agy && { collected: agyRan() }) }
+})
 
 describe('callWithFallback', () => {
   it('asks one CLI and stops when it answers', async () => {

@@ -21,8 +21,9 @@ function readSettings(path) {
 
 // The rule families that hand a headless call something it could act with,
 // as agy 1.1.22 names them. With none of these allowed, headless mode
-// auto-denies every permission-gated tool, which is the whole reason the
-// 'none' policy can be promised for a prompt that carries the resume.
+// auto-denies every permission-gated tool. Each call also runs an agent that
+// is not offered them at all (see agy-agent.js); this is the line behind it,
+// for a run where agy did not find that agent and fell back to its default.
 const GATED = /^\s*(command|read_file|url|browser|mcp)\s*\(/
 
 // Strings are what the CLI documents. A rule in any other shape is one whose

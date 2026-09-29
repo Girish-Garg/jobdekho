@@ -5,7 +5,8 @@ import { join } from 'node:path'
 import { buildApp } from '@jobdekho/server/app.js'
 import { CLAUDE, AGY } from '@jobdekho/server/ai/providers.js'
 import { encodeAgyInput } from '@jobdekho/server/ai/agy.js'
-import { agyReply } from './fixtures/agy-stream.js'
+import { agentFiles } from '@jobdekho/server/ai/agy-agent.js'
+import { agyRan, agyReply } from './fixtures/agy-stream.js'
 
 const config = { googleClientId: 'id', googleClientSecret: 'sec', sessionSecret: 'test-secret', baseUrl: 'http://localhost:3000' }
 
@@ -44,7 +45,9 @@ function machine({ has, reply = '', brokenClaude = false, home = '/no/such/home'
   return {
     locate: installed(...has),
     run: vi.fn(async ({ file, args }) => {
-      if (args[0] !== '--version') return { stdout: reply, stderr: '', code: 0 }
+      // agy's log is read back from the call directory (see staged-run.js);
+      // a fake run hands back the line a real run of JobDekho's agent writes.
+      if (args[0] !== '--version') return { stdout: reply, stderr: '', code: 0, ...(file.endsWith('agy') && { collected: agyRan() }) }
       if (brokenClaude && file.endsWith('claude')) return { stdout: '', stderr: 'libnode.so: cannot open shared object file', code: 127 }
       return { stdout: '1.1.22\n', stderr: '', code: 0 }
     }),
@@ -57,6 +60,7 @@ const promptCalls = (cli) => cli.run.mock.calls.map((c) => c[0]).filter((c) => c
 const LETTER = { letter: 'Dear Hiring Team at Acme,\n\nI built the board with React.\n\nRegards', usedFromResume: ['Built the board with React'], notClaimed: [] }
 const CLAUDE_LETTER = JSON.stringify({ type: 'result', result: JSON.stringify(LETTER) })
 const AGY_LETTER = agyReply(JSON.stringify(LETTER))
+const VERDICT = { verdict: 'probably_genuine', stillOpen: null, summary: 'Acme lists this role on its own board.', checks: [], redFlags: [] }
 const AGY_PROFILE = agyReply('{"skills":["node"],"titles":["backend"],"locations":["pune"],"years":3,"degree":"masters"}')
 
 async function makeApp(store, cli) {
@@ -90,7 +94,8 @@ describe('choosing the CLI for a posting action', () => {
     const [call] = promptCalls(cli)
     expect(call.file).toBe('/usr/local/bin/agy')
     expect(call.args).toEqual(AGY.promptArgs('none'))
-    expect(call.args).toEqual(['-p=', '--input-format', 'stream-json', '--output-format', 'stream-json', '--disable-slash-commands'])
+    expect(call.args).toEqual(['-p=', '--input-format', 'stream-json', '--output-format', 'stream-json', '--disable-slash-commands', '--agent', 'jobdekho-none', '--log-file', 'jobdekho-agy.log'])
+    expect(call.files).toEqual(agentFiles('none'))
     expect(call.cwd).toBe('/scratch')
     const line = JSON.parse(call.input)
     expect(line.event).toBe('user')
@@ -109,16 +114,17 @@ describe('choosing the CLI for a posting action', () => {
     expect(promptCalls(cli).map((c) => c.file)).toEqual(['/usr/local/bin/agy'])
   })
 
-  // The one action with a browser is the one Antigravity cannot be given.
-  it('refuses the fake check with only Antigravity installed, without spawning it, and says what would work', async () => {
-    const cli = machine({ has: ['agy'], reply: AGY_LETTER })
+  // Under 'web' Antigravity runs an agent with search_web and nothing else,
+  // and the prompt is public posting data: the resume is not in the room.
+  it('runs the fake check on Antigravity when only it is installed, with the search-only agent', async () => {
+    const cli = machine({ has: ['agy'], reply: agyReply(JSON.stringify(VERDICT)) })
     const res = await post(makeFakeStore(), cli, '/api/postings/p1/ai/fake-check')
-    expect(res.statusCode).toBe(503)
-    expect(res.json().kind).toBe('not_found')
-    expect(res.json().error).toMatch(/^This action needs a CLI that can browse/)
-    expect(res.json().error).toMatch(/Antigravity's headless mode cannot be given web access without permanent allow-rules in its own config/)
-    expect(res.json().error).toMatch(/Claude Code is not installed.*claude\.ai\/code/)
-    expect(promptCalls(cli)).toHaveLength(0)
+    expect(res.statusCode).toBe(200)
+    expect(res.json().provider).toBe('agy')
+    const [call] = promptCalls(cli)
+    expect(call.args).toEqual(AGY.promptArgs('web'))
+    expect(call.files).toEqual(agentFiles('web'))
+    expect(call.input).not.toMatch(/JANE DOE/)
   })
 
   it('names both CLIs when neither is installed and either would do', async () => {

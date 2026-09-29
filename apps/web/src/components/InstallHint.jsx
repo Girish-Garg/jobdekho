@@ -1,19 +1,9 @@
 import { Fragment } from 'react';
 
-// Why a CLI that is installed and runs still cannot take an action, by
-// policy and then by CLI. One pair exists today. Measured on agy 1.1.22:
-// headless mode auto-denies every permission-gated tool, and the only way
-// to allow one is a permanent rule in the person's own global settings,
-// which JobDekho will not write, so it is never handed a web action.
-const CANNOT = {
-  web: {
-    agy: 'this action needs a CLI that can browse, and Antigravity\'s headless mode cannot be given '
-      + 'web access without permanent allow-rules in its own config',
-  },
-};
-
+// Both CLIs take both policies today (Antigravity searches through an agent
+// of its own, see the server's ai/agy-agent.js), so a CLI that cannot serve
+// an action is one added later, and the sentence for it is the plain one.
 const serves = (p, policies) => policies.some((policy) => p.policies.includes(policy));
-const reasonFor = (p, policies) => policies.map((policy) => CANNOT[policy]?.[p.id]).find(Boolean) ?? 'it cannot take this action';
 
 // Shown in place of an AI button when no installed CLI can take the action.
 // A button that can only fail teaches nothing; the install links and a
@@ -54,8 +44,8 @@ export default function InstallHint({ intro, policies, providers, checking, onRe
       {unfit.map((p) => (
         <p key={p.id} className="text-sm text-ink">
           {p.present && p.runs
-            ? `${p.label} is installed, but ${reasonFor(p, policies)}.`
-            : `${p.label} would not help here: ${reasonFor(p, policies)}.`}
+            ? `${p.label} is installed, but it cannot take this action.`
+            : `${p.label} would not help here: it cannot take this action.`}
         </p>
       ))}
       <div>

@@ -40,3 +40,23 @@ export const agyStream = (result) => [AGY_INIT, ...AGY_STEPS, JSON.stringify({ e
 
 // A reply of `text`, as the stream would carry it.
 export const agyReply = (text) => agyStream({ ...AGY_OK, response: text })
+
+// The lines of agy 1.2.13's --log-file that say which agent a run used (see
+// ai/agy-agent.js), measured with a real run of each. The first is a run of
+// the agent JobDekho wrote; the pair after it is what agy logs when the file
+// was not found and it ran its default agent, with every tool, instead.
+export const AGY_LOG_AGENT = 'I0930 00:15:57.590490       1 conversation_manager.go:512] Starting new conversation (agent=true)\n'
+export const AGY_LOG_FELL_BACK = 'W0930 00:15:49.742313       1 session.go:94] Agent "jobdekho-none" not found, falling back to default\n'
+  + 'I0930 00:15:56.658032       1 conversation_manager.go:512] Starting new conversation (agent=false)\n'
+
+// What a fake run hands back for the log, the way staged-run.js reads it.
+export const agyRan = (log = AGY_LOG_AGENT) => ({ 'jobdekho-agy.log': log })
+
+// A finished tool call as the stream carries it, from a real search_web run.
+export const agyToolStep = (name) => JSON.stringify({
+  event: 'step_update',
+  step_update: { step_index: 2, state: 'DONE', step_type: 'tool', tool_name: name, tool_info: { name, parameters: { query: 'acme careers' } } },
+})
+
+// A reply of `text` that called `tools` on the way.
+export const agyReplyAfter = (tools, text) => [AGY_INIT, ...tools.map(agyToolStep), ...AGY_STEPS, JSON.stringify({ event: 'result', result: { ...AGY_OK, response: text } })].join('\n') + '\n'

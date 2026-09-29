@@ -12,6 +12,7 @@ const STATUS = {
   busy: 503,
   timeout: 504,
   failed: 502,
+  unconfirmed: 502,
   unreadable: 422,
 }
 
@@ -44,6 +45,13 @@ const MESSAGE = {
   failed: (p, detail) =>
     `${p.label} could not finish: ${trimStop(detail)}. `
     + `Try again; if it keeps happening, run "${p.binary}" from a terminal to see the full error.`,
+  // Apart from 'failed' because the CLI did answer, and the answer was
+  // thrown away on purpose: nothing showed it came from the tools the call
+  // allows (see agy-agent.js). A CLI update is the usual cause.
+  unconfirmed: (p, detail) =>
+    `${p.label} answered, but JobDekho could not confirm it kept to the tools this call allows `
+    + `(${trimStop(detail)}), so the answer was not used. This can follow an update to ${p.label}; `
+    + 'pick the other AI in Settings, or update JobDekho.',
   unreadable: (p) =>
     `${p.label} answered, but the reply was not in the shape JobDekho expected. Try again.`,
 }

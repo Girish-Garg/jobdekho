@@ -32,17 +32,23 @@ describe('pickProvider', () => {
     expect(pickProvider([stuck(CLAUDE, BROKEN), ready(AGY)], 'none')).toBe(AGY)
   })
 
-  // Antigravity honours 'none' by auto-denying every tool; a browser for it
-  // would mean a permanent allow-rule in the person's own config.
-  it('never uses Antigravity for a web action, and says why with the link to what would work', () => {
-    const err = thrown(() => pickProvider([absent(CLAUDE), ready(AGY)], 'web'))
+  // Antigravity searches under 'web' through an agent of its own (see
+  // agy-agent.js), so it takes a web action when Claude Code cannot.
+  it('uses Antigravity for a web action when Claude Code is absent or will not run', () => {
+    expect(pickProvider([absent(CLAUDE), ready(AGY)], 'web')).toBe(AGY)
+    expect(pickProvider([stuck(CLAUDE, BROKEN), ready(AGY)], 'web')).toBe(AGY)
+  })
+
+  // A CLI that does not honour the policy is not named as something to
+  // install, however it is doing.
+  it('names only the CLIs that honour the policy when none is installed', () => {
+    const noWeb = { ...absent(AGY), policies: ['none'] }
+    const err = thrown(() => pickProvider([absent(CLAUDE), noWeb], 'web'))
     expect(err.kind).toBe('not_found')
     expect(err.status).toBe(503)
     expect(err.provider).toBe('claude')
     expect(err.message).toBe(
-      'This action needs a CLI that can browse, and Antigravity\'s headless mode cannot be given web access '
-      + 'without permanent allow-rules in its own config. '
-      + 'Claude Code is not installed, or is not on the PATH JobDekho was started with. '
+      'Claude Code is not installed, or is not on the PATH JobDekho was started with. '
       + 'Install it from https://claude.ai/code, then restart JobDekho.',
     )
   })
@@ -56,11 +62,10 @@ describe('pickProvider', () => {
     )
   })
 
-  it('names only Claude Code, and the reason, when neither is installed and the action needs a browser', () => {
+  it('names both CLIs for a web action too, since either can search', () => {
     const err = thrown(() => pickProvider([absent(CLAUDE), absent(AGY)], 'web'))
-    expect(err.message).toMatch(/^This action needs a CLI that can browse/)
-    expect(err.message).toMatch(/Claude Code is not installed.*claude\.ai\/code/)
-    expect(err.message).not.toMatch(/antigravity\.google/)
+    expect(err.message).toMatch(/^Neither Claude Code nor Antigravity is installed/)
+    expect(err.message).toMatch(/claude\.ai\/code.*antigravity\.google/)
   })
 
   // The person has that CLI; the fix is on their machine, not a second install.
@@ -72,10 +77,9 @@ describe('pickProvider', () => {
     expect(both.message).toBe(BROKEN)
   })
 
-  it('ignores a stuck Antigravity for a web action, since it could not have helped', () => {
+  it('repeats a stuck Antigravity\'s own sentence for a web action as well', () => {
     const err = thrown(() => pickProvider([absent(CLAUDE), stuck(AGY, GATE)], 'web'))
-    expect(err.message).toMatch(/needs a CLI that can browse/)
-    expect(err.message).not.toMatch(/pre-approves/)
+    expect(err.message).toBe(GATE)
   })
 
   it('throws on a policy nobody knows, as a bug rather than a sentence', () => {
@@ -93,10 +97,15 @@ describe('pickProvider with a preference', () => {
     expect(pickProvider([ready(CLAUDE), ready(AGY)], 'none', ['agy'], 'agy')).toBe(CLAUDE)
   })
 
-  // The preference can never put Antigravity on a web action: it is not in
-  // the eligible set for 'web' at all, preferred or not.
+  it('honours a preference for Antigravity on a web action', () => {
+    expect(pickProvider([ready(CLAUDE), ready(AGY)], 'web', [], 'agy')).toBe(AGY)
+  })
+
+  // A CLI that cannot honour the policy is not in the eligible set at all,
+  // preferred or not.
   it('never lets a preference reach a CLI that cannot honour the policy', () => {
-    expect(pickProvider([ready(CLAUDE), ready(AGY)], 'web', [], 'agy')).toBe(CLAUDE)
+    const noWeb = { ...ready(AGY), policies: ['none'] }
+    expect(pickProvider([ready(CLAUDE), noWeb], 'web', [], 'agy')).toBe(CLAUDE)
   })
 
   it('treats no preference the same as before the feature existed', () => {
@@ -109,7 +118,7 @@ describe('createSelector', () => {
     const detect = vi.fn(async () => [absent(CLAUDE), ready(AGY)])
     const select = createSelector(detect)
     expect(await select('none')).toBe(AGY)
-    await expect(select('web')).rejects.toMatchObject({ kind: 'not_found' })
+    expect(await select('web')).toBe(AGY)
     expect(detect).toHaveBeenCalledTimes(2)
   })
 

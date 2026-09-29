@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { locateBinary } from '@jobdekho/server/ai/locate.js'
 import { unwrapClaude } from '@jobdekho/server/ai/claude.js'
 import { CLAUDE, AGY, PROVIDERS, TOOL_POLICIES, providerById } from '@jobdekho/server/ai/providers.js'
+import { underPolicies } from '@jobdekho/server/ai/policies.js'
 import { callProvider } from '@jobdekho/server/ai/call.js'
 import { inEmptyDir } from '@jobdekho/server/ai/scratch-dir.js'
 import { existsSync, readdirSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs'
@@ -65,16 +66,16 @@ describe('the provider registry', () => {
   })
 
   // Which policies a CLI honours decides which actions it may be handed:
-  // Claude Code takes both, Antigravity only the one it honours by
-  // construction (see agy.js). Asking for the other is an ordinary "not this
-  // CLI", not a crash; only a policy nobody knows is a bug.
+  // both take both today (see agy-agent.js for how Antigravity does). A CLI
+  // that did not would be an ordinary "not this CLI", not a crash; only a
+  // policy nobody knows is a bug.
   it('says which policies each CLI honours, answering null rather than throwing for one it cannot', () => {
     expect(CLAUDE.policies).toEqual(['none', 'web'])
-    expect(AGY.policies).toEqual(['none'])
-    expect(CLAUDE.supports('web')).toBe(true)
-    expect(AGY.supports('none')).toBe(true)
-    expect(AGY.supports('web')).toBe(false)
-    expect(AGY.promptArgs('web')).toBeNull()
+    expect(AGY.policies).toEqual(['none', 'web'])
+    const noWeb = underPolicies({ base: ['-p'], byPolicy: { none: [] } })
+    expect(noWeb.policies).toEqual(['none'])
+    expect(noWeb.supports('web')).toBe(false)
+    expect(noWeb.promptArgs('web')).toBeNull()
     expect(() => AGY.supports('default')).toThrow(/unknown tool policy/)
     expect(() => AGY.promptArgs()).toThrow(/unknown tool policy/)
   })
@@ -180,7 +181,8 @@ describe('callProvider', () => {
   // here with one is a wiring bug, and the safe failure is no spawn.
   it('refuses to run a provider under a policy it cannot honour', async () => {
     const run = vi.fn()
-    await expect(callProvider({ provider: AGY, prompt: 'x', tools: 'web', locate: HERE, run })).rejects.toThrow(/cannot honour the "web" tool policy/)
+    const provider = { ...CLAUDE, label: 'No Web', ...underPolicies({ base: ['-p'], byPolicy: { none: [] } }) }
+    await expect(callProvider({ provider, prompt: 'x', tools: 'web', locate: HERE, run })).rejects.toThrow(/No Web cannot honour the "web" tool policy/)
     expect(run).not.toHaveBeenCalled()
   })
 
@@ -308,7 +310,7 @@ describe('createDetector', () => {
         present: true, path: '/usr/local/bin/claude', runs: true, version: '2.1.245', error: null,
       },
       {
-        id: 'agy', label: 'Antigravity', install: 'https://antigravity.google', policies: ['none'],
+        id: 'agy', label: 'Antigravity', install: 'https://antigravity.google', policies: ['none', 'web'],
         present: true, path: '/usr/local/bin/agy', runs: true, version: '2.1.245', error: null,
       },
     ])

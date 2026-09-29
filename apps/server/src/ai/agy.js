@@ -1,5 +1,6 @@
 import { parseJsonObject } from './loose-json.js'
 import { ProviderError, classify } from './errors.js'
+import { agentArgs } from './agy-agent.js'
 
 // Antigravity's agy, measured at 1.1.22 and confirmed unchanged on 1.2.2.
 // Its -p takes the prompt as its VALUE, so `-p=` with an empty value plus
@@ -9,18 +10,16 @@ import { ProviderError, classify } from './errors.js'
 // line with exactly one terminal `result`. --disable-slash-commands keeps a
 // prompt that opens with "/" from being read as a command.
 //
-// 'none' alone, honoured by construction rather than by a flag. agy has no
-// --tools or --allowedTools, but headless mode cannot prompt for permission,
-// so every permission-gated tool (the command, read_file, url, browser and
-// mcp families) is auto-denied unless an allow-rule sits in the person's
-// global settings.json; asked to fetch a URL or read a file, it reported the
-// action denied and answered nothing. 'web' is therefore not offered: the
-// only way to grant it would be a permanent url(...) rule in that file, for
-// every call on the machine and not just this one. The gate in
-// agy-settings.js refuses an install where someone has written one by hand.
+// Both policies, through an agent written into the call's directory whose
+// tool list is the policy (see agy-agent.js): none for 'none', search_web for
+// 'web'. Headless mode cannot prompt for permission, so the permission-gated
+// tools (the command, read_file, url, browser and mcp families) are denied
+// either way unless an allow-rule sits in the person's global settings.json,
+// which the gate in agy-settings.js refuses. Opening a page is one of those,
+// so under 'web' Antigravity searches but never reads a page itself.
 export const AGY_ARGS = {
   base: ['-p=', '--input-format', 'stream-json', '--output-format', 'stream-json', '--disable-slash-commands'],
-  byPolicy: { none: [] },
+  byPolicy: { none: agentArgs('none'), web: agentArgs('web') },
 }
 
 // One turn per NDJSON line. The event name is exactly "user" (anything else
@@ -57,7 +56,7 @@ function lastResult(stdout) {
 // looks like success unless the result is read; the error string carries
 // the sentence that says so. A run that answered nothing after having a
 // tool denied is the model asking for something headless mode could not
-// give. No JobDekho prompt under 'none' should get there, so it is reported
+// give. No JobDekho prompt should get there, so it is reported
 // as a failure that names the tools rather than as an empty reply the
 // feature would call unreadable.
 //

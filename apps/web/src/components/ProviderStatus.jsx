@@ -2,7 +2,7 @@
 // providers endpoint is the one place that knows what JobDekho can drive.
 export default function ProviderStatus({ providers }) {
   if (!providers.length) return null;
-  const canBrowse = providers.filter((p) => p.policies.includes('web'));
+  const canSearch = providers.filter((p) => p.policies.includes('web'));
 
   return (
     <div className="flex flex-col gap-2 text-sm">
@@ -12,7 +12,7 @@ export default function ProviderStatus({ providers }) {
           <span className="text-muted">{status(p)}</span>
         </div>
       ))}
-      <p className="mt-1 text-muted">{browseSentence(canBrowse, providers)}</p>
+      <p className="mt-1 text-muted">{webSentence(canSearch, providers)}</p>
     </div>
   );
 }
@@ -23,13 +23,12 @@ function status({ runs, version, error }) {
   return 'not installed';
 }
 
-// "Is this job real?" is the one action that browses, so it can only ever
-// run on a CLI that honours the 'web' policy (see ai/policies.js).
-function browseSentence(canBrowse, providers) {
-  if (!canBrowse.length) return '"Is this job real?" needs a CLI that can browse the web; none of these can.';
-  const can = canBrowse.map((p) => p.label).join(' or ');
-  const rest = providers.filter((p) => !canBrowse.includes(p)).map((p) => p.label).join(' or ');
-  return rest
-    ? `"Is this job real?" needs a CLI that can browse the web, so it only ever runs on ${can}. ${rest} cannot be given that.`
-    : `"Is this job real?" needs a CLI that can browse the web, so it only ever runs on ${can}.`;
+// "Is this job real?" is the one action that searches the web, so it can
+// only run on a CLI that honours the 'web' policy (see ai/policies.js).
+function webSentence(canSearch, providers) {
+  if (!canSearch.length) return '"Is this job real?" needs a CLI that can search the web; none of these can.';
+  const can = canSearch.map((p) => p.label).join(' and ');
+  const rest = providers.filter((p) => !canSearch.includes(p)).map((p) => p.label).join(' or ');
+  const intro = `"Is this job real?" searches the web, which ${can} ${canSearch.length > 1 ? 'can both' : 'can'} do.`;
+  return rest ? `${intro} ${rest} cannot.` : intro;
 }

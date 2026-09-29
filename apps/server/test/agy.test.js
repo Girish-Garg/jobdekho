@@ -8,11 +8,13 @@ import { agyAllowRules, agyUnusable, agySettingsPath } from '@jobdekho/server/ai
 import { callProvider } from '@jobdekho/server/ai/call.js'
 import { createDetector } from '@jobdekho/server/ai/detect.js'
 import { ProviderError } from '@jobdekho/server/ai/errors.js'
-import { agyStream, agyReply, AGY_INIT, AGY_OK, AGY_EMPTY_PROMPT, AGY_SIGNED_OUT, AGY_DENIED } from './fixtures/agy-stream.js'
+import { agentFiles } from '@jobdekho/server/ai/agy-agent.js'
+import { agyRan, agyStream, agyReply, AGY_INIT, AGY_OK, AGY_EMPTY_PROMPT, AGY_SIGNED_OUT, AGY_DENIED } from './fixtures/agy-stream.js'
 
 const HERE = () => 'C:\\Users\\me\\AppData\\Local\\agy\\bin\\agy.exe'
 const scratch = (work) => work('/scratch')
 const AGY_ONE_SHOT = ['-p=', '--input-format', 'stream-json', '--output-format', 'stream-json', '--disable-slash-commands']
+const AGENT = (policy) => ['--agent', `jobdekho-${policy}`, '--log-file', 'jobdekho-agy.log']
 
 function thrown(fn) {
   try { fn() } catch (err) { return err }
@@ -23,22 +25,21 @@ describe('the Antigravity entry', () => {
   // -p takes a value on this CLI, so the empty value plus stream-json input
   // is what moves the prompt off the command line and onto stdin.
   it('reads the prompt from stdin as stream-json and answers as stream-json, with no prompt on the command line', () => {
-    expect(AGY.promptArgs('none')).toEqual(AGY_ONE_SHOT)
-    expect(AGY_ARGS.byPolicy).toEqual({ none: [] })
+    expect(AGY.promptArgs('none')).toEqual([...AGY_ONE_SHOT, ...AGENT('none')])
+    expect(AGY_ARGS.byPolicy).toEqual({ none: AGENT('none'), web: AGENT('web') })
     expect(AGY.versionArgs).toEqual(['--version'])
     expect(AGY.binary).toBe('agy')
     expect(AGY.label).toBe('Antigravity')
     expect(AGY.install).toBe('https://antigravity.google')
   })
 
-  // Headless mode auto-denies every permission-gated tool, and the only way
-  // to allow one is a permanent rule in the person's own global settings, so
-  // web access is not something a single call can be given.
-  it('honours the no-tools policy alone, and asks for no permission to be skipped', () => {
-    expect(AGY.policies).toEqual(['none'])
-    expect(AGY.supports('web')).toBe(false)
-    expect(AGY.promptArgs('web')).toBeNull()
-    expect(AGY.promptArgs('none').join(' ')).not.toMatch(/dangerously|yolo|allow|permission/i)
+  // agy has no --tools: each call runs an agent of its own whose tool list is
+  // the policy (see agy-agent.js), and nothing asks for a permission to be
+  // skipped or granted.
+  it('honours both policies through an agent of its own, and asks for no permission to be skipped', () => {
+    expect(AGY.policies).toEqual(['none', 'web'])
+    expect(AGY.promptArgs('web')).toEqual([...AGY_ONE_SHOT, ...AGENT('web')])
+    for (const policy of ['none', 'web']) expect(AGY.promptArgs(policy).join(' ')).not.toMatch(/dangerously|yolo|allow|permission/i)
   })
 
   it('wraps the prompt as one "user" event line holding a single text block', () => {
@@ -121,15 +122,17 @@ describe('unwrapAgy', () => {
 
 describe('callProvider with Antigravity', () => {
   it('runs agy with the fixed arguments and the prompt wrapped on stdin, and returns the text', async () => {
-    const run = vi.fn(async () => ({ stdout: agyReply('{"skills":["go"]}'), stderr: '', code: 0 }))
+    const run = vi.fn(async () => ({ stdout: agyReply('{"skills":["go"]}'), stderr: '', code: 0, collected: agyRan() }))
     const out = await callProvider({ provider: AGY, prompt: 'RESUME:\nJane "Doe"', tools: 'none', locate: HERE, run, scratch })
     expect(out).toEqual({ provider: 'agy', text: '{"skills":["go"]}' })
     expect(run).toHaveBeenCalledWith({
       file: HERE(),
-      args: AGY_ONE_SHOT,
+      args: [...AGY_ONE_SHOT, ...AGENT('none')],
       input: '{"event":"user","message":{"role":"user","content":[{"type":"text","text":"RESUME:\\nJane \\"Doe\\""}]}}\n',
       timeoutMs: 120000,
       cwd: '/scratch',
+      files: agentFiles('none'),
+      collect: ['jobdekho-agy.log'],
     })
   })
 
@@ -210,7 +213,7 @@ describe('the settings gate', () => {
     const run = vi.fn(async () => ({ stdout: '1.1.22\n', stderr: '', code: 0 }))
     const home = homeWith({ permissions: { allow: ['read_file(*)'] } })
     const [agy] = await createDetector({ locate: HERE, run, providers: [AGY], home })()
-    expect(agy).toMatchObject({ id: 'agy', present: true, path: HERE(), runs: false, version: null, policies: ['none'] })
+    expect(agy).toMatchObject({ id: 'agy', present: true, path: HERE(), runs: false, version: null, policies: ['none', 'web'] })
     expect(agy.error).toMatch(/read_file\(\*\)/)
     expect(run).not.toHaveBeenCalled()
   })
