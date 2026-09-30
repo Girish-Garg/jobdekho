@@ -2,6 +2,7 @@ import { parseJsonObject } from '../ai/loose-json.js'
 import { validateActions } from './actions.js'
 import { validateRefs } from './refs.js'
 import { validateProposals } from './proposals.js'
+import { withoutPostingIds } from './reply-ids.js'
 
 // The reply is shown straight in the panel, so it is clamped to a size the
 // panel was designed for rather than trusted as is - the same reasoning
@@ -25,7 +26,7 @@ export function parseChatReply(raw, context) {
   if (!obj) return null
   const onFeed = !context?.page || context.page === 'postings'
   const proposals = validateProposals(obj.proposals, context)
-  const given = typeof obj.reply === 'string' ? obj.reply.trim().slice(0, MAX_REPLY) : ''
+  const given = typeof obj.reply === 'string' ? withoutPostingIds(obj.reply, context).trim().slice(0, MAX_REPLY) : ''
   const reply = given || (proposals.length ? PROPOSAL_ONLY : '')
   if (!reply) return null
   return {

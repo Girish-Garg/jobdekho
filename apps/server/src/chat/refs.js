@@ -7,7 +7,7 @@
 // ever name and open a posting the person could already see.
 const MAX_REFS = 6
 
-function knownRows(context) {
+export function knownRows(context) {
   const rows = new Map()
   for (const row of context?.top ?? []) rows.set(row.id, row)
   // So are the openings of a company the question named, looked up across

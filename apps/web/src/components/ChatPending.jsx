@@ -13,7 +13,10 @@ const STEP_TONE = { done: 'text-muted', current: 'font-semibold text-ink', next:
 // closed, because the answer now waits for it (see lib/chatSession.js).
 export default function ChatPending({ call, providers = [] }) {
   const now = useNow(true);
-  const named = call.label || providers.find((p) => p.id === call.provider)?.label || '';
+  // Looked up as it is drawn, not only when the call started: a question sent
+  // the moment the panel opened can start before the list of CLIs arrives,
+  // and the card would keep saying "ollama" where it means "Ollama".
+  const named = providers.find((p) => p.id === call.provider)?.label || call.label || '';
   const steps = aiSteps(call.events, { label: named, doing: call.what.doing ?? 'thinking' });
   const current = steps.find((step) => step.state === 'current');
 
