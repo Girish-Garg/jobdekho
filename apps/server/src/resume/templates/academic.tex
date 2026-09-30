@@ -26,8 +26,11 @@
 \raggedbottom
 \raggedright
 
-\titleformat{\section}{\normalsize\scshape}{}{0pt}{}[{\vspace{-6pt}\hrule\vspace{6pt}}]
-\titlespacing*{\section}{0pt}{12pt}{3pt}
+% The rule sits under the heading: titlesec's \titlerule after a point of
+% space. It used to be drawn after pulling back up 6pt, which ran it through
+% the heading's letters so every section read as struck out.
+\titleformat{\section}{\normalsize\scshape}{}{0pt}{}[\vspace{1pt}\titlerule]
+\titlespacing*{\section}{0pt}{12pt}{5pt}
 
 \newenvironment{resItems}{%
   \begin{itemize}[leftmargin=1.2em, topsep=2pt, itemsep=1.5pt, parsep=0pt]

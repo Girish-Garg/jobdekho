@@ -25,8 +25,13 @@
 \raggedbottom
 \raggedright
 
-\titleformat{\section}{\normalsize\bfseries\MakeUppercase}{}{0pt}{}[{\vspace{-5pt}\hrule\vspace{5pt}}]
-\titlespacing*{\section}{0pt}{7pt}{2pt}
+% The rule sits under the heading: titlesec's \titlerule after a point of
+% space. It used to be drawn after pulling back up 6pt, which ran it through
+% the heading's letters so every section read as struck out.
+% \MakeUppercase takes the title as its argument in the before-code slot;
+% in the format slot it grabbed titlesec's own row macro instead.
+\titleformat{\section}{\normalsize\bfseries}{}{0pt}{\MakeUppercase}[\vspace{1pt}\titlerule]
+\titlespacing*{\section}{0pt}{7pt}{4pt}
 
 \newenvironment{resItems}{%
   \begin{itemize}[leftmargin=1em, topsep=1pt, itemsep=0.5pt, parsep=0pt]

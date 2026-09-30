@@ -1,4 +1,4 @@
-import { getDocument } from '@jobdekho/store/documents.js'
+import { readDocument } from '../documents/read.js'
 import { documentStore } from '../documents/store.js'
 import { documentPdf } from '../documents/pdf.js'
 import { compileTex } from '../resume/compile.js'
@@ -23,7 +23,7 @@ export async function documentFileRoutes(app) {
 
   app.post('/api/documents/:id/pdf', auth, async (request, reply) => {
     const userId = request.user.sub
-    const doc = await getDocument(store, userId, request.params.id)
+    const doc = await readDocument(store, userId, request.params.id)
     if (!doc) return reply.code(404).send({ error: NO_DOCUMENT })
     const { pdf, failure } = await documentPdf({ tex: doc.tex, store, userId, compile })
     if (failure) return reply.code(failure.status).send(failure.body)
@@ -32,7 +32,7 @@ export async function documentFileRoutes(app) {
   })
 
   app.get('/api/documents/:id/tex', auth, async (request, reply) => {
-    const doc = await getDocument(store, request.user.sub, request.params.id)
+    const doc = await readDocument(store, request.user.sub, request.params.id)
     if (!doc) return reply.code(404).send({ error: NO_DOCUMENT })
     reply.type('application/x-tex; charset=utf-8')
     reply.header('content-disposition', `attachment; filename="${downloadName(doc.name)}.tex"`)

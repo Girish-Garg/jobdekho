@@ -1,4 +1,5 @@
-import { listDocuments, getDocument } from '@jobdekho/store/documents.js'
+import { listDocuments } from '@jobdekho/store/documents.js'
+import { readDocument } from '../documents/read.js'
 import { textChangedAt } from '@jobdekho/store/document-versions.js'
 import { locatePdflatex } from '../resume/locate-latex.js'
 import { trimOpenPosting } from './postings-summary.js'
@@ -37,7 +38,7 @@ function openDocument(doc) {
 export async function resumePageContext(dashboard, documents, userId, documentId) {
   const record = await dashboard.getProfile(userId)
   const list = await listDocuments(documents, userId)
-  const doc = typeof documentId === 'string' && documentId ? await getDocument(documents, userId, documentId) : null
+  const doc = typeof documentId === 'string' && documentId ? await readDocument(documents, userId, documentId) : null
   const posting = doc?.postingId ? trimOpenPosting(await dashboard.getPosting(userId, doc.postingId)) : null
   return {
     record,

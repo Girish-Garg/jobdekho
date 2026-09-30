@@ -1,4 +1,5 @@
-import { listDocuments, getDocument, createDocument, deleteDocument, DOCUMENT_KINDS } from '@jobdekho/store/documents.js'
+import { listDocuments, createDocument, deleteDocument, DOCUMENT_KINDS } from '@jobdekho/store/documents.js'
+import { readDocument } from '../documents/read.js'
 import { documentStore } from '../documents/store.js'
 import { documentView } from '../documents/view.js'
 import { firstDraft } from '../documents/first-draft.js'
@@ -27,7 +28,7 @@ export async function documentRoutes(app) {
   app.get('/api/documents', auth, async (request) => ({ documents: await listDocuments(store, request.user.sub) }))
 
   app.get('/api/documents/:id', auth, async (request, reply) => {
-    const doc = await getDocument(store, request.user.sub, request.params.id)
+    const doc = await readDocument(store, request.user.sub, request.params.id)
     if (!doc) return reply.code(404).send({ error: NO_DOCUMENT })
     const bodies = ['1', 'true'].includes(String(request.query?.bodies ?? ''))
     return documentView(doc, { bodies })
