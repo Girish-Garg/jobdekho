@@ -13,13 +13,19 @@ function Harness(props) {
 }
 
 vi.mock('../api.js', () => ({
+  getScrapeState: vi.fn(async () => ({ running: false, startedAt: null, finishedAt: null, done: 0, total: 0, lastRun: null })),
+  startScrape: vi.fn(async () => ({ running: true, done: 0, total: 0 })),
+  getScrapeSettings: vi.fn(async () => ({ autoRefresh: true })),
+  putScrapeSettings: vi.fn(async () => null),
+  getSetup: vi.fn(async () => []),
   getPostings: vi.fn(async () => []),
   getPostingsPage: vi.fn(),
   getSources: vi.fn(async () => []),
   setStatus: vi.fn(async () => null),
 }));
 
-import { getPostings, getPostingsPage, setStatus } from '../api.js';
+import { getPostings, getPostingsPage, setStatus, getSetup } from '../api.js';
+import { announceRefreshed } from '../lib/postingsRefreshedSignal.js';
 
 // The feed reads a page with its counts; these tests speak in postings, so
 // the page call answers with whatever getPostings is set to return.
@@ -681,5 +687,27 @@ describe('PostingsView wide two-pane layout', () => {
     render(<Harness filters={EMPTY} />);
     fireEvent.click(await screen.findByText('Alpha'));
     expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+});
+
+// A refresh run from the header (or the daily one) ends in a signal the feed
+// reads again on, so new postings show without reloading the page.
+describe('PostingsView after a refresh', () => {
+  it('reads the feed again when a refresh finishes', async () => {
+    render(<Harness filters={EMPTY} />);
+    await waitFor(() => expect(getPostings).toHaveBeenCalledTimes(1));
+    act(() => announceRefreshed({ fresh: 3 }));
+    await waitFor(() => expect(getPostings).toHaveBeenCalledTimes(2));
+  });
+});
+
+describe('PostingsView setup banner', () => {
+  it('says what is missing and opens Settings from there', async () => {
+    getSetup.mockResolvedValueOnce([{ id: 'ai', label: 'An AI to answer with', state: 'missing', detail: 'None found.', fix: 'Install one.' }]);
+    const onOpenSettings = vi.fn();
+    render(<Harness filters={EMPTY} onOpenSettings={onOpenSettings} />);
+    const banner = await screen.findByRole('region', { name: 'Setup' });
+    fireEvent.click(within(banner).getByRole('button', { name: 'Open Settings' }));
+    expect(onOpenSettings).toHaveBeenCalled();
   });
 });

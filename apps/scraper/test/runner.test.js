@@ -39,6 +39,21 @@ describe('runAdapters', () => {
     expect(started).toHaveLength(5)
   })
 
+  // The server's refresh job reports "42 of 118 sources" from this, so every
+  // source is told exactly once, failures included, with a count that only
+  // ever climbs to the total.
+  it('tells onResult about each source as it settles, with how many are done of how many', async () => {
+    const heard = []
+    await runAdapters([ok, boom, ok], null, { retries: 0, onResult: (result, progress) => heard.push([result.name, result.ok, progress]) })
+    expect(heard.map(([, , p]) => p)).toEqual([{ done: 1, total: 3 }, { done: 2, total: 3 }, { done: 3, total: 3 }])
+    expect(heard.map(([name, isOk]) => `${name}:${isOk}`).sort()).toEqual(['boom:false', 'ok:true', 'ok:true'])
+  })
+
+  it('runs as before when nobody listens for progress', async () => {
+    const { results } = await runAdapters([ok], null, { retries: 0 })
+    expect(results).toHaveLength(1)
+  })
+
   it('retries a failing adapter the requested number of times before giving up', async () => {
     let attempts = 0
     const flaky = { name: 'flaky', fetch: async () => { attempts++; throw new Error('nope') } }

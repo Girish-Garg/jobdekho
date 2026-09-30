@@ -22,6 +22,11 @@ const OLLAMA = {
 };
 
 vi.mock('../api.js', () => ({
+  getScrapeState: vi.fn(async () => ({ running: false, startedAt: null, finishedAt: null, done: 0, total: 0, lastRun: null })),
+  startScrape: vi.fn(async () => ({ running: true, done: 0, total: 0 })),
+  getScrapeSettings: vi.fn(async () => ({ autoRefresh: true })),
+  putScrapeSettings: vi.fn(async () => null),
+  getSetup: vi.fn(async () => []),
   getProviders: vi.fn(async () => [
     { id: 'claude', label: 'Claude Code', policies: ['none', 'web'], present: true, runs: true, version: '2.1.245', error: null },
     { id: 'agy', label: 'Antigravity', policies: ['none', 'web'], present: false, runs: false, version: null, error: null },
@@ -41,10 +46,10 @@ async function mount() {
 }
 
 describe('SettingsView structure', () => {
-  it('renders the three cards in order: AI CLI, Appearance, Your data', async () => {
+  it('renders the cards in order: the setup check and the AI, then postings, appearance and data', async () => {
     await mount();
     const headings = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent);
-    expect(headings).toEqual(['AI CLI', 'Appearance', 'Your data']);
+    expect(headings).toEqual(['Setup check', 'AI CLI', 'Postings', 'Appearance', 'Your data']);
   });
 
   it('puts the theme choice under Appearance', async () => {

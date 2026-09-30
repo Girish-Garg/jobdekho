@@ -5,6 +5,11 @@ import { askAboutPosting } from '../lib/askAiSignal.js';
 import { startChatDraft } from '../lib/chatDraftSignal.js';
 
 vi.mock('../api.js', () => ({
+  getScrapeState: vi.fn(async () => ({ running: false, startedAt: null, finishedAt: null, done: 0, total: 0, lastRun: null })),
+  startScrape: vi.fn(async () => ({ running: true, done: 0, total: 0 })),
+  getScrapeSettings: vi.fn(async () => ({ autoRefresh: true })),
+  putScrapeSettings: vi.fn(async () => null),
+  getSetup: vi.fn(async () => []),
   getFilters: vi.fn(async () => ({})),
   putFilters: vi.fn(async () => null),
   getPostings: vi.fn(async () => []),

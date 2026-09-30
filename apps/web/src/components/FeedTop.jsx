@@ -2,6 +2,8 @@ import FilterBar from './FilterBar.jsx';
 import PostingsHeader from './PostingsHeader.jsx';
 import DensityToggle from './DensityToggle.jsx';
 import SortSelect from './SortSelect.jsx';
+import RefreshPostings from './RefreshPostings.jsx';
+import SetupNotice from './SetupNotice.jsx';
 
 // Everything above the rows. The filters sit in the feed's own column rather
 // than in a full-width band of chrome: in the band they started at the
@@ -9,7 +11,8 @@ import SortSelect from './SortSelect.jsx';
 // up, and a pinned chat panel moved one and not the other. Sticky, so a
 // filter is always one click away however far down the feed is read, and a
 // card of its own, frosted, so the rows passing under it stay out of the way.
-export default function FeedTop({ filters, setFilters, sort, setSort, viewMode, setViewMode, shown, total, fresh }) {
+// Under the title, the setup banner while something required is missing.
+export default function FeedTop({ filters, setFilters, sort, setSort, viewMode, setViewMode, shown, total, fresh, onOpenSettings }) {
   return (
     <>
       <div className="sticky top-2 z-20 mt-3 rounded-2xl border border-line bg-panel/85 p-1.5 shadow-raise backdrop-blur-md">
@@ -21,11 +24,13 @@ export default function FeedTop({ filters, setFilters, sort, setSort, viewMode, 
         fresh={fresh}
         controls={(
           <>
+            <RefreshPostings />
             <DensityToggle mode={viewMode} setMode={setViewMode} />
             <SortSelect sort={sort} setSort={setSort} />
           </>
         )}
       />
+      <SetupNotice onOpenSettings={onOpenSettings} />
     </>
   );
 }

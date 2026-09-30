@@ -21,7 +21,7 @@ export default function ResumeFactCheck({ factCheck }) {
       <p className="font-display text-base font-bold tracking-tight">Check these before using it</p>
       <p className="mt-0.5 text-sm text-ink/80">
         {flags.length === 1 ? 'One thing' : `${flags.length} things`} in the rewrite that your original resume does not have.
-        Fix or remove each one in the text below.
+        Fix or remove each one in the resume made from this, on the Resume page.
       </p>
       <ul className="mt-2 flex flex-col gap-1.5">
         {flags.map((flag, i) => (

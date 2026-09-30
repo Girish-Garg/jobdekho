@@ -12,9 +12,10 @@ describe('loadConfig', () => {
     const c = loadConfig({ NODE_ENV: 'development' })
     expect(c.sessionSecret).toBe('dev-insecure-secret')
   })
-  it('exposes the local user id outside production', () => {
+  // A fresh clone with no .env must still run as the one local person.
+  it('exposes the local user id outside production, "local" when none is set', () => {
     expect(loadConfig({ DEV_AUTH_USER_ID: 'u1' }).devUserId).toBe('u1')
-    expect(loadConfig({}).devUserId).toBeNull()
+    expect(loadConfig({}).devUserId).toBe('local')
   })
 
   // The whole point of the flag: setting it on a deployed box must do nothing.

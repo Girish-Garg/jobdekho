@@ -15,7 +15,7 @@ export default function PostingsHeader({ shown, total = shown, fresh, controls =
           {fresh > 0 && <span className="font-medium text-primary">{`  ·  ${fresh} new today`}</span>}
         </p>
       </div>
-      {controls && <div className="flex items-center gap-2">{controls}</div>}
+      {controls && <div className="flex flex-wrap items-center justify-end gap-2">{controls}</div>}
     </div>
   );
 }

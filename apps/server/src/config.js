@@ -13,8 +13,9 @@ export function loadConfig(env = process.env) {
     // wants it on their network sets HOST and knows what they are doing.
     host: env.HOST || '127.0.0.1',
     // JobDekho runs as one local person: this is the whole of how a request
-    // gets a user id, no sign-in involved. Forced to null in production, so
-    // setting the variable on a deployed box does nothing.
-    devUserId: production ? null : env.DEV_AUTH_USER_ID || null,
+    // gets a user id, no sign-in involved. "local" when unset, since a fresh
+    // clone started without a .env otherwise answered every request with 401.
+    // Forced to null in production, so a deployed box never runs as it.
+    devUserId: production ? null : env.DEV_AUTH_USER_ID || 'local',
   }
 }

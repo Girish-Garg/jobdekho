@@ -1,5 +1,6 @@
 {
   "name": "@jobdekho/scraper", "version": "0.0.0", "type": "module",
+  "exports": { "./*": "./src/*" },
   "dependencies": {
     "@jobdekho/core": "*", "@jobdekho/store": "*",
     "@jobdekho/sources": "*"

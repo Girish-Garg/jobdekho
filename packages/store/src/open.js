@@ -32,9 +32,15 @@ export const FILES = {
   // The chat panel's conversation, kept with the other things the person
   // made rather than with the corpus a scrape may reset. See chat-history.js.
   chatHistory: 'chat-history.json',
+  // The conversations filed away with "Start a new one", in a file of their
+  // own so each answer rewrites only the current one. See chat-archive.js.
+  chatArchive: 'chat-archive.json',
   // The person's resumes and cover letters as LaTeX sources they own, each
   // with its recent versions. See documents.js.
   documents: 'documents.json',
+  // Whether the running server refreshes postings on its own once a day.
+  // See apps/server/src/scrape/prefs.js.
+  scrapeSettings: 'scrape-settings.json',
 }
 
 export function openStore(dir) {
@@ -56,6 +62,8 @@ export function openStore(dir) {
     aiProvider: userFile(at('aiProvider')),
     resumeSelections: userFile(at('resumeSelections')),
     chatHistory: userFile(at('chatHistory')),
+    chatArchive: userFile(at('chatArchive')),
     documents: userFile(at('documents')),
+    scrapeSettings: userFile(at('scrapeSettings')),
   }
 }

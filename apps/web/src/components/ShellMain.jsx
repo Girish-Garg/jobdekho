@@ -7,7 +7,7 @@ import SettingsView from './SettingsView.jsx';
 // that file stays about the frame: the chrome, the panels either side of it,
 // and the state those share.
 export default function ShellMain({ view, setView, feed }) {
-  if (view === 'postings') return <PostingsView {...feed} onOpenProfile={() => setView('profile')} />;
+  if (view === 'postings') return <PostingsView {...feed} onOpenProfile={() => setView('profile')} onOpenSettings={() => setView('settings')} />;
   if (view === 'profile') return <ProfileView />;
   if (view === 'resume') return <ResumeWorkspace />;
   return <SettingsView />;

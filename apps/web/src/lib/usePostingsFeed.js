@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getPostingsPage, setStatus } from '../api.js';
 import { useDebounced } from './useDebounced.js';
+import { onRefreshed } from './postingsRefreshedSignal.js';
 
 // Pulled a page at a time. The feed runs to a few thousand rows, and the old
 // single 500-row read made everything past the cut unreachable.
@@ -14,6 +15,10 @@ export function usePostingsFeed(filters, sort = 'match') {
   const [loading, setLoading] = useState(true);
   const [more, setMore] = useState(false);
   const [counts, setCounts] = useState({ total: 0, newToday: 0 });
+  // A finished "Refresh postings" (see useScrape.js) reads the feed again,
+  // so new postings show without a reload of the page.
+  const [reloads, setReloads] = useState(0);
+  useEffect(() => onRefreshed(() => setReloads((n) => n + 1)), []);
 
   // Depend on the individual fields, not the filters object: a new object
   // identity every render would refetch on every keystroke elsewhere.
@@ -47,7 +52,7 @@ export function usePostingsFeed(filters, sort = 'match') {
     };
   }, [
     q, excludedSources, status, levels, workModes, maxDegree,
-    minStipend, maxExperienceYears, maxDurationMonths, sort, includeStale, minFit,
+    minStipend, maxExperienceYears, maxDurationMonths, sort, includeStale, minFit, reloads,
   ]);
 
   async function loadMore() {

@@ -4,6 +4,8 @@ import ThemeChoice from './ThemeChoice.jsx';
 import ProviderChoice from './ProviderChoice.jsx';
 import ModelChoice from './ModelChoice.jsx';
 import SettingsCard from './SettingsCard.jsx';
+import SetupCard from './SetupCard.jsx';
+import RefreshSettingsCard from './RefreshSettingsCard.jsx';
 import { CheckIcon, FolderIcon, GlobeIcon, PaletteIcon, ShieldCheckIcon, SparkleIcon } from './Icon.jsx';
 
 const SAVED = {
@@ -22,33 +24,37 @@ export default function SettingsView() {
   return (
     <section className="px-4 pb-12 pt-8">
       {/* The Postings page's width, so moving between the two does not
-          change where the page's edges are. Wide, the AI CLI takes one
-          column and the smaller two stack in the other. */}
+          change where the page's edges are. Wide, the setup check and the AI
+          lead one column, and the smaller cards stack in the other. */}
       <div className="mx-auto w-full max-w-[84rem]">
         <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink">Settings</h1>
         <p className="mt-0.5 text-sm text-muted">Saved on this computer as you pick.</p>
 
         <div className="mt-6 grid grid-cols-1 items-start gap-5 min-[1100px]:grid-cols-2">
-          <SettingsCard
-            icon={<SparkleIcon size={18} />}
-            title="AI CLI"
-            hint="The AI command-line tool that does JobDekho's AI work, on your own subscription or your own computer. Pick which one it asks first."
-            note={<span aria-live="polite" className="shrink-0 pt-1">{SAVED[saved] ?? null}</span>}
-          >
-            <ProviderChoice providers={providers} pref={provider} onChange={pick} />
-            {picked && <ModelChoice provider={picked} saved={models[picked.id]} onChange={(id) => pickModel(picked.id, id)} />}
-            {provider === 'auto' && providers.length > 0 && (
-              <p className="mt-4 text-xs text-muted">Each CLI then answers with its own saved model, or its default.</p>
-            )}
-            {providers.length > 0 && (
-              <p className="mt-4 flex items-start gap-2 text-sm text-muted">
-                <GlobeIcon size={14} className="mt-[3px] shrink-0 text-accent" />
-                {webSentence(providers)}
-              </p>
-            )}
-          </SettingsCard>
+          <div className="flex flex-col gap-5">
+            <SetupCard />
+            <SettingsCard
+              icon={<SparkleIcon size={18} />}
+              title="AI CLI"
+              hint="The AI command-line tool that does JobDekho's AI work, on your own subscription or your own computer. Pick which one it asks first."
+              note={<span aria-live="polite" className="shrink-0 pt-1">{SAVED[saved] ?? null}</span>}
+            >
+              <ProviderChoice providers={providers} pref={provider} onChange={pick} />
+              {picked && <ModelChoice provider={picked} saved={models[picked.id]} onChange={(id) => pickModel(picked.id, id)} />}
+              {provider === 'auto' && providers.length > 0 && (
+                <p className="mt-4 text-xs text-muted">Each CLI then answers with its own saved model, or its default.</p>
+              )}
+              {providers.length > 0 && (
+                <p className="mt-4 flex items-start gap-2 text-sm text-muted">
+                  <GlobeIcon size={14} className="mt-[3px] shrink-0 text-accent" />
+                  {webSentence(providers)}
+                </p>
+              )}
+            </SettingsCard>
+          </div>
 
           <div className="flex flex-col gap-5">
+            <RefreshSettingsCard />
             <SettingsCard icon={<PaletteIcon size={18} />} title="Appearance" hint="How JobDekho looks on this computer.">
               <ThemeChoice />
             </SettingsCard>
@@ -59,7 +65,8 @@ export default function SettingsView() {
                   Your profile, documents, chats and saved jobs are files in JobDekho&apos;s data folder.
                 </Fact>
                 <Fact icon={<SparkleIcon size={15} />} title="Sent only when you ask">
-                  A question goes to the AI through your own CLI, and nowhere else.
+                  A question goes to the AI you picked: Claude Code sends it to Anthropic, Antigravity to Google, and
+                  Ollama keeps it on this computer. A web search sends the question alone.
                 </Fact>
               </ul>
             </SettingsCard>

@@ -6,3 +6,5 @@ export * from './api/profile.js';
 export * from './api/ai.js';
 export * from './api/documents.js';
 export * from './api/chat.js';
+export * from './api/setup.js';
+export * from './api/scrape.js';
