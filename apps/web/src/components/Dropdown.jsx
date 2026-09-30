@@ -7,16 +7,21 @@ import { ChevronDownIcon } from './Icon.jsx';
 // base bg-paper under a conditional one lets Tailwind's stylesheet order,
 // not the state, decide which colour actually wins.
 export const TRIGGER =
-  'flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm outline-none transition-colors duration-fast ease';
+  'flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm outline-none transition-colors duration-fast ease';
 
-// Three readable states, not two: a saffron-tinted trigger means it is
-// holding a value, a darker border means it is only open, and the quiet
-// default means neither. Collapsing "has a value" into "is open" was how an active filter
-// used to look identical to an empty one being poked at.
+// The panel every trigger opens, so the filters, the source list and More
+// filters read as one family of surfaces.
+export const PANEL = 'absolute top-full z-30 mt-2 rounded-2xl border border-line bg-overlay shadow-pop';
+
+// Three readable states, not two: a saffron trigger means it is holding a
+// value, a tinted one means it is only open, and the quiet default means
+// neither. Collapsing "has a value" into "is open" was how an active filter
+// used to look identical to an empty one being poked at. The quiet one has
+// no border of its own, as it sits inside the bar's card.
 export function triggerTone(hasValue, isOpen) {
-  if (hasValue) return 'border-primary/50 bg-primary/10 text-ink font-medium';
-  if (isOpen) return 'border-edge bg-panel text-ink';
-  return 'border-line bg-panel text-ink/80 hover:border-edge hover:text-ink';
+  if (hasValue) return 'border-primary/40 bg-primary/10 font-semibold text-primary';
+  if (isOpen) return 'border-line bg-select text-ink';
+  return 'border-transparent bg-transparent text-ink/80 hover:bg-select/60 hover:text-ink';
 }
 
 // Turns over while the menu is open, so the trigger says which way it goes.
@@ -24,15 +29,34 @@ export function Caret({ open = false }) {
   return (
     <ChevronDownIcon
       size={12}
-      className={`text-muted transition-transform duration-fast ease-ease ${open ? 'rotate-180' : ''}`}
+      className={`opacity-60 transition-transform duration-fast ease-ease ${open ? 'rotate-180' : ''}`}
     />
+  );
+}
+
+// The trigger's face: an icon for the axis, the label, and how many values it
+// holds as a badge. The accessible name keeps "Level (2)", so a screen reader
+// hears the count the badge only shows.
+export function TriggerFace({ icon: Icon, label, count = 0, open }) {
+  return (
+    <>
+      {Icon && <Icon size={14} className="shrink-0 opacity-70" />}
+      <span>{label}</span>
+      {count > 0 && (
+        <span aria-hidden="true" className="tnum grid h-[18px] min-w-[18px] place-items-center rounded-full bg-primary px-1 text-[10px] font-bold text-on-primary">
+          {count}
+        </span>
+      )}
+      <Caret open={open} />
+    </>
   );
 }
 
 // A filter control folded behind a trigger. The pill rows used to sit open in a
 // second bar row; the count on the trigger and the chip row below replace what
-// that permanent visibility bought.
-export default function Dropdown({ label, count = 0, width = 'w-64', align = 'left', className = '', children }) {
+// that permanent visibility bought. `title` is one line over the choices
+// saying how they combine, since "pick one" and "pick any" look the same.
+export default function Dropdown({ label, title = '', icon, count = 0, width = 'w-72', align = 'left', className = '', children }) {
   const { open, setOpen, ref } = usePopover();
 
   return (
@@ -41,16 +65,14 @@ export default function Dropdown({ label, count = 0, width = 'w-64', align = 'le
         type="button"
         onClick={() => setOpen(!open)}
         aria-expanded={open}
+        aria-label={count > 0 ? `${label} (${count})` : label}
         className={`${TRIGGER} ${triggerTone(count > 0, open)}`}
       >
-        {count > 0 ? `${label} (${count})` : label}
-        <Caret open={open} />
+        <TriggerFace icon={icon} label={label} count={count} open={open} />
       </button>
       {open && (
-        <div
-          className={`absolute top-full z-30 mt-2 ${align === 'right' ? 'right-0' : 'left-0'} ${width}
-            rounded-lg border border-line bg-overlay p-3 shadow-pop`}
-        >
+        <div className={`${PANEL} p-3 ${align === 'right' ? 'right-0' : 'left-0'} ${width}`}>
+          {title && <p className="mb-2.5 text-xs text-muted">{title}</p>}
           {children}
         </div>
       )}

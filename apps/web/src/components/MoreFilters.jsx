@@ -4,7 +4,7 @@ import { Field } from './FilterField.jsx';
 import SaveDefaultFilters from './SaveDefaultFilters.jsx';
 import Select from './Select.jsx';
 
-const SEL = 'w-full rounded-md border border-line bg-paper px-2 py-1.5 text-sm outline-none focus:border-ink';
+const SEL = 'w-full rounded-lg border border-line bg-panel px-3 py-2 text-sm text-ink outline-none transition-colors duration-fast ease hover:border-edge focus:border-primary/60 focus:ring-2 focus:ring-primary/15';
 
 const FIELDS = [
   ['Highest degree', 'maxDegree', DEGREE_OPTIONS],
@@ -32,14 +32,17 @@ export default function MoreFilters({ filters, setFilters }) {
       </div>
       {/* The feed drops postings that stopped appearing on their board, so
           without this the drop has no visible cause and no way back. */}
-      <label className="flex items-center gap-2 text-sm text-ink">
+      <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-line bg-paper/60 px-3 py-2.5 transition-colors duration-fast ease hover:border-edge">
         <input
           type="checkbox"
           checked={Boolean(filters.includeStale)}
           onChange={(event) => setFilters({ ...filters, includeStale: event.target.checked })}
-          className="h-3.5 w-3.5 accent-ink"
+          className="mt-0.5 h-4 w-4 shrink-0 accent-primary"
         />
-        Include stale postings
+        <span className="text-sm">
+          <span className="block font-medium text-ink">Include stale postings</span>
+          <span className="text-xs text-muted">Jobs their board stopped listing, which may be filled.</span>
+        </span>
       </label>
       <div className="border-t border-line pt-3">
         <SaveDefaultFilters filters={filters} />

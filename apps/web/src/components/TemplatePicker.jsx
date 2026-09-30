@@ -8,7 +8,9 @@ const GROUPS = [
 // The layouts a new document can start from, resumes then the letter, each
 // with a thumbnail of its page and the one line the server gives it. A
 // first draft is made from the profile with no AI call (see the server's
-// documents/first-draft.js), so picking one is instant and free.
+// documents/first-draft.js), so picking one is instant and free. On the
+// page itself (`wide`) a card sits on the textured ground and takes the
+// raised surface; in the New popover it sits on the overlay already.
 export default function TemplatePicker({ templates, busy = false, onPick, wide = false }) {
   if (!templates.length) return <p className="text-sm text-muted">Loading templates...</p>;
 
@@ -27,7 +29,7 @@ export default function TemplatePicker({ templates, busy = false, onPick, wide =
                     type="button"
                     disabled={busy}
                     onClick={() => onPick(template)}
-                    className="group flex w-full items-center gap-3 rounded-xl border border-line bg-paper p-2.5 text-left transition-colors duration-fast ease hover:border-primary/40 hover:bg-primary/5 disabled:opacity-60"
+                    className={`group flex w-full items-center gap-3 rounded-xl border border-line p-2.5 text-left transition-colors duration-fast ease hover:border-primary/40 hover:bg-primary/5 disabled:opacity-60 ${wide ? 'bg-panel shadow-raise' : 'bg-paper'}`}
                   >
                     <TemplateThumb id={template.id} />
                     <span className="min-w-0 flex-1">

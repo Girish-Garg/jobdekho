@@ -63,11 +63,17 @@ export function useOpenPosting(rows, { fetchPosting = getPosting } = {}) {
     openerRef.current?.focus();
   }
 
+  // Closed by a press somewhere else: focus stays where that press put it,
+  // and the list does not jump back to a row scrolled out of view.
+  function dismiss() {
+    setOpenId(null);
+  }
+
   // The feed's own status update only reaches the rows it loaded, so a job
   // opened from outside them is updated here as well.
   function patchOutside(id, status) {
     setOutside((posting) => (posting?.id === id ? { ...posting, status } : posting));
   }
 
-  return { opened, openFromClick, openById, close, patchOutside };
+  return { opened, openFromClick, openById, close, dismiss, patchOutside };
 }

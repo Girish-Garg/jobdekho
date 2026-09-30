@@ -1,48 +1,68 @@
-import { useEffect, useState } from 'react';
-import { getProviders, getProviderPreference, putProviderPreference } from '../api.js';
+import { useProviderSetting } from '../lib/useProviderSetting.js';
+import { webSentence } from '../lib/providerStatus.js';
 import ThemeChoice from './ThemeChoice.jsx';
 import ProviderChoice from './ProviderChoice.jsx';
-import ProviderStatus from './ProviderStatus.jsx';
-import SaveBar from './SaveBar.jsx';
+import SettingsCard from './SettingsCard.jsx';
+import { CheckIcon, FolderIcon, GlobeIcon, PaletteIcon, ShieldCheckIcon, SparkleIcon } from './Icon.jsx';
 
-const P0 = { provider: 'auto' };
+const SAVED = {
+  saving: <span className="text-xs text-muted">Saving...</span>,
+  saved: <span className="inline-flex items-center gap-1 text-xs font-semibold text-applied"><CheckIcon size={12} /> Saved</span>,
+  error: <span className="text-xs font-semibold text-ember">Not saved</span>,
+};
 
+// Every setting saves as it is picked, so there is no Save button to find.
 export default function SettingsView() {
-  const [pref, setPref] = useState(P0);
-  const [providers, setProviders] = useState([]);
-
-  useEffect(() => {
-    getProviderPreference().then((p) => setPref({ ...P0, ...p })).catch(() => {});
-    getProviders().then(setProviders).catch(() => {});
-  }, []);
+  const { provider, providers, saved, pick } = useProviderSetting();
 
   return (
-    <section className="px-8 py-8">
-      <h2 className="font-display text-xl font-extrabold tracking-tight">Settings</h2>
+    <section className="mx-auto w-full max-w-4xl px-6 pb-12 pt-8 sm:px-8">
+      <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink">Settings</h1>
+      <p className="mt-0.5 text-sm text-muted">Saved on this computer as you pick.</p>
 
-      <div className="mt-8 grid max-w-5xl grid-cols-1 items-start gap-6 min-[1100px]:grid-cols-2">
-        <Section title="Appearance" hint="How JobDekho looks on this device.">
+      <div className="mt-6 flex flex-col gap-5">
+        <SettingsCard icon={<PaletteIcon size={18} />} title="Appearance" hint="How JobDekho looks on this computer.">
           <ThemeChoice />
-        </Section>
+        </SettingsCard>
 
-        <Section title="AI CLI" hint="Which CLI runs the AI actions on a job, when more than one is installed.">
-          <ProviderChoice providers={providers} pref={pref.provider} onChange={(provider) => setPref({ provider })} />
-          <ProviderStatus providers={providers} />
-          <SaveBar onSave={() => putProviderPreference(pref)} />
-        </Section>
+        <SettingsCard
+          icon={<SparkleIcon size={18} />}
+          title="AI CLI"
+          hint="The AI command-line tool that does JobDekho's AI work, on your own subscription. Pick which one it asks first."
+          note={<span aria-live="polite" className="shrink-0 pt-1">{SAVED[saved] ?? null}</span>}
+        >
+          <ProviderChoice providers={providers} pref={provider} onChange={pick} />
+          {providers.length > 0 && (
+            <p className="mt-4 flex items-start gap-2 text-sm text-muted">
+              <GlobeIcon size={14} className="mt-[3px] shrink-0 text-accent" />
+              {webSentence(providers)}
+            </p>
+          )}
+        </SettingsCard>
+
+        <SettingsCard icon={<ShieldCheckIcon size={18} />} title="Your data" hint="There is no account and nothing is hosted.">
+          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Fact icon={<FolderIcon size={15} />} title="Kept on this computer">
+              Your profile, documents, chats and saved jobs are files in JobDekho&apos;s data folder.
+            </Fact>
+            <Fact icon={<SparkleIcon size={15} />} title="Sent only when you ask">
+              A question goes to the AI through your own CLI, and nowhere else.
+            </Fact>
+          </ul>
+        </SettingsCard>
       </div>
     </section>
   );
 }
 
-// Each section is a bounded card rather than a strip in one long column, so
-// the two of them can sit side by side once there is room for that.
-function Section({ title, hint, children }) {
+function Fact({ icon, title, children }) {
   return (
-    <div className="rounded-lg border border-line bg-panel p-6">
-      <h3 className="font-display text-lg font-bold tracking-tight">{title}</h3>
-      <p className="mb-5 mt-1 max-w-md text-sm text-muted">{hint}</p>
-      <div className="flex flex-col gap-5">{children}</div>
-    </div>
+    <li className="flex gap-3 rounded-xl border border-line bg-paper/60 p-3.5">
+      <span className="mt-0.5 shrink-0 text-accent">{icon}</span>
+      <span className="text-sm">
+        <span className="block font-semibold text-ink">{title}</span>
+        <span className="text-muted">{children}</span>
+      </span>
+    </li>
   );
 }

@@ -5,8 +5,10 @@
 /* Tokens are channel triplets so Tailwind can still take an alpha: text-ink/70
    and bg-ember/10 keep working across both themes. Names are semantic, never
    literal colours, because the same class has to mean "the raised surface" in
-   both. */
-:root {
+   both. The light theme also answers to data-theme="light" so one element
+   can show it inside the dark one (the theme previews in Settings). */
+:root,
+[data-theme='light'] {
   color-scheme: light;
 
   /* Ground, then the two surfaces that sit above it. Depth is a surface step

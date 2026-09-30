@@ -172,8 +172,8 @@ describe('FilterBar source exclusions', () => {
     await setup();
     await waitFor(() => expect(getSources).toHaveBeenCalled());
     open('All sources');
-    expect(await screen.findByRole('checkbox', { name: /internshala/ })).toBeChecked();
-    expect(screen.getByRole('checkbox', { name: /lever/ })).toBeChecked();
+    expect(await screen.findByRole('checkbox', { name: /internshala/i })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: /lever/i })).toBeChecked();
     expect(screen.getByText('878')).toBeInTheDocument();
   });
 
@@ -181,7 +181,7 @@ describe('FilterBar source exclusions', () => {
     const { setFilters } = await setup();
     await waitFor(() => expect(getSources).toHaveBeenCalled());
     open('All sources');
-    fireEvent.click(await screen.findByRole('checkbox', { name: /lever/ }));
+    fireEvent.click(await screen.findByRole('checkbox', { name: /lever/i }));
     expect(setFilters).toHaveBeenCalledWith(expect.objectContaining({ excludedSources: ['lever'] }));
   });
 
@@ -279,10 +279,11 @@ describe('FilterBar More filters disclosure', () => {
 });
 
 describe('Save as my default', () => {
-  it('says the saved filter loads again on sign-in', async () => {
+  it('says the saved filters are what JobDekho opens with, with no sign-in to speak of', async () => {
     await setup();
     openMore();
-    expect(screen.getByText(/Loads every time you sign in/)).toBeInTheDocument();
+    expect(screen.getByText('Open JobDekho with these filters every time.')).toBeInTheDocument();
+    expect(screen.queryByText(/sign in/)).not.toBeInTheDocument();
   });
 
   it('PUTs the filters under the persisted field names', async () => {

@@ -8,6 +8,7 @@ import PillGroup from './PillGroup.jsx';
 import SourceSelect from './SourceSelect.jsx';
 import MoreFilters from './MoreFilters.jsx';
 import ActiveChips from './ActiveChips.jsx';
+import { BookmarkIcon, BriefcaseIcon, MapPinIcon, SlidersIcon, TargetIcon } from './Icon.jsx';
 
 const ADVANCED = ['maxDegree', 'minStipend', 'maxExp', 'maxMonths', 'includeStale'];
 
@@ -34,18 +35,18 @@ export default function FilterBar({ filters, setFilters, trailing }) {
     <div>
       {/* One line at every width the grid is usable at; wrapping only kicks in
           on a phone, where the alternative is scrolling the page sideways. */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-1">
         {/* Fit leads the row: it is the axis the default order sorts by, so
             its floor reads before the taxonomy refinements. Single-select like
             Status - one floor at a time, a second would just shadow the first. */}
-        <Dropdown label="Fit" count={filters.minFit ? 1 : 0}>
+        <Dropdown label="Fit" icon={TargetIcon} title="Only jobs that fit you at least this well." count={filters.minFit ? 1 : 0}>
           <PillGroup
             options={FIT_RANGES}
             selected={[filters.minFit]}
             onPick={(v) => patch('minFit', v)}
           />
         </Dropdown>
-        <Dropdown label="Level" count={filters.levels.length}>
+        <Dropdown label="Level" icon={BriefcaseIcon} title="Seniority. Pick any number." count={filters.levels.length}>
           <PillGroup
             options={LEVEL_OPTIONS}
             selected={filters.levels}
@@ -53,10 +54,10 @@ export default function FilterBar({ filters, setFilters, trailing }) {
             tone={levelPillTone}
           />
         </Dropdown>
-        <Dropdown label="Status" count={filters.status ? 1 : 0}>
+        <Dropdown label="Status" icon={BookmarkIcon} title="Where you are with each job." count={filters.status ? 1 : 0}>
           <PillGroup options={STATUS_OPTIONS} selected={[filters.status]} onPick={(v) => patch('status', v)} />
         </Dropdown>
-        <Dropdown label="Work mode" count={filters.workModes.length}>
+        <Dropdown label="Work mode" icon={MapPinIcon} title="Where the work happens. Pick any number." count={filters.workModes.length}>
           <PillGroup
             options={WORK_MODE_OPTIONS}
             selected={filters.workModes}
@@ -69,7 +70,7 @@ export default function FilterBar({ filters, setFilters, trailing }) {
           onChange={(next) => patch('excludedSources', next)}
         />
         <div className="ml-auto flex items-center gap-2">
-          <Dropdown label="More filters" count={extra} align="right" width="w-[23rem]">
+          <Dropdown label="More filters" icon={SlidersIcon} count={extra} align="right" width="w-[24rem]">
             <MoreFilters filters={filters} setFilters={setFilters} />
           </Dropdown>
           {trailing}

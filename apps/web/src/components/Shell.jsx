@@ -50,7 +50,7 @@ export default function Shell() {
   });
 
   return (
-    <div className="flex h-full w-full flex-col bg-paper">
+    <div className="app-canvas flex h-full w-full flex-col">
       <Topbar
         view={view}
         setView={setView}

@@ -68,7 +68,7 @@ export default function ProfileView() {
       ) : (
         <>
           {rows.length > 0 && (
-            <div className="sticky top-0 z-10 -mx-8 mt-6 border-b border-line bg-paper px-8">
+            <div className="sticky top-0 z-10 -mx-8 mt-6 border-b border-line bg-paper/85 px-8 backdrop-blur-md">
               <ProfileIndex horizontal rows={rows} current={current} onJump={jumpTo} />
             </div>
           )}

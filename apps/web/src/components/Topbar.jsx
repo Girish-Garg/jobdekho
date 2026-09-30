@@ -55,6 +55,7 @@ export default function Topbar({ view, setView, q = '', onSearch, searchRef, cha
           <button
             type="button"
             onClick={onToggleChat}
+            data-keeps-pane
             aria-pressed={Boolean(chatOpen)}
             className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors duration-fast ease ${
               chatOpen ? 'border-primary bg-primary text-on-primary' : 'border-primary/30 bg-primary/10 text-primary hover:bg-primary/15'

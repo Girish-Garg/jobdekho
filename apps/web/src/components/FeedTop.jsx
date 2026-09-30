@@ -7,11 +7,12 @@ import SortSelect from './SortSelect.jsx';
 // than in a full-width band of chrome: in the band they started at the
 // window's left edge while the feed below was centred, so the two never lined
 // up, and a pinned chat panel moved one and not the other. Sticky, so a
-// filter is always one click away however far down the feed is read.
+// filter is always one click away however far down the feed is read, and a
+// card of its own, frosted, so the rows passing under it stay out of the way.
 export default function FeedTop({ filters, setFilters, sort, setSort, viewMode, setViewMode, shown, fresh }) {
   return (
     <>
-      <div className="sticky top-0 z-20 -mx-1 border-b border-line bg-paper/90 px-1 py-2.5 backdrop-blur">
+      <div className="sticky top-2 z-20 mt-3 rounded-2xl border border-line bg-panel/85 p-1.5 shadow-raise backdrop-blur-md">
         <FilterBar filters={filters} setFilters={setFilters} />
       </div>
       <PostingsHeader

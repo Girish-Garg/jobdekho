@@ -17,6 +17,7 @@ export default function ChatFrame({ layout, children }) {
   return (
     <aside
       aria-label="Ask AI"
+      data-keeps-pane
       data-mode={mode}
       style={layout.wide ? { width: layout.width } : undefined}
       className={`slide-in-left flex min-h-0 flex-col bg-panel ${PLACE[mode]}`}

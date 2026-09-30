@@ -67,28 +67,28 @@ describe('SourceSelect menu', () => {
     setup();
     fireEvent.click(screen.getByRole('button', { name: 'All sources' }));
     expect(screen.getByText('878')).toBeInTheDocument();
-    expect(screen.getByRole('checkbox', { name: /greenhouse/ })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /greenhouse/i })).toBeInTheDocument();
   });
 
   it('excludes on untick and re-includes on tick', () => {
     const { onChange } = setup();
     fireEvent.click(screen.getByRole('button', { name: 'All sources' }));
 
-    fireEvent.click(screen.getByRole('checkbox', { name: /lever/ }));
+    fireEvent.click(screen.getByRole('checkbox', { name: /lever/i }));
     expect(onChange).toHaveBeenLastCalledWith(['lever']);
 
-    fireEvent.click(screen.getByRole('checkbox', { name: /ashby/ }));
+    fireEvent.click(screen.getByRole('checkbox', { name: /ashby/i }));
     expect(onChange).toHaveBeenLastCalledWith(['lever', 'ashby']);
 
-    fireEvent.click(screen.getByRole('checkbox', { name: /lever/ }));
+    fireEvent.click(screen.getByRole('checkbox', { name: /lever/i }));
     expect(onChange).toHaveBeenLastCalledWith(['ashby']);
   });
 
   it('unticks exactly the excluded boards', () => {
     setup(['greenhouse']);
     fireEvent.click(screen.getByRole('button', { name: '1 excluded' }));
-    expect(screen.getByRole('checkbox', { name: /greenhouse/ })).not.toBeChecked();
-    expect(screen.getByRole('checkbox', { name: /lever/ })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: /greenhouse/i })).not.toBeChecked();
+    expect(screen.getByRole('checkbox', { name: /lever/i })).toBeChecked();
   });
 
   // A board added to the config after the exclusions were saved is not in the
@@ -97,14 +97,14 @@ describe('SourceSelect menu', () => {
     const options = [...OPTIONS, { name: 'workable', count: 7 }];
     render(<SourceSelect options={options} excluded={['lever']} onChange={() => {}} />);
     fireEvent.click(screen.getByRole('button', { name: '1 excluded' }));
-    expect(screen.getByRole('checkbox', { name: /workable/ })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: /workable/i })).toBeChecked();
   });
 
   it('pins the already-excluded sources to the top when it opens', () => {
     setup(['ashby']);
     fireEvent.click(screen.getByRole('button', { name: '1 excluded' }));
     const rows = screen.getAllByRole('checkbox').map((box) => box.closest('label').textContent);
-    expect(rows[0]).toContain('ashby');
+    expect(rows[0]).toContain('Ashby');
   });
 });
 
@@ -114,7 +114,7 @@ describe('SourceSelect search', () => {
     fireEvent.click(screen.getByRole('button', { name: 'All sources' }));
     fireEvent.change(screen.getByLabelText('Search sources'), { target: { value: 'ash' } });
     expect(screen.getAllByRole('checkbox')).toHaveLength(1);
-    expect(screen.getByRole('checkbox', { name: /ashby/ })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /ashby/i })).toBeInTheDocument();
   });
 
   it('says so when nothing matches', () => {
@@ -173,5 +173,30 @@ describe('SourceSelect dismissal', () => {
     const box = screen.getByLabelText('Search sources');
     fireEvent.mouseDown(box);
     expect(within(document.body).getByLabelText('Search sources')).toBeInTheDocument();
+  });
+});
+
+// The scraper's "board:Company" key is not something to show a person.
+describe('SourceMenu rows', () => {
+  const CAREERS = [
+    { name: 'greenhouse:okta', count: 156 },
+    { name: 'smartrecruiters:BoschGroup', count: 529 },
+  ];
+
+  it('names the company first and its board under it, never the raw key', () => {
+    render(<SourceSelect options={CAREERS} excluded={[]} onChange={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: 'All sources' }));
+    const row = screen.getByRole('checkbox', { name: /Okta/ }).closest('label');
+    expect(within(row).getByText('Okta')).toBeInTheDocument();
+    expect(within(row).getByText('Greenhouse')).toBeInTheDocument();
+    expect(screen.queryByText('greenhouse:okta')).not.toBeInTheDocument();
+  });
+
+  it('finds a company by its board name as well as its own', () => {
+    render(<SourceSelect options={CAREERS} excluded={[]} onChange={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: 'All sources' }));
+    fireEvent.change(screen.getByLabelText('Search sources'), { target: { value: 'smartrec' } });
+    expect(screen.getAllByRole('checkbox')).toHaveLength(1);
+    expect(screen.getByRole('checkbox', { name: /BoschGroup/ })).toBeInTheDocument();
   });
 });

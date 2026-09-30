@@ -1,16 +1,15 @@
 import { EMPTY_FILTERS } from '../lib/savedFilters.js';
 import { CloseIcon } from './Icon.jsx';
 
-// border-edge, not the hairline border-line: a chip is a piece of active
-// state, not a resting surface, so it carries the heavier of the two border
-// tokens to read as a thing rather than a divider.
-const CHIP = 'inline-flex items-center gap-1 rounded-full border border-edge bg-paper py-0.5 pl-3 pr-1 text-xs text-ink';
+// A chip is a filter that is on, so it takes the same saffron tint as the
+// trigger holding it: the two read as one piece of state, not as a divider.
+const CHIP = 'inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 py-0.5 pl-3 pr-1 text-xs font-medium text-ink';
 // An icon this small needs a target bigger than itself to stay clickable.
-const REMOVE = 'grid h-5 w-5 place-items-center rounded-full text-muted transition hover:bg-ink hover:text-paper';
+const REMOVE = 'grid h-5 w-5 place-items-center rounded-full text-primary transition-colors duration-fast ease hover:bg-primary hover:text-on-primary';
 
 export default function ActiveChips({ chips, filters, setFilters }) {
   return (
-    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+    <div className="mt-2 flex flex-wrap items-center gap-1.5 border-t border-line px-1 pt-2">
       {chips.map((chip) => (
         <span key={chip.id} className={CHIP}>
           {chip.label}
@@ -30,7 +29,7 @@ export default function ActiveChips({ chips, filters, setFilters }) {
       <button
         type="button"
         onClick={() => setFilters({ ...EMPTY_FILTERS })}
-        className="font-mono text-[11px] text-muted underline underline-offset-2 transition hover:text-ink"
+        className="rounded-full px-2 py-0.5 text-xs font-semibold text-muted transition-colors duration-fast ease hover:bg-select/60 hover:text-ink"
       >
         Clear all
       </button>

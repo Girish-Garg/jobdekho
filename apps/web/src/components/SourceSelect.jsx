@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { usePopover } from '../lib/usePopover.js';
-import { TRIGGER, triggerTone, Caret } from './Dropdown.jsx';
+import { TRIGGER, triggerTone, TriggerFace } from './Dropdown.jsx';
+import { GlobeIcon } from './Icon.jsx';
 import SourceMenu from './SourceMenu.jsx';
 
 // Inverted picker: every board is in by default and a tick is removed to leave
@@ -31,8 +32,7 @@ export default function SourceSelect({ options, excluded, onChange }) {
         aria-expanded={open}
         className={`${TRIGGER} ${triggerTone(count > 0, open)}`}
       >
-        {count === 0 ? 'All sources' : `${count} excluded`}
-        <Caret open={open} />
+        <TriggerFace icon={GlobeIcon} label={count === 0 ? 'All sources' : `${count} excluded`} open={open} />
       </button>
       {open && <SourceMenu options={ranked} excluded={excluded} onChange={onChange} />}
     </div>

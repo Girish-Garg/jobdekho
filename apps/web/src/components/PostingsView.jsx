@@ -24,7 +24,7 @@ export default function PostingsView({
   const { rows, loading, more, loadMore, onStatus } = usePostingsFeed(filters, sort);
   const triage = useTriage(rows, onStatus);
   const isWide = useMediaQuery(WIDE_QUERY);
-  const { opened, openFromClick: openRow, openById, close: closeCard, patchOutside } = useOpenPosting(rows);
+  const { opened, openFromClick: openRow, openById, close: closeCard, dismiss, patchOutside } = useOpenPosting(rows);
   const { fitFiltered, unranked } = rankingNotice(filters, sort, rows);
 
   // Selection (keyboard highlight) is separate from "open": only Enter or a
@@ -46,13 +46,12 @@ export default function PostingsView({
     onClear: () => (opened ? closeCard() : setSelectedId(null)),
   });
 
-  // The feed keeps a reading width, centred, rather than running edge to
-  // edge: full-width rows and cards spread a title, its company and its fit
-  // too far apart to read as one line, and the empty sides are where the
-  // chat and the job pane float without covering a card.
+  // The feed keeps the Profile page's width, centred, rather than running
+  // edge to edge: full-width rows and cards spread a title, its company and
+  // its fit too far apart to read as one line on a wide screen.
   return (
     <section className="flex gap-4 px-4 pb-10">
-      <div className="mx-auto w-full min-w-0 max-w-[68rem]">
+      <div className="mx-auto w-full min-w-0 max-w-[84rem]">
         <FeedTop
           filters={filters} setFilters={setFilters} sort={sort} setSort={setSort} viewMode={viewMode} setViewMode={setViewMode}
           shown={rows.length} fresh={rows.filter((p) => isNewToday(p.firstSeenAt)).length}
@@ -89,6 +88,7 @@ export default function PostingsView({
         isWide={isWide}
         opened={opened}
         onClose={closeCard}
+        onDismiss={dismiss}
         onStatus={(id, value) => { patchOutside(id, value); triage.setStatus(id, value); }}
       />
     </section>

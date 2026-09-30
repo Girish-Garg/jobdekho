@@ -13,3 +13,14 @@ export function sourceName(source) {
   if (!board) return '';
   return BOARDS[board] ?? board[0].toUpperCase() + board.slice(1);
 }
+
+// A row in the source picker: the company a careers board belongs to, with
+// the board under it, or a whole job board by its own name. The company part
+// is the board's slug for it, so only its separators and first letter change;
+// guessing word breaks inside "PhonePeLimited" would get as many wrong.
+export function sourceLabel(source) {
+  const [board, ...rest] = String(source || '').split(':');
+  const company = rest.join(':').replace(/[-_]+/g, ' ').trim();
+  if (!company) return { title: sourceName(board), board: 'Job board' };
+  return { title: company[0].toUpperCase() + company.slice(1), board: sourceName(board) };
+}

@@ -29,6 +29,17 @@ describe('useOpenPosting', () => {
     document.body.removeChild(element);
   });
 
+  it('leaves focus where it is when dismissed by a press elsewhere', () => {
+    const { result } = renderHook(() => useOpenPosting(rows));
+    const opener = document.createElement('button');
+    document.body.appendChild(opener);
+    act(() => result.current.openFromClick(rows[0], opener));
+    act(() => result.current.dismiss());
+    expect(result.current.opened).toBe(null);
+    expect(document.activeElement).not.toBe(opener);
+    document.body.removeChild(opener);
+  });
+
   it('opens by id, finding the row in the DOM by data-row-id for focus return', () => {
     const el = document.createElement('div');
     el.setAttribute('data-row-id', 'b');

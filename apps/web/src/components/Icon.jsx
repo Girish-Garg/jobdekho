@@ -77,3 +77,11 @@ export function DocumentIcon(props) {
 export function UploadIcon(props) {
   return <Svg {...props}><path d="M8 10.5V2.5M4.8 5.5L8 2.5l3.2 3M2.5 10.5v2a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-2" /></Svg>;
 }
+
+export function PaletteIcon(props) {
+  return <Svg {...props}><path d="M8 2a6 6 0 0 0 0 12c.9 0 1.3-.6 1.1-1.3-.3-1 .3-1.9 1.4-1.9H12a2.5 2.5 0 0 0 2-2.6C14 4.6 11.3 2 8 2z" /><circle cx="5" cy="7.5" r=".6" /><circle cx="7.2" cy="5" r=".6" /><circle cx="10.4" cy="5.4" r=".6" /></Svg>;
+}
+
+export function SlidersIcon(props) {
+  return <Svg {...props}><path d="M2.5 4.5h6M11.5 4.5h2M2.5 11.5h2M7.5 11.5h6" /><circle cx="10" cy="4.5" r="1.5" /><circle cx="6" cy="11.5" r="1.5" /></Svg>;
+}
