@@ -12,7 +12,7 @@ import { TITLE_ID } from '../lib/postingTitle.js';
 export default function PostingPaneHeader({ posting, onClose }) {
   return (
     <header className="flex items-start gap-3 border-b border-line px-5 pb-4 pt-5">
-      <CompanyMark company={posting.company} />
+      <CompanyMark company={posting.company} logoOf={posting.logoUrl ? posting.id : null} />
       <div className="min-w-0 flex-1">
         <h2 id={TITLE_ID} title={posting.title} className="line-clamp-3 font-display text-lg font-extrabold leading-snug tracking-tight text-ink">
           {posting.title}

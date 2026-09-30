@@ -13,6 +13,13 @@ const item = {
 }
 
 describe('mapUnstop', () => {
+  it('keeps the larger organisation logo, else the smaller, else none', () => {
+    const logos = { logoUrl: 'https://d8it4huxumps7.cloudfront.net/p75.png', logoUrl2: 'https://d8it4huxumps7.cloudfront.net/p125.png' }
+    expect(mapUnstop({ ...item, organisation: { name: 'Acme', ...logos } }).logoUrl).toBe(logos.logoUrl2)
+    expect(mapUnstop({ ...item, organisation: { name: 'Acme', logoUrl: logos.logoUrl } }).logoUrl).toBe(logos.logoUrl)
+    expect(mapUnstop(item).logoUrl).toBeNull()
+  })
+
   it('maps an unstop internship to a RawPosting', () => {
     const r = mapUnstop(item)
     expect(r.externalId).toBe('123')

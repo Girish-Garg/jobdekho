@@ -116,3 +116,20 @@ describe('a posting seen again without its text', () => {
   })
 })
 
+
+// A run in which every source only listed postings it already had (a quiet
+// day on Workday) sends no items, yet those postings were seen.
+describe('upsertPostings with seen ids', () => {
+  it('records a sighting even when a run brings nothing new', async () => {
+    const store = openStore(dir)
+    await upsertPostings(store, [{ ...base, id: 'abc' }], Date.parse('2026-09-01T00:00:00Z'))
+    await upsertPostings(store, [], Date.parse('2026-09-20T00:00:00Z'), ['abc'])
+    expect(store.corpus.byId().get('abc').lastSeenAt).toBe('2026-09-20T00:00:00.000Z')
+  })
+
+  it('stores the logo address a posting came with', async () => {
+    const store = openStore(dir)
+    await upsertPostings(store, [{ ...base, logoUrl: 'https://media.licdn.com/a.png' }])
+    expect(store.corpus.byId().get('abc').logoUrl).toBe('https://media.licdn.com/a.png')
+  })
+})

@@ -4,6 +4,7 @@ import { createDashboardStore } from './api/store.js'
 import { buildApp } from './app.js'
 import { createScrapeService } from './scrape/service.js'
 import { startAutoRefresh } from './scrape/auto.js'
+import { createLogoService } from './logos/service.js'
 
 try { process.loadEnvFile() } catch {}
 
@@ -20,6 +21,8 @@ const app = buildApp({ config, dashboardStore, logger: true })
 // whose Adzuna key from Settings a run uses.
 const scrape = createScrapeService(store, { userId: config.devUserId, log: app.log })
 app.decorate('scrape', scrape)
+// Logos read the addresses from, and cache into, the same data folder.
+app.decorate('logos', createLogoService({ store }))
 
 app.listen({ port: config.port, host: config.host })
   .then((addr) => {

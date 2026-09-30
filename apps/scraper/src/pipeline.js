@@ -13,13 +13,15 @@ const DEFAULT_PORTS = { getExistingIds, upsertPostings, recordRun }
 // date, so the fetch cannot skip the old ones; they are dropped here instead
 // (see core's freshness.js), and the store's write drops what has aged out
 // since (store/corpus-prune.js). Both counts come back for the run's summary.
-export async function runPipeline({ items, results }, { db, rules, runId, ports = DEFAULT_PORTS, now = Date.now() }) {
+// `seen` are ids of postings a source listed but skipped as already stored;
+// the write moves their lastSeenAt on (see the store's corpus-merge.js).
+export async function runPipeline({ items, results, seen = [] }, { db, rules, runId, ports = DEFAULT_PORTS, now = Date.now() }) {
   const normalized = items.map(({ source, raw }) => normalize(raw, source))
   const relevant = normalized.filter((p) => filter(p, rules))
   const recent = relevant.filter((p) => !postedTooLongAgo(p, now))
   const existing = await ports.getExistingIds(db, recent.map((p) => p.id))
   const { all, fresh } = dedupe(recent, existing)
-  const { removed = 0 } = (await ports.upsertPostings(db, all, now)) ?? {}
+  const { removed = 0 } = (await ports.upsertPostings(db, all, now, seen)) ?? {}
   await ports.recordRun(db, { id: runId, sourceResults: results, newCount: fresh.length })
   return { total: all.length, fresh: fresh.length, freshPostings: fresh, tooOld: relevant.length - recent.length, removed }
 }

@@ -38,7 +38,7 @@ export default function PostingCard({ posting, selected = false, flashUndo = fal
       />
 
       <span className="flex items-center gap-3 pr-2">
-        <CompanyMark company={posting.company} size="sm" />
+        <CompanyMark company={posting.company} size="sm" logoOf={posting.logoUrl ? posting.id : null} />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-semibold text-ink">{posting.company}</span>
           <span className="block truncate text-xs text-muted">

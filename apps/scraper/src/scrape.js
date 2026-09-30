@@ -35,11 +35,19 @@ export async function runScrape({
   const total = linkedin.adapters.length
   onProgress({ done: 0, total, current: null })
   // What an adapter may skip fetching a second page for (LinkedIn's job
-  // views): a posting the store already holds a description for, and a card
-  // the relevance filter would drop anyway, which is never stored and would
-  // otherwise be fetched again on every run.
+  // views, Workday's details and the like): a posting the store already holds
+  // a description for, and a card the relevance filter would drop anyway,
+  // which is never stored and would otherwise be fetched again on every run.
+  // A posting skipped as known was still listed, so it is recorded as seen
+  // (see the store's corpus-merge.js markSeen).
+  const seen = new Set()
   const context = {
-    known: (source, externalId) => Boolean(db.corpus.byId().get(makeId(source, externalId))?.descriptionText),
+    known: (source, externalId) => {
+      const id = makeId(source, externalId)
+      const hit = Boolean(db.corpus.byId().get(id)?.descriptionText)
+      if (hit) seen.add(id)
+      return hit
+    },
     wanted: (source, raw) => filter(normalize(raw, source), config.rules),
     ...linkedin.context,
   }
@@ -48,6 +56,6 @@ export async function runScrape({
     onResult: (result, { done }) => onProgress({ done, total, current: result.name }),
   })
   const results = linkedin.settle(ran.results)
-  const summary = await runPipeline({ items: ran.items, results }, { db, rules: config.rules, runId: randomUUID() })
+  const summary = await runPipeline({ items: ran.items, results, seen: [...seen] }, { db, rules: config.rules, runId: randomUUID() })
   return { ...summary, results }
 }

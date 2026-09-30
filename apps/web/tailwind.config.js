@@ -23,6 +23,7 @@ export default {
         edge: withAlpha('edge'),
         ember: withAlpha('ember'),
         select: withAlpha('select'),
+        tile: withAlpha('tile'),
         primary: withAlpha('primary'),
         'on-primary': withAlpha('on-primary'),
         applied: withAlpha('applied'),

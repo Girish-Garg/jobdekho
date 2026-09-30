@@ -39,7 +39,7 @@ export default function PostingRow({
         selected ? SELECTED : 'hover:bg-select/40'
       } ${posting.status === 'dismissed' ? 'opacity-60' : ''}`}
     >
-      <span role="gridcell"><CompanyMark company={posting.company} size="sm" /></span>
+      <span role="gridcell"><CompanyMark company={posting.company} size="sm" logoOf={posting.logoUrl ? posting.id : null} /></span>
       <span role="gridcell" className="min-w-0">
         <span className="flex min-w-0 items-center gap-2">
           <span className="truncate text-[15px] font-semibold leading-snug text-ink">{posting.title}</span>

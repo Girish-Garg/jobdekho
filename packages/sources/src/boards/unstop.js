@@ -37,6 +37,8 @@ export function mapUnstop(item, type = 'internship') {
     stipend: item.isPaid === false ? 'Unpaid' : stipend(item.jobDetail),
     duration: null,
     experience: experience(item.jobDetail),
+    // The 125 pixel logo where there is one, else the 75.
+    logoUrl: item.organisation?.logoUrl2 || item.organisation?.logoUrl || null,
   }
 }
 

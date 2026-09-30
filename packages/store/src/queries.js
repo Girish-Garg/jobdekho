@@ -1,20 +1,7 @@
 import { toIso } from './timestamp.js'
 import { pruneRows } from './corpus-prune.js'
 import { touchedPostingIds } from './corpus-keep.js'
-
-// Everything a re-scrape may legitimately correct. firstSeenAt and id are
-// absent on purpose: the first is what "new today" is measured from, and the
-// second is the key. Without this refresh an adapter fix could never reach
-// rows already stored, so a parser bug was permanent.
-const REFRESHABLE = [
-  'title', 'company', 'location', 'url', 'descriptionSnippet', 'descriptionText', 'tags',
-  'stipend', 'duration', 'experience', 'postedAt',
-  'level', 'degreeMin', 'degreeRequired', 'workMode', 'type',
-  'stipendMin', 'currency', 'durationMonths', 'experienceYears', 'groupKey',
-  // Bumping this on every conflict is what makes staleness detectable: a row
-  // whose lastSeenAt stops advancing is no longer being listed anywhere.
-  'lastSeenAt',
-]
+import { refreshed, markSeen } from './corpus-merge.js'
 
 export function toRow(p) {
   const level = p.level ?? 'mid'
@@ -23,7 +10,7 @@ export function toRow(p) {
     company: p.company,
     // These columns were NOT NULL with defaults in Postgres, and core's
     // filter() still counts on that: it joins tags without checking them.
-    location: p.location ?? '', url: p.url,
+    location: p.location ?? '', url: p.url, logoUrl: p.logoUrl ?? null,
     descriptionSnippet: p.descriptionSnippet ?? '',
     // Null rather than '' when a source predates the field, so "never stored"
     // stays distinguishable from "the posting really had no description".
@@ -59,9 +46,11 @@ export async function getExistingIds(store, ids) {
 // must never see them change underneath it.
 //
 // The same write drops what is too old to be of use (corpus-prune.js), and
-// resolves with how many went, so the run can say so.
-export async function upsertPostings(store, items, nowMs = Date.now()) {
-  if (items.length === 0) return { removed: 0 }
+// resolves with how many went, so the run can say so. `seenIds` are postings
+// a source listed without sending (see corpus-merge.js markSeen): a run can
+// bring nothing new and still have to record that much.
+export async function upsertPostings(store, items, nowMs = Date.now(), seenIds = []) {
+  if (items.length === 0 && seenIds.length === 0) return { removed: 0 }
   const next = new Map(store.corpus.byId())
   const now = toIso(new Date(nowMs))
   for (const item of items) {
@@ -69,24 +58,10 @@ export async function upsertPostings(store, items, nowMs = Date.now()) {
     const existing = next.get(row.id)
     next.set(row.id, existing ? refreshed(existing, row) : { ...row, firstSeenAt: now })
   }
+  markSeen(next, seenIds, now)
   const { rows, removed } = pruneRows(next, { keep: touchedPostingIds(store), now: nowMs })
   store.corpus.save(rows)
   return { removed }
-}
-
-// A posting seen again as a bare search card (LinkedIn lists cards, and its
-// description is fetched once, see boards/linkedin.js) carries no text, and
-// copying that over would wipe the description fetched on an earlier run,
-// with what was read from it. Those stay until a sighting brings text again.
-const READ_FROM_TEXT = ['descriptionSnippet', 'descriptionText', 'level', 'degreeMin', 'degreeRequired', 'type']
-
-function refreshed(existing, row) {
-  const out = { ...existing }
-  const bare = !row.descriptionText && Boolean(existing.descriptionText)
-  for (const column of REFRESHABLE) {
-    if (!(bare && READ_FROM_TEXT.includes(column))) out[column] = row[column]
-  }
-  return out
 }
 
 export async function recordRun(store, { id, sourceResults, newCount }) {

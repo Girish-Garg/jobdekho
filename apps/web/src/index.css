@@ -36,6 +36,9 @@
   --edge: 212 212 218;
   --ring: 184 84 16;
   --select: 243 243 245;
+  /* The light square a company logo sits on, in both themes: most logos
+     are dark marks drawn for white. */
+  --tile: 255 255 255;
 
   /* Saffron is what you act with, and it is deepened from the bright marigold
      of the brand so white text on it clears 4.87 to 1; the bright one only
@@ -80,6 +83,7 @@
   --edge: 54 57 64;
   --ring: 255 159 28;
   --select: 32 34 39;
+  --tile: 232 233 236;
 
   /* The bright saffron takes dark text: 9.13 to 1. */
   --primary: 255 159 28;

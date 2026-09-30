@@ -22,6 +22,20 @@ const down = (name) => ({ name, fetch: async () => { throw new Error('offline') 
 const noHttp = () => { throw new Error('a test reached the network') }
 
 describe('runScrape', () => {
+  // Workday and the other list-then-describe adapters leave out what the store
+  // already holds. The posting was still listed, so it has to count as seen,
+  // or the feed hides it as stale after 21 days while it is still open.
+  it('marks a posting skipped as already known as seen', async () => {
+    const db = openStore(dir)
+    const described = { ...job('1'), description: 'Build software for our customers.' }
+    await runScrape({ db, config, http: noHttp, adapters: [board('a', [described])] })
+    const first = db.corpus.rows()[0].lastSeenAt
+    await new Promise((resolve) => setTimeout(resolve, 5))
+    const skipper = { name: 'a', fetch: async (http, context) => (context.known('a', '1') ? [] : [described]) }
+    await runScrape({ db, config, http: noHttp, adapters: [skipper] })
+    expect(db.corpus.rows()[0].lastSeenAt > first).toBe(true)
+  })
+
   it('fetches every source, writes the new postings and the run into the store, and returns both', async () => {
     const db = openStore(dir)
     const out = await runScrape({ db, config, http: noHttp, adapters: [board('a', [job('1'), job('2')]), down('b')] })

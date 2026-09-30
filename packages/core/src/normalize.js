@@ -5,6 +5,7 @@ import { classifyLevel } from './level.js'
 import { classifyDegree } from './degree.js'
 import { classifyWorkMode } from './work-mode.js'
 import { tidyLines, oneLine, clipText } from './text-layout.js'
+import { logoUrl } from './logo.js'
 
 const SNIPPET_MAX = 280
 
@@ -42,6 +43,8 @@ export function normalize(raw, source) {
     company,
     location,
     url: raw.url || '',
+    // Only an address, and only from a known logo host (see logo.js).
+    logoUrl: logoUrl(raw.logoUrl),
     descriptionSnippet: oneLine(description).slice(0, SNIPPET_MAX),
     descriptionText: clipText(description, TEXT_MAX),
     tags,

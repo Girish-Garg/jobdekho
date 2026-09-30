@@ -57,6 +57,7 @@ export function parseInternshala(html, type = 'internship') {
       stipend: iconText(card, '.ic-16-money') || null,
       duration: iconText(card, '.ic-16-calendar') || null,
       experience: iconText(card, '.ic-16-briefcase') || 'Fresher',
+      logoUrl: card.find('.internship_logo img').first().attr('src') || null,
     })
   })
   return out

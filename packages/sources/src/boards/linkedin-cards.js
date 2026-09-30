@@ -10,6 +10,13 @@ const flat = (node) => node.text().replace(/\s+/g, ' ').trim()
 const urnId = (card) => (card.attr('data-entity-urn') || '').match(/(\d+)$/)?.[1]
 const pathId = (path) => path.match(/-(\d+)$/)?.[1]
 
+// The company's logo, lazily loaded from data-delayed-url. A company with
+// none shows LinkedIn's stock ghost image, which is not its logo at all.
+const logoOf = (card) => {
+  const src = card.find('img[data-delayed-url]').attr('data-delayed-url') || ''
+  return src.includes('company-logo') ? src : null
+}
+
 export function parseLinkedin(html) {
   const $ = load(html)
   const out = []
@@ -32,6 +39,7 @@ export function parseLinkedin(html) {
       description: '',
       tags: [],
       postedAt: toIso(card.find('time[datetime]').attr('datetime')),
+      logoUrl: logoOf(card),
     })
   })
   return out

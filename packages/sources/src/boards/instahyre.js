@@ -50,6 +50,7 @@ export function toRaw(j, jobType = 'full_time') {
     description: '',
     tags: keywords,
     postedAt: null,
+    logoUrl: j.employer?.profile_image_src || null,
     ...internLevel(jobType),
   }
 }

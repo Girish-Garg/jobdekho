@@ -66,6 +66,13 @@ const html = `<!DOCTYPE html>
 </li>`
 
 describe('parseLinkedin', () => {
+  it('keeps the company logo address, and not the stock ghost image', () => {
+    const [first] = parseLinkedin(html)
+    expect(first.logoUrl).toBe('https://media.licdn.com/dms/image/v2/D4E0BAQHYzTce8ZeOzw/company-logo_100_100/0/accentureindia_logo')
+    const ghost = html.replace(/company-logo_100_100[^"]*/, 'ghost')
+    expect(parseLinkedin(ghost)[0].logoUrl).toBeNull()
+  })
+
   it('maps a card', () => {
     const [r] = parseLinkedin(html)
     expect(r).toMatchObject({

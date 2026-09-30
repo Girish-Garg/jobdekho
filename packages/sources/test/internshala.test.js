@@ -19,6 +19,15 @@ const html = `
 </div>`
 
 describe('parseInternshala', () => {
+  it('keeps the logo address from the card, or none', () => {
+    const logo = 'https://internshala-uploads.internshala.com/logo%2Fabc.jpg.webp'
+    const withLogo = html.replace(/<\/div>\s*<\/div>\s*$/, `</div>
+  <div class="internship_logo"><img src="${logo}" alt="Acme Labs"></div>
+</div>`)
+    expect(parseInternshala(withLogo)[0].logoUrl).toBe(logo)
+    expect(parseInternshala(html)[0].logoUrl).toBeNull()
+  })
+
   it('extracts internship cards', () => {
     const [r] = parseInternshala(html)
     expect(r.externalId).toBe('900')

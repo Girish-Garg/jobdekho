@@ -42,7 +42,13 @@ describe('instahyre toRaw', () => {
       description: '',
       tags: ['CSS', 'Data Structures', 'JavaScript', 'React.js'],
       postedAt: null,
+      logoUrl: null,
     })
+  })
+
+  it("keeps the employer's logo address", () => {
+    const logo = 'https://media.instahyre.com/images/profile/base/employer/1/x.webp'
+    expect(toRaw({ id: 1, employer: { company_name: 'A', profile_image_src: logo } }).logoUrl).toBe(logo)
   })
 
   it('keeps a multi-city location string as given', () => {
