@@ -8,12 +8,12 @@ import { notifyError } from './toast.js';
 // A failed save puts the old pick back, so the cards never show a choice the
 // server does not hold. `saved` is 'idle', 'saving', 'saved' or 'error'.
 //
-// Beside the provider, the Ollama model (null until one is picked, which the
-// server reads as Ollama's first model). Each saves only itself: the server
-// keeps the other as it was.
+// Beside the provider, `models`: the model each AI answers with, by id,
+// { claude?, agy?, ollama? }; one left out is that AI's default. Each save
+// names only what changed: the server keeps the rest as it was.
 export function useProviderSetting() {
   const [provider, setProvider] = useState('auto');
-  const [ollamaModel, setOllamaModel] = useState(null);
+  const [models, setModels] = useState({});
   const [providers, setProviders] = useState([]);
   const [saved, setSaved] = useState('idle');
 
@@ -21,20 +21,20 @@ export function useProviderSetting() {
     getProviderPreference()
       .then((p) => {
         setProvider(p?.provider || 'auto');
-        setOllamaModel(p?.ollamaModel || null);
+        setModels(p?.models || {});
       })
       .catch(() => {});
     getProviders().then(setProviders).catch(() => {});
   }, []);
 
-  async function save(field, next, before, set, failure) {
-    set(next);
+  async function save(body, apply, undo, failure) {
+    apply();
     setSaved('saving');
     try {
-      await putProviderPreference({ [field]: next });
+      await putProviderPreference(body);
       setSaved('saved');
     } catch (err) {
-      set(before);
+      undo();
       setSaved('error');
       notifyError(err, failure);
     }
@@ -42,13 +42,15 @@ export function useProviderSetting() {
 
   function pick(next) {
     if (next === provider) return;
-    save('provider', next, provider, setProvider, 'Could not save the AI CLI');
+    const before = provider;
+    save({ provider: next }, () => setProvider(next), () => setProvider(before), 'Could not save the AI CLI');
   }
 
-  function pickModel(next) {
-    if (next === ollamaModel) return;
-    save('ollamaModel', next, ollamaModel, setOllamaModel, 'Could not save the Ollama model');
+  function pickModel(providerId, next) {
+    if (next === models[providerId]) return;
+    const before = models;
+    save({ models: { [providerId]: next } }, () => setModels({ ...before, [providerId]: next }), () => setModels(before), 'Could not save the model');
   }
 
-  return { provider, ollamaModel, providers, saved, pick, pickModel };
+  return { provider, models, providers, saved, pick, pickModel };
 }

@@ -9,6 +9,7 @@ import { existsSync, readdirSync, writeFileSync, mkdtempSync, rmSync } from 'nod
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createDetector } from '@jobdekho/server/ai/detect.js'
+import { CLAUDE_MODELS, DEFAULT_MODEL } from '@jobdekho/server/ai/cli-models.js'
 import { ProviderError, FAILURE_KINDS } from '@jobdekho/server/ai/errors.js'
 import { readNdjson, startEvent, progressEvent, isEvent } from '@jobdekho/server/ai/events.js'
 import { runCli } from '@jobdekho/server/ai/spawn.js'
@@ -307,19 +308,21 @@ describe('createDetector', () => {
   it('reports each provider with the version it printed and the policies it honours', async () => {
     const detect = createDetector({ locate: ALL, run: answering('2.1.245\n'), home: NO_HOME })
     expect(await detect()).toEqual([
+      // Claude Code's models are a fixed list; Antigravity's come from its
+      // own listing, which a detector whose `run` is faked never starts.
       {
         id: 'claude', label: 'Claude Code', install: 'https://claude.ai/code', policies: ['none', 'web'],
-        present: true, path: '/usr/local/bin/claude', runs: true, version: '2.1.245', error: null,
+        present: true, path: '/usr/local/bin/claude', runs: true, version: '2.1.245', error: null, models: CLAUDE_MODELS,
       },
       {
         id: 'agy', label: 'Antigravity', install: 'https://antigravity.google', policies: ['none', 'web'],
-        present: true, path: '/usr/local/bin/agy', runs: true, version: '2.1.245', error: null,
+        present: true, path: '/usr/local/bin/agy', runs: true, version: '2.1.245', error: null, models: [DEFAULT_MODEL],
       },
       // Found on PATH, but a detector whose `run` is faked reaches no model
       // server (see http-json.js), so it reads as not running.
       {
-        id: 'ollama', label: 'Ollama', install: 'https://ollama.com', policies: ['none'],
-        present: true, path: '/usr/local/bin/ollama', runs: false, version: null, models: [],
+        id: 'ollama', label: 'Ollama', install: 'https://ollama.com', policies: ['none'], local: true,
+        present: true, path: '/usr/local/bin/ollama', runs: false, version: null, models: [], webHint: null,
         error: 'Ollama is installed but not running: start the Ollama app, or run "ollama serve" in a terminal.',
       },
     ])

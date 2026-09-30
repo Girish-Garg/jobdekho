@@ -53,6 +53,16 @@ describe('InstallHint', () => {
     expect(screen.getByRole('link', { name: 'https://claude.ai/code' })).toBeInTheDocument();
   });
 
+  // Ollama signed out: the server's line on how to let it search, in place
+  // of the plain "cannot".
+  it('says how to let an installed AI search, when the server knows how', () => {
+    const webHint = 'Sign in with "ollama signin" in a terminal to let Ollama search the web; it needs a free ollama.com account.';
+    const ollama = { ...installed(NO_WEB), id: 'ollama', label: 'Ollama', webHint };
+    hint({ policies: ['web'], providers: [CLAUDE, ollama] });
+    expect(screen.getByText(webHint)).toBeInTheDocument();
+    expect(screen.queryByText('Ollama is installed, but it cannot take this action.')).not.toBeInTheDocument();
+  });
+
   it('shows the server sentence verbatim for a CLI that is installed but will not run or must not be used', () => {
     const gated = {
       ...installed(AGY), runs: false, version: null,

@@ -43,6 +43,13 @@ describe('webSentence', () => {
     );
   });
 
+  // Once its probe found it can search (signed in, a model that uses tools).
+  it('counts Ollama among those that can once the providers endpoint says so', () => {
+    expect(webSentence([CLAUDE, AGY, { ...OLLAMA, policies: ['none', 'web'] }])).toBe(
+      '"Is this job real?" searches the web, which Claude Code, Antigravity and Ollama can all do.',
+    );
+  });
+
   it('reads right for three that can and two that cannot', () => {
     const third = { ...CLAUDE, id: 'third', label: 'Third CLI' };
     expect(webSentence([CLAUDE, AGY, third, OLLAMA, NO_WEB])).toBe(

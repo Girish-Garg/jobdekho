@@ -5,7 +5,9 @@
 //   none  no tools at all: the model reads the prompt and answers
 //   web   searching the web and nothing else: Claude Code gets WebSearch and
 //         WebFetch, pre-approved because a one-shot call cannot ask and would
-//         deny them silently; Antigravity gets search_web alone (agy-agent.js)
+//         deny them silently; Antigravity gets search_web alone (agy-agent.js);
+//         Ollama gets web_search and web_fetch, which JobDekho runs for it
+//         (ollama-web-tools.js)
 //
 // A CLI honours a policy or it does not, and honouring one means being able
 // to hand the call exactly that set of tools. A CLI that cannot is not a

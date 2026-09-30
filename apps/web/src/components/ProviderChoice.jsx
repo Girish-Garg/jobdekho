@@ -8,10 +8,12 @@ const DOT = { ready: 'bg-applied', stuck: 'bg-ember', missing: 'bg-muted/50' };
 
 // Radio cards: "Whichever is available" plus one per CLI the providers
 // endpoint knows about, so Ollama, added third, showed up here with no copy
-// change, and without the web tag because it cannot search. Each card
-// carries what the probe found, so the pick and whether it can run are read
-// in one place. The radio's name is only the label; the status is its
-// description, so "Claude Code" is still what is announced.
+// change. Each card carries what the probe found, so the pick and whether it
+// can run are read in one place, and the web tag only when the probe found
+// it can search right now; one that could but cannot yet (Ollama signed
+// out) carries the server's one line on how to let it instead. The radio's
+// name is only the label; the status is its description, so "Claude Code"
+// is still what is announced.
 export default function ProviderChoice({ providers, pref, onChange }) {
   return (
     <div role="radiogroup" aria-label="AI CLI" className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -63,6 +65,7 @@ function Option({ label, detail, icon, provider, active, onClick }) {
             <GlobeIcon size={11} /> Searches the web
           </span>
         )}
+        {provider?.webHint && <span>{provider.webHint}</span>}
       </span>
     </button>
   );

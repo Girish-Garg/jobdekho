@@ -2,8 +2,8 @@ import { Fragment } from 'react';
 
 // Claude Code and Antigravity take both policies (Antigravity searches
 // through an agent of its own, see the server's ai/agy-agent.js). Ollama
-// takes 'none' alone, so it is the one a web action names with the plain
-// "cannot take this action" sentence.
+// takes 'web' only once its probe found it can search, so until then a web
+// action names it as unable, with the server's line on how to let it.
 const serves = (p, policies) => policies.some((policy) => p.policies.includes(policy));
 
 // Shown in place of an AI button when no installed CLI can take the action.
@@ -45,7 +45,7 @@ export default function InstallHint({ intro, policies, providers, checking, onRe
       {unfit.map((p) => (
         <p key={p.id} className="text-sm text-ink">
           {p.present && p.runs
-            ? `${p.label} is installed, but it cannot take this action.`
+            ? p.webHint || `${p.label} is installed, but it cannot take this action.`
             : `${p.label} would not help here: it cannot take this action.`}
         </p>
       ))}

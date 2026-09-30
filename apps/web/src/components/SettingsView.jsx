@@ -14,8 +14,10 @@ const SAVED = {
 
 // Every setting saves as it is picked, so there is no Save button to find.
 export default function SettingsView() {
-  const { provider, ollamaModel, providers, saved, pick, pickModel } = useProviderSetting();
-  const ollama = providers.find((p) => p.id === 'ollama');
+  const { provider, models, providers, saved, pick, pickModel } = useProviderSetting();
+  // One model picker, for the AI picked; with none picked each answers with
+  // its own saved model, so there is no one list to offer.
+  const picked = providers.find((p) => p.id === provider);
 
   return (
     <section className="px-4 pb-12 pt-8">
@@ -34,7 +36,10 @@ export default function SettingsView() {
             note={<span aria-live="polite" className="shrink-0 pt-1">{SAVED[saved] ?? null}</span>}
           >
             <ProviderChoice providers={providers} pref={provider} onChange={pick} />
-            {ollama && <ModelChoice provider={ollama} saved={ollamaModel} onChange={pickModel} />}
+            {picked && <ModelChoice provider={picked} saved={models[picked.id]} onChange={(id) => pickModel(picked.id, id)} />}
+            {provider === 'auto' && providers.length > 0 && (
+              <p className="mt-4 text-xs text-muted">Each CLI then answers with its own saved model, or its default.</p>
+            )}
             {providers.length > 0 && (
               <p className="mt-4 flex items-start gap-2 text-sm text-muted">
                 <GlobeIcon size={14} className="mt-[3px] shrink-0 text-accent" />

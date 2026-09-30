@@ -29,9 +29,10 @@ const MESSAGE = {
   not_found: (p, detail) => detail
     || `${p.label} is not installed, or is not on the PATH JobDekho was started with. `
     + `Install it from ${p.install}, then restart JobDekho.`,
+  // A CLI signs in when it is run bare; Ollama has a command of its own.
   login: (p, detail) =>
     `${p.label} is not signed in (${trimStop(detail)}). `
-    + `Open a terminal, run "${p.binary}", finish signing in, then try again.`,
+    + `Open a terminal, run "${p.signin ?? p.binary}", finish signing in, then try again.`,
   // Claude Code refreshes its sign-in token in place, and a second process
   // that needs it while the first is mid-refresh is told to wait. That is not
   // a signed-out CLI, and telling the person to sign in again sent them to fix
@@ -62,8 +63,8 @@ export const FAILURE_KINDS = Object.keys(STATUS)
 // three places used to decide it (both unwrappers and a non-zero exit).
 // Busy is asked first: Claude Code's refresh race says "OAuth token", which
 // the login pattern also matches, and a transient wait must not read as a
-// broken sign-in. A provider with nothing to sign in to (Ollama) has no
-// login wording, and its failures are only ever failures.
+// broken sign-in. Ollama has no login wording: its one sign-in, for web
+// search, is read from the status the search answers (see ollama-web.js).
 export function classify(provider, detail) {
   if (provider.busyPattern?.test(detail)) return 'busy'
   if (provider.loginPattern?.test(detail)) return 'login'

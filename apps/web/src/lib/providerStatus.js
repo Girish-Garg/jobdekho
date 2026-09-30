@@ -20,9 +20,10 @@ function listed(labels) {
 const TOGETHER = { 1: 'can', 2: 'can both' };
 
 // "Is this job real?" is the one job action that searches the web, so it can
-// only run on a CLI that honours the 'web' policy (see ai/policies.js). Ollama
-// honours 'none' alone, so on a machine with all three it is the one named
-// as unable.
+// only run on a CLI that honours the 'web' policy (see ai/policies.js). The
+// providers endpoint says which do right now: Ollama only once its probe
+// found it can search (signed in, with a model that uses tools), so until
+// then it is the one named as unable, and its card says how to change that.
 export function webSentence(providers) {
   const canSearch = providers.filter(searchesWeb);
   if (!canSearch.length) return '"Is this job real?" needs a CLI that can search the web; none of these can.';

@@ -10,7 +10,9 @@ import { request } from 'node:http'
 //
 // Loopback only, checked on every request rather than trusted to the caller:
 // the prompt carries the person's resume, and this is the one place it could
-// be handed to another machine.
+// be handed to another machine. There is no exception, not even for Ollama's
+// web search: that goes to ollama.com through Ollama's own server, which
+// holds the sign-in (see ollama-web-probe.js), so JobDekho never talks to it.
 const LOOPBACK = /^(localhost|127(\.\d{1,3}){3}|\[::1\])$/i
 
 export const isLoopback = (hostname) => LOOPBACK.test(String(hostname))

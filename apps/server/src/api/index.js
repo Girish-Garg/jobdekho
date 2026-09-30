@@ -1,6 +1,6 @@
 import { postingsRoutes } from './postings.js'
 import { filtersRoutes } from './filters.js'
-import { aiProviderRoutes, MODEL_FIELD } from './ai-provider.js'
+import { aiProviderRoutes } from './ai-provider.js'
 import { profileRoutes } from './profile.js'
 import { postingAiRoutes } from './posting-ai.js'
 import { resumeRoutes } from './resume.js'
@@ -28,14 +28,15 @@ function preferenceReader(app) {
 }
 
 // The chooser every AI call goes through: the saved provider first when it
-// can take the action, and for Ollama the saved model (see ai/select.js).
+// can take the action, and the model saved for whichever AI answers (see
+// ai/select.js).
 function selector(app, detect) {
   const read = preferenceReader(app)
   const preferred = async () => {
     const pref = await read()
     return pref && pref.provider !== 'auto' ? pref.provider : null
   }
-  const model = async (providerId) => (MODEL_FIELD[providerId] ? (await read())?.[MODEL_FIELD[providerId]] ?? null : null)
+  const model = async (providerId) => (await read())?.models?.[providerId] ?? null
   return createSelector(detect, preferred, model)
 }
 

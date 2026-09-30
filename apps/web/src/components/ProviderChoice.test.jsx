@@ -67,6 +67,19 @@ describe('ProviderChoice', () => {
     expect(card).not.toHaveTextContent('Searches the web');
   });
 
+  // The tag only where the probe found it can search; otherwise the
+  // server's one line on how to let it, as part of the card's description.
+  it('tags an Ollama that can search, and says how to turn it on for one that cannot', () => {
+    const hint = 'Sign in with "ollama signin" in a terminal to let Ollama search the web; it needs a free ollama.com account.';
+    const signedOut = { id: 'ollama', label: 'Ollama', policies: ['none'], runs: true, version: '0.32.12', error: null, models: [], webHint: hint };
+    const { unmount } = render(<ProviderChoice providers={[signedOut]} pref="auto" onChange={() => {}} />);
+    expect(screen.getByRole('radio', { name: 'Ollama' })).toHaveAccessibleDescription(`0.32.12 ${hint}`);
+    expect(screen.getByRole('radio', { name: 'Ollama' })).not.toHaveTextContent('Searches the web');
+    unmount();
+    render(<ProviderChoice providers={[{ ...signedOut, policies: ['none', 'web'], webHint: null }]} pref="auto" onChange={() => {}} />);
+    expect(screen.getByRole('radio', { name: 'Ollama' })).toHaveAccessibleDescription('0.32.12 Searches the web');
+  });
+
   it('shows why Ollama cannot answer when its server is not up', () => {
     const stopped = {
       id: 'ollama', label: 'Ollama', policies: ['none'], runs: false, version: null, models: [],

@@ -9,7 +9,9 @@ import { withModel } from './model-choice.js'
 // policy is not a candidate at all, so a preference never hands an action
 // to a CLI that cannot do it; it just falls through to the ordinary fallback
 // below. Claude Code and Antigravity honour both policies; Ollama honours
-// 'none' alone, so a preference for it never reaches a web action.
+// 'web' only where its probe found it can search (see ollama-web-probe.js),
+// so a preference for it reaches a web action only there. What a provider
+// honours is read from its detection row, never assumed from the registry.
 export function pickProvider(detected, policy, after = [], preferredId = null) {
   const eligible = detected.filter((p) => p.present && p.runs && p.policies.includes(policy) && !after.includes(p.id))
   const fit = eligible.find((p) => p.id === preferredId) ?? eligible[0]
@@ -20,13 +22,13 @@ export function pickProvider(detected, policy, after = [], preferredId = null) {
 // select(policy) over the shared, cached probe (see detect.js), so choosing
 // costs no process start of its own within the cache's minute. `getPreferred`
 // is asked fresh on every call, not cached: it is a file read, not a probe.
-// So is `getModel`, (providerId) -> the model the person picked for it, for
-// the one provider whose detection lists models (see model-choice.js).
+// So is `getModel`, (providerId) -> the model id the person picked for it
+// (see model-choice.js), bound for the policy the call runs under.
 export const createSelector = (detect, getPreferred = async () => null, getModel = async () => null) =>
   async (policy, { after = [] } = {}) => {
     const detected = await detect()
     const provider = pickProvider(detected, policy, after, await getPreferred())
-    return withModel(provider, detected, await getModel(provider.id))
+    return withModel(provider, detected, await getModel(provider.id), policy)
   }
 
 // Also where an unknown policy fails, before any sentence is written for it.
@@ -38,14 +40,16 @@ const firstCapable = (policy) => PROVIDERS.find((p) => p.supports(policy))
 // already carries detection's sentence about why, and that is the one to
 // show: the person has that CLI and needs to fix it, not install another.
 // One that needs more than an install (Ollama needs a model pulled too) is
-// offered in a sentence of its own after the others (see `offer`).
+// offered in a sentence of its own after the others (see `offer`), and one
+// that runs but cannot search yet says how to let it (its `webHint`).
 function whyNone(detected, policy) {
   const capable = detected.filter((p) => p.policies.includes(policy))
   const stuck = capable.find((p) => p.present)
   if (stuck) return stuck.error
   const offerOf = (p) => providerById(p.id)?.offer
   const clis = capable.filter((p) => !offerOf(p))
-  return [...(clis.length ? [missing(clis), install(clis)] : []), ...capable.map(offerOf).filter(Boolean)].join(' ')
+  const hints = policy === 'web' ? detected.map((p) => p.webHint).filter(Boolean) : []
+  return [...(clis.length ? [missing(clis), install(clis)] : []), ...capable.map(offerOf).filter(Boolean), ...hints].join(' ')
 }
 
 const missing = (capable) => (capable.length === 1

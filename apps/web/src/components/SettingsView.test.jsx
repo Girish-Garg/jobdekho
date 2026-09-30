@@ -2,15 +2,23 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent, act, within } from '@testing-library/react';
 import SettingsView from './SettingsView.jsx';
 
+const CLAUDE_MODELS = [
+  { id: 'default', label: 'Default' }, { id: 'fable', label: 'Fable' }, { id: 'opus', label: 'Opus' },
+  { id: 'sonnet', label: 'Sonnet' }, { id: 'haiku', label: 'Haiku' },
+];
+
 const CLIS = [
-  { id: 'claude', label: 'Claude Code', policies: ['none', 'web'], present: true, runs: true, version: '2.1.245', error: null },
-  { id: 'agy', label: 'Antigravity', policies: ['none', 'web'], present: false, runs: false, version: null, error: null },
+  { id: 'claude', label: 'Claude Code', policies: ['none', 'web'], present: true, runs: true, version: '2.1.245', error: null, models: CLAUDE_MODELS },
+  { id: 'agy', label: 'Antigravity', policies: ['none', 'web'], present: false, runs: false, version: null, error: null, models: [] },
 ];
 
 // Ollama with two models, the way the providers endpoint lists it.
 const OLLAMA = {
-  id: 'ollama', label: 'Ollama', policies: ['none'], present: true, runs: true, version: '0.32.12', error: null,
-  models: [{ name: 'llama3.2:3b', size: 2019393189, contextLength: 131072 }, { name: 'qwen3:8b', size: 5225388164, contextLength: 40960 }],
+  id: 'ollama', label: 'Ollama', policies: ['none'], present: true, runs: true, version: '0.32.12', error: null, local: true, webHint: null,
+  models: [
+    { id: 'llama3.2:3b', label: 'llama3.2:3b', size: 2019393189, contextLength: 131072, tools: false },
+    { id: 'qwen3:8b', label: 'qwen3:8b', size: 5225388164, contextLength: 40960, tools: true },
+  ],
 };
 
 vi.mock('../api.js', () => ({
@@ -95,6 +103,7 @@ describe('SettingsView AI CLI section', () => {
 
 describe('SettingsView with Ollama', () => {
   beforeEach(() => getProviders.mockResolvedValue([...CLIS, OLLAMA]));
+  const picked = () => getProviderPreference.mockResolvedValueOnce({ provider: 'ollama', models: {} });
 
   it('says the AI can run on a subscription or on this computer', async () => {
     await mount();
@@ -107,7 +116,8 @@ describe('SettingsView with Ollama', () => {
     expect(screen.getByText(/which Claude Code and Antigravity can both do\. Ollama cannot\./)).toBeInTheDocument();
   });
 
-  it('offers its installed models, the first picked until one is saved', async () => {
+  it('offers its installed models once it is picked, the first picked until one is saved', async () => {
+    picked();
     await mount();
     const group = await screen.findByRole('radiogroup', { name: 'Ollama model' });
     expect(within(group).getByRole('radio', { name: 'llama3.2:3b, 2.0 GB' })).toHaveAttribute('aria-checked', 'true');
@@ -115,7 +125,7 @@ describe('SettingsView with Ollama', () => {
   });
 
   it('shows the saved model once it loads', async () => {
-    getProviderPreference.mockResolvedValueOnce({ provider: 'ollama', ollamaModel: 'qwen3:8b' });
+    getProviderPreference.mockResolvedValueOnce({ provider: 'ollama', models: { ollama: 'qwen3:8b' } });
     await mount();
     await waitFor(() => expect(screen.getByRole('radio', { name: 'qwen3:8b, 5.2 GB' })).toHaveAttribute('aria-checked', 'true'));
     expect(screen.getByRole('radio', { name: 'Ollama' })).toHaveAttribute('aria-checked', 'true');
@@ -123,14 +133,16 @@ describe('SettingsView with Ollama', () => {
 
   // Like the provider, a model pick is the save, and names only itself.
   it('saves a model as soon as it is picked, and says so', async () => {
+    picked();
     await mount();
     await act(async () => fireEvent.click(await screen.findByRole('radio', { name: 'qwen3:8b, 5.2 GB' })));
-    expect(putProviderPreference).toHaveBeenCalledWith({ ollamaModel: 'qwen3:8b' });
+    expect(putProviderPreference).toHaveBeenCalledWith({ models: { ollama: 'qwen3:8b' } });
     expect(screen.getByRole('radio', { name: 'qwen3:8b, 5.2 GB' })).toHaveAttribute('aria-checked', 'true');
     expect(screen.getByText('Saved')).toBeInTheDocument();
   });
 
   it('puts the old model back when the save fails', async () => {
+    picked();
     putProviderPreference.mockRejectedValueOnce(new Error('Ollama has no model called "qwen3:8b" on this computer.'));
     await mount();
     await act(async () => fireEvent.click(await screen.findByRole('radio', { name: 'qwen3:8b, 5.2 GB' })));
@@ -139,9 +151,58 @@ describe('SettingsView with Ollama', () => {
   });
 
   it('offers no model picker while Ollama has nothing to run', async () => {
+    picked();
     getProviders.mockResolvedValue([...CLIS, { ...OLLAMA, runs: false, models: [], error: 'Ollama has no models yet: run "ollama pull llama3.2" in a terminal, then check again.' }]);
     await mount();
     await waitFor(() => expect(screen.getByRole('radio', { name: 'Ollama' })).toHaveAccessibleDescription(/no models yet/));
     expect(screen.queryByRole('radiogroup', { name: 'Ollama model' })).not.toBeInTheDocument();
+  });
+
+  // Truthful either way: the tag once its probe found it can search, and
+  // otherwise the one line on how to let it.
+  it('shows the web tag on its card only when it can search, and how to turn it on when it cannot', async () => {
+    const hint = 'Sign in with "ollama signin" in a terminal to let Ollama search the web; it needs a free ollama.com account.';
+    getProviders.mockResolvedValue([...CLIS, { ...OLLAMA, webHint: hint }]);
+    const { unmount } = render(<SettingsView />);
+    await waitFor(() => expect(screen.getByRole('radio', { name: 'Ollama' })).toHaveAccessibleDescription(/ollama signin/));
+    expect(screen.getByRole('radio', { name: 'Ollama' })).not.toHaveTextContent('Searches the web');
+    unmount();
+    getProviders.mockResolvedValue([...CLIS, { ...OLLAMA, policies: ['none', 'web'] }]);
+    await mount();
+    await waitFor(() => expect(screen.getByRole('radio', { name: 'Ollama' })).toHaveTextContent('Searches the web'));
+    expect(screen.getByText(/which Claude Code, Antigravity and Ollama can all do\./)).toBeInTheDocument();
+  });
+});
+
+describe('SettingsView model picker', () => {
+  beforeEach(() => getProviders.mockResolvedValue([...CLIS, OLLAMA]));
+  const pickers = () => screen.queryAllByRole('radiogroup', { name: / model$/ });
+
+  it('shows none for "Whichever is available", saying each CLI uses its own', async () => {
+    await mount();
+    await waitFor(() => expect(screen.getByRole('radio', { name: 'Ollama' })).toBeInTheDocument());
+    expect(pickers()).toHaveLength(0);
+    expect(screen.getByText('Each CLI then answers with its own saved model, or its default.')).toBeInTheDocument();
+  });
+
+  it('shows Claude Code\'s picker alone when it is picked, and none for Ollama', async () => {
+    getProviderPreference.mockResolvedValueOnce({ provider: 'claude', models: { claude: 'haiku', ollama: 'qwen3:8b' } });
+    await mount();
+    const group = await screen.findByRole('radiogroup', { name: 'Claude Code model' });
+    expect(within(group).getByRole('radio', { name: 'Haiku' })).toHaveAttribute('aria-checked', 'true');
+    expect(pickers()).toHaveLength(1);
+    expect(screen.queryByRole('radiogroup', { name: 'Ollama model' })).not.toBeInTheDocument();
+    expect(screen.queryByText(/Each CLI then answers/)).not.toBeInTheDocument();
+  });
+
+  it('moves the picker with the pick, and saves a CLI\'s model under its own id', async () => {
+    await mount();
+    await act(async () => fireEvent.click(await screen.findByRole('radio', { name: 'Claude Code' })));
+    const group = await screen.findByRole('radiogroup', { name: 'Claude Code model' });
+    await act(async () => fireEvent.click(within(group).getByRole('radio', { name: 'Opus' })));
+    expect(putProviderPreference).toHaveBeenLastCalledWith({ models: { claude: 'opus' } });
+    await act(async () => fireEvent.click(screen.getByRole('radio', { name: 'Ollama' })));
+    expect(screen.queryByRole('radiogroup', { name: 'Claude Code model' })).not.toBeInTheDocument();
+    expect(screen.getByRole('radiogroup', { name: 'Ollama model' })).toBeInTheDocument();
   });
 });

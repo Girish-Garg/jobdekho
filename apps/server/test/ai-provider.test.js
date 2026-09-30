@@ -21,6 +21,16 @@ function ollamaWith(models) {
   }
 }
 
+// Claude Code and Antigravity installed, answering the version probe, with
+// Antigravity's own model listing (see agy-models.js) answering `listing`.
+function clisWith(listing) {
+  return {
+    locate: (name) => (name === 'ollama' ? null : `/usr/local/bin/${name}`),
+    run: vi.fn(async () => ({ stdout: '1.2.14\n', stderr: '', code: 0 })),
+    listRun: vi.fn(async () => ({ stdout: listing, stderr: 'Fetching available models...\n', code: 0 })),
+  }
+}
+
 async function makeApp(store = makeFakeStore(), cfg = config, cli = null) {
   const app = buildApp({ config: cfg, dashboardStore: store })
   if (cli) app.decorate('cli', cli)
@@ -43,7 +53,7 @@ describe('GET /api/ai/provider', () => {
     const { app } = await makeApp()
     const res = await app.inject({ method: 'GET', url: '/api/ai/provider' })
     expect(res.statusCode).toBe(200)
-    expect(res.json()).toEqual({ provider: 'auto' })
+    expect(res.json()).toEqual({ provider: 'auto', models: {} })
   })
 
   it('returns the saved preference', async () => {
@@ -65,7 +75,7 @@ describe('PUT /api/ai/provider', () => {
       body: JSON.stringify({ provider: 'agy' }),
     })
     expect(res.statusCode).toBe(204)
-    expect(store.upsertProviderPref).toHaveBeenCalledWith('local', { provider: 'agy' })
+    expect(store.upsertProviderPref).toHaveBeenCalledWith('local', { provider: 'agy', models: {} })
   })
 
   it('accepts auto, the "whichever is available" choice', async () => {
@@ -92,45 +102,45 @@ describe('PUT /api/ai/provider', () => {
   })
 })
 
-describe('the Ollama model beside the provider', () => {
-  it('returns the saved model with the provider', async () => {
+describe('a model for each AI', () => {
+  it('returns the saved models with the provider', async () => {
     const store = makeFakeStore()
-    store.getProviderPref.mockResolvedValue({ provider: 'ollama', ollamaModel: 'qwen3:8b' })
+    store.getProviderPref.mockResolvedValue({ provider: 'ollama', models: { ollama: 'qwen3:8b', claude: 'opus' } })
     const { app } = await makeApp(store)
     const res = await app.inject({ method: 'GET', url: '/api/ai/provider' })
-    expect(res.json()).toEqual({ provider: 'ollama', ollamaModel: 'qwen3:8b' })
+    expect(res.json()).toEqual({ provider: 'ollama', models: { ollama: 'qwen3:8b', claude: 'opus' } })
   })
 
   it('accepts Ollama as the provider, since the registry knows it', async () => {
     const store = makeFakeStore()
     const { app } = await makeApp(store)
     expect((await put(app, { provider: 'ollama' })).statusCode).toBe(204)
-    expect(store.upsertProviderPref).toHaveBeenCalledWith('local', { provider: 'ollama' })
+    expect(store.upsertProviderPref).toHaveBeenCalledWith('local', { provider: 'ollama', models: {} })
   })
 
-  it('saves a model Ollama has installed, keeping the saved provider', async () => {
+  it('saves a model Ollama has installed, keeping the saved provider and the other models', async () => {
     const store = makeFakeStore()
-    store.getProviderPref.mockResolvedValue({ provider: 'claude' })
+    store.getProviderPref.mockResolvedValue({ provider: 'claude', models: { claude: 'sonnet' } })
     const { app } = await makeApp(store, config, ollamaWith(['llama3.2:3b', 'qwen3:8b']))
-    expect((await put(app, { ollamaModel: 'qwen3:8b' })).statusCode).toBe(204)
-    expect(store.upsertProviderPref).toHaveBeenCalledWith('local', { provider: 'claude', ollamaModel: 'qwen3:8b' })
+    expect((await put(app, { models: { ollama: 'qwen3:8b' } })).statusCode).toBe(204)
+    expect(store.upsertProviderPref).toHaveBeenCalledWith('local', { provider: 'claude', models: { claude: 'sonnet', ollama: 'qwen3:8b' } })
   })
 
   // Settings saves each as it is picked, so a provider pick must not drop
-  // the model picked before it.
-  it('keeps the saved model when only the provider changes', async () => {
+  // the models picked before it.
+  it('keeps the saved models when only the provider changes', async () => {
     const store = makeFakeStore()
-    store.getProviderPref.mockResolvedValue({ provider: 'auto', ollamaModel: 'qwen3:8b' })
+    store.getProviderPref.mockResolvedValue({ provider: 'auto', models: { ollama: 'qwen3:8b' } })
     const { app } = await makeApp(store)
     expect((await put(app, { provider: 'agy' })).statusCode).toBe(204)
-    expect(store.upsertProviderPref).toHaveBeenCalledWith('local', { provider: 'agy', ollamaModel: 'qwen3:8b' })
+    expect(store.upsertProviderPref).toHaveBeenCalledWith('local', { provider: 'agy', models: { ollama: 'qwen3:8b' } })
   })
 
   it('refuses a model Ollama does not have, after asking it again in case it was just pulled', async () => {
     const store = makeFakeStore()
     const cli = ollamaWith(['llama3.2:3b'])
     const { app } = await makeApp(store, config, cli)
-    const res = await put(app, { ollamaModel: 'gpt-oss:120b-cloud' })
+    const res = await put(app, { models: { ollama: 'gpt-oss:120b-cloud' } })
     expect(res.statusCode).toBe(400)
     expect(res.json().error).toBe('Ollama has no model called "gpt-oss:120b-cloud" on this computer. Pick one of the models it lists.')
     expect(store.upsertProviderPref).not.toHaveBeenCalled()
@@ -138,19 +148,47 @@ describe('the Ollama model beside the provider', () => {
     expect(tagReads).toHaveLength(2)
   })
 
-  it('refuses any model while Ollama is not running', async () => {
+  it('refuses any Ollama model while Ollama is not running', async () => {
     const store = makeFakeStore()
     const cli = { ...ollamaWith([]), http: vi.fn(async () => { throw Object.assign(new Error('refused'), { code: 'ECONNREFUSED' }) }) }
     const { app } = await makeApp(store, config, cli)
-    expect((await put(app, { ollamaModel: 'llama3.2:3b' })).statusCode).toBe(400)
+    expect((await put(app, { models: { ollama: 'llama3.2:3b' } })).statusCode).toBe(400)
     expect(store.upsertProviderPref).not.toHaveBeenCalled()
   })
 
-  it('rejects an empty model name before looking', async () => {
+  it('rejects an empty model name or an unknown AI before looking, and a model that is not a string', async () => {
     const store = makeFakeStore()
     const cli = ollamaWith(['llama3.2:3b'])
     const { app } = await makeApp(store, config, cli)
-    expect((await put(app, { ollamaModel: '' })).statusCode).toBe(400)
+    expect((await put(app, { models: { ollama: '' } })).statusCode).toBe(400)
+    expect((await put(app, { models: { chatgpt: 'gpt-5' } })).statusCode).toBe(400)
     expect(cli.http).not.toHaveBeenCalled()
+    expect((await put(app, { models: { claude: 7 } })).statusCode).toBe(400)
+    expect(store.upsertProviderPref).not.toHaveBeenCalled()
+  })
+
+  // Claude Code's list is fixed, so nothing is started to check it.
+  it('saves a Claude Code alias it lists, Default among them, and refuses a name it does not', async () => {
+    const store = makeFakeStore()
+    const cli = clisWith('')
+    const { app } = await makeApp(store, config, cli)
+    expect((await put(app, { models: { claude: 'haiku' } })).statusCode).toBe(204)
+    expect(store.upsertProviderPref).toHaveBeenLastCalledWith('local', { models: { claude: 'haiku' } })
+    expect((await put(app, { models: { claude: 'default' } })).statusCode).toBe(204)
+    const res = await put(app, { models: { claude: 'opus --dangerously-skip-permissions' } })
+    expect(res.statusCode).toBe(400)
+    expect(res.json().error).toBe('Claude Code does not offer a model called "opus --dangerously-skip-permissions". Pick one of the models it lists.')
+  })
+
+  it('saves an Antigravity model its own listing names, and refuses one it does not', async () => {
+    const store = makeFakeStore()
+    const cli = clisWith('gemini-3.8-flash-low\tGemini 3.8 Flash (Low)\nclaude-sonnet-4-6\tClaude Sonnet 4.6 (Thinking)\n')
+    const { app } = await makeApp(store, config, cli)
+    expect((await put(app, { models: { agy: 'claude-sonnet-4-6' } })).statusCode).toBe(204)
+    expect(store.upsertProviderPref).toHaveBeenLastCalledWith('local', { models: { agy: 'claude-sonnet-4-6' } })
+    const res = await put(app, { models: { agy: 'gemini-9-ultra' } })
+    expect(res.statusCode).toBe(400)
+    expect(res.json().error).toBe('Antigravity does not offer a model called "gemini-9-ultra". Pick one of the models it lists.')
+    expect(cli.listRun.mock.calls.every(([c]) => c.args.join(' ') === 'models')).toBe(true)
   })
 })

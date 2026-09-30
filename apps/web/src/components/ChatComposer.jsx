@@ -15,7 +15,8 @@ import ChatInput from './ChatInput.jsx';
 // With one that takes plain calls but cannot search the web, everything
 // works except the fake check, and asking for that shows its own hint
 // instead of a call that could only fail; the server makes the same choice
-// (ai/select.js). Both CLIs search today, so this is for one added later.
+// (ai/select.js). Ollama is that case until it is signed in to ollama.com
+// with a model that uses tools, which is when it can search too.
 export default function ChatComposer({ cli, scoped, runner, actions, target, onClearTarget, onSend, draft = null }) {
   const { providers, checking, refresh } = cli;
   const known = Array.isArray(providers);

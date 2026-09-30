@@ -10,8 +10,8 @@ import { offline } from '@jobdekho/server/ai/http-json.js'
 
 // Ollama through the same path every CLI takes: call.js, fallback.js,
 // select.js and detect.js. Every model server here is a fake `http`.
-const LLAMA = { name: 'llama3.2:3b', size: 2019393189, contextLength: 131072 }
-const QWEN = { name: 'qwen3:8b', size: 5225388164, contextLength: 40960 }
+const LLAMA = { id: 'llama3.2:3b', label: 'llama3.2:3b', size: 2019393189, contextLength: 131072, tools: false }
+const QWEN = { id: 'qwen3:8b', label: 'qwen3:8b', size: 5225388164, contextLength: 40960, tools: true }
 const BOUND = { ...OLLAMA, model: LLAMA }
 
 const answering = (response) => vi.fn(async () => ({ status: 200, body: { response, done: true, done_reason: 'stop' } }))
@@ -28,7 +28,7 @@ const row = (provider, over = {}) => ({
   present: false, path: null, runs: false, version: null, error: null, ...over,
 })
 const ready = (provider, over = {}) => row(provider, { present: true, path: `/bin/${provider.binary}`, runs: true, version: '1.0', ...over })
-const ollamaReady = (models = [LLAMA, QWEN]) => ready(OLLAMA, { models })
+const ollamaReady = (models = [LLAMA, QWEN], policies = ['none']) => ready(OLLAMA, { models, policies })
 
 describe('callProvider with Ollama', () => {
   it('asks the local API with the bound model, and reports the same events a CLI does', async () => {
@@ -51,12 +51,15 @@ describe('callProvider with Ollama', () => {
     expect(http.mock.calls[0][0].body.format).toBeUndefined()
   })
 
-  // Wiring the wrong provider in is a bug, caught before anything is sent.
-  it('refuses a web action before any request is made', async () => {
-    const http = answering('{}')
-    const err = await rejection(callProvider({ provider: BOUND, prompt: 'hi', tools: 'web', http }))
-    expect(err.message).toMatch(/Ollama cannot honour the "web" tool policy/)
-    expect(http).not.toHaveBeenCalled()
+  // A web call is a conversation with tools (see ollama-web.test.js), not
+  // a generation.
+  it('asks /api/chat with the web tools for a web action', async () => {
+    const http = vi.fn(async () => ({ status: 200, body: { message: { role: 'assistant', content: '{"reply":"ok","sources":[]}' }, done_reason: 'stop' } }))
+    const out = await callProvider({ provider: { ...OLLAMA, model: QWEN }, prompt: 'hi', tools: 'web', http, run: neverSpawn() })
+    expect(out.text).toBe('{"reply":"ok","sources":[]}')
+    const [{ url, body }] = http.mock.calls[0]
+    expect(url).toBe('http://127.0.0.1:11434/api/chat')
+    expect(body.tools.map((t) => t.function.name)).toEqual(['web_search', 'web_fetch'])
   })
 
   it('gives a local model more time than the feature asked for, then reports a timeout in its words', async () => {
@@ -98,11 +101,22 @@ describe('callWithFallback with Ollama', () => {
 })
 
 describe('choosing Ollama', () => {
-  it('is picked for a no-tools action when preferred, and never for a web one', () => {
+  it('is picked for a no-tools action when preferred, and for a web one only where its probe allows it', () => {
     const detected = [ready(CLAUDE), ready(AGY), ollamaReady()]
     expect(pickProvider(detected, 'none', [], 'ollama')).toBe(OLLAMA)
     expect(pickProvider(detected, 'web', [], 'ollama')).toBe(CLAUDE)
     expect(pickProvider(detected, 'none')).toBe(CLAUDE)
+    const searching = [ready(CLAUDE), ready(AGY), ollamaReady([LLAMA, QWEN], ['none', 'web'])]
+    expect(pickProvider(searching, 'web', [], 'ollama')).toBe(OLLAMA)
+    expect(pickProvider(searching, 'web')).toBe(CLAUDE)
+  })
+
+  // The card's one line, repeated where a web action finds nothing to run it.
+  it('says how to let Ollama search when it is the only AI and cannot yet', () => {
+    const hint = 'Sign in with "ollama signin" in a terminal to let Ollama search the web; it needs a free ollama.com account.'
+    const err = (() => { try { pickProvider([row(CLAUDE), row(AGY), ready(OLLAMA, { models: [QWEN], policies: ['none'], webHint: hint })], 'web') } catch (e) { return e } })()
+    expect(err.message).toMatch(/^Neither Claude Code nor Antigravity is installed/)
+    expect(err.message.endsWith(hint)).toBe(true)
   })
 
   it('answers a no-tools action when it is the only AI that runs, and still no web one', () => {
@@ -140,7 +154,16 @@ describe('binding the model', () => {
     expect(withModel(OLLAMA, detected, 'deleted:7b').model).toEqual(LLAMA)
   })
 
-  it('hands a CLI back untouched', () => {
+  // A web call needs a model that uses tools: the pick when it does, the
+  // first that does when it does not.
+  it('binds a model that uses tools for a web call', () => {
+    const detected = [ollamaReady([LLAMA, QWEN], ['none', 'web'])]
+    expect(withModel(OLLAMA, detected, 'llama3.2:3b', 'web').model).toEqual(QWEN)
+    expect(withModel(OLLAMA, detected, 'llama3.2:3b', 'none').model).toEqual(LLAMA)
+    expect(withModel(OLLAMA, [ollamaReady([LLAMA])], null, 'web')).toBe(OLLAMA)
+  })
+
+  it('hands back a provider whose row lists no models untouched', () => {
     expect(withModel(CLAUDE, [ready(CLAUDE)], 'qwen3:8b')).toBe(CLAUDE)
   })
 
@@ -163,10 +186,13 @@ describe('detecting Ollama', () => {
   it('asks its server, not a version probe, and lists the models', async () => {
     const run = vi.fn()
     const [ollama] = await createDetector({ locate: () => '/usr/bin/ollama', run, http: serving, providers: [OLLAMA] })()
+    // A model that cannot use tools cannot search, so it says how to let it.
+    // `local` is what lets Settings say the model runs on this computer.
     expect(ollama).toEqual({
-      id: 'ollama', label: 'Ollama', install: 'https://ollama.com', policies: ['none'],
+      id: 'ollama', label: 'Ollama', install: 'https://ollama.com', policies: ['none'], local: true,
       present: true, path: '/usr/bin/ollama', runs: true, version: '0.32.12', error: null,
-      models: [{ name: 'llama3.2:3b', size: 2019393189, contextLength: 131072 }],
+      models: [{ id: 'llama3.2:3b', label: 'llama3.2:3b', size: 2019393189, contextLength: 131072, tools: false }],
+      webHint: 'Pull a model that can use tools, such as "ollama pull qwen3:4b", to let Ollama search the web.',
     })
     expect(run).not.toHaveBeenCalled()
   })

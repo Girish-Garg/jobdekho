@@ -14,7 +14,7 @@ import { ProviderError } from '@jobdekho/server/ai/errors.js'
 // which talks to a server this file starts on 127.0.0.1, the way ai.test.js
 // spawns node itself to prove the process plumbing.
 const NO_ENV = {}
-const MODEL = { name: 'llama3.2:3b', contextLength: 131072 }
+const MODEL = { id: 'llama3.2:3b', label: 'llama3.2:3b', contextLength: 131072, tools: true }
 
 async function rejection(promise) {
   try { await promise } catch (err) { return err }
@@ -42,23 +42,31 @@ describe('the Ollama entry', () => {
     expect(OLLAMA).toMatchObject({ id: 'ollama', label: 'Ollama', binary: 'ollama', install: 'https://ollama.com' })
   })
 
-  // It has no web search JobDekho could hand it, so it is never a choice for
-  // the fake check or the chat's search.
-  it('honours the none policy alone', () => {
-    expect(OLLAMA.policies).toEqual(['none'])
-    expect(OLLAMA.supports('none')).toBe(true)
-    expect(OLLAMA.supports('web')).toBe(false)
-    expect(OLLAMA.promptArgs('web')).toBeNull()
+  // It can honour 'web', but only where its probe found it can search right
+  // now (see ollama-web-probe.js); until then detection says 'none' alone.
+  it('can honour both policies, and reports none alone until probed', () => {
+    expect(OLLAMA.policies).toEqual(['none', 'web'])
+    expect(OLLAMA.policiesUnprobed).toEqual(['none'])
+    expect(OLLAMA.promptArgs('web')).toEqual([])
     expect(OLLAMA.promptArgs('none')).toEqual([])
     expect(() => OLLAMA.promptArgs('default')).toThrow(/unknown tool policy/)
   })
 
-  it('is asked over its API with a longer timeout, and has no sign-in to classify', () => {
+  it('takes a web call only on a model that uses tools', () => {
+    expect(OLLAMA.canUse({ id: 'a', tools: true }, 'web')).toBe(true)
+    expect(OLLAMA.canUse({ id: 'b', tools: false }, 'web')).toBe(false)
+    expect(OLLAMA.canUse({ id: 'b', tools: false }, 'none')).toBe(true)
+  })
+
+  it('is asked over its API with a longer timeout, and names its own sign-in command', () => {
     expect(typeof OLLAMA.request).toBe('function')
     expect(typeof OLLAMA.probe).toBe('function')
     expect(OLLAMA.timeoutScale).toBeGreaterThan(1)
     expect(OLLAMA.loginPattern).toBeUndefined()
+    expect(OLLAMA.local).toBe(true)
     expect(new ProviderError('failed', OLLAMA, 'unauthorized').kind).toBe('failed')
+    expect(new ProviderError('login', OLLAMA, 'signed out').message)
+      .toBe('Ollama is not signed in (signed out). Open a terminal, run "ollama signin", finish signing in, then try again.')
   })
 })
 
@@ -130,7 +138,7 @@ describe('contextFor', () => {
 describe('probeOllama', () => {
   it('reports the server not running when nothing answers', async () => {
     const out = await probeOllama({ http: offline, env: NO_ENV })
-    expect(out).toEqual({ runs: false, version: null, models: [], error: NOT_RUNNING })
+    expect(out).toEqual({ runs: false, version: null, models: [], error: NOT_RUNNING, policies: ['none'], webHint: null })
     expect(out.error).toBe('Ollama is installed but not running: start the Ollama app, or run "ollama serve" in a terminal.')
   })
 
@@ -146,20 +154,21 @@ describe('probeOllama', () => {
     expect(out.error).toBe('Ollama has no models yet: run "ollama pull llama3.2" in a terminal, then check again.')
   })
 
-  it('lists the installed models with their size and context, and runs', async () => {
+  it('lists the installed models with their size, context and tool use, and runs', async () => {
     const qwen = tag('qwen3:8b', { size: 5225388164, details: { context_length: 40960 } })
+    const plain = tag('gemma:2b', { capabilities: ['completion'] })
     const http = server({
       'GET /api/version': { status: 200, body: { version: '0.32.12' } },
-      'GET /api/tags': { status: 200, body: { models: [tag('llama3.2:3b'), qwen] } },
+      'GET /api/tags': { status: 200, body: { models: [plain, qwen] } },
     })
-    expect(await probeOllama({ http, env: NO_ENV })).toEqual({
+    expect(await probeOllama({ http, env: NO_ENV })).toMatchObject({
       runs: true, version: '0.32.12', error: null,
       models: [
-        { name: 'llama3.2:3b', size: 2019393189, contextLength: 131072 },
-        { name: 'qwen3:8b', size: 5225388164, contextLength: 40960 },
+        { id: 'gemma:2b', label: 'gemma:2b', size: 2019393189, contextLength: 131072, tools: false },
+        { id: 'qwen3:8b', label: 'qwen3:8b', size: 5225388164, contextLength: 40960, tools: true },
       ],
     })
-    expect(http.mock.calls.map(([req]) => req.url)).toEqual(['http://127.0.0.1:11434/api/version', 'http://127.0.0.1:11434/api/tags'])
+    expect(http.mock.calls.slice(0, 2).map(([req]) => req.url)).toEqual(['http://127.0.0.1:11434/api/version', 'http://127.0.0.1:11434/api/tags'])
   })
 
   // A cloud model would send the resume to ollama.com; an embedding model
@@ -174,7 +183,7 @@ describe('probeOllama', () => {
     ]
     const http = server({ 'GET /api/version': { status: 200, body: {} }, 'GET /api/tags': { status: 200, body: { models } } })
     const out = await probeOllama({ http, env: NO_ENV })
-    expect(out.models.map((m) => m.name)).toEqual(['old-listing:7b'])
+    expect(out.models.map((m) => m.id)).toEqual(['old-listing:7b'])
     expect(out.version).toBeNull()
   })
 
@@ -186,10 +195,14 @@ describe('probeOllama', () => {
     expect(out.error).toMatch(/only cloud ones, which send the prompt to ollama\.com/)
   })
 
-  it('never asks for a generation while probing', async () => {
+  // Its web check posts, but never a body: nothing it sends could be a
+  // prompt or a search.
+  it('never asks for a generation or a search while probing', async () => {
     const http = server({ 'GET /api/version': { status: 200, body: {} }, 'GET /api/tags': { status: 200, body: { models: [tag('a')] } } })
     await probeOllama({ http, env: NO_ENV })
-    expect(http.mock.calls.every(([req]) => (req.method ?? 'GET') === 'GET')).toBe(true)
+    const paths = http.mock.calls.map(([req]) => new URL(req.url).pathname)
+    expect(paths.some((p) => /generate|chat/.test(p))).toBe(false)
+    expect(http.mock.calls.every(([req]) => req.body === undefined)).toBe(true)
   })
 })
 
@@ -262,7 +275,7 @@ describe('requestOllama', () => {
 
   it('refuses a prompt the model cannot hold, without asking it', async () => {
     const http = server({})
-    const err = await rejection(ask(http, { prompt: 'x'.repeat(30000), model: { name: 'tiny:1b', contextLength: 8192 } }))
+    const err = await rejection(ask(http, { prompt: 'x'.repeat(30000), model: { id: 'tiny:1b', contextLength: 8192 } }))
     expect(err.kind).toBe('failed')
     expect(err.message).toMatch(/too long for "tiny:1b".*holds 8192/)
     expect(http).not.toHaveBeenCalled()

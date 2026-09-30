@@ -12,9 +12,10 @@ const needsShell = (file) => /\.(cmd|bat)$/i.test(file)
 const quoted = (arg) => (arg === '' || /\s/.test(arg) ? `"${arg}"` : arg)
 
 // Every piece of the command line is a fixed literal: `file` came from the
-// PATH lookup and `args` from the provider registry. Anything user-supplied
-// goes over stdin, which is what keeps quoting and injection out of the
-// picture and sidesteps argv length limits on a long resume.
+// PATH lookup and `args` from the provider registry, plus at most a model id
+// detection listed, of plain characters only (see cli-models.js). Anything
+// user-supplied goes over stdin, which is what keeps quoting and injection
+// out of the picture and sidesteps argv length limits on a long resume.
 //
 // `cwd` is the working directory the CLI sees. Callers hand in an empty
 // directory made for the call, so a tool that slipped past the policy would

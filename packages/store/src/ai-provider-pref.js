@@ -4,19 +4,38 @@
 // a plain string so an id this build no longer knows about degrades to
 // "not eligible" rather than a crash (see select.js).
 //
-// Beside it, `ollamaModel`: which installed Ollama model answers whenever
-// Ollama does. Left out until one is picked, which means Ollama's first
-// model (see ai/model-choice.js). It is checked against what Ollama has
-// installed when it is saved (api/ai-provider.js), not here: this layer
-// cannot see Ollama, and a model removed since then is handled where the
-// call is made, so a stale name is kept as the plain string it is.
+// Beside it, `models`: which model each AI answers with, by provider id,
+// { claude?, agy?, ollama? }. One left out means that AI's default (see
+// ai/model-choice.js). Each is checked against what that AI lists when it is
+// saved (api/ai-provider.js), not here: this layer cannot see the AIs, and a
+// model gone since then is handled where the call is made, so a stale name
+// is kept as the plain string it is.
+//
+// Before every AI had a model, Ollama's alone was saved as `ollamaModel`. A
+// record from then reads as `models.ollama`, so the pick is not lost, and
+// the next save writes it in the new shape.
 const AUTO = 'auto'
+
+// Provider ids are short lowercase words; any other key, however it got into
+// the file, is not a provider's and is dropped.
+const PROVIDER_ID = /^[a-z][a-z0-9-]{0,31}$/
 
 const text = (value) => (typeof value === 'string' && value ? value : null)
 
+function modelsOf(input) {
+  const models = {}
+  const legacy = text(input?.ollamaModel)
+  if (legacy) models.ollama = legacy
+  const given = input?.models
+  if (!given || typeof given !== 'object' || Array.isArray(given)) return models
+  for (const [id, model] of Object.entries(given)) {
+    if (PROVIDER_ID.test(id) && text(model)) models[id] = model
+  }
+  return models
+}
+
 export function normalizeProviderPref(input) {
-  const model = text(input?.ollamaModel)
-  return { provider: text(input?.provider) ?? AUTO, ...(model && { ollamaModel: model }) }
+  return { provider: text(input?.provider) ?? AUTO, models: modelsOf(input) }
 }
 
 export async function getProviderPref(store, userId) {

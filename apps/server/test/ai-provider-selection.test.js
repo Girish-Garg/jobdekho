@@ -94,7 +94,7 @@ const generations = (cli) => cli.http.mock.calls.map(([req]) => req).filter((req
 describe('a saved preference for Ollama', () => {
   it('writes the cover letter on this computer with the saved model', async () => {
     const cli = withOllama()
-    const res = await runAs('cover-letter', { provider: 'ollama', ollamaModel: 'qwen3:8b' }, cli)
+    const res = await runAs('cover-letter', { provider: 'ollama', models: { ollama: 'qwen3:8b' } }, cli)
     expect(res.statusCode).toBe(200)
     expect(res.json().provider).toBe('ollama')
     expect(res.json().result.letter).toBe(LETTER.letter)
@@ -114,7 +114,7 @@ describe('a saved preference for Ollama', () => {
   // It cannot search, so the one web action goes to a CLI that can.
   it('never hands it "Is this job real?", even preferred', async () => {
     const cli = withOllama()
-    const res = await runAs('fake-check', { provider: 'ollama', ollamaModel: 'qwen3:8b' }, cli)
+    const res = await runAs('fake-check', { provider: 'ollama', models: { ollama: 'qwen3:8b' } }, cli)
     expect(res.json().provider).toBe('claude')
     expect(generations(cli)).toHaveLength(0)
   })

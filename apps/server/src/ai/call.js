@@ -44,11 +44,14 @@ export async function callProvider({
   run = runStaged, locate = locateBinary, scratch = inEmptyDir, http = run === runStaged ? httpJson : offline,
   heartbeatMs = HEARTBEAT_MS, now = Date.now, sleep = pause, busyWaits = BUSY_WAITS_MS,
 }) {
-  const args = provider.promptArgs(tools)
-  if (!args) throw new Error(`${provider.label} cannot honour the "${tools}" tool policy and should not have been chosen for it`)
+  const policyArgs = provider.promptArgs(tools)
+  if (!policyArgs) throw new Error(`${provider.label} cannot honour the "${tools}" tool policy and should not have been chosen for it`)
+  // The model select.js bound, for a CLI that takes a flag for it (see
+  // cli-models.js); none when it is the CLI's own default.
+  const args = [...policyArgs, ...(provider.modelArgs?.(provider.model) ?? [])]
   // A provider behind an API has no binary to find; the start event names
   // the model that will answer instead, the one the person picked.
-  const file = provider.request ? provider.model?.name ?? provider.id : locate(provider.binary)
+  const file = provider.request ? provider.model?.id ?? provider.id : locate(provider.binary)
   if (!file) throw new ProviderError('not_found', provider)
   const limit = timeoutMs * (provider.timeoutScale ?? 1)
 

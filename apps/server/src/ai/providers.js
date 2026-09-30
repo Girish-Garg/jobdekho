@@ -3,6 +3,8 @@ import { AGY_ARGS, encodeAgyInput, unwrapAgy } from './agy.js'
 import { AGENT_LOG, agentFiles, checkAgentRun } from './agy-agent.js'
 import { agyUnusable } from './agy-settings.js'
 import { TOOL_POLICIES, underPolicies } from './policies.js'
+import { CLAUDE_MODELS, modelFlag } from './cli-models.js'
+import { listAgyModels } from './agy-models.js'
 import { OLLAMA } from './ollama.js'
 
 export { TOOL_POLICIES, OLLAMA }
@@ -25,24 +27,16 @@ export { TOOL_POLICIES, OLLAMA }
 //   loginPattern  how this CLI words "you are not signed in", in stderr or its
 //                 envelope; left out by one with nothing to sign in to
 //   unwrap        (stdout, provider) -> the model's text, or throw a ProviderError
-//   stage         optional, (tools) -> { path: text } written into the call's
-//                 directory before the CLI starts
-//   collect       optional, files read back from that directory after it exits
-//   verify        optional, ({ stdout, collected, tools }, provider) -> throw
-//                 a ProviderError when the answer cannot be vouched for
+//   stage, collect, verify  optional: files written into the call's directory
+//                 before it starts, files read back after, and a check that
+//                 throws a ProviderError when the answer cannot be vouched for
 //   unusable      optional, ({ home }) -> a sentence when the install must
 //                 not be used at all, asked at detection time (see detect.js)
-//   probe         optional, ({ http }) -> { runs, version, error, models }, in
-//                 place of the version probe once the binary is found
-//   request       optional, ({ prompt, tools, json, model, signal, http },
-//                 provider) -> the model's text, or throw a ProviderError; the
-//                 call goes to a local API instead of a process, so there is
-//                 nothing to spawn or encode and promptArgs only says which
-//                 policies it honours (see call.js)
-//   timeoutScale  optional, how many times the feature's own timeout it gets
-//   offer         optional, the sentence offering it when nothing that could
-//                 answer is installed, in place of its name in the list
-// select.js also sets `model` on a provider whose probe listed models.
+//   listModels    optional, ({ run, path }) -> the models it can answer with,
+//                 [{ id, label }], asked at detection time without a model call
+//   modelArgs     optional, (model) -> the arguments naming the bound model
+// Ollama, which is not a process, has more (see ollama.js). select.js binds
+// `model`, one of the listed models, onto the provider it hands back.
 //
 // Order is preference: the first entry that is installed, runs and honours
 // an action's policy answers it (see select.js), so a machine with Claude
@@ -62,6 +56,8 @@ export const CLAUDE = {
   // exited mid-refresh. This is usually transient".
   busyPattern: /is refreshing it|mid-refresh/i,
   unwrap: unwrapClaude,
+  listModels: () => CLAUDE_MODELS,
+  modelArgs: modelFlag,
 }
 
 // Antigravity's CLI. Each call gets an agent whose tool list is the policy,
@@ -70,7 +66,9 @@ export const CLAUDE = {
 // open pages. Its sign-in wording, measured: "Please sign in to view
 // available models" in the result, "not authenticated" in the print-mode log.
 // The log itself says "You are not logged into Antigravity" on runs that
-// succeed, which is why it is never read for the sign-in state.
+// succeed, which is why it is never read for the sign-in state. --model
+// leaves the agent alone: measured on 1.2.14, the log still names the agent
+// the call set up (see agy-models.js for the list it is picked from).
 export const AGY = {
   id: 'agy',
   label: 'Antigravity',
@@ -85,6 +83,8 @@ export const AGY = {
   collect: [AGENT_LOG],
   verify: checkAgentRun,
   unusable: agyUnusable,
+  listModels: listAgyModels,
+  modelArgs: modelFlag,
 }
 
 // Ollama last (see ollama.js): it answers only when picked, or when neither

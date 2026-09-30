@@ -22,9 +22,11 @@ export const MIN_REPLY_TOKENS = 1024
 // `numPredict` caps the reply at whatever the context has left, so a long
 // reply stops and says so (done_reason "length") rather than pushing the
 // prompt's start out of the context to keep going. `modelMax` is the model's
-// own limit when Ollama reports one.
-export function contextFor(prompt, modelMax = null) {
-  const promptTokens = Math.ceil(String(prompt).length / CHARS_PER_TOKEN)
+// own limit when Ollama reports one. `reserveChars` is text the call will add
+// to the conversation as it goes, a web call's search results, counted as
+// part of the prompt so the context is sized once and the model loaded once.
+export function contextFor(prompt, modelMax = null, reserveChars = 0) {
+  const promptTokens = Math.ceil((String(prompt).length + reserveChars) / CHARS_PER_TOKEN)
   let size = SMALLEST
   while (size < promptTokens + REPLY_TOKENS) size *= 2
   const numCtx = modelMax ? Math.min(size, modelMax) : size
