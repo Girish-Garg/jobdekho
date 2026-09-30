@@ -13,7 +13,7 @@ const DOT = { ready: 'bg-applied', stuck: 'bg-ember', missing: 'bg-muted/50' };
 // status is its description, so "Claude Code" is still what is announced.
 export default function ProviderChoice({ providers, pref, onChange }) {
   return (
-    <div role="radiogroup" aria-label="AI CLI" className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+    <div role="radiogroup" aria-label="AI CLI" className="grid grid-cols-1 gap-3 sm:grid-cols-2">
       <Option
         label="Whichever is available"
         detail="Asks the first that answers, then the other."

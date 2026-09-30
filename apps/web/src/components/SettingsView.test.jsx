@@ -22,10 +22,10 @@ async function mount() {
 }
 
 describe('SettingsView structure', () => {
-  it('renders the three cards in order: Appearance, AI CLI, Your data', async () => {
+  it('renders the three cards in order: AI CLI, Appearance, Your data', async () => {
     await mount();
     const headings = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent);
-    expect(headings).toEqual(['Appearance', 'AI CLI', 'Your data']);
+    expect(headings).toEqual(['AI CLI', 'Appearance', 'Your data']);
   });
 
   it('puts the theme choice under Appearance', async () => {
