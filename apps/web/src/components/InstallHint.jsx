@@ -36,7 +36,7 @@ export default function InstallHint({ intro, policies, providers, checking, onRe
           {absent.map((p, i) => (
             <Fragment key={p.id}>
               {i > 0 && ' or '}
-              {p.label} from <a href={p.install} target="_blank" rel="noreferrer" className="underline">{p.install}</a>
+              {p.label} from <a href={p.install} target="_blank" rel="noreferrer" className="link">{p.install}</a>
             </Fragment>
           ))}
           , then check again. If it is still not found, restart JobDekho so it picks up the new PATH.

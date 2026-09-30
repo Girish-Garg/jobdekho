@@ -47,7 +47,7 @@ export default function FakeCheckResult({ record, providers }) {
               {check.sources?.length > 0 && (
                 <p className="flex flex-wrap gap-x-3 font-mono text-[11px] text-muted">
                   {check.sources.map((url) => (
-                    <a key={url} href={url} target="_blank" rel="noreferrer" className="truncate underline">
+                    <a key={url} href={url} target="_blank" rel="noreferrer" className="link truncate">
                       {url.replace(/^https?:\/\//, '')}
                     </a>
                   ))}

@@ -31,6 +31,7 @@ export default function PostingRow({
   return (
     <div
       data-row-id={posting.id}
+      data-reveal
       role="row"
       aria-selected={selected}
       tabIndex={-1}

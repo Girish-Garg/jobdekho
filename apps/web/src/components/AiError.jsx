@@ -9,7 +9,7 @@ export default function AiError({ error, checking, onRecheck }) {
     <p role="alert" className="flex flex-wrap items-center gap-2 text-sm text-ember">
       {error.message}
       {error.kind === 'not_found' && (
-        <button type="button" disabled={checking} onClick={onRecheck} className="underline">
+        <button type="button" disabled={checking} onClick={onRecheck} className="link">
           {checking ? 'Checking...' : 'Check again'}
         </button>
       )}

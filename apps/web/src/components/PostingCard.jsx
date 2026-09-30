@@ -25,6 +25,7 @@ export default function PostingCard({ posting, selected = false, flashUndo = fal
   return (
     <article
       data-row-id={posting.id}
+      data-reveal
       aria-current={selected || undefined}
       className={`dither-spot group relative flex flex-col gap-3 rounded-xl border p-4 ${
         selected ? 'border-primary/50 bg-select' : 'border-line bg-panel hover:border-edge'

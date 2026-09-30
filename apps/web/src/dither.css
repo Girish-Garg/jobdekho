@@ -83,6 +83,13 @@
       opacity var(--duration-fast) var(--ease);
   }
 
+  /* Big cards full of text and controls take a softer, sparser light, so
+     the dots never compete with what is written on them. */
+  .dither-soft {
+    --dither-color: rgb(var(--primary) / 0.16);
+    --dither-pitch: 5;
+  }
+
   .dither-spot:hover {
     --dither-r: 240px;
     --dither-strength: 0.5;

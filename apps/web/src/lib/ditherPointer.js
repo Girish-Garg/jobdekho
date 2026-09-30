@@ -6,6 +6,14 @@
 // into the spot they were left at.
 export const DITHER_SELECTOR = '.btn, .dither, .dither-spot';
 
+// A lit card repaints on every move, so it follows the pointer only at the
+// full effects level (see effects.js); light and off draw no spot at all.
+function followed(el) {
+  if (!el.classList.contains('dither-spot')) return true;
+  const level = el.ownerDocument.documentElement.dataset.effects;
+  return level !== 'light' && level !== 'off';
+}
+
 export function trackDitherPointer(root = document, schedule = (fn) => requestAnimationFrame(fn)) {
   let pending = null;
   let queued = false;
@@ -20,7 +28,7 @@ export function trackDitherPointer(root = document, schedule = (fn) => requestAn
 
   const onPointer = (event) => {
     const el = typeof event.target?.closest === 'function' ? event.target.closest(DITHER_SELECTOR) : null;
-    if (!el) return;
+    if (!el || !followed(el)) return;
     pending = { el, x: event.clientX, y: event.clientY };
     if (!queued) {
       queued = true;

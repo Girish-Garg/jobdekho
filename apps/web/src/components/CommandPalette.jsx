@@ -51,7 +51,7 @@ export default function CommandPalette({ open, onClose, view, setView, filters, 
         aria-labelledby={TITLE_ID}
         onMouseDown={(event) => event.stopPropagation()}
         onKeyDown={handleKeyDown}
-        className="w-full max-w-lg rounded-lg border border-line bg-overlay shadow-pop"
+        className="pop-in w-full max-w-lg rounded-lg border border-line bg-overlay shadow-pop"
       >
         <h2 id={TITLE_ID} className="sr-only">Command palette</h2>
         <input

@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
+import { useResumeChat } from '../lib/useResumeChat.js';
 import { useSavedFilters } from '../lib/useSavedFilters.js';
 import { useChatDock } from '../lib/useChatDock.js';
 import { useGlobalKeys } from '../lib/useGlobalKeys.js';
@@ -33,13 +34,9 @@ export default function Shell() {
   const searchRef = useRef(null);
   const postings = view === 'postings';
 
-  // The Resume page is built around the chat: every change to a document is
-  // asked for there, so arriving opens it, docked beside the documents (see
-  // useChatLayout.js). Closing it there holds until the next arrival. Not on
-  // a narrow window, where the chat would cover the documents entirely.
-  useEffect(() => {
-    if (view === 'resume' && globalThis.matchMedia?.(WIDE_QUERY)?.matches) chat.show();
-  }, [view]); // eslint-disable-line react-hooks/exhaustive-deps
+  // The Resume page opens the chat for itself and puts it back on leaving
+  // (see useResumeChat.js); the topbar's toggle hands it to the person.
+  const toggleChat = useResumeChat(view, chat, () => Boolean(globalThis.matchMedia?.(WIDE_QUERY)?.matches));
 
   // The chrome's three global shortcuts. j/k/Enter/s/a/d/u belong to the feed
   // and are bound in its own hook, not here.
@@ -58,7 +55,7 @@ export default function Shell() {
         onSearch={postings ? (value) => setFilters({ ...filters, q: value }) : null}
         searchRef={searchRef}
         chatOpen={chat.open}
-        onToggleChat={chat.toggle}
+        onToggleChat={toggleChat}
       />
       {/* The chat is on every page and the page area is its row: floating, it
           sits over the page; pinned, the page makes room beside it. */}

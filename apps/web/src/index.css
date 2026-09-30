@@ -1,6 +1,7 @@
 /* Inlined before the layers below exist, and placed by their @layer blocks. */
 @import './buttons.css';
 @import './dither.css';
+@import './motion.css';
 
 @tailwind base;
 @tailwind components;

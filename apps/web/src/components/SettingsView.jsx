@@ -1,6 +1,7 @@
 import { useProviderSetting } from '../lib/useProviderSetting.js';
 import { webSentence } from '../lib/providerStatus.js';
 import ThemeChoice from './ThemeChoice.jsx';
+import EffectsChoice from './EffectsChoice.jsx';
 import ProviderChoice from './ProviderChoice.jsx';
 import ModelChoice from './ModelChoice.jsx';
 import SettingsCard from './SettingsCard.jsx';
@@ -59,6 +60,7 @@ export default function SettingsView() {
             <AdzunaCard />
             <SettingsCard icon={<PaletteIcon size={18} />} title="Appearance" hint="How JobDekho looks on this computer.">
               <ThemeChoice />
+              <EffectsChoice />
             </SettingsCard>
 
             <SettingsCard icon={<ShieldCheckIcon size={18} />} title="Your data" hint="There is no account and nothing is hosted.">

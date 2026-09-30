@@ -20,7 +20,7 @@ export default function NewDocumentMenu({ templates, busy, onPick }) {
         New
       </button>
       {open && (
-        <div role="dialog" aria-label="Start a new document" className="absolute left-0 top-full z-30 mt-2 w-80 rounded-2xl border border-line bg-overlay p-3 shadow-pop">
+        <div role="dialog" aria-label="Start a new document" className="pop-in absolute left-0 top-full z-30 mt-2 w-80 rounded-2xl border border-line bg-overlay p-3 shadow-pop">
           <TemplatePicker
             templates={templates}
             busy={busy}

@@ -4,10 +4,11 @@ import { PlusIcon } from './Icon.jsx';
 // its count, the add control at the far end of the same line, the one-line
 // purpose under it while the section is empty, then whatever the section
 // holds. The id is what the index scrolls to; the scroll margin keeps a
-// jumped-to card clear of the top.
+// jumped-to card clear of the top. It eases in as it arrives, with the soft
+// light the Settings cards have (see motion.css and dither.css).
 export default function ProfileSection({ id, title, count, hint, action, icon: Icon, children }) {
   return (
-    <section id={id} aria-label={title} className="flex scroll-mt-4 flex-col gap-4 rounded-2xl border border-line bg-panel p-5">
+    <section id={id} data-reveal aria-label={title} className="dither-spot dither-soft flex scroll-mt-4 flex-col gap-4 rounded-2xl border border-line bg-panel p-5 hover:border-edge">
       <div className="flex items-start gap-3">
         {Icon && (
           <span aria-hidden="true" className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-select text-ink">

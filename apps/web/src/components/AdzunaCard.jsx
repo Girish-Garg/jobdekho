@@ -5,7 +5,7 @@ import AdzunaKeyFields from './AdzunaKeyFields.jsx';
 import { CheckIcon, SearchIcon } from './Icon.jsx';
 
 const TONE = { ok: 'text-applied', error: 'text-ember', muted: 'text-muted' };
-const LINK = 'font-medium text-ink underline decoration-edge underline-offset-2 transition-colors duration-fast ease hover:decoration-ink';
+const LINK = 'link';
 const OUTLINE = 'btn btn-quiet font-normal';
 
 // The person's own free Adzuna key, so Adzuna joins every refresh without

@@ -41,7 +41,7 @@ export default function ShortcutsHelp({ open, onClose }) {
         aria-labelledby={TITLE_ID}
         onMouseDown={(event) => event.stopPropagation()}
         onKeyDown={handleKeyDown}
-        className="w-full max-w-md rounded-lg border border-line bg-overlay p-5 shadow-pop"
+        className="pop-in w-full max-w-md rounded-lg border border-line bg-overlay p-5 shadow-pop"
       >
         <div className="flex items-center justify-between">
           <h2 id={TITLE_ID} className="text-md font-semibold text-ink">Keyboard shortcuts</h2>

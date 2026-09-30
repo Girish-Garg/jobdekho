@@ -12,7 +12,7 @@ const SNIPPET_MAX = 280;
 
 const CAPTION = 'text-xs font-semibold text-muted';
 const NOTE = 'mt-3 text-sm text-muted';
-const TOGGLE = 'mt-3 inline-flex items-center gap-1.5 text-sm text-ink underline decoration-edge underline-offset-4 transition-colors duration-fast ease-ease hover:decoration-ink';
+const TOGGLE = 'link mt-3 inline-flex items-center gap-1.5 text-sm';
 
 // The feed row carries only a 280 character snippet, so a job used to read as
 // two or three lines cut off mid-sentence. The snippet is still the first

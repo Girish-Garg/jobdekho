@@ -46,7 +46,7 @@ export default function DocumentVersions({ versions, onRestore }) {
         <span className="tnum rounded-full bg-select px-1.5 text-[11px] font-semibold text-muted">{list.length}</span>
       </button>
       {open && (
-        <div role="dialog" aria-label="Versions" className="absolute right-0 top-full z-30 mt-2 w-80 rounded-2xl border border-line bg-overlay p-2 shadow-pop">
+        <div role="dialog" aria-label="Versions" className="pop-in absolute right-0 top-full z-30 mt-2 w-80 rounded-2xl border border-line bg-overlay p-2 shadow-pop">
           <p className="px-2 pb-2 pt-1 text-xs text-muted">Restoring one adds it back as the newest version, so nothing is lost.</p>
           <ol className="flex max-h-80 flex-col gap-0.5 overflow-y-auto">
             {list.map((version, i) => {

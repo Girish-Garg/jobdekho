@@ -1,0 +1,89 @@
+/* The app's quiet motion, one place for all of it. Everything here moves
+   only opacity and transform where it can, runs on intent (a hover, a focus,
+   something coming into view once) and never loops, so it stays smooth on a
+   slow computer. How much of it runs is data-effects on <html>, set by
+   lib/effects.js: full, light or off. */
+
+/* Arriving: see lib/reveal.js, which marks what has come into view. A
+   stagger index it sets delays each a beat behind the one before. An
+   animation rather than a transition, so it never takes over the element's
+   own transitions (a lit card's hover, a border easing to its hover tone). */
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+html[data-reveal-ready] [data-reveal]:not([data-revealed]) {
+  opacity: 0;
+}
+
+html[data-reveal-ready] [data-reveal][data-revealed] {
+  animation: reveal 420ms var(--ease-out) both;
+  animation-delay: calc(var(--reveal-i, 0) * 45ms);
+}
+
+@layer components {
+  /* A link underlines itself from the left as it is pointed at, over a
+     faint rule that is always there, so it reads as a link at rest too. */
+  .link {
+    color: rgb(var(--ink));
+    font-weight: 500;
+    background-image:
+      linear-gradient(rgb(var(--ink)), rgb(var(--ink))),
+      linear-gradient(rgb(var(--edge)), rgb(var(--edge)));
+    background-position: 0 100%, 0 100%;
+    background-repeat: no-repeat;
+    background-size: 0% 1px, 100% 1px;
+    transition: background-size 260ms var(--ease-out);
+  }
+
+  .link:hover,
+  .link:focus-visible {
+    background-size: 100% 1px, 100% 1px;
+  }
+
+  /* A bar that stays put while the page scrolls under it gains a soft
+     shadow once something is under it. Driven by the scroll itself where the
+     browser can (no script, no listener); elsewhere it keeps its plain one. */
+  @supports (animation-timeline: scroll()) {
+    .sticky-lift {
+      animation: sticky-lift linear both;
+      animation-timeline: scroll(nearest);
+      animation-range: 0 32px;
+    }
+  }
+}
+
+@keyframes sticky-lift {
+  to {
+    box-shadow: 0 12px 28px -18px rgb(var(--ink) / 0.35);
+  }
+}
+
+/* Light: the dither stays on small things like buttons, but comes off the
+   big surfaces that repaint as the pointer moves, and off the ground. */
+html[data-effects='light'] .dither-spot,
+html[data-effects='off'] .dither-spot,
+html[data-effects='off'] .btn,
+html[data-effects='off'] .dither {
+  background-image: none;
+}
+
+html[data-effects='light'] .app-canvas,
+html[data-effects='off'] .app-canvas {
+  background-image:
+    radial-gradient(70rem 26rem at 50% -10%, var(--glow), transparent 70%),
+    radial-gradient(var(--dot) 1px, transparent 1.5px);
+  background-size: auto, 22px 22px;
+}
+
+/* Off: nothing moves, the same as the system's reduced-motion rule. */
+html[data-effects='off'] *,
+html[data-effects='off'] *::before,
+html[data-effects='off'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}

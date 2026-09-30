@@ -19,7 +19,7 @@ export default function RowActions({ posting, flashUndo, onStatus, onUndo }) {
         <button
           type="button"
           onClick={(event) => { event.stopPropagation(); onUndo(); }}
-          className="font-medium text-ink underline underline-offset-2"
+          className="link"
         >
           Undo
         </button>

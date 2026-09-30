@@ -23,7 +23,7 @@ export default function Toast({ notice, onDismiss }) {
   return (
     <div
       role={isError ? 'alert' : 'status'}
-      className="pointer-events-auto w-full rounded-md border border-edge bg-overlay p-3 shadow-pop"
+      className="rise pointer-events-auto w-full rounded-md border border-edge bg-overlay p-3 shadow-pop"
     >
       <div className="flex items-start gap-2">
         <p className={`flex-1 text-sm font-semibold ${isError ? 'text-ember' : 'text-ink'}`}>
@@ -45,7 +45,7 @@ export default function Toast({ notice, onDismiss }) {
           type="button"
           disabled={checking}
           onClick={onRecheck}
-          className="mt-2 text-sm text-ink underline decoration-edge underline-offset-4 transition-colors duration-fast ease-ease hover:decoration-ink disabled:opacity-60"
+          className="link mt-2 text-sm disabled:opacity-60"
         >
           {checking ? 'Checking...' : 'Check again'}
         </button>

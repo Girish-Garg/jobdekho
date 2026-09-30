@@ -14,7 +14,7 @@ import SetupNotice from './SetupNotice.jsx';
 export default function FeedTop({ filters, setFilters, sort, setSort, viewMode, setViewMode, shown, total, fresh, onOpenSettings }) {
   return (
     <>
-      <div className="sticky top-2 z-20 mt-3 rounded-2xl border border-line bg-panel/85 p-1.5 shadow-raise backdrop-blur-md">
+      <div className="sticky-lift sticky top-2 z-20 mt-3 rounded-2xl border border-line bg-panel/85 p-1.5 shadow-raise backdrop-blur-md">
         <FilterBar filters={filters} setFilters={setFilters} />
       </div>
       <PostingsHeader

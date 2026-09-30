@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { BAYER, DitherPainter, dotAt } from './ditherWorklet.js';
+import { BAYER, DitherPainter, dotAt, span } from './ditherWorklet.js';
 
 // Custom properties as the worklet receives them: typed values printed as
 // strings, and unset ones as nothing.
@@ -44,5 +44,16 @@ describe('the dither worklet', () => {
     const { dots } = paintWith({ '--dither-r': '8px', '--dither-strength': 1, '--dither-pitch': 4 });
     expect(dots.length).toBeGreaterThan(0);
     for (const [x, y] of dots) expect(Math.hypot(x - 19.25, y - 19.25)).toBeLessThan(10);
+  });
+
+  // It runs every frame the pointer moves, so it only visits the cells the
+  // lit circle can reach, never the whole of a long row.
+  it('visits only the cells within reach of the lit circle', () => {
+    expect(span(10, 8, 4, 1000)).toEqual([0, 5]);
+    expect(span(500, 40, 4, 1000)).toEqual([115, 135]);
+    expect(span(990, 40, 4, 1000)).toEqual([237, 249]);
+    const { dots } = paintWith({ '--dither-r': '20px', '--dither-strength': 1, '--dither-x': '500px', '--dither-y': '10px', '--dither-pitch': 4 }, { width: 1000, height: 20 });
+    expect(dots.length).toBeGreaterThan(0);
+    for (const [x] of dots) expect(Math.abs(x + 0.75 - 500)).toBeLessThan(24);
   });
 });

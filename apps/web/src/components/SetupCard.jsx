@@ -21,7 +21,7 @@ const URL_PATTERN = /(https?:\/\/[^\s"]*[^\s".,;:)'])/;
 
 function Linked({ text }) {
   return String(text).split(URL_PATTERN).map((part, i) => (i % 2
-    ? <a key={i} href={part} target="_blank" rel="noreferrer" className="font-medium text-ink underline decoration-edge underline-offset-2 transition-colors duration-fast ease hover:decoration-ink">{part}</a>
+    ? <a key={i} href={part} target="_blank" rel="noreferrer" className="link">{part}</a>
     : <Fragment key={i}>{part}</Fragment>));
 }
 
