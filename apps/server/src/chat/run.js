@@ -5,6 +5,7 @@ import { ProviderError } from '../ai/errors.js'
 import { buildChatPrompt } from './prompt.js'
 import { parseChatReply } from './parse.js'
 import { answerFromWeb } from './web-answer.js'
+import { replyStream } from './reply-stream.js'
 
 // This call carries the career record (see prompt-profile.js and
 // prompt-pages.js), so like cover-letter.js and resume-tailor.js it runs
@@ -35,10 +36,16 @@ const LONG_REPLY_MS = 5 * 60 * 1000
 // beside the first answer. The search never sees the career record or a
 // document on any page: only the feed's context has an `open` posting, the
 // one public thing it may be given.
-export async function runChatTurn({ message, context, history, select, emit, ...seams }) {
+//
+// The reply streams as it is written (see reply-stream.js), and `signal`
+// stops the call where it is: a stop during the search keeps the answer
+// already given and says the search did not finish.
+export async function runChatTurn({ message, context, history, select, emit, signal = null, ...seams }) {
   const prompt = buildChatPrompt({ message, context, history })
   const timeoutMs = context.page === 'resume' ? LONG_REPLY_MS : TIMEOUT_MS
-  const { provider, text } = await callWithFallback({ select, policy: 'none', prompt, timeoutMs, emit, ...seams })
+  const onText = replyStream(emit)
+  const { provider, text } = await callWithFallback({ select, policy: 'none', prompt, timeoutMs, emit, signal, onText, ...seams })
+  onText.flush()
   const parsed = parseChatReply(text, context)
   if (!parsed) throw new ProviderError('unreadable', provider)
   const { reply, actions, refs, proposals, web } = parsed
@@ -46,16 +53,18 @@ export async function runChatTurn({ message, context, history, select, emit, ...
     id: randomUUID(), page: context.page ?? 'postings', question: message, answer: reply, actions, refs, proposals, provider: provider.id,
   }
   const open = context.page === undefined || context.page === 'postings' ? context.open : null
-  const searched = web ? await searchFor({ message, history, open, select, emit, seams }) : {}
+  const searched = web ? await searchFor({ message, history, open, select, emit, signal, seams }) : {}
   return { ...turn, ...searched, createdAt: toIso(new Date()) }
 }
 
-async function searchFor({ message, history, open, select, emit, seams }) {
+const STOPPED_SEARCH = 'You stopped the web search, so this is JobDekho\'s own answer alone.'
+
+async function searchFor({ message, history, open, select, emit, signal, seams }) {
   try {
-    const found = await answerFromWeb({ message, history, open, select, emit, ...seams })
+    const found = await answerFromWeb({ message, history, open, select, emit, signal, ...seams })
     return { web: { answer: found.reply, sources: found.sources, provider: found.provider } }
   } catch (err) {
     if (!(err instanceof ProviderError)) throw err
-    return { webError: err.message }
+    return { webError: err.kind === 'stopped' ? STOPPED_SEARCH : err.message }
   }
 }

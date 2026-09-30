@@ -67,4 +67,11 @@ describe('chatBlocks', () => {
     expect(chatBlocks(null)).toEqual([]);
     expect(chatBlocks('<b>hi</b>')).toEqual([{ type: 'p', lines: [plain('<b>hi</b>')] }]);
   });
+
+  // An answer still being written has not been through the server's
+  // cleanup, and a model often puts the id in brackets after the title.
+  it('takes an id out with the brackets around it', () => {
+    const [block] = chatBlocks('SDE 1 at Writesonic (id 7218f734fa01cd5a), fit 85.');
+    expect(block.lines[0][0].text).toBe('SDE 1 at Writesonic, fit 85.');
+  });
 });

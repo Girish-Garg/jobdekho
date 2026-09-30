@@ -188,6 +188,29 @@ body {
   animation: breathe 1.4s ease-in-out infinite;
 }
 
+/* The caret at the end of an answer still being written (ChatPending.jsx):
+   drawn after the last paragraph's words, or the last item of a closing
+   list, so it sits where the next word will land. It blinks in steps, as a
+   text caret does; with effects off it stays lit. */
+@keyframes caret-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.writing > p:last-child::after,
+.writing > :is(ul, ol):last-child > li:last-child::after {
+  content: '';
+  display: inline-block;
+  width: 0.45em;
+  height: 1.05em;
+  margin-left: 3px;
+  vertical-align: -0.16em;
+  border-radius: 1px;
+  background: rgb(var(--primary));
+  animation: caret-blink 1s steps(1) infinite;
+}
+
 /* Three dots waiting on an answer, each a beat behind the one before, so
    the row reads as "still going" without a spinner's urgency. */
 @keyframes typing {

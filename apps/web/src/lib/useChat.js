@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
-import { sendChatMessage, startNewConversation } from '../api.js';
+import { sendChatMessage, startNewConversation, stopChat } from '../api.js';
 import { notifyError } from './toast.js';
-import { useChatSession } from './chatSession.js';
+import { chatSession, useChatSession } from './chatSession.js';
 import { landTurn, switchConversation } from './chatLanding.js';
 import { loadChat } from './chatLoad.js';
 
@@ -14,20 +14,33 @@ import { loadChat } from './chatLoad.js';
 // "Start a new one" files the conversation away on the server rather than
 // deleting it (see its chat-conversations.js); History is where it goes.
 // `switchTo` puts a conversation continued from there on screen.
+//
+// A question that gets no answer stays in the conversation (`missed`, see
+// ChatMissed.jsx) with what it was asked from, so Ask again asks it the same
+// way. `stop` ends the question being answered, on the server too.
 export function useChat(runner) {
-  const { turns } = useChatSession();
+  const { turns, missed } = useChatSession();
 
   useEffect(() => { loadChat(); }, []);
 
-  // A posting action's stream announces its own failure (lib/aiCall.js);
-  // the chat's does not, so the notice is raised here.
+  // The failure shows in the conversation; the notice is for when no panel
+  // is open to show it there. A stop is the person's own doing.
   async function ask(message, screen) {
-    const turn = await runner.run({ say: message, noun: 'Question', doing: 'thinking' }, (onEvent) =>
+    const what = { say: message, noun: 'Question', doing: 'thinking', ask: true, screen };
+    const turn = await runner.run(what, (onEvent) =>
       sendChatMessage({ message, ...screen }, { onEvent }).catch((err) => {
-        notifyError(err, 'The assistant could not answer');
+        if (!chatSession.watched() && err.kind !== 'stopped') notifyError(err, 'The assistant could not answer');
         throw err;
       }));
     if (turn) landTurn(turn);
+  }
+
+  async function stop() {
+    try {
+      await stopChat();
+    } catch (err) {
+      notifyError(err, 'Could not stop the answer');
+    }
   }
 
   // A conversation that could not be filed stays on screen, whole, rather
@@ -40,8 +53,17 @@ export function useChat(runner) {
       notifyError(err, 'Could not start a new conversation');
       return;
     }
+    chatSession.set({ missed: null });
     switchConversation(fresh);
   }
 
-  return { turns, ask, startNew, switchTo: switchConversation };
+  return {
+    turns,
+    missed,
+    ask,
+    stop,
+    forget: () => chatSession.set({ missed: null }),
+    startNew,
+    switchTo: switchConversation,
+  };
 }

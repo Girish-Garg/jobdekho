@@ -13,6 +13,7 @@ import { useOpenDocument } from '../lib/useOpenDocument.js';
 import { historyLinks } from '../lib/historyLinks.js';
 import { buildConversation } from '../lib/conversation.js';
 import { takeRequest } from '../lib/askAiSignal.js';
+import { useChatQueue } from '../lib/useChatQueue.js';
 import ChatFrame from './ChatFrame.jsx';
 import ChatHeader from './ChatHeader.jsx';
 import ChatScopeCard from './ChatScopeCard.jsx';
@@ -75,6 +76,8 @@ export default function ChatPanelBody({ onClose, context, apply, request, draft 
     return chat.ask(message, onResume ? { ...where, documentId: openDoc?.id ?? null } : where);
   }
 
+  const { box, missed } = useChatQueue({ chat, runner, cli, onSend });
+
   const closeHistory = () => setHistory(false);
   const links = historyLinks({ chat, scope, feedLinks, onFeed, apply, close: closeHistory });
   const empty = { page, posting, loading: Boolean(posting) && actions.results === undefined, busy: runner.busy, onSend };
@@ -86,8 +89,8 @@ export default function ChatPanelBody({ onClose, context, apply, request, draft 
         <>
           {posting && <ChatScopeCard posting={posting} onClear={scope.clear} />}
           {onResume && openDoc && <ChatDocumentScope doc={openDoc} />}
-          <ChatMessages entries={buildConversation(chat.turns, actions.results ?? [])} call={runner.call} empty={empty} card={card} onApply={feedLinks.onApply} onOpenRef={feedLinks.onOpenRef} />
-          <ChatComposer cli={cli} scoped={Boolean(posting)} runner={runner} actions={actions} target={target} onClearTarget={() => setTarget(null)} onSend={onSend} draft={draft} />
+          <ChatMessages entries={buildConversation(chat.turns, actions.results ?? [])} call={runner.call} missed={chat.missed} onMissed={missed} empty={empty} card={card} onApply={feedLinks.onApply} onOpenRef={feedLinks.onOpenRef} />
+          <ChatComposer cli={cli} scoped={Boolean(posting)} runner={runner} actions={actions} target={target} onClearTarget={() => setTarget(null)} onSend={onSend} draft={draft} box={box} />
         </>
       )}
     </ChatFrame>

@@ -17,7 +17,7 @@ import ChatInput from './ChatInput.jsx';
 // instead of a call that could only fail; the server makes the same choice
 // (ai/select.js). Ollama is that case until it is signed in to ollama.com
 // with a model that uses tools, which is when it can search too.
-export default function ChatComposer({ cli, scoped, runner, actions, target, onClearTarget, onSend, draft = null }) {
+export default function ChatComposer({ cli, scoped, runner, actions, target, onClearTarget, onSend, draft = null, box = {} }) {
   const { providers, checking, refresh } = cli;
   const known = Array.isArray(providers);
   const hint = (intro, policy) => (
@@ -44,6 +44,7 @@ export default function ChatComposer({ cli, scoped, runner, actions, target, onC
       {scoped && <ChatQuickActions results={actions.results} busy={runner.busy} onRun={actions.run} />}
       {changing && <ChatReplyTarget name={changing.name} onClear={onClearTarget} />}
       <ChatInput
+        {...box}
         busy={runner.busy}
         onSend={onSend}
         placeholder={changing?.ask}

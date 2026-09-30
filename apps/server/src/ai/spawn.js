@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process'
+import { killTree } from './kill-tree.js'
 
 // Node refuses to run a .cmd or .bat without a shell, and that is exactly what
 // an npm global install leaves on Windows. Only those go through cmd.exe; a
@@ -10,6 +11,9 @@ const needsShell = (file) => /\.(cmd|bat)$/i.test(file)
 // empty argument has to be spelled as a pair of quotes or it vanishes from
 // the line, which would hand the call the CLI's default of every tool.
 const quoted = (arg) => (arg === '' || /\s/.test(arg) ? `"${arg}"` : arg)
+
+// How long a killed CLI gets to exit before the call is reported ended anyway.
+const EXIT_WAIT_MS = 5000
 
 // Every piece of the command line is a fixed literal: `file` came from the
 // PATH lookup and `args` from the provider registry, plus at most a model id
@@ -28,27 +32,57 @@ function start(file, args, cwd) {
 
 // Runs one process to completion. Resolves with whatever it printed and how it
 // exited; the caller decides what a non-zero exit means. Rejects only when the
-// process could not be run at all (err.code ENOENT) or outlived its timeout
-// (err.code ETIMEDOUT), since those are the two cases no exit code describes.
-export function runCli({ file, args, input, timeoutMs, cwd }) {
+// process could not be run at all (err.code ENOENT), outlived its timeout
+// (err.code ETIMEDOUT) or was stopped through `signal` (err.code EABORTED),
+// since those are the cases no exit code describes. `onStdout` sees the
+// output as it arrives, for an answer shown while it is written; it is read
+// as UTF-8 text, so a character split across two chunks stays whole.
+export function runCli({ file, args, input, timeoutMs, cwd, signal = null, onStdout = null }) {
   return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(Object.assign(new Error(`${file} was stopped before it started`), { code: 'EABORTED' }))
+      return
+    }
     const child = start(file, args, cwd)
     let stdout = ''
     let stderr = ''
+    let settled = false
+    let ending = null
     const fail = (code, message) => {
-      const err = new Error(message)
-      err.code = code
-      reject(err)
+      if (settled) return
+      settled = true
+      reject(Object.assign(new Error(message), { code }))
     }
-    const timer = setTimeout(() => {
-      child.kill()
-      fail('ETIMEDOUT', `${file} did not exit within ${timeoutMs}ms`)
-    }, timeoutMs)
+    // A stop or a timeout is reported once the CLI has exited, not the moment
+    // it is killed: until then Windows holds the directory it ran in, and
+    // removing that failed the call (see scratch-dir.js). One that will not
+    // die is reported anyway after a few seconds.
+    const end = (code, message) => () => {
+      if (ending || settled) return
+      ending = { code, message }
+      killTree(child)
+      setTimeout(() => fail(code, message), EXIT_WAIT_MS).unref?.()
+    }
+    const timer = setTimeout(end('ETIMEDOUT', `${file} did not exit within ${timeoutMs}ms`), timeoutMs)
+    const stop = end('EABORTED', `${file} was stopped`)
+    signal?.addEventListener('abort', stop, { once: true })
+    const done = () => {
+      clearTimeout(timer)
+      signal?.removeEventListener('abort', stop)
+    }
 
-    child.stdout.on('data', (d) => { stdout += d })
+    child.stdout.setEncoding('utf8')
+    child.stderr.setEncoding('utf8')
+    child.stdout.on('data', (d) => { stdout += d; onStdout?.(d) })
     child.stderr.on('data', (d) => { stderr += d })
-    child.on('error', (err) => { clearTimeout(timer); fail(err.code, err.message) })
-    child.on('close', (code) => { clearTimeout(timer); resolve({ stdout, stderr, code }) })
+    child.on('error', (err) => { done(); fail(err.code, err.message) })
+    child.on('close', (code) => {
+      done()
+      if (ending) fail(ending.code, ending.message)
+      if (settled) return
+      settled = true
+      resolve({ stdout, stderr, code })
+    })
     // A child that exits before reading its input (a bad login, a crash) closes
     // the pipe, and an unhandled EPIPE here would take the whole server down.
     // The close handler already reports the real failure.

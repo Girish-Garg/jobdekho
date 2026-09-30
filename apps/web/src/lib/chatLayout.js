@@ -1,7 +1,8 @@
 // Where the chat panel sits and how wide it is, and how that survives a
-// reload. Floating over the feed is the default, so opening the chat never
-// reflows the list under the reader's eye; pinned, it takes a column of its
-// own and the feed makes room. Either way it can be dragged wider.
+// reload. Pinned is the default: it takes a column of its own and the page
+// makes room, because the chat is about what is on the page and floating
+// over it covered the very job titles it was talking about. Floating, it
+// sits over the page without moving it. Either way it can be dragged wider.
 export const CHAT_WIDTH = { min: 320, max: 720, fallback: 380, step: 16 };
 
 // The job pane turns into a dialog below this (see PostingsView.jsx), and the
@@ -9,7 +10,7 @@ export const CHAT_WIDTH = { min: 320, max: 720, fallback: 380, step: 16 };
 export const WIDE_QUERY = '(min-width: 1100px)';
 
 const KEY = 'jobdekho-chat-layout';
-const DEFAULTS = { pinned: false, width: CHAT_WIDTH.fallback, open: false };
+const DEFAULTS = { pinned: true, width: CHAT_WIDTH.fallback, open: false };
 
 // Never more than 60 percent of the window, so a widened panel can not
 // swallow the feed it is meant to be read beside.
@@ -35,8 +36,11 @@ export function readLayout() {
     const saved = JSON.parse(storage()?.getItem(KEY) ?? 'null');
     if (!saved || typeof saved !== 'object') return { ...DEFAULTS };
     const width = Number(saved.width);
+    // Floating is saved as a choice of its own. Every layout saved while
+    // floating was the default says pinned: false without anyone having
+    // picked it, so that is not read as unpinning.
     return {
-      pinned: saved.pinned === true,
+      pinned: saved.floating !== true,
       width: Number.isFinite(width) && width > 0 ? width : DEFAULTS.width,
       open: saved.open === true,
     };
@@ -47,7 +51,8 @@ export function readLayout() {
 
 export function saveLayout(patch) {
   try {
-    storage()?.setItem(KEY, JSON.stringify({ ...readLayout(), ...patch }));
+    const { pinned, width, open } = { ...readLayout(), ...patch };
+    storage()?.setItem(KEY, JSON.stringify({ floating: !pinned, width, open }));
   } catch {
     // A layout that does not persist is still this session's layout.
   }

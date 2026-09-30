@@ -67,16 +67,36 @@ describe('useChat', () => {
     await waitFor(() => expect(result.current.runner.busy).toBe(false));
   });
 
-  it('keeps the failure for AiError and also raises it on the toast channel', async () => {
+  // The question stays in the conversation with the reason, for Ask again;
+  // with no panel open to show it there, the notice says so too.
+  it('keeps a question that got no answer, with where it was asked, and raises it on the toast channel', async () => {
     sendChatMessage.mockRejectedValueOnce(Object.assign(new Error('Claude Code is not installed'), { kind: 'not_found' }));
     const notices = [];
     const stop = onNotice((n) => notices.push(n));
     const { result } = renderHook(useWired);
-    await act(async () => { await result.current.chat.ask('hi', {}); });
-    expect(result.current.runner.error).toMatchObject({ message: 'Claude Code is not installed', kind: 'not_found' });
+    await act(async () => { await result.current.chat.ask('hi', { page: 'postings' }); });
+    expect(result.current.chat.missed).toMatchObject({ question: 'hi', screen: { page: 'postings' }, kind: 'not_found', message: 'Claude Code is not installed' });
+    expect(result.current.runner.error).toBeNull();
     expect(result.current.chat.turns).toEqual([]);
     expect(notices).toHaveLength(1);
     expect(notices[0]).toMatchObject({ kind: 'error', detail: 'Claude Code is not installed' });
+    stop();
+  });
+
+  it('keeps a stopped question with what had been written, and raises no notice', async () => {
+    sendChatMessage.mockImplementationOnce(async (_payload, { onEvent }) => {
+      onEvent({ event: 'start', provider: 'claude' });
+      onEvent({ event: 'text', add: 'Both are' });
+      throw Object.assign(new Error('You stopped Claude Code before it finished.'), { kind: 'stopped' });
+    });
+    const notices = [];
+    const stop = onNotice((n) => notices.push(n));
+    const { result } = renderHook(useWired);
+    await act(async () => { await result.current.chat.ask('compare them', {}); });
+    expect(result.current.chat.missed).toMatchObject({ question: 'compare them', kind: 'stopped', text: 'Both are' });
+    expect(notices).toHaveLength(0);
+    act(() => result.current.chat.forget());
+    expect(result.current.chat.missed).toBeNull();
     stop();
   });
 

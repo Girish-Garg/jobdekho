@@ -15,20 +15,20 @@ afterEach(() => {
 });
 
 describe('useChatLayout', () => {
-  it('floats at the default width on a wide window, with the limits of that window', () => {
+  it('pins at the default width on a wide window, with the limits of that window', () => {
     windowOf({ wide: true, width: 1440 });
     const { result } = renderHook(() => useChatLayout());
-    expect(result.current).toMatchObject({ wide: true, pinned: false, width: 380, min: 320, max: 720 });
+    expect(result.current).toMatchObject({ wide: true, pinned: true, width: 380, min: 320, max: 720 });
   });
 
-  it('pins and unpins, and remembers it', () => {
+  it('floats and pins again, and remembers it', () => {
     windowOf({ wide: true, width: 1440 });
     const { result } = renderHook(() => useChatLayout());
     act(() => result.current.togglePinned());
-    expect(result.current.pinned).toBe(true);
-    expect(readLayout().pinned).toBe(true);
-    act(() => result.current.togglePinned());
     expect(result.current.pinned).toBe(false);
+    expect(readLayout().pinned).toBe(false);
+    act(() => result.current.togglePinned());
+    expect(result.current.pinned).toBe(true);
   });
 
   it('resizes within the limits and remembers the width', () => {
@@ -64,6 +64,7 @@ describe('useChatLayout', () => {
   // The Resume page docks the panel beside the documents whatever was saved,
   // and leaves the saved choice alone for every other page.
   it('pins a docked panel without changing the saved choice', () => {
+    localStorage.setItem('jobdekho-chat-layout', JSON.stringify({ floating: true }));
     windowOf({ wide: true, width: 1440 });
     const { result } = renderHook(() => useChatLayout({ docked: true }));
     expect(result.current).toMatchObject({ pinned: true, docked: true });

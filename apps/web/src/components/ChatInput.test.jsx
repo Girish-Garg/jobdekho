@@ -53,15 +53,49 @@ describe('ChatInput', () => {
     expect(onSend).not.toHaveBeenCalled();
   });
 
-  it('disables the box and the button while busy', () => {
-    render(<ChatInput busy onSend={() => {}} />);
-    expect(screen.getByPlaceholderText(PLACEHOLDER)).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Ask' })).toBeDisabled();
+  // The next question can be written while an answer is on its way; sent
+  // then, it waits for that answer rather than going at once.
+  it('stays open while busy, and holds a question sent meanwhile', () => {
+    const onSend = vi.fn();
+    const onQueue = vi.fn();
+    render(<ChatInput busy onSend={onSend} onQueue={onQueue} />);
+    const box = screen.getByPlaceholderText(PLACEHOLDER);
+    expect(box).not.toBeDisabled();
+    fireEvent.change(box, { target: { value: 'and the third?' } });
+    fireEvent.keyDown(box, { key: 'Enter' });
+    expect(onQueue).toHaveBeenCalledWith('and the third?');
+    expect(onSend).not.toHaveBeenCalled();
+    expect(box).toHaveValue('');
   });
 
-  it('says plainly whose AI answers: their own subscription, or a model on their computer', () => {
+  it('holds nothing back when there is nowhere to hold it', () => {
+    const onSend = vi.fn();
+    render(<ChatInput busy onSend={onSend} />);
+    fireEvent.change(screen.getByPlaceholderText(PLACEHOLDER), { target: { value: 'hi' } });
+    expect(screen.getByRole('button', { name: 'Ask' })).toBeDisabled();
+    expect(onSend).not.toHaveBeenCalled();
+  });
+
+  it('turns the send button into Stop while an answer is written, and Escape stops it too', () => {
+    const onStop = vi.fn();
+    render(<ChatInput busy onSend={() => {}} onStop={onStop} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Stop' }));
+    fireEvent.keyDown(screen.getByPlaceholderText(PLACEHOLDER), { key: 'Escape' });
+    expect(onStop).toHaveBeenCalledTimes(2);
+    expect(screen.getByText('Esc stops the answer.')).toBeInTheDocument();
+  });
+
+  it('shows a held question above the box, with a way to take it back', () => {
+    const onUnqueue = vi.fn();
+    render(<ChatInput busy onSend={() => {}} queued="and the third?" onUnqueue={onUnqueue} />);
+    expect(screen.getByText('and the third?')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Do not send it' }));
+    expect(onUnqueue).toHaveBeenCalled();
+  });
+
+  it('says how to send, and how to write a second line', () => {
     render(<ChatInput busy={false} onSend={() => {}} />);
-    expect(screen.getByText('Runs on your own AI CLI: your subscription, or a model on this computer.')).toBeInTheDocument();
+    expect(screen.getByText('Enter sends, Shift+Enter for a new line.')).toBeInTheDocument();
   });
 
   it('sends from the round button, which is held back until there is something to send', () => {

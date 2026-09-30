@@ -15,6 +15,12 @@ export function sendChatMessage(payload, { onEvent } = {}) {
   return streamedChatPost('/api/chat', payload, onEvent);
 }
 
+// Stops the question being answered: { stopped }, false when there was none.
+// The question's own stream then ends with kind 'stopped'.
+export function stopChat() {
+  return req('/api/chat/stop', { method: 'POST', body: '{}' });
+}
+
 // "Start a new one": the server files the current conversation away and
 // answers the fresh one, { id, turns: [], filed }. The empty object body is
 // only because a JSON POST with no body at all is refused.

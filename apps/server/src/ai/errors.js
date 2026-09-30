@@ -14,6 +14,9 @@ const STATUS = {
   failed: 502,
   unconfirmed: 502,
   unreadable: 422,
+  // The person stopped it, so there is nothing to fix; 499 is the status
+  // for a request its own client ended.
+  stopped: 499,
 }
 
 // A CLI's own wording ends in a full stop often enough that appending one blindly
@@ -55,6 +58,7 @@ const MESSAGE = {
     + 'pick another AI in Settings, or update JobDekho.',
   unreadable: (p) =>
     `${p.label} answered, but the reply was not in the shape JobDekho expected. Try again.`,
+  stopped: (p) => `You stopped ${p.label} before it finished.`,
 }
 
 export const FAILURE_KINDS = Object.keys(STATUS)
@@ -73,6 +77,9 @@ export function classify(provider, detail) {
 
 // Both ways of calling (a process, a local API) run out of time the same way.
 export const timedOut = (provider, ms) => new ProviderError('timeout', provider, `${Math.round(ms / 1000)} seconds`)
+
+// And are stopped the same way, from the chat's Stop (see chat/in-flight.js).
+export const stoppedBy = (provider) => new ProviderError('stopped', provider)
 
 export class ProviderError extends Error {
   constructor(kind, provider, detail = '') {

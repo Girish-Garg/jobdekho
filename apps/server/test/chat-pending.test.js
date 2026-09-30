@@ -100,7 +100,7 @@ describe('in-flight.js', () => {
     expect(beginQuestion('unit-a', 'again', 0)).toBe(false)
     noteEvent('unit-a', { event: 'start', provider: 'agy' })
     noteEvent('unit-a', { event: 'progress', stage: 'web' })
-    expect(questionState('unit-a').pending).toEqual({ question: 'q', startedAt: new Date(0).toISOString(), provider: 'agy', stage: 'web', web: true })
+    expect(questionState('unit-a').pending).toEqual({ question: 'q', startedAt: new Date(0).toISOString(), provider: 'agy', stage: 'web', web: true, text: '' })
     endQuestion('unit-a')
     expect(questionState('unit-a')).toEqual({ pending: null, failed: null })
   })

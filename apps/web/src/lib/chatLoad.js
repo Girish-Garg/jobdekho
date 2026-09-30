@@ -83,6 +83,8 @@ function remoteCall(pending) {
     provider: pending.provider,
     label: '',
     events,
+    // The answer as far as it had been written when the page asked.
+    text: pending.text ?? '',
     startedAt: Date.parse(pending.startedAt) || Date.now(),
     remote: true,
   };

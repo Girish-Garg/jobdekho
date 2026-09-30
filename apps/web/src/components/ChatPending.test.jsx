@@ -14,8 +14,23 @@ describe('ChatPending', () => {
   it('names the CLI by its label once the list is there, not by the id the call started with', () => {
     render(<ChatPending call={call()} providers={[{ id: 'ollama', label: 'Ollama' }]} />);
     const card = screen.getByRole('region', { name: 'Answer in progress' });
-    expect(within(card).getByText('Ollama')).toBeInTheDocument();
-    expect(within(card).getByText('Sent to Ollama')).toBeInTheDocument();
+    expect(within(card).getByText('Ollama, thinking')).toBeInTheDocument();
+  });
+
+  it('shows the answer as it is written, under who is writing it', () => {
+    render(<ChatPending call={call({ text: 'Two of these are **remote**.' })} providers={[{ id: 'ollama', label: 'Ollama' }]} />);
+    const card = screen.getByRole('region', { name: 'Answer in progress' });
+    expect(within(card).getByText('Ollama is writing')).toBeInTheDocument();
+    expect(within(card).getByText('remote').tagName).toBe('STRONG');
+  });
+
+  // Worth saying only once a wait is long enough to wonder about.
+  it('says the panel can be closed only once the wait runs long', () => {
+    const { unmount } = render(<ChatPending call={call({ startedAt: Date.now() - 3000 })} providers={[]} />);
+    expect(screen.queryByText(/You can close this panel/)).not.toBeInTheDocument();
+    unmount();
+    render(<ChatPending call={call()} providers={[]} />);
+    expect(screen.getByText(/You can close this panel/)).toBeInTheDocument();
   });
 
   it('counts from when it was asked, in minutes past the first', () => {

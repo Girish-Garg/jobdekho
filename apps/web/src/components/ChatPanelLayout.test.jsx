@@ -36,28 +36,29 @@ afterEach(() => {
 });
 
 describe('the chat panel\'s place on a wide window', () => {
-  it('floats over the page by default, at the default width', () => {
+  // The chat is about what is on the page, so by default the page makes
+  // room for it rather than hiding under it.
+  it('is pinned beside the page by default, at the default width', () => {
     windowOf({ wide: true });
     const panel = setup();
+    expect(panel).toHaveAttribute('data-mode', 'pinned');
+    expect(panel.className).not.toMatch(/\babsolute\b/);
+    expect(panel.className).toMatch(/\bshrink-0\b/);
+    expect(panel.style.width).toBe('380px');
+  });
+
+  it('floats over the page as an inset card, and pins again, remembering each', () => {
+    windowOf({ wide: true });
+    const panel = setup();
+    fireEvent.click(screen.getByRole('button', { name: 'Float over the page' }));
     expect(panel).toHaveAttribute('data-mode', 'floating');
     expect(panel.className).toMatch(/\babsolute\b/);
     // An inset card, the mirror of the job pane on the right.
     expect(panel.className.split(' ')).toEqual(expect.arrayContaining(['left-3', 'top-3', 'bottom-3', 'rounded-2xl']));
-    expect(panel.style.width).toBe('380px');
-  });
-
-  it('pins to the side as a column of its own, and floats again, remembering each', () => {
-    windowOf({ wide: true });
-    const panel = setup();
+    expect(readLayout().pinned).toBe(false);
     fireEvent.click(screen.getByRole('button', { name: 'Pin to the side' }));
     expect(panel).toHaveAttribute('data-mode', 'pinned');
-    expect(panel.className).not.toMatch(/\babsolute\b/);
-    expect(panel.className).toMatch(/\bshrink-0\b/);
-    expect(panel.className).not.toMatch(/\brounded-2xl\b/);
     expect(readLayout().pinned).toBe(true);
-    fireEvent.click(screen.getByRole('button', { name: 'Float over the page' }));
-    expect(panel).toHaveAttribute('data-mode', 'floating');
-    expect(readLayout().pinned).toBe(false);
   });
 
   it('opens pinned when it was pinned before', () => {

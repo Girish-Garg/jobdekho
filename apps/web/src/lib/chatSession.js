@@ -13,10 +13,12 @@ import { useEffect, useSyncExternalStore } from 'react';
 //                   lands (see chatLanding.js); null until the server has
 //                   given it one
 //   call     the AI call in flight, or null (see chatCall.js):
-//            { what, words, provider, label, events, startedAt, remote }
-//   error    the last failure, for AiError
+//            { what, words, provider, label, events, text, startedAt, remote }
+//   error    the last failure of a quick action, for AiError
+//   missed   the last question that got no answer, failed or stopped, kept
+//            in the conversation for Ask again (see ChatMissed.jsx)
 //   unseen   an answer landed while no panel was open, for the Ask AI dot
-const EMPTY = { turns: [], conversationId: null, loaded: false, call: null, error: null, unseen: false };
+const EMPTY = { turns: [], conversationId: null, loaded: false, call: null, error: null, missed: null, unseen: false };
 
 let state = EMPTY;
 let panels = 0;

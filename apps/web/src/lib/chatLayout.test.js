@@ -30,28 +30,36 @@ describe('chat width', () => {
 });
 
 describe('saved layout', () => {
-  it('starts floating, at the default width, closed', () => {
-    expect(readLayout()).toEqual({ pinned: false, width: 380, open: false });
+  it('starts pinned, at the default width, closed', () => {
+    expect(readLayout()).toEqual({ pinned: true, width: 380, open: false });
+  });
+
+  // Saved while floating was the default, pinned: false was nobody's pick.
+  it('opens pinned from a layout saved before pinning was the default, and floats once floated', () => {
+    localStorage.setItem(KEY, JSON.stringify({ pinned: false, width: 420, open: true }));
+    expect(readLayout()).toEqual({ pinned: true, width: 420, open: true });
+    saveLayout({ pinned: false });
+    expect(readLayout()).toEqual({ pinned: false, width: 420, open: true });
   });
 
   it('merges each save into what was saved before', () => {
-    saveLayout({ pinned: true });
+    saveLayout({ pinned: false });
     saveLayout({ width: 500 });
-    expect(readLayout()).toEqual({ pinned: true, width: 500, open: false });
+    expect(readLayout()).toEqual({ pinned: false, width: 500, open: false });
   });
 
   it('reads a broken or foreign value as the defaults', () => {
     localStorage.setItem(KEY, '{not json');
-    expect(readLayout().pinned).toBe(false);
-    localStorage.setItem(KEY, JSON.stringify({ pinned: 'yes', width: -4 }));
-    expect(readLayout()).toEqual({ pinned: false, width: 380, open: false });
+    expect(readLayout().pinned).toBe(true);
+    localStorage.setItem(KEY, JSON.stringify({ floating: 'yes', width: -4 }));
+    expect(readLayout()).toEqual({ pinned: true, width: 380, open: false });
   });
 
   it('survives storage that throws on every call', () => {
     vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('blocked'); });
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('blocked'); });
-    expect(() => saveLayout({ pinned: true })).not.toThrow();
-    expect(readLayout()).toEqual({ pinned: false, width: 380, open: false });
+    expect(() => saveLayout({ pinned: false })).not.toThrow();
+    expect(readLayout()).toEqual({ pinned: true, width: 380, open: false });
   });
 });
 

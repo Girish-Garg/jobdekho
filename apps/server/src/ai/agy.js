@@ -38,6 +38,18 @@ const parseLine = (line) => {
   }
 }
 
+// The piece of the reply one stream line carries: the answer is written as
+// agent_response steps with a text_delta each (see the test fixture
+// agy-stream.js), so it can be shown while it is written. Tool steps carry
+// none. The stream is already what the call reads, so its arguments stay.
+export function agyText(line) {
+  if (!line.includes('text_delta')) return ''
+  const step = parseLine(line)?.step_update
+  return step?.step_type === 'agent_response' && typeof step.text_delta === 'string' ? step.text_delta : ''
+}
+
+export const AGY_STREAM = { textOf: agyText, streamArgs: (args) => args }
+
 // A stream line is an event with the outcome under `result`; with
 // --output-format json the same outcome object is printed bare, and its
 // `status` is what marks it as one.

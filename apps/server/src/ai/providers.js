@@ -1,5 +1,5 @@
-import { CLAUDE_ARGS, unwrapClaude } from './claude.js'
-import { AGY_ARGS, encodeAgyInput, unwrapAgy } from './agy.js'
+import { CLAUDE_ARGS, CLAUDE_STREAM, unwrapClaude } from './claude.js'
+import { AGY_ARGS, AGY_STREAM, encodeAgyInput, unwrapAgy } from './agy.js'
 import { AGENT_LOG, agentFiles, checkAgentRun } from './agy-agent.js'
 import { agyUnusable } from './agy-settings.js'
 import { TOOL_POLICIES, underPolicies } from './policies.js'
@@ -35,6 +35,9 @@ export { TOOL_POLICIES, OLLAMA }
 //   listModels    optional, ({ run, path }) -> the models it can answer with,
 //                 [{ id, label }], asked at detection time without a model call
 //   modelArgs     optional, (model) -> the arguments naming the bound model
+//   textOf, streamArgs  optional: (line) -> the piece of the model's text one
+//                 line of output carries, and (args) -> the arguments that
+//                 print it so, for an answer shown as it is written
 // Ollama, which is not a process, has more (see ollama.js). select.js binds
 // `model`, one of the listed models, onto the provider it hands back.
 //
@@ -56,6 +59,7 @@ export const CLAUDE = {
   // exited mid-refresh. This is usually transient".
   busyPattern: /is refreshing it|mid-refresh/i,
   unwrap: unwrapClaude,
+  ...CLAUDE_STREAM,
   listModels: () => CLAUDE_MODELS,
   modelArgs: modelFlag,
 }
@@ -79,6 +83,7 @@ export const AGY = {
   encodeInput: encodeAgyInput,
   loginPattern: /sign in|authenticat/i,
   unwrap: unwrapAgy,
+  ...AGY_STREAM,
   stage: agentFiles,
   collect: [AGENT_LOG],
   verify: checkAgentRun,
@@ -87,8 +92,7 @@ export const AGY = {
   modelArgs: modelFlag,
 }
 
-// Ollama last (see ollama.js): it answers only when picked, or when neither
-// CLI above it can.
+// Ollama last (see ollama.js): it answers only when picked, or when no CLI can.
 export const PROVIDERS = [CLAUDE, AGY, OLLAMA]
 
 export function providerById(id) {

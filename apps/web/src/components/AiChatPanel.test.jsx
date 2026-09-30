@@ -82,12 +82,25 @@ describe('AiChatPanel, plain questions', () => {
     setup();
     await ask('hi');
     const card = await screen.findByRole('region', { name: 'Answer in progress' });
-    expect(within(card).getByText('Claude Code')).toBeInTheDocument();
-    expect(within(card).getByText('Thinking...')).toHaveAttribute('aria-live', 'polite');
-    const steps = within(within(card).getByRole('list', { name: 'Progress' })).getAllByRole('listitem');
-    expect(steps.map((step) => step.textContent)).toEqual(['Sent to Claude Code (done)', 'Thinking', 'Writing it up']);
-    expect(steps[1]).toHaveAttribute('aria-current', 'step');
+    expect(within(card).getByText('Claude Code, thinking')).toHaveAttribute('aria-live', 'polite');
     expect(screen.getByText('hi')).toBeInTheDocument();
+    await waitFor(() => finish());
+  });
+
+  it('shows the answer as it is written, and who is writing it', async () => {
+    let finish;
+    sendChatMessage.mockImplementationOnce(async (_body, { onEvent }) => {
+      onEvent({ event: 'start', provider: 'claude', path: 'x' });
+      onEvent({ event: 'text', add: 'Two of these ' });
+      onEvent({ event: 'text', add: 'are remote.' });
+      await new Promise((r) => { finish = r; });
+      return TURN;
+    });
+    setup();
+    await ask('hi');
+    const card = await screen.findByRole('region', { name: 'Answer in progress' });
+    expect(within(card).getByText('Two of these are remote.')).toBeInTheDocument();
+    expect(within(card).getByText('Claude Code is writing')).toBeInTheDocument();
     await waitFor(() => finish());
   });
 
@@ -201,7 +214,7 @@ describe('AiChatPanel, the redesigned panel', () => {
     });
     setup();
     await ask('is Acme funded?');
-    expect(await screen.findByText('Checking the web with your question only, not your profile...')).toHaveAttribute('aria-live', 'polite');
+    expect(await screen.findByText('Checking the web with your question only, not your profile')).toHaveAttribute('aria-live', 'polite');
     expect(screen.getByText('is Acme funded?')).toBeInTheDocument();
     await waitFor(() => finish());
     await screen.findByText('Two of these are remote.');

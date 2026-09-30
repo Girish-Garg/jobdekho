@@ -115,7 +115,8 @@ describe('POST /api/chat', () => {
     expect(res.statusCode).toBe(200)
     expect(dashboard.listPostingsForUser).toHaveBeenCalledWith('u1', expect.objectContaining({ levels: ['entry'], sort: 'match' }))
     const call = cli.run.mock.calls.at(-1)[0]
-    expect(call.args).toEqual(CLAUDE.promptArgs('none'))
+    // The chat's answer is shown as it is written, so it asks for the stream.
+    expect(call.args).toEqual(CLAUDE.streamArgs(CLAUDE.promptArgs('none')))
     expect(call.args).toEqual(expect.arrayContaining(['--tools', '']))
     expect(call.timeoutMs).toBe(180000)
     expect(call.input).toContain('which are remote?')

@@ -4,7 +4,7 @@ import { chatStore } from '../chat/store.js'
 import { documentStore } from '../documents/store.js'
 import { assemblePageContext } from '../chat/page-context.js'
 import { runChatTurn } from '../chat/run.js'
-import { beginQuestion, noteEvent, endQuestion, questionState } from '../chat/in-flight.js'
+import { beginQuestion, noteEvent, endQuestion, questionState, stopSignal, stopQuestion } from '../chat/in-flight.js'
 import { chatConversationRoutes } from './chat-conversations.js'
 
 const MAX_MESSAGE = 2000
@@ -37,6 +37,11 @@ export async function chatRoutes(app) {
   // unseen (see chat/in-flight.js), for a page that reloaded mid-answer.
   app.get('/api/chat/pending', { preHandler: app.requireAuth }, async (request) => questionState(request.user.sub))
 
+  // Stops the question being answered, from any page: its CLI is ended and
+  // nothing is saved. Closing the panel or the tab does not stop it, on
+  // purpose: the answer is still saved for when the person comes back.
+  app.post('/api/chat/stop', { preHandler: app.requireAuth }, async (request) => ({ stopped: stopQuestion(request.user.sub) }))
+
   // Send Accept: application/x-ndjson to watch it happen (see ai/events.js).
   // `page` says which page asked ('postings', 'profile', 'resume' or
   // 'settings'; anything else is the feed); on the feed `filters`, `sort`
@@ -60,12 +65,14 @@ export async function chatRoutes(app) {
     return answer(request, reply, async (emit) => {
       try {
         const watch = (event) => { noteEvent(userId, event); emit(event) }
-        const turn = { ...(await runChatTurn({ message, context, history, select: app.ai.select, emit: watch, ...cli })), conversationId }
+        const signal = stopSignal(userId)
+        const turn = { ...(await runChatTurn({ message, context, history, select: app.ai.select, emit: watch, signal, ...cli })), conversationId }
         await appendChatTurn(store, userId, turn)
         endQuestion(userId)
         return turn
       } catch (err) {
-        endQuestion(userId, err?.kind ? err.message : COULD_NOT)
+        // A stop is the person's own doing, not a failure to tell them about.
+        endQuestion(userId, err?.kind === 'stopped' ? null : err?.kind ? err.message : COULD_NOT)
         throw err
       }
     })

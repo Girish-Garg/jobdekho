@@ -2,7 +2,7 @@ import { locateBinary } from './locate.js'
 import { runStaged } from './staged-run.js'
 import { inEmptyDir } from './scratch-dir.js'
 import { httpJson, offline } from './http-json.js'
-import { ProviderError } from './errors.js'
+import { ProviderError, stoppedBy } from './errors.js'
 import { startEvent, progressEvent } from './events.js'
 import { overProcess } from './over-process.js'
 import { overRequest } from './over-request.js'
@@ -35,20 +35,25 @@ const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 // local API (over-request.js). Both get the same events, heartbeat, timeout
 // and retry here, so a browser cannot tell them apart but by name.
 //
+// `onText` asks for the model's text as it is written, for a CLI that can
+// print it that way (`textOf`, `streamArgs` in providers.js); one that
+// cannot answers whole, as before. `signal` stops the call where it is.
+//
 // `run`, `locate`, `scratch`, `http` and `sleep` are injectable so a test never
 // spawns a real CLI, touches the real temp directory, reaches a real model
 // server or waits in real time. A caller that fakes `run` but not `http`
 // gets a network where nothing answers (see http-json.js).
 export async function callProvider({
-  provider, prompt, tools, timeoutMs = DEFAULT_TIMEOUT_MS, emit = () => {}, json = true,
+  provider, prompt, tools, timeoutMs = DEFAULT_TIMEOUT_MS, emit = () => {}, json = true, onText = null, signal = null,
   run = runStaged, locate = locateBinary, scratch = inEmptyDir, http = run === runStaged ? httpJson : offline,
   heartbeatMs = HEARTBEAT_MS, now = Date.now, sleep = pause, busyWaits = BUSY_WAITS_MS,
 }) {
   const policyArgs = provider.promptArgs(tools)
   if (!policyArgs) throw new Error(`${provider.label} cannot honour the "${tools}" tool policy and should not have been chosen for it`)
+  const live = Boolean(onText && provider.textOf)
   // The model select.js bound, for a CLI that takes a flag for it (see
   // cli-models.js); none when it is the CLI's own default.
-  const args = [...policyArgs, ...(provider.modelArgs?.(provider.model) ?? [])]
+  const args = [...(live ? provider.streamArgs(policyArgs) : policyArgs), ...(provider.modelArgs?.(provider.model) ?? [])]
   // A provider behind an API has no binary to find; the start event names
   // the model that will answer instead, the one the person picked.
   const file = provider.request ? provider.model?.id ?? provider.id : locate(provider.binary)
@@ -60,10 +65,11 @@ export async function callProvider({
   emit(startEvent({ provider: provider.id, path: file }))
   emit(progressEvent({ stage: 'send', chars: prompt.length }))
   const started = now()
-  const call = { file, args, provider, prompt, tools, json, timeoutMs: limit, run, scratch, http }
+  const call = { file, args, provider, prompt, tools, json, timeoutMs: limit, run, scratch, http, signal, onText: live ? onText : null }
   const ask = () => (provider.request ? overRequest(call) : overProcess(call))
 
   for (let tries = 0; ; tries += 1) {
+    if (signal?.aborted) throw stoppedBy(provider)
     try {
       const text = await beating(ask, { emit, heartbeatMs, now, started })
       emit(progressEvent({ stage: 'reply', elapsedMs: now() - started, chars: text.length }))

@@ -29,6 +29,15 @@ export function progressEvent({ stage, ...detail }) {
   return { event: 'progress', stage, ...detail }
 }
 
+// text:     { event: 'text', add }    more of the answer, as it is written
+//           { event: 'text', text }   the answer so far, whole, in place of
+//                                     what came before (another CLI took over)
+// Only the chat sends these (see chat/reply-stream.js); the answer that
+// counts is still the last line.
+export function textEvent({ add, text }) {
+  return text !== undefined ? { event: 'text', text } : { event: 'text', add }
+}
+
 export function isEvent(line) {
   return line !== null && typeof line === 'object' && typeof line.event === 'string'
 }
