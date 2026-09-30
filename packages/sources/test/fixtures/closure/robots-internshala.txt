@@ -1,0 +1,109 @@
+#### Rules for ANY User-Agent
+
+User-Agent: *
+
+Disallow: /*,*
+Disallow: /*?*
+Disallow: /*%3f*
+Disallow: /*%3d*
+Disallow: /*%3F*
+Disallow: /*%3D*
+Disallow: /api/
+Disallow: /ddos
+Disallow: /student
+Disallow: /chat
+Disallow: /internship/details/
+Disallow: /job/details/
+Disallow: /internship/search/
+Disallow: /job/search/
+Disallow: /employer/application
+Disallow: /chandigarh-university/*
+Disallow: /download_certificate/*
+Disallow: /external-jobs/*
+Disallow: /application/*
+Disallow: /student/*
+Disallow: /employer/billing/*
+Disallow: /employer/invite_application/*
+
+Allow: /favicon.ico?*
+
+#### END Rules for ANY User-Agent
+
+#### Crawl Delay for Some Bots
+User-Agent: Baiduspider
+User-Agent: Baiduspider-image
+User-Agent: Baiduspider-video
+User-Agent: Baiduspider-news
+User-Agent: Baiduspider-favo
+User-Agent: Baiduspider-cpro
+User-Agent: Baiduspider-ads
+Crawl-delay: 1
+
+User-agent: MSNBot
+User-agent: MSNBot-Media
+User-agent: AdIdxBot
+Crawl-delay: 5
+
+#### END Crawl Delay Rules for Bots
+
+####Partially Block High-Quality AI/LLM Bots
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: Google-Extended
+User-agent: meta-externalagent
+User-agent: Amazonbot
+User-agent: GoogleOther
+User-agent: Anthropic-AI
+User-agent: Claude-Web
+User-agent: ClaudeBot
+User-agent: Claude-SearchBot
+User-agent: PerplexityBot
+User-agent: Cohere
+User-agent: cohere-ai
+User-agent: Applebot-Extended
+User-agent: Google-CloudVertexBot
+Disallow: /
+Allow: /about_us
+Allow: /blog/
+Allow: /competitions/
+
+#### Block Low-Quality AI/LLM Bots
+User-Agent: DotBot
+User-Agent: spbot
+User-agent: AhrefsBot
+User-agent: CCBot
+User-agent: Omgilibot
+User-agent: Omgili
+User-agent: FacebookBot
+User-agent: Bytespider
+User-agent: Bytedance
+User-agent: Diffbot
+User-agent: Youbot
+User-agent: FriendlyCrawler
+User-agent: img2dataset
+Disallow: /
+
+#### Allowing user related AI Bots
+User-agent: ChatGPT-User
+User-agent: Perplexity-User
+User-agent: Claude-User
+Allow: /
+
+#### End AI/LLM Bot Blocks
+
+#### Crawl Delay for OpenAI & Meta (Facebook) Bots
+
+User-agent: meta-webindexer
+Crawl-delay: 5
+
+User-agent: facebookexternalhit
+Crawl-delay: 5
+
+User-agent: FacebookBot
+Crawl-delay: 5
+
+#### END OpenAI & Meta Crawl Delays
+
+Sitemap: https://internshala.com/sitemap.xml
+Sitemap: https://internshala.com/sitemap-main.xml
+Sitemap: https://internshala.com/sitemap-employers.xml

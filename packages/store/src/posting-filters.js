@@ -62,7 +62,12 @@ export function postingPredicate(opts, statusOf, now = Date.now()) {
   return (row) => {
     if (opts.status !== undefined && statusOf(row.id) !== opts.status) return false
     if (!opts.sources?.length && opts.source && row.source !== opts.source) return false
-    if (!opts.includeStale && !isFresh(row, cutoff)) return false
+    // A closed posting (see corpus-closure.js) is only still stored because
+    // the person did something with it: it leaves the feed but stays in their
+    // own lists (a status filter), marked closed, however long ago it was seen.
+    const closed = Boolean(row.closedAt)
+    if (closed && opts.status === undefined && !opts.includeStale) return false
+    if (!closed && !opts.includeStale && !isFresh(row, cutoff)) return false
     if (matchesSearch && !matchesSearch(row)) return false
     return filter(row, opts)
   }

@@ -5,7 +5,7 @@ const BOARDS = {
   greenhouse: 'Greenhouse', lever: 'Lever', ashby: 'Ashby', smartrecruiters: 'SmartRecruiters',
   workable: 'Workable', personio: 'Personio', recruitee: 'Recruitee', internshala: 'Internshala',
   unstop: 'Unstop', instahyre: 'Instahyre', linkedin: 'LinkedIn', arbeitnow: 'Arbeitnow',
-  remoteok: 'RemoteOK', remotive: 'Remotive',
+  remoteok: 'RemoteOK', remotive: 'Remotive', 'hn-hiring': 'Hacker News',
 };
 
 export function sourceName(source) {

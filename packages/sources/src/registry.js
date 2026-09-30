@@ -28,6 +28,8 @@ import { remoteok } from './boards/remoteok.js'
 import { arbeitnow } from './boards/arbeitnow.js'
 import { linkedin } from './boards/linkedin.js'
 import { instahyre } from './boards/instahyre.js'
+import { hnHiring } from './boards/hn-hiring.js'
+import { withTags } from './tagged.js'
 
 const PROVIDERS = {
   greenhouse, lever, ashby, smartrecruiters, workable, recruitee, personio, workday,
@@ -40,14 +42,15 @@ const COMPANIES = {
 // adzuna is registered but intentionally not in config/companies.json: it needs
 // API credentials, and listing it before those exist would log a failed source
 // on every run.
-const BOARDS = { internshala, unstop, adzuna, remotive, remoteok, arbeitnow, linkedin, instahyre }
+const BOARDS = { internshala, unstop, adzuna, remotive, remoteok, arbeitnow, linkedin, instahyre, 'hn-hiring': hnHiring }
 
 export function buildAdapters(config) {
   const adapters = []
   for (const p of config.providers || []) {
     // The whole entry, not just the slug: a Workday board is addressed by its
     // careers site URL and named by its company, which one slug cannot carry.
-    if (PROVIDERS[p.provider]) adapters.push(PROVIDERS[p.provider](p))
+    // An entry's tags ("YC W21") go on every posting it sends (tagged.js).
+    if (PROVIDERS[p.provider]) adapters.push(withTags(PROVIDERS[p.provider](p), p.tags))
   }
   for (const name of config.companies || []) {
     if (COMPANIES[name]) adapters.push(COMPANIES[name]())

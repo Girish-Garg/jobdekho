@@ -75,3 +75,36 @@ describe('greenhouse adapter', () => {
     expect(raw.postedAt).toBe('2026-06-10T00:00:00.000Z')
   })
 })
+
+// A board that has not changed since the last read answers 304 (checked
+// live on 2026-09-30), and the run counts its postings as seen again.
+describe('greenhouse conditional read', () => {
+  it('sends the ETag it was given, and on a 304 reports the board unchanged and returns nothing', async () => {
+    const calls = []
+    const context = { etagFor: () => 'W/"abc"', unchanged: (name) => calls.push(['unchanged', name]), remember: () => calls.push(['remember']) }
+    const http = async (url, options) => { calls.push(['get', options.headers['If-None-Match']]); return { status: 304 } }
+    const out = await greenhouse({ slug: 'acme' }).fetch(http, context)
+    expect(out).toEqual([])
+    expect(calls).toEqual([['get', 'W/"abc"'], ['unchanged', 'greenhouse:acme']])
+  })
+
+  it('remembers the ETag of a full read', async () => {
+    const kept = []
+    const context = { etagFor: () => null, remember: (name, url, etag) => kept.push([name, etag]) }
+    const http = async (url, options) => {
+      expect(options).toEqual({})
+      return { status: 200, headers: new Headers({ etag: 'W/"new"' }), json: async () => ({ jobs: [] }) }
+    }
+    await greenhouse({ slug: 'acme' }).fetch(http, context)
+    expect(kept).toEqual([['greenhouse:acme', 'W/"new"']])
+  })
+
+  it('lists the whole board, so it is complete, and carries a deadline the board set', async () => {
+    const adapter = greenhouse({ slug: 'acme' })
+    expect(adapter.complete).toBe(true)
+    const http = async () => ({ json: async () => ({ jobs: [{ id: 1, title: 'SWE', application_deadline: '2026-10-20T00:00:00Z' }, { id: 2, title: 'PM' }] }) })
+    const [a, b] = await adapter.fetch(http)
+    expect(a.closesAt).toBe('2026-10-20T00:00:00.000Z')
+    expect(b.closesAt).toBeNull()
+  })
+})

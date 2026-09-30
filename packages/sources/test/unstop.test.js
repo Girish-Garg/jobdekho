@@ -61,3 +61,14 @@ describe('mapUnstop', () => {
     expect(r.level).toBeUndefined()
   })
 })
+
+// Taken from a live search reply (2026-09-30): registration's end is the
+// posting's own deadline, which closes it without a request once it passes.
+describe('mapUnstop deadline', () => {
+  it('carries the registration deadline, else the end date, else none', () => {
+    const regn = { regnRequirements: { end_regn_dt: '2026-10-09T23:59:59+05:30' }, end_date: '2026-10-10T23:59:59+05:30' }
+    expect(mapUnstop({ ...item, ...regn }).closesAt).toBe('2026-10-09T23:59:59+05:30')
+    expect(mapUnstop({ ...item, end_date: '2026-10-10T23:59:59+05:30' }).closesAt).toBe('2026-10-10T23:59:59+05:30')
+    expect(mapUnstop(item).closesAt).toBeNull()
+  })
+})

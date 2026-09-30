@@ -53,3 +53,28 @@ describe('runPipeline', () => {
     expect(ports.upsertPostings.mock.calls[0][1].map((p) => p.externalId)).toEqual(['1'])
   })
 })
+
+describe('runPipeline and closed postings', () => {
+  const ports = () => ({
+    getExistingIds: vi.fn(async () => new Set()),
+    upsertPostings: vi.fn(async () => ({ removed: 2, closed: 2 })),
+    recordRun: vi.fn(async () => {}),
+  })
+
+  it('hands the write what the run learned about gone postings, and counts a live link as seen', async () => {
+    const p = ports()
+    const closure = { listed: ['a'], missed: ['m'], gone: ['g'], live: ['l'], checked: 7 }
+    const out = await runPipeline({ items: [], results: [], seen: ['s1'], closure }, { db: {}, rules, runId: 'r', ports: p })
+    expect(p.upsertPostings.mock.calls[0][3]).toEqual(['s1', 'l'])
+    expect(p.upsertPostings.mock.calls[0][4]).toBe(closure)
+    expect(p.recordRun.mock.calls[0][1]).toMatchObject({ closed: 2, checked: 7 })
+    expect(out).toMatchObject({ closed: 2, checked: 7 })
+  })
+
+  it('keeps a deadline the board published beside the normalized posting', async () => {
+    const p = ports()
+    const raw = { externalId: '9', title: 'Software Intern', company: 'A', url: 'u9', location: 'Remote', closesAt: '2026-10-09T23:59:59+05:30' }
+    await runPipeline({ items: [{ source: 's', raw }], results: [] }, { db: {}, rules, runId: 'r', ports: p })
+    expect(p.upsertPostings.mock.calls[0][1][0].closesAt).toBe('2026-10-09T23:59:59+05:30')
+  })
+})

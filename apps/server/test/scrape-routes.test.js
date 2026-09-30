@@ -55,6 +55,7 @@ describe('POST /api/scrape and GET /api/scrape', () => {
     expect(res.json()).toEqual({
       running: false, startedAt: null, finishedAt: null, done: 0, total: 0, lastRun: null,
       linkedin: { lastSweepAt: null, pausedUntil: null, nextAfter: null },
+      health: { paused: [], alerts: [] },
     })
   })
 
@@ -114,7 +115,7 @@ describe('POST /api/scrape and GET /api/scrape', () => {
     await post()
     await vi.waitFor(() => expect(scrape.job.isRunning()).toBe(false))
     const state = (await get('/api/scrape')).json()
-    expect(state.result).toEqual({ fresh: 1, total: 1, tooOld: 0, removed: 0, failed: [], skipped: [] })
+    expect(state.result).toEqual({ fresh: 1, total: 1, tooOld: 0, removed: 0, closed: 0, checked: 0, failed: [], skipped: [] })
     expect(state.lastRun).toMatchObject({ fresh: 1, sources: 1, failed: [] })
     expect((await get('/api/postings')).json().postings.map((p) => p.title)).toEqual(['Software Intern'])
   })

@@ -59,6 +59,43 @@ describe('stipendMonthly', () => {
     expect(stipendMonthly('Rs 10,000 - 15,000 /month')).toBe(10000)
     expect(stipendMonthly('Unpaid')).toBe(0)
   })
+
+  // Each of these was misread before: "₹2.2M" (YC and Ashby write pay that
+  // way) came out as 22 lakh a month, CTC and "annually" were taken for a
+  // month, and crores and a bare "L" lost their unit altogether.
+  it('reads millions, crores and lakhs as a year of pay', () => {
+    expect(stipendMonthly('₹2.2M - ₹3.5M INR')).toBe(183333)
+    expect(stipendMonthly('1.2 Cr')).toBe(1000000)
+    expect(stipendMonthly('0.8 - 1.2 Cr')).toBe(666667)
+    expect(stipendMonthly('8L-12L per annum')).toBe(66667)
+    expect(stipendMonthly('12 - 15 L')).toBe(100000)
+    expect(stipendMonthly('3.5 Lakhs per annum')).toBe(29167)
+    expect(stipendMonthly('Up to 30 LPA')).toBe(250000)
+  })
+
+  it('takes CTC and annually as yearly', () => {
+    expect(stipendMonthly('Rs. 6,00,000 CTC')).toBe(50000)
+    expect(stipendMonthly('INR 1,200,000 - 1,800,000 annually')).toBe(100000)
+  })
+
+  // Unstop sends a job's salary and an internship's stipend as the same
+  // bare "Rs a - b": from a lakh up it can only be a year's pay.
+  it('reads a bare rupee figure as monthly below a lakh and yearly from one', () => {
+    expect(stipendMonthly('Rs 10000 - 15000')).toBe(10000)
+    expect(stipendMonthly('Rs 600000')).toBe(50000)
+  })
+
+  it('lets a stated month win over a yearly unit or a large figure', () => {
+    expect(stipendMonthly('₹ 1,20,000 per month')).toBe(120000)
+    expect(stipendMonthly('₹1 lakh per month')).toBe(100000)
+    expect(stipendMonthly('15,000 p.m.')).toBe(15000)
+    expect(stipendMonthly('$6K - $7.5K / monthly')).toBe(510000)
+  })
+
+  it('borrows a range unit from its high end', () => {
+    expect(stipendMonthly('10-15k')).toBe(10000)
+    expect(stipendMonthly('12-18 LPA')).toBe(100000)
+  })
 })
 
 describe('experienceYears', () => {

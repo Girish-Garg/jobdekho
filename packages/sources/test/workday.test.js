@@ -412,3 +412,69 @@ describe('workday listed rows against config/filters.json', () => {
     expect(out.map((r) => r.title)).toEqual([video.title])
   })
 })
+
+// A quiet tenant used to cost a facet probe and five pages every run. With
+// what the last full read left in the run's memo, it costs one request.
+describe('workday incremental listing', () => {
+  const FACET = { locationHierarchy1: ['0d0d0d0d0d0d0d0d0d0d0d0d0d0d0002'] }
+  const dayAgo = new Date(Date.now() - 86400000).toISOString()
+  function memoContext({ kept = null, known = () => false } = {}) {
+    const calls = { unchanged: [], keep: [] }
+    return {
+      calls,
+      context: {
+        known: (name, id) => known(id),
+        wanted: () => true,
+        recall: (name, key) => (key === 'workday' ? kept : null),
+        keep: (name, key, value) => calls.keep.push([name, key, value]),
+        unchanged: (name, since) => calls.unchanged.push([name, since]),
+      },
+    }
+  }
+  const go = (fake, context) => workday({ url: URL_, company: 'Acme' }, { pause: noPause, now: NOW }).fetch(fake.http, context)
+
+  it('skips the facet probe while the remembered facets are fresh', async () => {
+    const fake = fakeWorkday()
+    await go(fake, memoContext({ kept: { facets: FACET, facetsAt: dayAgo, total: 99, fullAt: dayAgo } }).context)
+    expect(fake.calls[0].body).toMatchObject({ appliedFacets: FACET, limit: 20, offset: 0 })
+    expect(fake.calls.some((c) => c.body?.limit === 1)).toBe(false)
+  })
+
+  it('stops after a first page of known postings when the count has not moved, and counts them all as seen', async () => {
+    const fake = fakeWorkday()
+    const { context, calls } = memoContext({ kept: { facets: FACET, facetsAt: dayAgo, total: INDIA.total, fullAt: dayAgo }, known: () => true })
+    const out = await go(fake, context)
+    expect(out).toEqual([])
+    expect(fake.calls).toHaveLength(1)
+    expect(calls.unchanged).toEqual([['workday:acme', dayAgo]])
+  })
+
+  it('reads on as before when the count moved, and remembers the new full read', async () => {
+    const fake = fakeWorkday()
+    const { context, calls } = memoContext({ kept: { facets: FACET, facetsAt: dayAgo, total: INDIA.total + 1, fullAt: dayAgo }, known: () => true })
+    await go(fake, context)
+    expect(calls.unchanged).toEqual([])
+    const [[, key, value]] = calls.keep
+    expect(key).toBe('workday')
+    expect(value).toMatchObject({ facets: FACET, facetsAt: dayAgo, total: INDIA.total })
+  })
+
+  it('probes again when the remembered facets fail', async () => {
+    const fake = fakeWorkday({ fail: (url, body, n) => (n === 1 ? 'HTTP 422 for ' + url : null) })
+    const { context, calls } = memoContext({ kept: { facets: { gone: ['x'] }, facetsAt: dayAgo, total: 3, fullAt: dayAgo } })
+    await go(fake, context)
+    expect(fake.calls[1].body).toEqual({ appliedFacets: {}, limit: 1, offset: 0, searchText: '' })
+    expect(calls.keep[0][2].facetsAt).not.toBe(dayAgo)
+  })
+
+  it('reads the facets afresh once they are a week old', async () => {
+    const old = new Date(Date.now() - 8 * 86400000).toISOString()
+    const fake = fakeWorkday()
+    await go(fake, memoContext({ kept: { facets: FACET, facetsAt: old, total: 3, fullAt: old } }).context)
+    expect(fake.calls[0].body.limit).toBe(1)
+  })
+
+  it('names the data centre it lives on', () => {
+    expect(workday({ url: URL_ }).hostKey).toBe('workday:wd5')
+  })
+})

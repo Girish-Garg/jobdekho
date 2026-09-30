@@ -1,0 +1,14 @@
+User-agent: Amazonbot
+Disallow: /
+User-agent: bingbot
+Crawl-delay: 2
+
+User-agent: *
+Disallow: /search?
+Disallow: /jobs/search?
+Disallow: /to-rent?
+Disallow: /for-sale?
+Disallow: /goto/ad/
+Disallow: /jobs/goto/ad/
+Disallow: /land/ad/
+Disallow: /jobs/land/ad/

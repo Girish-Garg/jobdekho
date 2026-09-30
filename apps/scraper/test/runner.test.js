@@ -62,6 +62,44 @@ describe('runAdapters', () => {
     expect(results[0]).toMatchObject({ name: 'flaky', ok: false })
   })
 
+  // A 4xx is the host's answer, not bad luck: a dead slug asked twice cost
+  // two requests on every run.
+  it('does not try again after a 4xx or a refusal, and does after a server error', async () => {
+    const tries = { gone: 0, busy: 0, refused: 0 }
+    const failing = (name, message) => ({ name, fetch: async () => { tries[name]++; throw new Error(message) } })
+    await runAdapters([
+      failing('gone', 'HTTP 404 for https://x'), failing('busy', 'HTTP 503 for https://x'),
+      failing('refused', 'amazon stopped: the careers site answered 429'),
+    ], null, { retries: 1 })
+    expect(tries).toEqual({ gone: 1, busy: 2, refused: 1 })
+  })
+
+  it('waits before trying again when asked to', async () => {
+    const waited = []
+    const flaky = { name: 'flaky', fetch: async () => { throw new Error('fetch failed') } }
+    await runAdapters([flaky], null, { retries: 1, delayMs: 2000, wait: async (ms) => { waited.push(ms) } })
+    expect(waited).toEqual([2000])
+  })
+
+  // The config groups sources by platform; running them in that order would
+  // put every worker in one host's queue.
+  it('works through the sources round-robin by platform but reports them in input order', async () => {
+    const started = []
+    const make = (name) => ({ name, fetch: async () => { started.push(name); return [] } })
+    const adapters = ['greenhouse:a', 'greenhouse:b', 'greenhouse:c', 'lever:a', 'lever:b', 'ashby:a'].map(make)
+    const { results } = await runAdapters(adapters, null, { retries: 0 })
+    expect(started.slice(0, 3)).toEqual(['greenhouse:a', 'lever:a', 'ashby:a'])
+    expect(results.map((r) => r.name)).toEqual(adapters.map((a) => a.name))
+  })
+
+  it('records a source that listed everything it has as complete, and only when it succeeded', async () => {
+    const full = { name: 'gh', complete: true, fetch: async () => [] }
+    const broken = { name: 'gh2', complete: true, fetch: async () => { throw new Error('HTTP 404 for x') } }
+    const { results } = await runAdapters([full, broken], null, { retries: 0 })
+    expect(results[0]).toMatchObject({ name: 'gh', ok: true, complete: true })
+    expect(results[1]).not.toHaveProperty('complete')
+  })
+
   it('hands each adapter the run context, and keeps an adapter note beside its count', async () => {
     let got
     const cut = { name: 'li', fetch: async (http, context) => { got = context; cut.note = 'LinkedIn refused after 12 requests'; return [{ externalId: 'x' }] } }

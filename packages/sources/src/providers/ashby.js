@@ -1,6 +1,7 @@
 import { stripHtml } from '../html.js'
 import { internLevel } from './employment-type.js'
 import { toIso } from '../iso-date.js'
+import { fetchUnlessUnchanged } from '../conditional.js'
 
 // The HTML body comes first now that stripHtml keeps its structure. Ashby's
 // own plain text writes every link out after its words ("Auth
@@ -12,16 +13,23 @@ function body(j) {
   return html ? stripHtml(html) : String(j.descriptionPlain || '')
 }
 
-export function ashby({ slug }) {
+// The reply is the whole board, so the adapter is `complete`: a posting it
+// stops listing has closed (see the scraper's closure-turn.js). An unchanged
+// board answers 304 and costs nothing. A slug is not always a name
+// ("atomic-invest", "fathom.video"), so a config entry may give `company`.
+export function ashby({ slug, company }) {
+  const name = `ashby:${slug}`
   return {
-    name: `ashby:${slug}`,
-    async fetch(http) {
-      const res = await http(`https://api.ashbyhq.com/posting-api/job-board/${slug}`)
+    name,
+    complete: true,
+    async fetch(http, context) {
+      const res = await fetchUnlessUnchanged(http, context, name, `https://api.ashbyhq.com/posting-api/job-board/${slug}`)
+      if (!res) return []
       const data = await res.json()
       return (data.jobs || []).map((j) => ({
         externalId: String(j.id),
         title: j.title,
-        company: slug.charAt(0).toUpperCase() + slug.slice(1),
+        company: company || slug.charAt(0).toUpperCase() + slug.slice(1),
         location: j.location || '',
         url: j.jobUrl || j.applyUrl || '',
         description: body(j),

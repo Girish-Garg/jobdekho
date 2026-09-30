@@ -7,7 +7,10 @@
     {
       "provider": "greenhouse",
       "slug": "gitlab",
-      "company": "GitLab"
+      "company": "GitLab",
+      "tags": [
+        "YC W15"
+      ]
     },
     {
       "provider": "greenhouse",
@@ -20,11 +23,17 @@
     },
     {
       "provider": "greenhouse",
-      "slug": "groww"
+      "slug": "groww",
+      "tags": [
+        "YC W18"
+      ]
     },
     {
       "provider": "greenhouse",
-      "slug": "webflow"
+      "slug": "webflow",
+      "tags": [
+        "YC S13"
+      ]
     },
     {
       "provider": "greenhouse",
@@ -42,7 +51,10 @@
     {
       "provider": "greenhouse",
       "slug": "hackerrank",
-      "company": "HackerRank"
+      "company": "HackerRank",
+      "tags": [
+        "YC S11"
+      ]
     },
     {
       "provider": "greenhouse",
@@ -51,11 +63,17 @@
     },
     {
       "provider": "greenhouse",
-      "slug": "airbnb"
+      "slug": "airbnb",
+      "tags": [
+        "YC W09"
+      ]
     },
     {
       "provider": "greenhouse",
-      "slug": "coinbase"
+      "slug": "coinbase",
+      "tags": [
+        "YC S12"
+      ]
     },
     {
       "provider": "greenhouse",
@@ -63,7 +81,10 @@
     },
     {
       "provider": "greenhouse",
-      "slug": "dropbox"
+      "slug": "dropbox",
+      "tags": [
+        "YC S07"
+      ]
     },
     {
       "provider": "greenhouse",
@@ -81,12 +102,18 @@
     },
     {
       "provider": "greenhouse",
-      "slug": "stripe"
+      "slug": "stripe",
+      "tags": [
+        "YC S09"
+      ]
     },
     {
       "provider": "greenhouse",
       "slug": "razorpaysoftwareprivatelimited",
-      "company": "Razorpay"
+      "company": "Razorpay",
+      "tags": [
+        "YC W15"
+      ]
     },
     {
       "provider": "greenhouse",
@@ -102,7 +129,10 @@
     },
     {
       "provider": "greenhouse",
-      "slug": "fivetran"
+      "slug": "fivetran",
+      "tags": [
+        "YC W13"
+      ]
     },
     {
       "provider": "greenhouse",
@@ -148,11 +178,17 @@
     },
     {
       "provider": "lever",
-      "slug": "meesho"
+      "slug": "meesho",
+      "tags": [
+        "YC S16"
+      ]
     },
     {
       "provider": "lever",
-      "slug": "netomi"
+      "slug": "netomi",
+      "tags": [
+        "YC W16"
+      ]
     },
     {
       "provider": "lever",
@@ -188,15 +224,24 @@
     },
     {
       "provider": "ashby",
-      "slug": "vanta"
+      "slug": "vanta",
+      "tags": [
+        "YC W18"
+      ]
     },
     {
       "provider": "ashby",
-      "slug": "clipboard"
+      "slug": "clipboard",
+      "tags": [
+        "YC W17"
+      ]
     },
     {
       "provider": "ashby",
-      "slug": "posthog"
+      "slug": "posthog",
+      "tags": [
+        "YC W20"
+      ]
     },
     {
       "provider": "ashby",
@@ -204,7 +249,10 @@
     },
     {
       "provider": "ashby",
-      "slug": "zip"
+      "slug": "zip",
+      "tags": [
+        "YC S20"
+      ]
     },
     {
       "provider": "ashby",
@@ -232,11 +280,17 @@
     },
     {
       "provider": "ashby",
-      "slug": "supabase"
+      "slug": "supabase",
+      "tags": [
+        "YC S20"
+      ]
     },
     {
       "provider": "ashby",
-      "slug": "replit"
+      "slug": "replit",
+      "tags": [
+        "YC W18"
+      ]
     },
     {
       "provider": "ashby",
@@ -337,11 +391,17 @@
     {
       "provider": "greenhouse",
       "slug": "observeai",
-      "company": "Observe.AI"
+      "company": "Observe.AI",
+      "tags": [
+        "YC W18"
+      ]
     },
     {
       "provider": "lever",
-      "slug": "fampay"
+      "slug": "fampay",
+      "tags": [
+        "YC S19"
+      ]
     },
     {
       "provider": "greenhouse",
@@ -475,7 +535,10 @@
     },
     {
       "provider": "greenhouse",
-      "slug": "instawork"
+      "slug": "instawork",
+      "tags": [
+        "YC S15"
+      ]
     },
     {
       "provider": "greenhouse",
@@ -1270,6 +1333,126 @@
       "url": "https://jobs.ea.com/en_US/careers/SearchJobs/?8171%5B0%5D=10590&listFilterMode=1",
       "company": "Electronic Arts",
       "slug": "ea"
+    },
+    {
+      "provider": "lever",
+      "slug": "captivateiq",
+      "company": "CaptivateIQ",
+      "tags": [
+        "YC W18"
+      ]
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "postscript",
+      "company": "Postscript",
+      "tags": [
+        "YC W19"
+      ]
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "alpaca",
+      "company": "Alpaca",
+      "tags": [
+        "YC W19"
+      ]
+    },
+    {
+      "provider": "greenhouse",
+      "slug": "tintai",
+      "company": "Tint",
+      "tags": [
+        "YC W21"
+      ]
+    },
+    {
+      "provider": "workable",
+      "slug": "writesonic",
+      "company": "Writesonic",
+      "tags": [
+        "YC S21"
+      ]
+    },
+    {
+      "provider": "ashby",
+      "slug": "Deepgram",
+      "company": "Deepgram",
+      "tags": [
+        "YC W16"
+      ]
+    },
+    {
+      "provider": "ashby",
+      "slug": "ClassDojo",
+      "company": "ClassDojo",
+      "tags": [
+        "YC S12"
+      ]
+    },
+    {
+      "provider": "ashby",
+      "slug": "atomic-invest",
+      "company": "Atomic",
+      "tags": [
+        "YC S20"
+      ]
+    },
+    {
+      "provider": "ashby",
+      "slug": "ready",
+      "company": "Ready",
+      "tags": [
+        "YC S20"
+      ]
+    },
+    {
+      "provider": "ashby",
+      "slug": "fathom.video",
+      "company": "Fathom",
+      "tags": [
+        "YC W21"
+      ]
+    },
+    {
+      "provider": "ashby",
+      "slug": "Anima",
+      "company": "Anima",
+      "tags": [
+        "YC W21"
+      ]
+    },
+    {
+      "provider": "ashby",
+      "slug": "firstwork",
+      "company": "FirstWork",
+      "tags": [
+        "YC S24"
+      ]
+    },
+    {
+      "provider": "ashby",
+      "slug": "reacher",
+      "company": "Reacher",
+      "tags": [
+        "YC S25"
+      ]
+    },
+    {
+      "provider": "ashby",
+      "slug": "bolna",
+      "company": "Bolna AI",
+      "tags": [
+        "YC F25"
+      ]
+    },
+    {
+      "provider": "ashby",
+      "slug": "cardboard",
+      "company": "Cardboard",
+      "tags": [
+        "YC W26"
+      ]
     }
   ],
   "companies": [
@@ -1291,6 +1474,7 @@
     "remoteok",
     "arbeitnow",
     "linkedin",
-    "instahyre"
+    "instahyre",
+    "hn-hiring"
   ]
 }

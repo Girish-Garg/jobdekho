@@ -7,10 +7,10 @@
 // order of magnitude, and a few percent of drift does not change that order.
 export const INR_PER = { INR: 1, USD: 85, EUR: 95, GBP: 110 }
 
-// LPA and lakh imply rupees even when no symbol appears. Word boundaries stop
-// "rs" firing inside "years" and "usd" inside a company name.
+// LPA, lakh, crore and CTC imply rupees even when no symbol appears. Word
+// boundaries stop "rs" firing inside "years" and "usd" inside a company name.
 const SIGNS = [
-  ['INR', /₹|\brs\.?(?=\s|\d|$)|\binr\b|\blpa\b|\blakh/i],
+  ['INR', /₹|\brs\.?(?=\s|\d|$)|\binr\b|\blpa\b|\blakh|\blacs?\b|\bcrores?\b|\d\s*cr\b|\bctc\b/i],
   ['USD', /\$|\busd\b|\bdollars?\b/i],
   ['EUR', /€|\beuro?s?\b|\beur\b/i],
   ['GBP', /£|\bgbp\b|\bpounds?\b/i],

@@ -18,6 +18,9 @@ function body(j) {
 export function recruitee({ slug }) {
   return {
     name: `recruitee:${slug}`,
+    // The reply is the whole board: a posting it stops listing has closed
+    // (see the scraper's closure-turn.js).
+    complete: true,
     async fetch(http) {
       const res = await http(`https://${slug}.recruitee.com/api/offers/`)
       const data = await res.json()

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { smartrecruiters } from '@jobdekho/sources/providers/smartrecruiters.js'
+import { MAX_DETAILS } from '@jobdekho/sources/providers/smartrecruiters-detail.js'
 
 const fixture = {
   offset: 0,
@@ -147,5 +148,58 @@ describe('smartrecruiters detail fetch', () => {
     const [r1, r2] = await smartrecruiters({ slug: 'Acme' }).fetch(detailHttp({ failId: '201' }))
     expect(r1.description).toBe('')
     expect(r2.description).toContain('Ship the design system')
+  })
+})
+
+// Bosch alone lists over 500 India postings, and every one of them was read
+// again on every run. The store already holds the body of a known posting,
+// and one the relevance filter drops is never stored.
+describe('smartrecruiters detail selection', () => {
+  function countingHttp(calls) {
+    return async (reqUrl) => {
+      if (reqUrl.includes('/postings?')) return { json: async () => detailList }
+      calls.push(reqUrl.split('/').pop())
+      return { json: async () => detailBodies[reqUrl.split('/').pop()] || {} }
+    }
+  }
+
+  it('reads no detail for a posting the store already describes, and still lists it', async () => {
+    const calls = []
+    const context = { known: (name, id) => name === 'smartrecruiters:Acme' && id === '201', wanted: () => true }
+    const rows = await smartrecruiters({ slug: 'Acme' }).fetch(countingHttp(calls), context)
+    expect(calls).toEqual(['202'])
+    expect(rows.map((r) => r.externalId)).toEqual(['201', '202'])
+    expect(rows[0].description).toBe('')
+  })
+
+  it('reads no detail for a posting the relevance filter would drop', async () => {
+    const calls = []
+    const context = { known: () => false, wanted: (name, raw) => raw.title !== 'Frontend Engineer' }
+    await smartrecruiters({ slug: 'Acme' }).fetch(countingHttp(calls), context)
+    expect(calls).toEqual(['201'])
+  })
+
+  it('reads at most MAX_DETAILS bodies a run', async () => {
+    const many = { content: Array.from({ length: 45 }, (_, i) => ({ id: String(300 + i), name: 'Engineer' })) }
+    const calls = []
+    const http = async (reqUrl) => {
+      if (reqUrl.includes('/postings?')) return { json: async () => many }
+      calls.push(reqUrl)
+      return { json: async () => ({}) }
+    }
+    const rows = await smartrecruiters({ slug: 'Acme' }).fetch(http, { known: () => false, wanted: () => true })
+    expect(calls).toHaveLength(MAX_DETAILS)
+    expect(rows).toHaveLength(45)
+  })
+
+  // Only a board read to its end says which of its postings are gone.
+  it('is complete when it paged to the end, and not when cut off at the page limit', async () => {
+    const adapter = smartrecruiters({ slug: 'Acme' })
+    await adapter.fetch(async () => ({ json: async () => ({ content: [], totalFound: 0 }) }))
+    expect(adapter.complete).toBe(true)
+    const full = { content: Array.from({ length: 100 }, (_, i) => ({ id: String(i), name: 'X' })), totalFound: 5000 }
+    const endless = async (reqUrl) => (reqUrl.includes('/postings?') ? { json: async () => full } : { json: async () => ({}) })
+    await adapter.fetch(endless, { known: () => true })
+    expect(adapter.complete).toBe(false)
   })
 })

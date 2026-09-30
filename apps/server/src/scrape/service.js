@@ -1,4 +1,5 @@
 import { normalizeGuard, guardView } from '@jobdekho/scraper/linkedin-guard.js'
+import { healthView } from '@jobdekho/scraper/source-guard.js'
 import { createScrapeJob } from './job.js'
 import { lastRunReader } from './last-run.js'
 import { readRefreshPref, saveRefreshPref } from './prefs.js'
@@ -24,5 +25,8 @@ export function createScrapeService(store, {
     getPref: (userId) => readRefreshPref(store, userId),
     setPref: (userId, change) => saveRefreshPref(store, userId, change),
     linkedinStatus: () => guardView(normalizeGuard(store.linkedinGuard.get()), now()),
+    // Sources resting after repeated failures, and ones that answer but look
+    // wrong (see the scraper's source-guard.js).
+    sourceHealth: () => healthView(store.sourceHealth.get(), now()),
   }
 }

@@ -17,10 +17,12 @@ const settingsSchema = {
 // `npm run scrape`. POST starts the server's one scrape (see scrape/job.js)
 // and answers at once, since a run takes minutes; GET says how it is going,
 // for the page that started it and for one reloaded mid-run, with the last
-// completed run on disk, whoever ran it, and where LinkedIn's guard stands
-// (read when, paused until when), which changes when a run ends. Beside
-// them, the refresh switches: whether the server refreshes on its own once a
-// day (see scrape/auto.js), and whether a refresh reads LinkedIn at all.
+// completed run on disk, whoever ran it, where LinkedIn's guard stands (read
+// when, paused until when), and `health`, the sources resting after repeated
+// failures and the ones that look wrong, each of which changes when a run
+// ends. Beside them, the refresh switches: whether the server refreshes on
+// its own once a day (see scrape/auto.js), and whether a refresh reads
+// LinkedIn at all.
 //
 // server.js decorates `scrape` with the service over its own store handle,
 // and tests with one over a temporary folder and a fake scrape. A server
@@ -33,7 +35,7 @@ export async function scrapeRoutes(app) {
     fallback ??= createScrapeService(openStore(), { log: app.log })
     return fallback
   }
-  const view = () => ({ ...scrape().job.state(), lastRun: scrape().lastRun(), linkedin: scrape().linkedinStatus() })
+  const view = () => ({ ...scrape().job.state(), lastRun: scrape().lastRun(), linkedin: scrape().linkedinStatus(), health: scrape().sourceHealth?.() ?? null })
   const auth = { preHandler: app.requireAuth }
 
   app.get('/api/scrape', auth, async () => view())

@@ -2,6 +2,7 @@ import { toIso } from './timestamp.js'
 import { pruneRows } from './corpus-prune.js'
 import { touchedPostingIds } from './corpus-keep.js'
 import { refreshed, markSeen } from './corpus-merge.js'
+import { applyClosure } from './corpus-closure.js'
 import { withFeatures } from './corpus-features.js'
 
 export function toRow(p) {
@@ -30,6 +31,8 @@ export function toRow(p) {
     groupKey: p.groupKey ?? null,
     // What the fit reads, taken from the full body by normalize.js.
     features: p.features ?? null,
+    // A deadline the board published (see corpus-closure.js), only when it did.
+    ...(p.closesAt ? { closesAt: toIso(p.closesAt) } : {}),
     lastSeenAt: toIso(new Date()),
     type: p.type ?? (level === 'internship' ? 'internship' : 'job'),
   }
@@ -52,8 +55,15 @@ export async function getExistingIds(store, ids) {
 // resolves with how many went, so the run can say so. `seenIds` are postings
 // a source listed without sending (see corpus-merge.js markSeen): a run can
 // bring nothing new and still have to record that much.
-export async function upsertPostings(store, items, nowMs = Date.now(), seenIds = []) {
-  if (items.length === 0 && seenIds.length === 0) return { removed: 0 }
+//
+// `closure` is what the run learned about postings that are gone (see
+// corpus-closure.js): `listed`, every posting id a source listed, whether or
+// not it was kept; `missed`, ones a complete source stopped listing; `gone`,
+// ones whose own link said so. Closed postings leave in this same write,
+// unless a person did something with them (corpus-keep.js).
+export async function upsertPostings(store, items, nowMs = Date.now(), seenIds = [], closure = {}) {
+  const { listed = [], missed = [], gone = [] } = closure
+  if (items.length === 0 && seenIds.length === 0 && missed.length === 0 && gone.length === 0) return { removed: 0, closed: 0 }
   const next = new Map(store.corpus.byId())
   const now = toIso(new Date(nowMs))
   for (const item of items) {
@@ -62,12 +72,17 @@ export async function upsertPostings(store, items, nowMs = Date.now(), seenIds =
     next.set(row.id, existing ? refreshed(existing, row) : { ...row, firstSeenAt: now })
   }
   markSeen(next, seenIds, now)
+  const sighted = [...items.map((item) => item.id), ...seenIds, ...listed]
+  const closed = applyClosure(next, { sighted, missed, gone }, now)
   const { rows, removed } = pruneRows(next, { keep: touchedPostingIds(store), now: nowMs })
   withFeatures(rows)
   store.corpus.save(rows)
-  return { removed }
+  return { removed, closed }
 }
 
-export async function recordRun(store, { id, sourceResults, newCount }) {
-  store.runs.append({ id, startedAt: toIso(new Date()), sourceResults, newCount })
+// `closed` and `checked` say how many postings the run found gone and how
+// many links it checked to find out (see the scraper's closure-turn.js).
+export async function recordRun(store, { id, sourceResults, newCount, closed, checked }) {
+  const closure = closed == null ? {} : { closed, checked: checked ?? 0 }
+  store.runs.append({ id, startedAt: toIso(new Date()), sourceResults, newCount, ...closure })
 }

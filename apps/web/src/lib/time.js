@@ -25,6 +25,15 @@ export function relativeDay(value) {
 // whose month names and spaces differ from one ICU build to the next.
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+// The day alone, "3 Oct", for a date a line only needs to name: until when a
+// source rests, say.
+export function shortDay(value) {
+  if (!value) return '';
+  const t = new Date(value);
+  if (Number.isNaN(t.getTime())) return '';
+  return `${t.getDate()} ${MONTHS[t.getMonth()]}`;
+}
+
 export function shortStamp(value) {
   if (!value) return '';
   const t = new Date(value);

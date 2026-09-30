@@ -20,6 +20,8 @@ export function scrapeRunner(store, { load = importScraper, userId = null } = {}
       total: out.total,
       tooOld: out.tooOld,
       removed: out.removed,
+      closed: out.closed ?? 0,
+      checked: out.checked ?? 0,
       failed: out.results.filter((r) => !r.ok).map((r) => r.name),
       skipped: out.results.filter((r) => r.skipped).map((r) => ({ name: r.name, note: r.note ?? '' })),
     }

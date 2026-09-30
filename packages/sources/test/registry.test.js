@@ -99,3 +99,25 @@ describe('config/companies.json', () => {
     expect(names).toContain('amazon')
   })
 })
+
+// A Y Combinator company's entry carries "YC W21"; every posting its board
+// sends must carry it too, beside the board's own tags.
+describe('entry tags', () => {
+  it('adds an entry\'s tags to every posting its board sends, once each', async () => {
+    const [a] = buildAdapters({ providers: [{ provider: 'lever', slug: 'acme', tags: ['YC W21'] }] })
+    const http = async () => ({ json: async () => [{ id: 'x', text: 'Engineer', categories: { team: 'Eng' }, hostedUrl: 'u' }] })
+    const [posting] = await a.fetch(http)
+    expect(posting.tags).toEqual(['Eng', 'YC W21'])
+    expect(a.complete).toBe(true)
+  })
+
+  it('leaves an entry without tags as it was', async () => {
+    const [a] = buildAdapters({ providers: [{ provider: 'lever', slug: 'acme' }] })
+    const [posting] = await a.fetch(async () => ({ json: async () => [{ id: 'x', text: 'Engineer', categories: {} }] }))
+    expect(posting.tags).toEqual([])
+  })
+
+  it('knows the HN "Who is hiring" board', () => {
+    expect(buildAdapters({ boards: ['hn-hiring'] }).map((a) => a.name)).toEqual(['hn-hiring'])
+  })
+})

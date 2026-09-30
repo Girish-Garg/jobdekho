@@ -33,6 +33,12 @@ describe('detectCurrency', () => {
     expect(detectCurrency('4,76,000 /year')).toBe('INR')
   })
 
+  it('reads crores, lacs and CTC as rupees', () => {
+    expect(detectCurrency('$ 1.2 Cr')).toBe('INR')
+    expect(detectCurrency('5 lacs per annum')).toBe('INR')
+    expect(detectCurrency('CTC 600000')).toBe('INR')
+  })
+
   // Western grouping is three digits after the comma, so it must not be read
   // as Indian just for having one.
   it('leaves a western-grouped dollar figure as dollars', () => {

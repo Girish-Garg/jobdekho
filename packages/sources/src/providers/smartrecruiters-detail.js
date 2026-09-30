@@ -19,34 +19,43 @@ export function descriptionFromSections(sections) {
 const detailUrl = (slug, id) =>
   `https://api.smartrecruiters.com/v1/companies/${slug}/postings/${id}`
 
-// A bounded pool, not Promise.all: a company with hundreds of postings at
-// 300-900ms per detail call would otherwise open that many sockets at once.
-async function runPool(items, limit, worker) {
-  let next = 0
-  async function lane() {
-    while (next < items.length) {
-      const i = next++
-      await worker(items[i])
-    }
-  }
-  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, lane))
+// The body is a second call per posting, and nearly all of what a board costs:
+// Bosch lists over 500 India postings, and every one of them was read again on
+// every run. Only postings the store has no body for, and that the relevance
+// filter would keep, are read now, at most this many a run. The rest go out as
+// their list rows, which carry everything but the body: a stored posting keeps
+// its body (the store's corpus-merge.js), and a new one gets it on a later run.
+export const MAX_DETAILS = 40
+
+export function toDescribe(postings, { name, context } = {}) {
+  const known = context?.known
+  const wanted = context?.wanted
+  return postings
+    .filter((p) => !known?.(name, p.externalId) && (!wanted || wanted(name, p)))
+    .slice(0, MAX_DETAILS)
 }
 
-const CONCURRENCY = 6
+// Two at a time, as Workday's details are: one visitor's browser opens that
+// many. A detail call is best-effort: one slow or failing posting must not cost
+// the rest their bodies, so a failure stays local and that posting is left
+// exactly as the list endpoint returned it.
+const LANES = 2
 
-// A detail call is best-effort: one slow or failing posting must not cost the
-// rest of the company's postings their bodies, so a failure stays local and
-// that posting is left exactly as the list endpoint returned it.
-export async function fillDescriptions(http, slug, postings) {
-  await runPool(postings, CONCURRENCY, async (p) => {
-    try {
-      const res = await http(detailUrl(slug, p.externalId))
-      const data = await res.json()
-      const text = descriptionFromSections(data.jobAd?.sections)
-      if (text) p.description = text
-    } catch {
-      // no description today, same as before this endpoint was added
+export async function fillDescriptions(http, slug, postings, options = {}) {
+  const todo = toDescribe(postings, options)
+  let next = 0
+  async function lane() {
+    while (next < todo.length) {
+      const p = todo[next++]
+      try {
+        const res = await http(detailUrl(slug, p.externalId))
+        const text = descriptionFromSections((await res.json()).jobAd?.sections)
+        if (text) p.description = text
+      } catch {
+        // no description today; a later run asks again
+      }
     }
-  })
+  }
+  await Promise.all(Array.from({ length: Math.min(LANES, todo.length) }, lane))
   return postings
 }

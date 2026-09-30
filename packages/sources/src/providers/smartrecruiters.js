@@ -33,10 +33,16 @@ const url = (slug, offset) =>
 // cannot dominate a run. No configured board is near it.
 const MAX_PAGES = 12
 
+// `complete` says this run listed the whole board (for India), which lets the
+// scrape close a posting the board stopped listing. A board cut off at
+// MAX_PAGES did not.
 export function smartrecruiters({ slug }) {
-  return {
-    name: `smartrecruiters:${slug}`,
-    async fetch(http) {
+  const name = `smartrecruiters:${slug}`
+  const adapter = {
+    name,
+    complete: false,
+    async fetch(http, context) {
+      adapter.complete = false
       const content = []
       for (let page = 0; page < MAX_PAGES; page++) {
         const res = await http(url(slug, page * PER_PAGE))
@@ -45,7 +51,10 @@ export function smartrecruiters({ slug }) {
         content.push(...rows)
         // totalFound is absent on some responses, so the short page is the
         // reliable end marker and the count is only a shortcut.
-        if (rows.length < PER_PAGE || content.length >= (data.totalFound ?? 0)) break
+        if (rows.length < PER_PAGE || content.length >= (data.totalFound ?? 0)) {
+          adapter.complete = true
+          break
+        }
       }
       const postings = content.map((j) => ({
         externalId: String(j.id),
@@ -61,8 +70,9 @@ export function smartrecruiters({ slug }) {
         ...internLevel(j.typeOfEmployment?.id, j.experienceLevel?.id),
       }))
       // the list endpoint is metadata only, so the body has to come from a
-      // second call per posting
-      return fillDescriptions(http, slug, postings)
+      // second call per posting, made only for new postings worth keeping
+      return fillDescriptions(http, slug, postings, { name, context })
     },
   }
+  return adapter
 }

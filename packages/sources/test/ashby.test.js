@@ -17,6 +17,12 @@ describe('ashby adapter', () => {
   it('names itself by slug', () => {
     expect(ashby({ slug: 'acme' }).name).toBe('ashby:acme')
   })
+  it('takes the company from the config entry when it gives one, else from the slug', async () => {
+    const [named] = await ashby({ slug: 'fathom.video', company: 'Fathom' }).fetch(http)
+    expect(named.company).toBe('Fathom')
+    const [plain] = await ashby({ slug: 'acme' }).fetch(http)
+    expect(plain.company).toBe('Acme')
+  })
   it('maps jobs to RawPosting', async () => {
     const [r] = await ashby({ slug: 'acme' }).fetch(http)
     expect(r.externalId).toBe('a1')
@@ -82,5 +88,19 @@ describe('ashby adapter', () => {
     })
     const [r] = await ashby({ slug: 'acme' }).fetch(intern)
     expect(r.level).toBe('internship')
+  })
+})
+
+describe('ashby conditional read', () => {
+  it('reports an unchanged board on a 304 and returns nothing', async () => {
+    const heard = []
+    const context = { etagFor: () => 'W/"job-board:1"', unchanged: (name) => heard.push(name) }
+    const out = await ashby({ slug: 'acme' }).fetch(async () => ({ status: 304 }), context)
+    expect(out).toEqual([])
+    expect(heard).toEqual(['ashby:acme'])
+  })
+
+  it('is complete: the reply is the whole board', () => {
+    expect(ashby({ slug: 'acme' }).complete).toBe(true)
   })
 })

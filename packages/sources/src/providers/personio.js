@@ -29,6 +29,9 @@ function place(j) {
 export function personio({ slug }) {
   return {
     name: `personio:${slug}`,
+    // The reply is the whole board: a posting it stops listing has closed
+    // (see the scraper's closure-turn.js).
+    complete: true,
     async fetch(http) {
       const res = await http(`${host(slug)}/search.json`)
       const data = await res.json()

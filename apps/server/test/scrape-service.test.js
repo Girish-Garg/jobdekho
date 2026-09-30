@@ -111,7 +111,7 @@ describe('scrapeRunner', () => {
     const out = await scrapeRunner(store, { load: async () => ({ runScrape }), userId: 'local' })({ onProgress })
     expect(runScrape.mock.calls[0][0]).toMatchObject({ db: store, userId: 'local' })
     expect(onProgress).toHaveBeenCalledWith({ done: 1, total: 2, current: 'internshala' })
-    expect(out).toEqual({ fresh: 3, total: 40, tooOld: 1, removed: 2, failed: ['greenhouse:acme'], skipped: [] })
+    expect(out).toEqual({ fresh: 3, total: 40, tooOld: 1, removed: 2, closed: 0, checked: 0, failed: ['greenhouse:acme'], skipped: [] })
   })
 
   it('names a source the run skipped, with why, apart from the ones that failed', async () => {
@@ -158,5 +158,25 @@ describe('createScrapeService', () => {
     expect(scrape.linkedinStatus()).toEqual({ lastSweepAt: '2026-09-30T07:00:00.000Z', pausedUntil: null, nextAfter: '2026-10-01T03:00:00.000Z' })
     store.linkedinGuard.set({ lastSweepAt: '2026-09-30T07:00:00.000Z', pausedUntil: '2026-10-02T07:00:00.000Z', refusals: 1 })
     expect(scrape.linkedinStatus()).toMatchObject({ pausedUntil: '2026-10-02T07:00:00.000Z', nextAfter: '2026-10-02T07:00:00.000Z' })
+  })
+})
+
+// A source resting after repeated failures is listed once, from the health
+// record, rather than as one note per source under every run.
+describe('the last run and resting sources', () => {
+  it('leaves a paused source out of skipped, and keeps the closure counts a run recorded', () => {
+    const paused = { name: 'greenhouse:gone', ok: true, count: 0, error: null, skipped: true, paused: true, note: 'Paused until Fri 3 Oct: failed three runs in a row' }
+    const run = summarizeRun({ startedAt: '2026-10-01T00:00:00.000Z', newCount: 2, sourceResults: [...sources, paused], closed: 4, checked: 40 })
+    expect(run.skipped).toEqual([])
+    expect(run.sources).toBe(2)
+    expect(run).toMatchObject({ closed: 4, checked: 40 })
+  })
+
+  it('reports where each source stands from the health record', () => {
+    const store = openStore(dir)
+    const until = new Date(Date.now() + 86400000).toISOString()
+    store.sourceHealth.set({ 'lever:x': { pausedUntil: until, reason: 'refused', lastError: 'HTTP 429 for x' } })
+    const service = createScrapeService(store, { run: vi.fn() })
+    expect(service.sourceHealth()).toEqual({ paused: [{ name: 'lever:x', until, reason: 'refused', error: 'HTTP 429 for x' }], alerts: [] })
   })
 })

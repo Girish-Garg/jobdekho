@@ -40,19 +40,35 @@ function statusError(res, url) {
   return err
 }
 
-export function createHttp({ fetchImpl = fetch, timeoutMs = DEFAULT_TIMEOUT, userAgent = DEFAULT_UA } = {}) {
+// A 304 is the answer a conditional request asked for (see conditional.js),
+// not a failure. `anyStatus` hands back every answer as it came, for a caller
+// that reads the status itself (the closed-posting check reads 404s and
+// redirects).
+const passes = (res, init, anyStatus) =>
+  res.ok || anyStatus || (res.status === 304 && Boolean(init.headers?.['If-None-Match']))
+
+// `gate` (host-gate.js) is the run's per-host queue. The timer starts once
+// the gate lets a request go, so time spent queueing is not counted as the
+// host being slow.
+export function createHttp({ fetchImpl = fetch, timeoutMs = DEFAULT_TIMEOUT, userAgent = DEFAULT_UA, gate = null } = {}) {
   return async function http(url, options = {}) {
+    const { anyStatus = false, ...init } = options
     const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), timeoutMs)
+    let leave = null
+    let timer = null
     try {
+      leave = gate ? await gate.enter(url) : null
+      timer = setTimeout(() => controller.abort(), timeoutMs)
       const res = await fetchImpl(url, {
-        ...options,
+        ...init,
         signal: controller.signal,
-        headers: { 'User-Agent': userAgent, Accept: 'application/json', ...(options.headers || {}) },
+        headers: { 'User-Agent': userAgent, Accept: 'application/json', ...(init.headers || {}) },
       })
-      if (!res.ok) throw statusError(res, url)
+      leave?.(res.status)
+      if (!passes(res, init, anyStatus)) throw statusError(res, url)
       return res
     } catch (err) {
+      leave?.(0)
       throw redactedError(err)
     } finally {
       clearTimeout(timer)

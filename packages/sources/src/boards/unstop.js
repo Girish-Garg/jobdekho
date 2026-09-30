@@ -39,6 +39,10 @@ export function mapUnstop(item, type = 'internship') {
     experience: experience(item.jobDetail),
     // The 125 pixel logo where there is one, else the 75.
     logoUrl: item.organisation?.logoUrl2 || item.organisation?.logoUrl || null,
+    // When registration closes. Unstop's page is drawn by script, so its link
+    // cannot say whether a posting is still open; this date can, and costs no
+    // request (see the store's corpus-closure.js).
+    closesAt: item.regnRequirements?.end_regn_dt || item.end_date || null,
   }
 }
 

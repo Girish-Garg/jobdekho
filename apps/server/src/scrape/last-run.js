@@ -11,7 +11,12 @@ import { cachedFile } from '@jobdekho/store/cached-file.js'
 // see the scraper's linkedin-turn.js) is neither one of its sources nor a
 // failure: it is listed apart with its note. Kept out of the count, too, so
 // a run offline, in which every source it did try failed, still reads as
-// all failed to auto.js, and is tried again within the hour.
+// all failed to auto.js, and is tried again within the hour. A source
+// resting after repeated failures is left out of `skipped`: Settings lists
+// those from the health record instead (see service.js), one line for all.
+//
+// `closed` and `checked` (how many postings the run found gone, and how
+// many links it checked) are there for runs that recorded them.
 export function summarizeRun(run) {
   if (!run) return null
   const all = Array.isArray(run.sourceResults) ? run.sourceResults : []
@@ -21,7 +26,8 @@ export function summarizeRun(run) {
     fresh: run.newCount ?? 0,
     sources: results.length,
     failed: results.filter((r) => !r.ok).map((r) => ({ name: r.name, error: r.error ?? '' })),
-    skipped: all.filter((r) => r.skipped).map((r) => ({ name: r.name, note: r.note ?? '' })),
+    skipped: all.filter((r) => r.skipped && !r.paused).map((r) => ({ name: r.name, note: r.note ?? '' })),
+    ...(run.closed == null ? {} : { closed: run.closed, checked: run.checked ?? 0 }),
   }
 }
 

@@ -56,6 +56,19 @@ describe('postingPredicate', () => {
     expect(passes({ workModes: ['remote'] })).toBe(false)
     expect(passes({ maxDegree: 'bachelors' })).toBe(true)
   })
+
+  // A closed posting is only still stored because the person saved, applied
+  // to or otherwise used it: it leaves the feed, but their own list keeps it,
+  // however long ago it was last seen.
+  it('leaves a closed posting out of the feed but keeps it in a status list', () => {
+    const now = Date.parse('2026-10-01T00:00:00Z')
+    const closed = { id: 'c', source: 's', title: 'T', tags: [], descriptionSnippet: '', lastSeenAt: '2026-08-01T00:00:00.000Z', closedAt: '2026-09-01T00:00:00.000Z' }
+    const statusOf = () => 'saved'
+    expect(postingPredicate({}, statusOf, now)(closed)).toBe(false)
+    expect(postingPredicate({ status: 'saved' }, statusOf, now)(closed)).toBe(true)
+    expect(postingPredicate({ status: 'applied' }, statusOf, now)(closed)).toBe(false)
+    expect(postingPredicate({ includeStale: true }, statusOf, now)(closed)).toBe(true)
+  })
 })
 
 describe('orderFor', () => {

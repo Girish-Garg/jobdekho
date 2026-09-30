@@ -24,6 +24,13 @@ describe('lever adapter', () => {
     expect(typeof raw.postedAt).toBe('string')
   })
 
+  it('takes the company from the config entry when it gives one, else the slug', async () => {
+    const [named] = await lever({ slug: 'captivateiq', company: 'CaptivateIQ' }).fetch(http)
+    expect(named.company).toBe('CaptivateIQ')
+    const [plain] = await lever({ slug: 'acme' }).fetch(http)
+    expect(plain.company).toBe('acme')
+  })
+
   // descriptionPlain alone is only the intro; degree and experience
   // requirements live in the lists array and the classifier needs both.
   it('folds the lists array into the description', async () => {

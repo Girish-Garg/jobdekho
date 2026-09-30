@@ -46,6 +46,40 @@ describe('createHttp', () => {
     expect(silent).not.toHaveProperty('retryAfter')
   })
 
+  // A conditional request asked for a 304; any other request did not.
+  it('hands back a 304 only to a request that sent If-None-Match', async () => {
+    const fetchImpl = vi.fn(async () => ({ ok: false, status: 304 }))
+    const http = createHttp({ fetchImpl })
+    const res = await http('https://x', { headers: { 'If-None-Match': 'W/"1"' } })
+    expect(res.status).toBe(304)
+    await expect(http('https://x')).rejects.toThrow(/HTTP 304/)
+  })
+
+  it('hands back any status to a caller that reads it itself, and keeps anyStatus out of fetch', async () => {
+    const fetchImpl = vi.fn(async () => ({ ok: false, status: 410 }))
+    const res = await createHttp({ fetchImpl })('https://x', { anyStatus: true, redirect: 'manual' })
+    expect(res.status).toBe(410)
+    expect(fetchImpl.mock.calls[0][1]).not.toHaveProperty('anyStatus')
+    expect(fetchImpl.mock.calls[0][1].redirect).toBe('manual')
+  })
+
+  it('asks the gate before each request and tells it how the request ended', async () => {
+    const seen = []
+    const gate = { enter: async (url) => { seen.push(['enter', url]); return (status) => seen.push(['leave', status]) } }
+    const ok = createHttp({ gate, fetchImpl: async () => ({ ok: true, status: 200 }) })
+    await ok('https://x/1')
+    const down = createHttp({ gate, fetchImpl: async () => { throw new Error('offline') } })
+    await down('https://x/2').catch(() => {})
+    expect(seen).toEqual([['enter', 'https://x/1'], ['leave', 200], ['enter', 'https://x/2'], ['leave', 0]])
+  })
+
+  it('sends nothing when the gate refuses the host', async () => {
+    const fetchImpl = vi.fn()
+    const gate = { enter: async () => { throw new Error('HTTP 429 for https://x (not sent: this host refused earlier in the run)') } }
+    await expect(createHttp({ gate, fetchImpl })('https://x')).rejects.toThrow(/^HTTP 429/)
+    expect(fetchImpl).not.toHaveBeenCalled()
+  })
+
   it('passes an error with nothing to redact through as it was', async () => {
     const abort = new DOMException('This operation was aborted', 'AbortError')
     const http = createHttp({ fetchImpl: vi.fn(async () => { throw abort }) })

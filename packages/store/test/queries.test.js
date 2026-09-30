@@ -133,3 +133,50 @@ describe('upsertPostings with seen ids', () => {
     expect(store.corpus.byId().get('abc').logoUrl).toBe('https://media.licdn.com/a.png')
   })
 })
+
+// A posting whose link died used to stay in the feed for 21 days and in the
+// store for 60. The run now says which are gone (see corpus-closure.js).
+describe('upsertPostings with closure', () => {
+  it('closes and deletes a posting a complete source missed twice, and keeps a saved one closed', async () => {
+    const store = openStore(dir)
+    await upsertPostings(store, [{ ...base, id: 'gone' }, { ...base, id: 'kept' }], Date.parse('2026-09-01T00:00:00Z'))
+    store.statuses.set('local', { kept: 'saved' })
+    const first = await upsertPostings(store, [], Date.parse('2026-09-02T00:00:00Z'), [], { missed: ['gone', 'kept'] })
+    expect(first).toEqual({ removed: 0, closed: 0 })
+    const second = await upsertPostings(store, [], Date.parse('2026-09-03T00:00:00Z'), [], { missed: ['gone', 'kept'] })
+    expect(second).toEqual({ removed: 1, closed: 2 })
+    expect(store.corpus.byId().has('gone')).toBe(false)
+    expect(store.corpus.byId().get('kept').closedAt).toBe('2026-09-03T00:00:00.000Z')
+  })
+
+  it('treats a posting listed but not kept as sighted, so it is never counted as missed', async () => {
+    const store = openStore(dir)
+    await upsertPostings(store, [{ ...base, id: 'a' }], Date.parse('2026-09-01T00:00:00Z'))
+    await upsertPostings(store, [], Date.parse('2026-09-02T00:00:00Z'), [], { missed: ['a'] })
+    await upsertPostings(store, [], Date.parse('2026-09-03T00:00:00Z'), [], { listed: ['a'], missed: ['a'] })
+    expect(store.corpus.byId().get('a')).not.toHaveProperty('missedRuns')
+  })
+
+  it('closes a posting its own link found gone, in the same write', async () => {
+    const store = openStore(dir)
+    await upsertPostings(store, [{ ...base, id: 'a' }], Date.parse('2026-09-01T00:00:00Z'))
+    const out = await upsertPostings(store, [], Date.parse('2026-09-05T00:00:00Z'), [], { gone: ['a'] })
+    expect(out).toEqual({ removed: 1, closed: 1 })
+  })
+
+  it('stores a published deadline, and only when there is one', () => {
+    expect(toRow({ ...base, closesAt: '2026-10-09T23:59:59+05:30' }).closesAt).toBe('2026-10-09T18:29:59.000Z')
+    expect(toRow(base)).not.toHaveProperty('closesAt')
+  })
+})
+
+describe('recordRun with closure counts', () => {
+  it('records how many postings closed and how many links were checked, when the run says', async () => {
+    const store = openStore(dir)
+    await recordRun(store, { id: 'r1', sourceResults: [], newCount: 0, closed: 3, checked: 40 })
+    await recordRun(store, { id: 'r2', sourceResults: [], newCount: 0 })
+    const [one, two] = store.runs.all()
+    expect(one).toMatchObject({ closed: 3, checked: 40 })
+    expect(two).not.toHaveProperty('closed')
+  })
+})

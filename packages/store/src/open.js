@@ -50,6 +50,12 @@ export const FILES = {
   // back off. One record, not one per user: LinkedIn limits the address.
   // See apps/scraper/src/linkedin-guard.js.
   linkedinGuard: 'linkedin-guard.json',
+  // What each source remembers between runs (a board's ETag, a Workday
+  // tenant's India facets), and how each has been faring (failure streaks,
+  // pauses). Both belong to the computer, like LinkedIn's guard. See the
+  // scraper's source-memo.js and source-guard.js.
+  sourceMemo: 'source-memo.json',
+  sourceHealth: 'source-health.json',
 }
 
 export function openStore(dir) {
@@ -76,5 +82,7 @@ export function openStore(dir) {
     scrapeSettings: userFile(at('scrapeSettings')),
     adzuna: userFile(at('adzuna')),
     linkedinGuard: recordFile(at('linkedinGuard')),
+    sourceMemo: recordFile(at('sourceMemo')),
+    sourceHealth: recordFile(at('sourceHealth')),
   }
 }

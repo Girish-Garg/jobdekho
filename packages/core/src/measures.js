@@ -1,18 +1,15 @@
 import { detectCurrency, INR_PER } from './currency.js'
+import { payFigure } from './pay-figure.js'
 
 // Sources publish pay, tenure and experience as free text in incompatible
 // units. These turn each into one comparable number so the database can filter
 // and sort on them, instead of the browser guessing over whatever page it
 // happens to have loaded.
 
-// "6 LPA" means lakhs per annum, so a small number carries a 100000 multiplier.
-const YEARLY = /year|annum|\bp\.?\s?a\.?\b|\blpa\b|\/\s?yr/i
-const MONTHLY = /month|\/\s?mo\b|stipend/i
-const LAKHS = /\blpa\b|\blakh/i
-
-// "$60k" is 60000, not 60. Only a suffix glued to the digits counts, so the
-// "M" of "6 Months" cannot inflate a number.
-const SCALE = { k: 1e3, m: 1e6 }
+// CTC, cost to company, is how an Indian offer states a year's pay, and
+// "annually" was once missed, so "INR 12,00,000 annually" read as a month.
+const YEARLY = /year|annum|annual|\bp\.?\s?a\.?\b|\blpa\b|\bctc\b|\/\s?yr/i
+const MONTHLY = /month|\/\s?mo\b|stipend|\bp\.m\b/i
 
 // "$14/hour" is not 14 a month. Contract and US listings quote an hourly rate,
 // and reading it as a monthly figure buried every one of them at the bottom of
@@ -20,26 +17,30 @@ const SCALE = { k: 1e3, m: 1e6 }
 const HOURLY = /\/\s?h(?:ou)?r\b|per hour|hourly|\bp\.?h\.?\b/i
 const HOURS_PER_MONTH = 160
 
+// A bare rupee figure is a monthly stipend on the Indian boards ("10000"), but
+// from a lakh up it is a year's salary (Unstop's jobs send "Rs 600000"): an
+// internship paying a lakh a month would say so.
+const ANNUAL_FROM = 100000
+
 // Normalised to monthly rupees so a yearly salary and a monthly internship
 // stipend answer the same question. A range yields its LOW end, which is the
 // only figure actually guaranteed. null means unknown, 0 means explicitly unpaid.
+//
+// A stated period decides first, yearly over monthly. Otherwise lakhs, crores
+// and millions mean a year ("1.2 Cr", "₹2.2M"), foreign boards quote annual
+// salaries without saying so, and a bare rupee figure is monthly below a lakh.
+// The hourly check comes before all of it: an hourly rate is neither.
 export function stipendMonthly(text) {
   if (!text) return null
   if (/unpaid|no stipend/i.test(text)) return 0
-  const m = String(text).replace(/,/g, '').match(/(\d+(?:\.\d+)?)([km])?/i)
-  if (!m) return null
-  let value = Number(m[1]) * (SCALE[(m[2] || '').toLowerCase()] || 1)
-  if (LAKHS.test(text) && value < 1000) value *= 100000
+  const figure = payFigure(text)
+  if (!figure) return null
   const currency = detectCurrency(text)
-  // Checked before the yearly rule: an hourly rate is neither yearly nor
-  // monthly, and the "no stated period means yearly" fallback below would
-  // otherwise divide it by twelve.
-  if (HOURLY.test(text)) return Math.round(value * HOURS_PER_MONTH * INR_PER[currency])
-  // Foreign boards quote annual salaries even when they never say so; Indian
-  // boards quote bare numbers as monthly stipends. So a foreign figure with no
-  // stated period reads as yearly, and a bare rupee figure stays monthly.
-  if (YEARLY.test(text) || (currency !== 'INR' && !MONTHLY.test(text))) value /= 12
-  return Math.round(value * INR_PER[currency])
+  const rate = INR_PER[currency]
+  if (HOURLY.test(text)) return Math.round(figure.value * HOURS_PER_MONTH * rate)
+  const annual = figure.annual || currency !== 'INR' || figure.value >= ANNUAL_FROM
+  const monthly = !YEARLY.test(text) && (MONTHLY.test(text) || !annual)
+  return Math.round((monthly ? figure.value : figure.value / 12) * rate)
 }
 
 export function experienceYears(text) {

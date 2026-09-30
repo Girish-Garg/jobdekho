@@ -5,6 +5,7 @@ import SettingsCard from './SettingsCard.jsx';
 import SettingSwitch from './SettingSwitch.jsx';
 import LinkedInSetting from './LinkedInSetting.jsx';
 import RefreshLastRun from './RefreshLastRun.jsx';
+import SourceHealthNote from './SourceHealthNote.jsx';
 import { CheckIcon, HistoryIcon } from './Icon.jsx';
 
 const SAVED = {
@@ -43,6 +44,7 @@ export default function RefreshSettingsCard() {
         <LinkedInSetting on={linkedin} disabled={!ready} onChange={toggleLinkedin} status={scrape?.linkedin ?? null} />
       </div>
       <RefreshLastRun lastRun={scrape?.lastRun ?? null} />
+      <SourceHealthNote health={scrape?.health ?? null} />
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <button
           type="button"

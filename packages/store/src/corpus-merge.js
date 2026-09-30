@@ -10,6 +10,8 @@ const REFRESHABLE = [
   'stipend', 'duration', 'experience', 'postedAt',
   'level', 'degreeMin', 'degreeRequired', 'workMode', 'type',
   'stipendMin', 'currency', 'durationMonths', 'experienceYears', 'groupKey', 'logoUrl', 'features',
+  // A deadline a board moves, or stops publishing (see corpus-closure.js).
+  'closesAt',
   // Bumping this on every conflict is what makes staleness detectable: a row
   // whose lastSeenAt stops advancing is no longer being listed anywhere.
   'lastSeenAt',

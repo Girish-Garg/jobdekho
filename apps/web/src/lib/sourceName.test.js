@@ -33,3 +33,9 @@ describe('sourceLabel', () => {
     expect(sourceName('adzuna:in')).toBe('Adzuna');
   });
 });
+
+describe('the HN "Who is hiring" board', () => {
+  it('is named as Hacker News, a whole board', () => {
+    expect(sourceLabel('hn-hiring')).toEqual({ title: 'Hacker News', board: 'Job board' });
+  });
+});

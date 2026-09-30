@@ -24,6 +24,9 @@ function body(j) {
 export function workable({ slug }) {
   return {
     name: `workable:${slug}`,
+    // The reply is the whole board: a posting it stops listing has closed
+    // (see the scraper's closure-turn.js).
+    complete: true,
     async fetch(http) {
       const res = await http(url(slug))
       const data = await res.json()
