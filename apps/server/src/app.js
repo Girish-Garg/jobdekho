@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url'
 import { resolve, dirname } from 'node:path'
 import { authRoutes } from './auth/routes.js'
 import { requireAuth } from './auth/session.js'
+import { localGuard } from './auth/local-guard.js'
 import { apiRoutes } from './api/index.js'
 import { registerStatic } from './static.js'
 
@@ -36,6 +37,8 @@ function handleError(error, request, reply) {
 
 export function buildApp({ config, dashboardStore, distDir = DEFAULT_DIST, logger = false }) {
   const app = Fastify({ logger })
+  // Before anything else answers: see auth/local-guard.js for what it keeps out.
+  app.addHook('onRequest', localGuard)
   app.register(cookie)
   app.register(multipart)
   app.register(jwt, { secret: config.sessionSecret })

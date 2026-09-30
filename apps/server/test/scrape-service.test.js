@@ -124,10 +124,13 @@ describe('scrapeRunner', () => {
   })
 
   // Only the import is checked here; the scrape itself is never run.
+  // A cold import of the whole scraper (every adapter) takes about two
+  // seconds, which the default five-second limit did not survive on a busy
+  // machine.
   it('finds the scraper through its workspace package', async () => {
     const mod = await import('@jobdekho/scraper/scrape.js')
     expect(typeof mod.runScrape).toBe('function')
-  })
+  }, 20000)
 })
 
 describe('createScrapeService', () => {
