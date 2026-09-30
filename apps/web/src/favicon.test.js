@@ -17,7 +17,10 @@ describe('the favicon', () => {
     for (const href of hrefs) expect(existsSync(web(`public/${href}`))).toBe(true);
   });
 
-  it('follows the browser scheme in the SVG, since it never sees the page theme', () => {
-    expect(readFileSync(web('public/favicon.svg'), 'utf8')).toContain('@media (prefers-color-scheme: dark)');
+  // A favicon cannot load the site's fonts, so the letters are drawn shapes.
+  it('draws its letters as shapes rather than type', () => {
+    const svg = readFileSync(web('public/favicon.svg'), 'utf8');
+    expect(svg).not.toContain('<text');
+    expect(svg).toContain('<path');
   });
 });

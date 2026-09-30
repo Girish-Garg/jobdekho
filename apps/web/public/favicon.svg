@@ -1,21 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <!-- JobDekho's mark: an eye, since "dekho" means "look", on the saffron
-       the app acts with. Light and dark follow the browser's own scheme,
-       because a favicon never sees the page's theme. -->
+  <!-- JobDekho's mark: J and D hanging from one headline bar, the way
+       Devanagari letters hang from their shirorekha, J in white and D in the
+       app's saffron. Drawn as strokes, not type, since a favicon cannot load
+       the site's fonts. The dark tile suits light and dark tab bars alike. -->
   <style>
-    .tile { fill: rgb(184 84 16); }
-    .eye { fill: rgb(255 248 236); }
-    .pupil { fill: rgb(28 26 23); }
-    .glint { fill: rgb(255 248 236); }
-    @media (prefers-color-scheme: dark) {
-      .tile { fill: rgb(255 159 28); }
-      .eye { fill: rgb(17 18 20); }
-      .pupil { fill: rgb(255 159 28); }
-      .glint { fill: rgb(17 18 20); }
-    }
+    .tile { fill: rgb(22 24 29); }
+    .white { fill: rgb(255 248 236); }
+    .saffron { fill: rgb(255 159 28); }
+    .j { fill: none; stroke: rgb(255 248 236); stroke-width: 7; stroke-linecap: round; }
+    .d { fill: none; stroke: rgb(255 159 28); stroke-width: 7; stroke-linecap: square; stroke-linejoin: miter; }
   </style>
-  <rect class="tile" width="64" height="64" rx="15" />
-  <path class="eye" d="M7 32c7.5-11 16-16.5 25-16.5S49.5 21 57 32c-7.5 11-16 16.5-25 16.5S14.5 43 7 32z" />
-  <circle class="pupil" cx="32" cy="32" r="10" />
-  <circle class="glint" cx="35.5" cy="28.5" r="3" />
+  <rect class="tile" width="64" height="64" rx="14" />
+  <rect class="white" x="6" y="12" width="28" height="7" />
+  <rect class="saffron" x="34" y="12" width="24" height="7" />
+  <path class="j" d="M22 19v18c0 7-3 10-9 10" />
+  <path class="d" d="M38.5 19v30h2.5c8.5 0 13-5.5 13-15s-4.5-15-13-15" />
 </svg>
