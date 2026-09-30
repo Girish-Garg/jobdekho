@@ -1,9 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { mkdtempSync, rmSync, existsSync } from 'node:fs'
+import { mkdtempSync, rmSync, existsSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { openStore, FILES } from '@jobdekho/store/open.js'
-import { getChatHistory, appendChatTurn, clearChatHistory, MAX_TURNS } from '@jobdekho/store/chat-history.js'
+import {
+  getChatHistory, getCurrentConversation, currentConversationId, appendChatTurn, MAX_TURNS,
+} from '@jobdekho/store/chat-history.js'
+import { getConversation } from '@jobdekho/store/chat-archive.js'
+import { fileAwayConversation } from '@jobdekho/store/chat-switch.js'
 
 let dir
 let store
@@ -15,6 +19,7 @@ const turn = (n) => ({ question: `Q${n}`, answer: `A${n}`, provider: 'claude', c
 describe('chat history', () => {
   it('is empty before anything was asked, and writes no file for that', async () => {
     expect(await getChatHistory(store, 'me')).toEqual([])
+    expect(await getCurrentConversation(store, 'me')).toEqual({ id: null, startedAt: null, turns: [] })
     expect(existsSync(join(dir, FILES.chatHistory))).toBe(false)
   })
 
@@ -38,11 +43,22 @@ describe('chat history', () => {
     expect(history.at(-1)).toEqual(turn(MAX_TURNS + 4))
   })
 
-  it('starting a new conversation clears it for that user only', async () => {
-    await appendChatTurn(store, 'me', turn(1))
-    await appendChatTurn(store, 'other', turn(1))
-    await clearChatHistory(store, 'me')
+  // The file as the single-conversation version wrote it: { turns } alone.
+  it('reads a conversation saved before ids existed, and gives it one only when asked', async () => {
+    writeFileSync(join(dir, FILES.chatHistory), JSON.stringify({ me: { turns: [turn(1)] } }))
+    expect(await getCurrentConversation(store, 'me')).toEqual({ id: null, startedAt: turn(1).createdAt, turns: [turn(1)] })
+    const id = await currentConversationId(store, 'me')
+    expect(id).toMatch(/^[0-9a-f-]{36}$/)
+    expect(await currentConversationId(store, 'me')).toBe(id)
+    expect(await getCurrentConversation(store, 'me')).toEqual({ id, startedAt: turn(1).createdAt, turns: [turn(1)] })
+  })
+
+  it('saves an answer to the conversation it was asked in, even once that one was filed away', async () => {
+    const asked = await currentConversationId(store, 'me')
+    await appendChatTurn(store, 'me', { ...turn(1), conversationId: asked })
+    await fileAwayConversation(store, 'me')
+    await appendChatTurn(store, 'me', { ...turn(2), conversationId: asked })
     expect(await getChatHistory(store, 'me')).toEqual([])
-    expect(await getChatHistory(store, 'other')).toEqual([turn(1)])
+    expect((await getConversation(store, 'me', asked)).turns.map((t) => t.question)).toEqual(['Q1', 'Q2'])
   })
 })

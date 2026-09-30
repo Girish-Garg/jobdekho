@@ -47,6 +47,50 @@ describe('validateDocumentProposal', () => {
   })
 })
 
+describe('validateDocumentProposal with targeted edits', () => {
+  const margin = { find: '\\usepackage[margin=0.75in]{geometry}', replace: '\\usepackage[margin=0.5in]{geometry}' }
+
+  it('builds the whole new source from the edits and stores it like a rewrite, with how many edits made it', () => {
+    const proposal = validateDocumentProposal({ documentId: 'd1', edits: [margin] }, resumePage)
+    expect(proposal).toEqual({
+      kind: 'document', documentId: 'd1', documentKind: 'resume', name: 'Classic resume', baseAt: open.baseAt,
+      tex: tighter, factFlags: [], problems: [], editCount: 1,
+    })
+  })
+
+  it('holds what the edits put in to the guard and the fact check, like any source', () => {
+    const bullet = '  \\item Built the onboarding portal in React, used by 40,000 people a month.\n'
+    const risky = { find: bullet, replace: `${bullet}  \\item Led 12 engineers at Google.\\input{secret}\n` }
+    const proposal = validateDocumentProposal({ documentId: 'd1', edits: [risky] }, resumePage)
+    expect(proposal.problems).toEqual(['"\\input" reads files from this computer, so it is not allowed in a document.'])
+    expect(proposal.factFlags).toEqual(expect.arrayContaining(['12']))
+  })
+
+  it('keeps edits that do not fit as a refused card saying why, with nothing to apply', () => {
+    const proposal = validateDocumentProposal({ documentId: 'd1', edits: [margin, { find: '\\usepackage{palatino}', replace: '' }] }, resumePage)
+    expect(proposal).toEqual({
+      kind: 'document', documentId: 'd1', documentKind: 'resume', name: 'Classic resume', baseAt: open.baseAt,
+      status: 'refused', reason: expect.stringContaining('("\\usepackage{palatino}") is not in "Classic resume"'),
+    })
+  })
+
+  it('refuses edits for a new document, which has no source to edit, and prefers edits when both come', () => {
+    expect(validateDocumentProposal({ documentId: null, edits: [margin], documentKind: 'cover-letter' }, resumePage))
+      .toMatchObject({ status: 'refused', documentKind: 'cover-letter', reason: expect.stringContaining('has to be written whole') })
+    expect(validateDocumentProposal({ documentId: 'd1', edits: [margin], tex: '\\documentclass{article}' }, resumePage).tex).toBe(tighter)
+  })
+
+  it('offers nothing for edits that change nothing, or for a document it may not edit', () => {
+    expect(validateDocumentProposal({ documentId: 'd1', edits: [{ find: margin.find, replace: margin.find }] }, resumePage)).toBeNull()
+    expect(validateDocumentProposal({ documentId: 'd1', edits: [margin] }, { ...resumePage, document: { ...open, truncated: true } })).toBeNull()
+  })
+
+  it('is stored refused by validateProposals, not pending', () => {
+    const [proposal] = validateProposals([{ kind: 'document', documentId: 'd1', edits: [{ find: 'nowhere', replace: 'x' }] }], resumePage)
+    expect(proposal).toMatchObject({ status: 'refused', summary: 'New version of Classic resume' })
+  })
+})
+
 describe('validateProposals', () => {
   it('stores each proposal pending, under an id of the server\'s', () => {
     const [proposal] = validateProposals([{ ...addProject, id: 'model-id', status: 'applied' }], { page: 'profile', record })

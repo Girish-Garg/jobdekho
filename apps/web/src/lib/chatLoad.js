@@ -1,5 +1,6 @@
 import { getChatHistory, getChatPending } from '../api.js';
 import { chatSession } from './chatSession.js';
+import { announceFiled } from './chatLanding.js';
 
 const POLL_MS = 2000;
 
@@ -21,7 +22,9 @@ export function loadChat({ pollMs = POLL_MS } = {}) {
   loading = (async () => {
     const now = await getChatPending().catch(() => null);
     const history = await getChatHistory().catch(() => ({ turns: [] }));
-    setFor(gen, (s) => ({ turns: merged(history?.turns ?? [], s.turns), loaded: true }));
+    setFor(gen, (s) => ({
+      turns: merged(history?.turns ?? [], s.turns), conversationId: history?.id ?? s.conversationId, loaded: true,
+    }));
     if (chatSession.generation() === gen) settle(now, pollMs, gen);
   })().catch(() => setFor(gen, { loaded: true })).finally(() => { if (loadingFor === gen) loading = null; });
   return loading;
@@ -33,32 +36,38 @@ function settle(now, pollMs, gen) {
   if (now?.failed) chatSession.set({ error: failure(now.failed) });
   if (!now?.pending || chatSession.get().call) return;
   chatSession.set({ call: remoteCall(now.pending) });
-  follow(pollMs, gen);
+  follow(pollMs, gen, now.pending.conversationId ?? null);
 }
 
 // A server briefly out of reach is asked again rather than taken as done.
-function follow(pollMs, gen) {
+// `askedIn` is the conversation the question was asked in: if the person
+// filed that one away meanwhile, its answer is not in the history read at
+// the end, and they are told where it went (see chatLanding.js).
+function follow(pollMs, gen, askedIn) {
   setTimeout(async () => {
     if (chatSession.generation() !== gen) return;
     let now;
     try {
       now = await getChatPending();
     } catch {
-      follow(pollMs, gen);
+      follow(pollMs, gen, askedIn);
       return;
     }
     if (now?.pending) {
       setFor(gen, (s) => (s.call?.remote ? { call: remoteCall(now.pending) } : {}));
-      follow(pollMs, gen);
+      follow(pollMs, gen, askedIn);
       return;
     }
     const history = await getChatHistory().catch(() => null);
+    const filed = Boolean(askedIn && history?.id && history.id !== askedIn && !now?.failed);
     setFor(gen, (s) => ({
       call: s.call?.remote ? null : s.call,
       turns: history?.turns ?? s.turns,
-      unseen: s.unseen || !chatSession.watched(),
+      conversationId: history?.id ?? s.conversationId,
+      unseen: s.unseen || (!filed && !chatSession.watched()),
       error: now?.failed ? failure(now.failed) : s.error,
     }));
+    if (filed && chatSession.generation() === gen) announceFiled();
   }, pollMs);
 }
 

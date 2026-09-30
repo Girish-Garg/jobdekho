@@ -1,6 +1,7 @@
 // What a document proposal would change, line by line, for the card's "View
-// changes". The model sends a whole new source (see the server's chat/
-// document-proposal.js), so the card has to work out the difference itself.
+// changes". The server stores every proposal as the whole new source, built
+// from the model's targeted edits or written whole (see its chat/
+// document-proposal.js), so the card works out the difference itself.
 //
 // The common start and end are matched first: a typical proposal touches a
 // few lines of a page, which leaves a small middle for the longest common

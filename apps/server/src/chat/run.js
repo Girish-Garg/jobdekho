@@ -10,8 +10,9 @@ import { answerFromWeb } from './web-answer.js'
 // prompt-pages.js), so like cover-letter.js and resume-tailor.js it runs
 // under the 'none' tool policy - no web, no filesystem - and gets the same
 // generous ceiling resume-tailor.js uses for a similarly sized prompt. On
-// the resume page the reply may be a whole .tex document, a long answer to
-// write, so it gets longer.
+// the resume page a document change is usually a few edits, but a new
+// document or a restyle is a whole .tex file, a long answer to write, so
+// that page gets longer.
 const TIMEOUT_MS = 3 * 60 * 1000
 const LONG_REPLY_MS = 5 * 60 * 1000
 

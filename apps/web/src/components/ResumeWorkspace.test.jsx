@@ -180,6 +180,41 @@ describe('ResumeWorkspace', () => {
     await waitFor(() => expect(currentOpenDocument()?.id).toBe('d2'));
   });
 
+  it('keeps unsaved source edits through opening another document, and marks the document in the list', async () => {
+    render(<ResumeWorkspace />);
+    await preview();
+    fireEvent.click(screen.getByRole('button', { name: 'Source' }));
+    const edited = TEX.replace('Hi', 'Hi there');
+    fireEvent.change(screen.getByRole('textbox', { name: 'LaTeX source' }), { target: { value: edited } });
+    const list = screen.getByRole('navigation', { name: 'Your documents' });
+    expect(within(list).getByRole('button', { name: /Classic resume.*unsaved edits/ })).toBeInTheDocument();
+    fireEvent.click(within(list).getByRole('button', { name: /Cover letter for Acme/ }));
+    await waitFor(() => expect(currentOpenDocument().id).toBe('d2'));
+    expect(within(list).queryByRole('button', { name: /Cover letter for Acme.*unsaved edits/ })).not.toBeInTheDocument();
+    fireEvent.click(within(list).getByRole('button', { name: /Classic resume/ }));
+    expect(await screen.findByRole('textbox', { name: 'LaTeX source' })).toHaveValue(edited);
+    expect(screen.getByText('Unsaved. Ctrl+S saves it as a new version.')).toBeInTheDocument();
+  });
+
+  it('asks before the page is left with unsaved edits, and forgets the edits of a deleted document', async () => {
+    render(<ResumeWorkspace />);
+    await preview();
+    fireEvent.click(screen.getByRole('button', { name: 'Source' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'LaTeX source' }), { target: { value: 'half typed' } });
+    const leave = () => {
+      const event = new Event('beforeunload', { cancelable: true });
+      window.dispatchEvent(event);
+      return event.defaultPrevented;
+    };
+    expect(leave()).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Delete this document' }));
+    deleteDocument.mockResolvedValue(null);
+    listDocuments.mockResolvedValue([summary(D2)]);
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Delete this document?' })).getByRole('button', { name: 'Delete it' }));
+    await waitFor(() => expect(currentOpenDocument()?.id).toBe('d2'));
+    expect(leave()).toBe(false);
+  });
+
   it('recompiles when a chat change is applied to the open document', async () => {
     render(<ResumeWorkspace />);
     await preview();

@@ -32,6 +32,12 @@ export async function listDocuments(store, userId) {
   return all(store, userId).map(summaryOf).sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1))
 }
 
+// Every document whole, history included, for a reader that needs to know
+// who wrote each version (the chat's "Made by AI" list).
+export async function allDocuments(store, userId) {
+  return all(store, userId)
+}
+
 export async function getDocument(store, userId, id) {
   return all(store, userId).find((doc) => doc.id === id) ?? null
 }

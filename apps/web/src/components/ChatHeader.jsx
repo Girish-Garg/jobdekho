@@ -1,5 +1,5 @@
 import ChatAvatar from './ChatAvatar.jsx';
-import { CloseIcon, PinIcon, PinOffIcon, PlusIcon } from './Icon.jsx';
+import { CloseIcon, HistoryIcon, PinIcon, PinOffIcon, PlusIcon } from './Icon.jsx';
 
 // Which CLI will answer, said before anything is asked: the person pays for
 // it on their own subscription, so it is named rather than left as "AI".
@@ -26,10 +26,11 @@ function HeaderButton({ label, active = false, onClick, children }) {
   );
 }
 
-// The panel's title row: what it is and who answers, a fresh start, where it
-// sits (only on a window wide enough to have a choice, and not on a page
-// that docks it, see useChatLayout.js), and the way out.
-export default function ChatHeader({ providers, answerer, layout, onNew, onClose }) {
+// The panel's title row: what it is and who answers, its history (past
+// conversations and what the AI made, see ChatHistory.jsx), a fresh start,
+// where it sits (only on a window wide enough to have a choice, and not on
+// a page that docks it, see useChatLayout.js), and the way out.
+export default function ChatHeader({ providers, answerer, layout, history = false, onHistory, onNew, onClose }) {
   const now = status(providers, answerer);
   return (
     <div className="flex shrink-0 items-center gap-3 border-b border-line px-4 py-3">
@@ -42,6 +43,9 @@ export default function ChatHeader({ providers, answerer, layout, onNew, onClose
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-0.5">
+        {onHistory && (
+          <HeaderButton label={history ? 'Close history' : 'History'} active={history} onClick={onHistory}><HistoryIcon size={16} /></HeaderButton>
+        )}
         <HeaderButton label="New chat" onClick={onNew}><PlusIcon size={16} /></HeaderButton>
         {layout.wide && !layout.docked && (
           <HeaderButton label={layout.pinned ? 'Float over the page' : 'Pin to the side'} active={layout.pinned} onClick={layout.togglePinned}>

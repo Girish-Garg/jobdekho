@@ -8,13 +8,17 @@ const MAX_HISTORY = 6
 // What a turn offered and what became of it, so "now add the other one too"
 // or "why didn't that work" can be answered, and so the model knows an
 // offer the person discarded was not wanted. Summaries only: a document
-// proposal's source is the next turn's open document if it was applied.
-const STATUS = { pending: 'not applied yet', applied: 'applied', discarded: 'discarded' }
+// proposal's source is the next turn's open document if it was applied. A
+// change that could not be made carries its reason, so "why is there no
+// card?" gets the true answer and the next attempt can avoid the mistake.
+const STATUS = { pending: 'not applied yet', applied: 'applied', discarded: 'discarded', refused: 'could not be made' }
+
+const outcome = (p) => `${STATUS[p.status] ?? p.status}${p.status === 'refused' && p.reason ? ` (${p.reason})` : ''}`
 
 function offered(turn) {
   const proposals = turn.proposals ?? []
   if (!proposals.length) return ''
-  return `\n(Offered: ${proposals.map((p) => `"${p.summary}", ${STATUS[p.status] ?? p.status}`).join('; ')})`
+  return `\n(Offered: ${proposals.map((p) => `"${p.summary}", ${outcome(p)}`).join('; ')})`
 }
 
 export function historyBlock(history = []) {

@@ -9,8 +9,15 @@ import { withoutPostingIds } from './reply-ids.js'
 // cover-letter-parse.js applies to the letter it reads back.
 const MAX_REPLY = 4000
 
-// A reply that is only a proposal still needs a line above its card.
+// A reply that is only a proposal still needs a line above its card, and
+// one whose only proposal could not be made must not say there is a change.
 const PROPOSAL_ONLY = 'Here is a change you can apply.'
+const REFUSED_ONLY = 'The change could not be made. The card below says why.'
+
+function fallbackReply(proposals) {
+  if (proposals.some((p) => p.status === 'pending')) return PROPOSAL_ONLY
+  return proposals.length ? REFUSED_ONLY : ''
+}
 
 // Null when there is nothing to show, which the caller reports as an
 // unreadable reply (see run.js); actions, refs and proposals always come
@@ -27,7 +34,7 @@ export function parseChatReply(raw, context) {
   const onFeed = !context?.page || context.page === 'postings'
   const proposals = validateProposals(obj.proposals, context)
   const given = typeof obj.reply === 'string' ? withoutPostingIds(obj.reply, context).trim().slice(0, MAX_REPLY) : ''
-  const reply = given || (proposals.length ? PROPOSAL_ONLY : '')
+  const reply = given || fallbackReply(proposals)
   if (!reply) return null
   return {
     reply,

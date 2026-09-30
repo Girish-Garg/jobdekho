@@ -10,7 +10,7 @@ vi.mock('../api.js', () => ({
   getChatPending: vi.fn(async () => ({ pending: null, failed: null })),
   getChatHistory: vi.fn(async () => ({ turns: [] })),
   sendChatMessage: vi.fn(),
-  clearChatHistory: vi.fn(async () => null),
+  startNewConversation: vi.fn(async () => ({ id: 'c-new', turns: [], filed: null })),
   getPostingAiResults: vi.fn(async () => []),
   runPostingAction: vi.fn(),
 }));

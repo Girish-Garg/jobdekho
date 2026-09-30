@@ -9,12 +9,12 @@ vi.mock('../api.js', () => ({
   getChatPending: vi.fn(async () => ({ pending: null, failed: null })),
   getChatHistory: vi.fn(),
   sendChatMessage: vi.fn(),
-  clearChatHistory: vi.fn(async () => null),
+  startNewConversation: vi.fn(async () => ({ id: 'c-new', turns: [], filed: null })),
   getPostingAiResults: vi.fn(async () => []),
   runPostingAction: vi.fn(),
 }));
 
-import { getProviders, getProviderPreference, getChatHistory, sendChatMessage, clearChatHistory, getPostingAiResults } from '../api.js';
+import { getProviders, getProviderPreference, getChatHistory, sendChatMessage, startNewConversation, getPostingAiResults } from '../api.js';
 
 const CLAUDE = { id: 'claude', label: 'Claude Code', install: 'https://claude.ai/code', policies: ['none', 'web'], present: true, runs: true };
 const FILTERS = { levels: [], workModes: [], q: '', minFit: '' };
@@ -135,12 +135,12 @@ describe('AiChatPanel, plain questions', () => {
     expect(apply.setFilters).not.toHaveBeenCalled();
   });
 
-  it('starts a new conversation, clearing the saved history and the transcript on screen', async () => {
+  it('starts a new conversation, filing the old one away and clearing the transcript on screen', async () => {
     getChatHistory.mockResolvedValue({ turns: [TURN] });
     setup();
     await screen.findByText('Two of these are remote.');
     fireEvent.click(screen.getByRole('button', { name: 'New chat' }));
-    await waitFor(() => expect(clearChatHistory).toHaveBeenCalled());
+    await waitFor(() => expect(startNewConversation).toHaveBeenCalled());
     await screen.findByText(/Ask about the postings on screen/);
   });
 

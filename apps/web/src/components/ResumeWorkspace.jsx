@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useDocuments } from '../lib/useDocuments.js';
 import { useTemplates } from '../lib/useTemplates.js';
 import { announceOpenDocument } from '../lib/openDocumentSignal.js';
+import { dropDraft, useUnsavedDocuments } from '../lib/sourceDrafts.js';
 import { notifyError } from '../lib/toast.js';
 import DocumentList from './DocumentList.jsx';
 import NewDocumentMenu from './NewDocumentMenu.jsx';
@@ -13,11 +14,13 @@ import ResumeEmptyState from './ResumeEmptyState.jsx';
 // nothing here to pick entries or layouts with: a document starts from a
 // template, and every change after that is made in the chat pinned beside
 // it (which sees the open document, see openDocumentSignal.js) or by hand
-// in the source.
+// in the source. Hand edits not saved yet are kept per document while the
+// page is open (see lib/sourceDrafts.js), and marked in the list.
 export default function ResumeWorkspace() {
   const docs = useDocuments();
   const templates = useTemplates();
   const [creating, setCreating] = useState(false);
+  const unsaved = useUnsavedDocuments();
   const selected = docs.selected;
 
   useEffect(() => {
@@ -38,6 +41,7 @@ export default function ResumeWorkspace() {
   async function remove(id) {
     try {
       await docs.remove(id);
+      dropDraft(id);
     } catch (err) {
       notifyError(err, 'Could not delete the document');
     }
@@ -50,6 +54,7 @@ export default function ResumeWorkspace() {
     <div className="flex h-full min-h-0 flex-col md:flex-row">
       <DocumentList
         documents={docs.documents}
+        unsaved={unsaved}
         selectedId={selected?.id}
         onSelect={docs.select}
         newMenu={<NewDocumentMenu templates={templates} busy={creating} onPick={create} />}

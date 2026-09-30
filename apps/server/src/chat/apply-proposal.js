@@ -7,17 +7,20 @@ import { documentViewFor } from '../documents/view.js'
 import { applyProfileOps } from './profile-proposal.js'
 
 // The one place a chat proposal changes anything, and only because the
-// person pressed Apply. The proposal is read from the saved conversation by
-// id (never from the request), checked again against the record or document
-// as it is now, applied whole or not at all, and marked applied.
+// person pressed Apply. The proposal is read by id from the saved
+// conversations, the current one or one filed away (never from the
+// request), checked again against the record or document as it is now,
+// applied whole or not at all, and marked applied.
 //
 // Resolves { status, body }: 200 with { proposal, profile } or
 // { proposal, document }; 404 for a proposal no saved turn holds; 409 when
-// it was already applied or discarded, or what it changes has changed or
-// gone since; 422 with { kind: 'unsafe', problems } for a document the
-// LaTeX guard refuses.
+// it was already applied or discarded, could never be made (its edits did
+// not fit the document, see document-proposal.js), or what it changes has
+// changed or gone since; 422 with { kind: 'unsafe', problems } for a
+// document the LaTeX guard refuses.
 const refuse = (status, error, extra = {}) => ({ status, body: { error, ...extra } })
 const UNSAFE = 'This version uses LaTeX that JobDekho does not allow, so it cannot be applied. Ask the chat to fix the lines listed.'
+const CANNOT = 'This change could not be made, so there is nothing to apply or discard. Ask the chat for it again.'
 
 // Two clicks on Apply arrive as two requests; without this, both could pass
 // the "still pending" check before either marked it applied, and a project
@@ -58,6 +61,7 @@ export async function applyProposal({ chat, documents, dashboard, userId, propos
   const { proposal } = found
   if (proposal.status === 'applied') return refuse(409, 'This change was already applied.')
   if (proposal.status === 'discarded') return refuse(409, 'This change was discarded. Ask again for a fresh one.')
+  if (proposal.status === 'refused') return refuse(409, proposal.reason ?? CANNOT)
   const key = `${userId}:${proposalId}`
   if (inFlight.has(key)) return refuse(409, 'This change is already being applied.')
   inFlight.add(key)
@@ -78,6 +82,7 @@ export async function discardProposal({ chat, userId, proposalId }) {
   const found = await findProposal(chat, userId, proposalId)
   if (!found) return refuse(404, 'That change is no longer in the conversation.')
   if (found.proposal.status === 'applied') return refuse(409, 'This change was already applied, so it cannot be discarded.')
+  if (found.proposal.status === 'refused') return refuse(409, CANNOT)
   await updateProposal(chat, userId, proposalId, { status: 'discarded' })
   return { status: 204 }
 }

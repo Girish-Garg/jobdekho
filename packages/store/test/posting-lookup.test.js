@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { openStore } from '@jobdekho/store/open.js'
 import { setPostingStatus } from '@jobdekho/store/dashboard.js'
-import { getPosting } from '@jobdekho/store/posting-lookup.js'
+import { getPosting, postingNames } from '@jobdekho/store/posting-lookup.js'
 
 let dir
 beforeEach(() => { dir = mkdtempSync(join(tmpdir(), 'jobdekho-store-')) })
@@ -59,5 +59,12 @@ describe('getPosting', () => {
     const posting = await getPosting(store, 'me', 'p1')
     expect(posting.ghostSignals).toEqual(['no pay stated', 'very short job description', 'posted 4 months ago'])
     expect(posting.legitimacy).toBe('suspicious')
+  })
+})
+
+describe('postingNames', () => {
+  it('names each id the corpus still holds, and leaves out the rest', () => {
+    const names = postingNames(seeded([row(), row({ id: 'p2', title: 'Designer', company: 'Initech' })]), ['p2', 'gone', 'p1'])
+    expect([...names]).toEqual([['p2', { title: 'Designer', company: 'Initech' }], ['p1', { title: 'Software Engineer', company: 'Acme' }]])
   })
 })

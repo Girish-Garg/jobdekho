@@ -36,6 +36,16 @@ describe('ChatHeader', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
+  it('opens History, and says it closes it once open', () => {
+    const onHistory = vi.fn();
+    const { unmount } = render(<ChatHeader providers={[CLAUDE]} answerer={CLAUDE} layout={layout()} onHistory={onHistory} onNew={vi.fn()} onClose={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'History' }));
+    expect(onHistory).toHaveBeenCalled();
+    unmount();
+    render(<ChatHeader providers={[CLAUDE]} answerer={CLAUDE} layout={layout()} history onHistory={onHistory} onNew={vi.fn()} onClose={vi.fn()} />);
+    expect(screen.getByRole('button', { name: 'Close history' })).toHaveClass('text-primary');
+  });
+
   it('offers to pin a floating panel and to float a pinned one', () => {
     const floating = layout();
     const { unmount } = render(<ChatHeader providers={[]} answerer={null} layout={floating} onNew={vi.fn()} onClose={vi.fn()} />);

@@ -8,18 +8,18 @@ import { useChatActions } from '../lib/useChatActions.js';
 import { useChatLayout } from '../lib/useChatLayout.js';
 import { useChatAnswerer } from '../lib/useChatAnswerer.js';
 import { useChatFeedLinks } from '../lib/useChatFeedLinks.js';
+import { chatCard } from '../lib/chatCard.js';
 import { useOpenDocument } from '../lib/useOpenDocument.js';
-import { openTailoredResume } from '../lib/openTailoredResume.js';
-import { makeApplicationDocs, makeLetterDoc } from '../lib/makeApplicationDocs.js';
+import { historyLinks } from '../lib/historyLinks.js';
 import { buildConversation } from '../lib/conversation.js';
 import { takeRequest } from '../lib/askAiSignal.js';
-import { notifyError } from '../lib/toast.js';
 import ChatFrame from './ChatFrame.jsx';
 import ChatHeader from './ChatHeader.jsx';
 import ChatScopeCard from './ChatScopeCard.jsx';
 import ChatDocumentScope from './ChatDocumentScope.jsx';
 import ChatMessages from './ChatMessages.jsx';
 import ChatComposer from './ChatComposer.jsx';
+import ChatHistory from './ChatHistory.jsx';
 
 // The actual panel, split out of AiChatPanel.jsx so its hooks - loading the
 // conversation, probing for a CLI - only ever run while the panel is open.
@@ -30,6 +30,9 @@ import ChatComposer from './ChatComposer.jsx';
 // screen. A job is only in scope on the feed, where it is open beside the
 // list; on the Resume page the open document is, and its id goes with the
 // question. A tailored resume becomes a document there on request.
+//
+// History takes the conversation's place while it is open (see
+// ChatHistory.jsx); a question on its way keeps going meanwhile.
 export default function ChatPanelBody({ onClose, context, apply, request, draft }) {
   const cli = useProviders();
   const answerer = useChatAnswerer(cli.providers);
@@ -45,15 +48,22 @@ export default function ChatPanelBody({ onClose, context, apply, request, draft 
   const posting = onFeed ? scope.posting : null;
   const actions = useChatActions(posting, { runner, providers: cli.providers });
   const [target, setTarget] = useState(null);
-  const links = useChatFeedLinks({ onFeed, filters: context.filters, apply });
+  const [history, setHistory] = useState(false);
+  const feedLinks = useChatFeedLinks({ onFeed, filters: context.filters, apply });
+  const card = chatCard({ posting, actions, providers: cli.providers, target, setTarget, apply });
 
   // A reply target is one job's card; another job has no such card.
   useEffect(() => setTarget(null), [posting?.id]);
 
+  // Words put in the box from elsewhere need the box on screen.
+  useEffect(() => { if (draft) setHistory(false); }, [draft]);
+
   // "Ask AI about this job" from the pane, handled once however often this
-  // panel mounts (see askAiSignal.js).
+  // panel mounts (see askAiSignal.js). It is about the chat, so History
+  // makes way for it.
   useEffect(() => {
     if (!takeRequest(request)) return;
+    setHistory(false);
     scope.focus(request.posting);
     if (request.action) actions.queue(request.posting.id, request.action);
   }, [request]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -65,33 +75,21 @@ export default function ChatPanelBody({ onClose, context, apply, request, draft 
     return chat.ask(message, onResume ? { ...where, documentId: openDoc?.id ?? null } : where);
   }
 
-  const toResume = () => apply.setView?.('resume');
-  const card = {
-    providers: cli.providers,
-    target,
-    onTarget: setTarget,
-    tailored: Boolean(actions.results?.some((r) => r.kind === 'resume-tailor')),
-    onMakeResume: () => openTailoredResume(posting, toResume).catch((err) => notifyError(err, 'Could not make the resume')),
-    onMakeLetter: (text) => makeLetterDoc({ posting, text, goToResume: toResume }).catch((err) => notifyError(err, 'Could not make the cover letter')),
-    onMakeBoth: (text, tailored) => makeApplicationDocs({ posting, text, tailored, tailor: () => actions.run('resume-tailor'), goToResume: toResume })
-      .catch((err) => notifyError(err, 'Could not make the documents')),
-  };
+  const closeHistory = () => setHistory(false);
+  const links = historyLinks({ chat, scope, feedLinks, onFeed, apply, close: closeHistory });
   const empty = { page, posting, loading: Boolean(posting) && actions.results === undefined, busy: runner.busy, onSend };
 
   return (
     <ChatFrame layout={layout}>
-      <ChatHeader providers={cli.providers} answerer={answerer} layout={layout} onNew={chat.startNew} onClose={onClose} />
-      {posting && <ChatScopeCard posting={posting} onClear={scope.clear} />}
-      {onResume && openDoc && <ChatDocumentScope doc={openDoc} />}
-      <ChatMessages
-        entries={buildConversation(chat.turns, actions.results ?? [])}
-        call={runner.call}
-        empty={empty}
-        card={card}
-        onApply={links.onApply}
-        onOpenRef={links.onOpenRef}
-      />
-      <ChatComposer cli={cli} scoped={Boolean(posting)} runner={runner} actions={actions} target={target} onClearTarget={() => setTarget(null)} onSend={onSend} draft={draft} />
+      <ChatHeader providers={cli.providers} answerer={answerer} layout={layout} history={history} onHistory={() => setHistory((now) => !now)} onNew={() => { closeHistory(); chat.startNew(); }} onClose={onClose} />
+      {history ? <ChatHistory providers={cli.providers} links={links} /> : (
+        <>
+          {posting && <ChatScopeCard posting={posting} onClear={scope.clear} />}
+          {onResume && openDoc && <ChatDocumentScope doc={openDoc} />}
+          <ChatMessages entries={buildConversation(chat.turns, actions.results ?? [])} call={runner.call} empty={empty} card={card} onApply={feedLinks.onApply} onOpenRef={feedLinks.onOpenRef} />
+          <ChatComposer cli={cli} scoped={Boolean(posting)} runner={runner} actions={actions} target={target} onClearTarget={() => setTarget(null)} onSend={onSend} draft={draft} />
+        </>
+      )}
     </ChatFrame>
   );
 }

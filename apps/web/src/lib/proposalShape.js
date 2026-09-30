@@ -7,7 +7,10 @@
 // after } with lines joined by "\n"; each row here also says what kind of
 // change it is, since that decides its colour: only an `after` is an
 // addition, only a `before` a removal, both a change.
-const STATUSES = new Set(['pending', 'applied', 'discarded']);
+//
+// A document change whose edits did not fit the document is 'refused', with
+// the server's `reason`; one built from edits says how many (`editCount`).
+const STATUSES = new Set(['pending', 'applied', 'discarded', 'refused']);
 
 const text = (value) => (typeof value === 'string' ? value : '');
 const words = (value) => (Array.isArray(value) ? value.filter((item) => typeof item === 'string' && item) : []);
@@ -43,6 +46,8 @@ function shape(proposal) {
     baseAt: text(proposal.baseAt) || null,
     factFlags: words(proposal.factFlags),
     problems: words(proposal.problems),
+    ...(base.status === 'refused' ? { reason: text(proposal.reason) } : {}),
+    ...(Number.isInteger(proposal.editCount) && proposal.editCount > 0 ? { editCount: proposal.editCount } : {}),
   };
 }
 

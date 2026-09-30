@@ -41,6 +41,18 @@ describe('proposalsOf', () => {
     });
   });
 
+  it('keeps a refused change\'s reason and an edited change\'s count, and neither on other cards', () => {
+    const [refused, edited] = proposalsOf({
+      proposals: [
+        { id: 'r', kind: 'document', summary: 's', status: 'refused', reason: 'The change could not be made: not found.', documentId: 'd1', documentKind: 'resume', name: 'CV', baseAt: 'x' },
+        { ...DOCUMENT, editCount: 2 },
+      ],
+    });
+    expect(refused).toMatchObject({ status: 'refused', reason: 'The change could not be made: not found.', tex: '', problems: [] });
+    expect(edited.editCount).toBe(2);
+    expect(proposalsOf({ proposals: [{ ...DOCUMENT, editCount: 'many' }] })[0]).not.toHaveProperty('editCount');
+  });
+
   it('reads a new document as one with no id yet', () => {
     const [card] = proposalsOf({ proposals: [{ ...DOCUMENT, documentId: null, documentKind: 'cover-letter', baseAt: null }] });
     expect(card).toMatchObject({ documentId: null, documentKind: 'cover-letter', baseAt: null });

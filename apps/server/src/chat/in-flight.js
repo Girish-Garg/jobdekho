@@ -14,13 +14,21 @@ const failed = new Map()
 
 const iso = (ms) => new Date(ms).toISOString()
 
-// False when this person already has a question in flight.
-export function beginQuestion(userId, question, now = Date.now()) {
+// False when this person already has a question in flight. The question
+// belongs to the conversation it was asked in, `conversationId`, which may
+// be filed away before the answer lands; a page reloaded meanwhile compares
+// it with the current conversation to say where the answer went.
+export function beginQuestion(userId, question, now = Date.now(), conversationId = null) {
   if (running.has(userId)) return false
   failed.delete(userId)
-  running.set(userId, { question, startedAt: iso(now), provider: null, stage: 'start', web: false })
+  const entry = { question, startedAt: iso(now), provider: null, stage: 'start', web: false }
+  running.set(userId, conversationId ? { ...entry, conversationId } : entry)
   return true
 }
+
+// The conversation a question is being answered in right now, if any, so
+// it is not deleted from under the answer.
+export const answeringIn = (userId) => running.get(userId)?.conversationId ?? null
 
 // What the stream says, kept so a watcher that is not the stream sees the
 // same: which CLI is answering, where it has got to, and whether the

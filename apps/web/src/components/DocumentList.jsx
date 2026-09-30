@@ -13,7 +13,19 @@ const TILE = {
   'cover-letter': { Icon: MailIcon, tone: 'bg-accent/10 text-accent' },
 };
 
-function Row({ doc, here, onSelect }) {
+// A document with edits not saved yet carries the same saffron dot the
+// Source toggle shows (see DocumentToolbar.jsx), so the person can see from
+// the list which ones still hold typing, and a reader hears it in its name.
+function UnsavedMark() {
+  return (
+    <span title="Unsaved edits" className="grid h-4 w-4 shrink-0 place-items-center">
+      <span aria-hidden="true" className="h-2 w-2 rounded-full bg-primary" />
+      <span className="sr-only">, unsaved edits</span>
+    </span>
+  );
+}
+
+function Row({ doc, here, unsaved, onSelect }) {
   const { Icon, tone } = TILE[doc.kind] ?? TILE.resume;
   return (
     <button
@@ -31,13 +43,15 @@ function Row({ doc, here, onSelect }) {
         <span className={`block truncate text-sm text-ink ${here ? 'font-semibold' : 'font-medium'}`} title={doc.name}>{doc.name}</span>
         <span className="block text-xs text-muted">Edited {relativeDay(doc.updatedAt) || 'just now'}</span>
       </span>
+      {unsaved && <UnsavedMark />}
     </button>
   );
 }
 
 // The left column of the Resume workspace: every document the person has,
 // resumes first, newest first within each, and the way to start another.
-export default function DocumentList({ documents, selectedId, onSelect, newMenu }) {
+// `unsaved` holds the ids of the documents with unsaved edits.
+export default function DocumentList({ documents, unsaved = [], selectedId, onSelect, newMenu }) {
   return (
     <aside aria-label="Documents" className="flex max-h-56 min-h-0 w-full shrink-0 flex-col border-b border-line bg-panel md:max-h-none md:w-64 md:border-b-0 md:border-r">
       <div className="flex items-center justify-between gap-2 px-4 pb-2 pt-4">
@@ -53,7 +67,7 @@ export default function DocumentList({ documents, selectedId, onSelect, newMenu 
               <p className="px-2 pb-1 pt-3 text-[10px] font-bold uppercase tracking-[0.14em] text-muted">{title}</p>
               <ul className="flex flex-col gap-0.5">
                 {list.map((doc) => (
-                  <li key={doc.id}><Row doc={doc} here={doc.id === selectedId} onSelect={onSelect} /></li>
+                  <li key={doc.id}><Row doc={doc} here={doc.id === selectedId} unsaved={unsaved.includes(doc.id)} onSelect={onSelect} /></li>
                 ))}
               </ul>
             </div>

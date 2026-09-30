@@ -12,6 +12,10 @@ import { text } from './profile-op-values.js'
 //
 //   { id, kind: 'profile' | 'document', summary, status: 'pending', ... }
 //
+// A document change whose edits did not fit the document is stored as
+// 'refused' with the reason instead (see document-proposal.js): its card
+// says why, and it can never be applied.
+//
 // A page may only propose what its context showed the model: the profile
 // and resume pages carry the whole record, so either can change it; only
 // the resume page carries a document's source, so only it can rewrite one.
@@ -42,8 +46,8 @@ export function validateProposals(raw, context) {
     if (item?.kind === 'document' && out.some((p) => p.kind === 'document')) continue
     const body = validateOne(item, context)
     if (!body) continue
-    const { kind, ...rest } = body
-    out.push({ id: randomUUID(), kind, summary: summaryOf(item.summary, body), status: 'pending', ...rest })
+    const { kind, status = 'pending', ...rest } = body
+    out.push({ id: randomUUID(), kind, summary: summaryOf(item.summary, body), status, ...rest })
     if (out.length === MAX_PROPOSALS) break
   }
   return out

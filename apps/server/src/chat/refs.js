@@ -17,6 +17,9 @@ export function knownRows(context) {
   // "this job", so naming it is as legitimate as naming a row of the feed.
   const open = context?.open
   if (open && !rows.has(open.id)) rows.set(open.id, { ...open, fit: null })
+  // On the Resume page, the jobs the person saved or applied to (see
+  // saved-jobs.js), so "which job?" can be answered with jobs to open.
+  for (const job of context?.jobs ?? []) if (!rows.has(job.id)) rows.set(job.id, { ...job, fit: null })
   return rows
 }
 

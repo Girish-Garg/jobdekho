@@ -3,6 +3,7 @@ import { readDocument } from '../documents/read.js'
 import { textChangedAt } from '@jobdekho/store/document-versions.js'
 import { locatePdflatex } from '../resume/locate-latex.js'
 import { trimOpenPosting } from './postings-summary.js'
+import { savedJobs } from './saved-jobs.js'
 
 // What the chat reads on the pages other than the feed, each from the store
 // alone: the client says which page and which document, never what they
@@ -14,8 +15,8 @@ import { trimOpenPosting } from './postings-summary.js'
 const MAX_RESUME_TEXT = 6000
 
 // A resume or a letter is a few thousand characters. A source past this is
-// shown cut, and a cut source is never rewritten (see document-proposal.js),
-// since a proposal replaces the whole document.
+// shown cut, and a cut source is never changed (see document-proposal.js):
+// neither a rewrite nor an edit could be checked against the whole of it.
 const MAX_DOCUMENT = 40000
 
 export async function profilePageContext(dashboard, userId) {
@@ -33,8 +34,9 @@ function openDocument(doc) {
 
 // The open document's job, when it was made for one, so "fit this more to
 // the job" can be answered. It is scraped text and is fenced as such (see
-// prompt-resume-page.js); the LaTeX guard and the fact flags are what stand
-// between whatever it says and the document the person applies.
+// prompt-pages.js); the LaTeX guard and the fact flags are what stand
+// between whatever it says and the document the person applies. The jobs
+// they saved or applied to come named only (see saved-jobs.js).
 export async function resumePageContext(dashboard, documents, userId, documentId) {
   const record = await dashboard.getProfile(userId)
   const list = await listDocuments(documents, userId)
@@ -42,9 +44,10 @@ export async function resumePageContext(dashboard, documents, userId, documentId
   const posting = doc?.postingId ? trimOpenPosting(await dashboard.getPosting(userId, doc.postingId)) : null
   return {
     record,
-    documents: list.map(({ id, name, kind, updatedAt }) => ({ id, name, kind, updatedAt })),
+    documents: list.map(({ id, name, kind, updatedAt, postingId }) => ({ id, name, kind, updatedAt, postingId })),
     document: doc ? openDocument(doc) : null,
     posting,
+    jobs: await savedJobs(dashboard, userId, list),
   }
 }
 

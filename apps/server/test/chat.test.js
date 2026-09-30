@@ -72,24 +72,20 @@ describe('GET /api/chat/history', () => {
   it('is empty for a person who has not asked anything yet', async () => {
     const { app, cookie } = await makeApp()
     const res = await app.inject({ method: 'GET', url: '/api/chat/history', headers: { cookie } })
-    expect(res.json()).toEqual({ turns: [] })
+    expect(res.json()).toEqual({ id: null, turns: [] })
   })
 
-  it('reads back what was saved, for this user only', async () => {
+  // Saved by the single-conversation version: { turns } and nothing else.
+  it('reads back what was saved, for this user only, including a conversation saved before ids', async () => {
     const turn = { question: 'Q', answer: 'A', actions: [], provider: 'claude', createdAt: '2026-09-13T00:00:00.000Z' }
     const { app, cookie } = await makeApp({ chatStore: fakeChatStore({ u1: { turns: [turn] } }) })
     const res = await app.inject({ method: 'GET', url: '/api/chat/history', headers: { cookie } })
-    expect(res.json()).toEqual({ turns: [turn] })
+    expect(res.json()).toEqual({ id: null, turns: [turn] })
   })
-})
 
-describe('DELETE /api/chat/history', () => {
-  it('starts a new conversation by clearing the saved one', async () => {
-    const store = fakeChatStore({ u1: { turns: [{ question: 'Q', answer: 'A', actions: [], provider: 'claude', createdAt: 'x' }] } })
-    const { app, cookie } = await makeApp({ chatStore: store })
-    const res = await app.inject({ method: 'DELETE', url: '/api/chat/history', headers: { cookie } })
-    expect(res.statusCode).toBe(204)
-    expect(await store.chatHistory.get('u1')).toEqual({ turns: [] })
+  it('no longer deletes the conversation: "Start a new one" files it away instead', async () => {
+    const { app, cookie } = await makeApp()
+    expect((await app.inject({ method: 'DELETE', url: '/api/chat/history', headers: { cookie } })).statusCode).toBe(404)
   })
 })
 
@@ -127,7 +123,9 @@ describe('POST /api/chat', () => {
       question: 'which are remote?', answer: 'Two of these pay over 20 lakh and are remote.',
       actions: [{ type: 'sort', value: 'newest', label: 'Sort by newest first' }], provider: 'claude',
     })
-    expect(await store.chatHistory.get('u1')).toEqual({ turns: [res.json()] })
+    const saved = await store.chatHistory.get('u1')
+    expect(saved).toEqual({ id: expect.any(String), startedAt: expect.any(String), turns: [res.json()] })
+    expect(res.json().conversationId).toBe(saved.id)
   })
 
   it('never trusts a posting the request body supplies: only the store answers what is on screen', async () => {

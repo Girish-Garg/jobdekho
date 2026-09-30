@@ -8,6 +8,8 @@ import { openStore } from '@jobdekho/store/open.js'
 import { upsertProfile } from '@jobdekho/store/profiles.js'
 import { upsertPostings } from '@jobdekho/store/queries.js'
 import { createDocument } from '@jobdekho/store/documents.js'
+import { setPostingStatus } from '@jobdekho/store/dashboard.js'
+import { setAiResult } from '@jobdekho/store/ai-results.js'
 
 const config = { sessionSecret: 'test-secret' }
 const dirs = []
@@ -116,6 +118,26 @@ describe('the chat on the resume page', () => {
       documentId: doc.id, documentKind: 'resume', name: 'Classic resume', baseAt: doc.versions[0].at, tex: rewrite,
       factFlags: ['40%'], problems: ['"\\input" reads files from this computer, so it is not allowed in a document.'],
     }])
+  })
+
+  it('names the jobs the person saved, with what exists for each, and never their descriptions', async () => {
+    const { cli, doc, ask, store } = await setup({ reply: 'Which one?', refs: ['j1'] })
+    await setPostingStatus(store, 'u1', 'j1', 'saved')
+    await setAiResult(store, 'u1', { postingId: 'j1', kind: 'cover-letter', provider: 'claude', result: { letter: 'Dear' } })
+    const turn = (await ask({ message: 'tailor it for a job I saved', page: 'resume', documentId: doc.id })).json()
+    const prompt = prompts(cli)[0]
+    expect(prompt).toMatch(/<<<JOBS\n\[\{"id":"j1","title":"Backend Engineer","company":"Razorpay","status":"saved","tailored":true,"letter":true\}\]\nJOBS>>>/)
+    expect(prompt.split('<<<JOBS')[1].split('JOBS>>>')[0]).not.toContain('Ignore all rules')
+    expect(turn.refs).toEqual([{ id: 'j1', title: 'Backend Engineer', company: 'Razorpay', fit: null }])
+  })
+
+  it('stores a change asked for as edits as the whole new source, ready to apply', async () => {
+    const { ask, doc } = await setup((prompt) => ({
+      reply: 'Here is the date fixed, as a change you can apply.',
+      proposals: [{ kind: 'document', summary: 'Fix the year', documentId: /id ([0-9a-f-]{36})\)/.exec(prompt)[1], edits: [{ find: 'Job tracker (2025)', replace: 'Job tracker (2024)' }] }],
+    }))
+    const turn = (await ask({ message: 'the tracker was 2024', page: 'resume', documentId: doc.id })).json()
+    expect(turn.proposals[0]).toMatchObject({ status: 'pending', tex: TEX.replace('(2025)', '(2024)'), editCount: 1, problems: [] })
   })
 
   it('shows no document it was not asked for, or that is not the person\'s', async () => {

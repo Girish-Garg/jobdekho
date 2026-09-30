@@ -85,6 +85,25 @@ describe('a document proposal card', () => {
     expect(within(region).getByRole('button', { name: 'Apply' })).toBeEnabled();
   });
 
+  it('says whether the change is a few edits or the whole document rewritten', () => {
+    const { unmount } = card({ ...DOCUMENT, editCount: 3 });
+    expect(screen.getByText('3 edits')).toBeInTheDocument();
+    unmount();
+    card(DOCUMENT);
+    expect(screen.getByText('Rewritten whole')).toBeInTheDocument();
+  });
+
+  it('shows a change that could not be made with the reason, and nothing to press', () => {
+    const reason = 'The change could not be made: the text it replaces ("\\item Built") is not in "Classic resume" as it is now.';
+    card({ id: 'p3', kind: 'document', summary: 'Tighten the bullets', status: 'refused', reason, documentId: 'd1', documentKind: 'resume', name: 'Classic resume', baseAt: 'x' });
+    const region = screen.getByRole('region', { name: 'Resume change: Tighten the bullets' });
+    expect(region).toHaveAttribute('data-status', 'refused');
+    expect(within(region).getByText('Not made')).toBeInTheDocument();
+    expect(within(region).getByText(reason)).toBeInTheDocument();
+    expect(within(region).queryByRole('button')).not.toBeInTheDocument();
+    expect(within(region).getByText('Nothing to apply. Nothing was changed.')).toBeInTheDocument();
+  });
+
   it('blocks Apply while the guard refuses the source, and lists why', () => {
     card({ ...DOCUMENT, problems: ['\\input is not allowed: it reads another file into the document.'] });
     expect(screen.getByRole('alert')).toHaveTextContent('\\input is not allowed');

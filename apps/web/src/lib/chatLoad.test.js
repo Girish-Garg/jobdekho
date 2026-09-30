@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { waitFor } from '@testing-library/react';
 import { loadChat } from './chatLoad.js';
 import { addTurn, chatSession } from './chatSession.js';
+import { onNotice } from './toast.js';
 
 vi.mock('../api.js', () => ({ getChatPending: vi.fn(), getChatHistory: vi.fn() }));
 
@@ -64,5 +65,25 @@ describe('loadChat', () => {
     arrive({ turns: [TURN] });
     await loading;
     expect(chatSession.get().turns.map((turn) => turn.id)).toEqual(['t1', 't2']);
+  });
+});
+
+describe('loadChat and the conversation a question was asked in', () => {
+  it('knows the id of the conversation it loaded', async () => {
+    getChatHistory.mockResolvedValueOnce({ id: 'c1', turns: [TURN] });
+    await loadChat();
+    expect(chatSession.get().conversationId).toBe('c1');
+  });
+
+  it('says where the answer went when its conversation was filed away before it landed', async () => {
+    getChatPending.mockResolvedValueOnce({ pending: { ...PENDING, conversationId: 'c1' }, failed: null });
+    getChatHistory.mockResolvedValueOnce({ id: 'c1', turns: [TURN] }).mockResolvedValueOnce({ id: 'c2', turns: [] });
+    const notices = [];
+    const stop = onNotice((n) => notices.push(n));
+    await loadChat({ pollMs: 5 });
+    await waitFor(() => expect(chatSession.get().call).toBeNull());
+    stop();
+    expect(chatSession.get()).toMatchObject({ turns: [], conversationId: 'c2', unseen: false });
+    expect(notices).toEqual([expect.objectContaining({ kind: 'done', title: 'The answer went to your earlier conversation' })]);
   });
 });

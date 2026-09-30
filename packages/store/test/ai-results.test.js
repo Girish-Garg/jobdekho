@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync, readFileSync, existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { openStore, FILES } from '@jobdekho/store/open.js'
-import { getAiResult, setAiResult, listAiResults } from '@jobdekho/store/ai-results.js'
+import { getAiResult, setAiResult, listAiResults, listAllAiResults } from '@jobdekho/store/ai-results.js'
 
 let dir
 let store
@@ -99,5 +99,17 @@ describe('ai results', () => {
     expect(Object.keys(file.me)).toEqual(['p1:fake-check'])
     expect(file.me['p1:fake-check']).toMatchObject({ kind: 'fake-check', postingId: 'p1', result: { verdict: 'genuine' } })
     expect(file.me['p1:fake-check'].versions).toHaveLength(1)
+  })
+
+  it('lists every record across postings for one person, newest first, legacy ones as one-version histories', async () => {
+    const at = (day) => `2026-09-${day}T00:00:00.000Z`
+    const record = (postingId, kind, day) => ({ kind, postingId, provider: 'claude', createdAt: at(day), result: {} })
+    store.aiResults.set('me', {
+      'p0:fake-check': record('p0', 'fake-check', 10), 'p2:cover-letter': record('p2', 'cover-letter', 20), 'p1:fake-check': record('p1', 'fake-check', 15),
+    })
+    const all = await listAllAiResults(store, 'me')
+    expect(all.map((r) => `${r.postingId}:${r.kind}`)).toEqual(['p2:cover-letter', 'p1:fake-check', 'p0:fake-check'])
+    expect(all[2].versions).toHaveLength(1)
+    expect(await listAllAiResults(store, 'someone-else')).toEqual([])
   })
 })

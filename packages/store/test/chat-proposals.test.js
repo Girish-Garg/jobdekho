@@ -5,6 +5,8 @@ import { join } from 'node:path'
 import { openStore } from '@jobdekho/store/open.js'
 import { appendChatTurn, getChatHistory } from '@jobdekho/store/chat-history.js'
 import { findProposal, updateProposal } from '@jobdekho/store/chat-proposals.js'
+import { fileAwayConversation } from '@jobdekho/store/chat-switch.js'
+import { getConversation } from '@jobdekho/store/chat-archive.js'
 
 let dir
 let store
@@ -38,6 +40,17 @@ describe('chat proposals', () => {
   it('answers null and writes nothing for a proposal no turn holds', async () => {
     await appendChatTurn(store, 'me', turn('t1', [proposal('a')]))
     expect(await updateProposal(store, 'me', 'gone', { status: 'discarded' })).toBeNull()
+    expect((await getChatHistory(store, 'me'))[0].proposals[0].status).toBe('pending')
+  })
+
+  // Filing a conversation away is not turning its offers down.
+  it('finds and marks a proposal in a conversation filed away, leaving the current one alone', async () => {
+    await appendChatTurn(store, 'me', turn('t1', [proposal('a')]))
+    const { filed } = await fileAwayConversation(store, 'me')
+    await appendChatTurn(store, 'me', turn('t2', [proposal('b')]))
+    expect(await findProposal(store, 'me', 'a')).toMatchObject({ conversationId: filed.id, proposal: { id: 'a' } })
+    expect(await updateProposal(store, 'me', 'a', { status: 'applied' })).toMatchObject({ id: 'a', status: 'applied' })
+    expect((await getConversation(store, 'me', filed.id)).turns[0].proposals[0].status).toBe('applied')
     expect((await getChatHistory(store, 'me'))[0].proposals[0].status).toBe('pending')
   })
 })

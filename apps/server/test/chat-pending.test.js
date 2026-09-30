@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { buildApp } from '@jobdekho/server/app.js'
-import { beginQuestion, noteEvent, endQuestion, questionState } from '@jobdekho/server/chat/in-flight.js'
+import { beginQuestion, noteEvent, endQuestion, questionState, answeringIn } from '@jobdekho/server/chat/in-flight.js'
 
 const config = { sessionSecret: 'test-secret' }
 const REPLY = JSON.stringify({ type: 'result', result: JSON.stringify({ reply: 'Two are remote.' }) })
@@ -103,6 +103,14 @@ describe('in-flight.js', () => {
     expect(questionState('unit-a').pending).toEqual({ question: 'q', startedAt: new Date(0).toISOString(), provider: 'agy', stage: 'web', web: true })
     endQuestion('unit-a')
     expect(questionState('unit-a')).toEqual({ pending: null, failed: null })
+  })
+
+  it('names the conversation the question was asked in, while it is answered', () => {
+    beginQuestion('unit-c', 'q', 0, 'conv-1')
+    expect(questionState('unit-c').pending.conversationId).toBe('conv-1')
+    expect(answeringIn('unit-c')).toBe('conv-1')
+    endQuestion('unit-c')
+    expect(answeringIn('unit-c')).toBeNull()
   })
 
   it('forgets an old failure when a new question starts', () => {

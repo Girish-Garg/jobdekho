@@ -23,11 +23,21 @@ function FactFlags({ flags }) {
   );
 }
 
+// How the change was made, beside its "View changes": a few targeted edits
+// leave every other line as it was, while a rewrite of the whole document
+// deserves the closer look. A new document is whole by nature.
+function howMade({ documentId, editCount }) {
+  if (!documentId) return '';
+  if (!editCount) return 'Rewritten whole';
+  return editCount === 1 ? '1 edit' : `${editCount} edits`;
+}
+
 export default function DocumentProposalBody({ proposal }) {
   const [open, setOpen] = useState(false);
   const letter = proposal.documentKind === 'cover-letter';
   const Mark = letter ? MailIcon : DocumentIcon;
   const target = proposal.documentId ? proposal.name : `New ${letter ? 'cover letter' : 'resume'}: ${proposal.name}`;
+  const how = howMade(proposal);
 
   return (
     <div className="flex flex-col gap-3">
@@ -39,15 +49,18 @@ export default function DocumentProposalBody({ proposal }) {
         <GuardProblems title="JobDekho will not compile this version, so it cannot be applied. Ask the chat to fix:" problems={proposal.problems} />
       )}
       {proposal.factFlags.length > 0 && <FactFlags flags={proposal.factFlags} />}
-      <button
-        type="button"
-        aria-expanded={open}
-        onClick={() => setOpen((now) => !now)}
-        className="inline-flex items-center gap-1.5 self-start rounded-full border border-line px-3 py-1 text-xs font-semibold text-ink transition-colors duration-fast ease hover:border-edge"
-      >
-        {open ? 'Hide changes' : 'View changes'}
-        {open ? <ChevronUpIcon size={12} /> : <ChevronDownIcon size={12} />}
-      </button>
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          aria-expanded={open}
+          onClick={() => setOpen((now) => !now)}
+          className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1 text-xs font-semibold text-ink transition-colors duration-fast ease hover:border-edge"
+        >
+          {open ? 'Hide changes' : 'View changes'}
+          {open ? <ChevronUpIcon size={12} /> : <ChevronDownIcon size={12} />}
+        </button>
+        {how && <span className="text-xs text-muted">{how}</span>}
+      </div>
       {open && <ProposalSourceDiff proposal={proposal} />}
     </div>
   );

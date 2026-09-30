@@ -150,6 +150,24 @@ describe('applying a document proposal', () => {
     expect((await gone.post(`/api/chat/proposals/${second.id}/apply`)).statusCode).toBe(409)
   })
 
+  it('applies a change asked for as edits, as the whole source it built', async () => {
+    const { post, propose, store, doc } = await setup((d) => ({ reply: 'ok', proposals: [{ kind: 'document', documentId: d.id, edits: [{ find: 'Jane Doe', replace: '\\small Jane Doe' }] }] }))
+    const { id } = await propose('resume')
+    expect((await post(`/api/chat/proposals/${id}/apply`)).statusCode).toBe(200)
+    expect((await getDocument(store, 'u1', doc.id)).tex).toBe(TIGHTER)
+  })
+
+  it('never applies or discards a change whose edits did not fit, and says why', async () => {
+    const { post, propose, store, doc } = await setup((d) => ({ reply: 'ok', proposals: [{ kind: 'document', documentId: d.id, edits: [{ find: 'John Doe', replace: 'x' }] }] }))
+    const { id, status, reason } = await propose('resume')
+    expect(status).toBe('refused')
+    const res = await post(`/api/chat/proposals/${id}/apply`)
+    expect(res.statusCode).toBe(409)
+    expect(res.json().error).toBe(reason)
+    expect((await post(`/api/chat/proposals/${id}/discard`)).statusCode).toBe(409)
+    expect((await getDocument(store, 'u1', doc.id)).tex).toBe(TEX)
+  })
+
   it('creates a new document from a proposal for one', async () => {
     const { post, propose, store } = await setup(() => ({ reply: 'A new one.', proposals: [{ kind: 'document', documentId: null, name: 'For startups', documentKind: 'resume', tex: TIGHTER }] }))
     const { id } = await propose('resume')

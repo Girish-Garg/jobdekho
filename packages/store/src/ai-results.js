@@ -57,3 +57,11 @@ export async function setAiResult(store, userId, { postingId, kind, provider, re
 export async function listAiResults(store, userId, postingId) {
   return Object.values(store.aiResults.get(userId) ?? {}).filter((r) => r.postingId === postingId).map(withVersions)
 }
+
+// Every record the person has, across postings, for a list of what the AI
+// made for them (the chat's "Made by AI"). Newest first.
+export async function listAllAiResults(store, userId) {
+  return Object.values(store.aiResults.get(userId) ?? {})
+    .map(withVersions)
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0))
+}

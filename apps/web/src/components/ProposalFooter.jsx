@@ -37,6 +37,7 @@ export default function ProposalFooter({ state, blocked }) {
     );
   }
   if (state.status === 'discarded') return <p className="text-sm text-muted">Discarded. Nothing was changed.</p>;
+  if (state.status === 'refused') return <p className="text-sm text-muted">Nothing to apply. Nothing was changed.</p>;
 
   return (
     <div className="flex flex-col gap-2.5">

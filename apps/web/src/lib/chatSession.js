@@ -8,12 +8,15 @@ import { useEffect, useSyncExternalStore } from 'react';
 // lands whether the panel is open or not, and a panel opened mid-answer
 // shows the question with its clock still running.
 //
-//   turns    the saved conversation, loaded once (see chatLoad.js)
+//   turns           the current conversation, loaded once (see chatLoad.js)
+//   conversationId  its id, which an answer is checked against when it
+//                   lands (see chatLanding.js); null until the server has
+//                   given it one
 //   call     the AI call in flight, or null (see chatCall.js):
 //            { what, words, provider, label, events, startedAt, remote }
 //   error    the last failure, for AiError
 //   unseen   an answer landed while no panel was open, for the Ask AI dot
-const EMPTY = { turns: [], loaded: false, call: null, error: null, unseen: false };
+const EMPTY = { turns: [], conversationId: null, loaded: false, call: null, error: null, unseen: false };
 
 let state = EMPTY;
 let panels = 0;
