@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- JobDekho's mark: an eye, since "dekho" means "look", on the saffron
+       the app acts with. Light and dark follow the browser's own scheme,
+       because a favicon never sees the page's theme. -->
+  <style>
+    .tile { fill: rgb(184 84 16); }
+    .eye { fill: rgb(255 248 236); }
+    .pupil { fill: rgb(28 26 23); }
+    .glint { fill: rgb(255 248 236); }
+    @media (prefers-color-scheme: dark) {
+      .tile { fill: rgb(255 159 28); }
+      .eye { fill: rgb(17 18 20); }
+      .pupil { fill: rgb(255 159 28); }
+      .glint { fill: rgb(17 18 20); }
+    }
+  </style>
+  <rect class="tile" width="64" height="64" rx="15" />
+  <path class="eye" d="M7 32c7.5-11 16-16.5 25-16.5S49.5 21 57 32c-7.5 11-16 16.5-25 16.5S14.5 43 7 32z" />
+  <circle class="pupil" cx="32" cy="32" r="10" />
+  <circle class="glint" cx="35.5" cy="28.5" r="3" />
+</svg>
