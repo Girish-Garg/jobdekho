@@ -1,10 +1,16 @@
 import { req, announced } from './request.js';
 
-export function getPostings(params = {}) {
+// { postings, total, newToday }: one page, the whole match's size, and how
+// many of it arrived in the last day (see the store's dashboard.js).
+export function getPostingsPage(params = {}) {
   const q = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) if (v) q.set(k, v);
   const qs = q.toString();
-  return announced(req(`/api/postings${qs ? `?${qs}` : ''}`), 'Postings').then((d) => d.postings);
+  return announced(req(`/api/postings${qs ? `?${qs}` : ''}`), 'Postings');
+}
+
+export function getPostings(params = {}) {
+  return getPostingsPage(params).then((d) => d.postings);
 }
 
 // One posting whole, with the full description the feed leaves out. Not

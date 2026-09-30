@@ -9,7 +9,7 @@ import SortSelect from './SortSelect.jsx';
 // up, and a pinned chat panel moved one and not the other. Sticky, so a
 // filter is always one click away however far down the feed is read, and a
 // card of its own, frosted, so the rows passing under it stay out of the way.
-export default function FeedTop({ filters, setFilters, sort, setSort, viewMode, setViewMode, shown, fresh }) {
+export default function FeedTop({ filters, setFilters, sort, setSort, viewMode, setViewMode, shown, total, fresh }) {
   return (
     <>
       <div className="sticky top-2 z-20 mt-3 rounded-2xl border border-line bg-panel/85 p-1.5 shadow-raise backdrop-blur-md">
@@ -17,6 +17,7 @@ export default function FeedTop({ filters, setFilters, sort, setSort, viewMode, 
       </div>
       <PostingsHeader
         shown={shown}
+        total={total}
         fresh={fresh}
         controls={(
           <>

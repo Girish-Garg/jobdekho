@@ -14,11 +14,19 @@ function Harness(props) {
 
 vi.mock('../api.js', () => ({
   getPostings: vi.fn(async () => []),
+  getPostingsPage: vi.fn(),
   getSources: vi.fn(async () => []),
   setStatus: vi.fn(async () => null),
 }));
 
-import { getPostings, setStatus } from '../api.js';
+import { getPostings, getPostingsPage, setStatus } from '../api.js';
+
+// The feed reads a page with its counts; these tests speak in postings, so
+// the page call answers with whatever getPostings is set to return.
+getPostingsPage.mockImplementation(async (params) => {
+  const postings = await getPostings(params);
+  return { postings, total: postings.length, newToday: 0 };
+});
 
 const EMPTY = {
   excludedSources: [], levels: [], workModes: [], q: '', status: '',

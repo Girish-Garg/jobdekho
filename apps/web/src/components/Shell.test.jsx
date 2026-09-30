@@ -8,6 +8,7 @@ vi.mock('../api.js', () => ({
   getFilters: vi.fn(async () => ({})),
   putFilters: vi.fn(async () => null),
   getPostings: vi.fn(async () => []),
+  getPostingsPage: vi.fn(),
   getSources: vi.fn(async () => [{ name: 'lever', count: 12 }]),
   setStatus: vi.fn(async () => null),
   getNotifications: vi.fn(async () => ({ channel: 'none' })),
@@ -24,7 +25,14 @@ vi.mock('../api.js', () => ({
   getDocumentTemplates: vi.fn(async () => []),
 }));
 
-import { getFilters, getPostings, getProviders, getPostingAiResults, runPostingAction } from '../api.js';
+import { getFilters, getPostings, getPostingsPage, getProviders, getPostingAiResults, runPostingAction } from '../api.js';
+
+// The feed reads a page with its counts; these tests speak in postings, so
+// the page call answers with whatever getPostings is set to return.
+getPostingsPage.mockImplementation(async (params) => {
+  const postings = await getPostings(params);
+  return { postings, total: postings.length, newToday: 0 };
+});
 
 const open = (name) => fireEvent.click(screen.getByRole('button', { name: new RegExp(`^${name}`) }));
 const openMore = () => open('More filters');

@@ -259,3 +259,22 @@ describe('listSources', () => {
     expect(await listSources(store)).toEqual([{ name: 'a', count: 2 }, { name: 'b', count: 1 }, { name: 'c', count: 1 }])
   })
 })
+
+// The feed's title line reads these, not the loaded page: counting the page
+// said "100 new today" whenever its first hundred rows were new.
+describe('counts beside the page', () => {
+  it('gives the whole match size and how many arrived in the last day', async () => {
+    const store = seeded([
+      row({ id: 'n1', firstSeenAt: ago(0) }), row({ id: 'n2', firstSeenAt: ago(0) }),
+      row({ id: 'o1', firstSeenAt: ago(3) }), row({ id: 'o2', firstSeenAt: ago(5) }),
+    ])
+    const out = await listPostingsForUser(store, 'me', { sort: 'newest', limit: 1, withCounts: true })
+    expect(out.postings).toHaveLength(1)
+    expect(out).toMatchObject({ total: 4, newToday: 2 })
+  })
+
+  it('stays a plain list for callers that did not ask for counts', async () => {
+    const store = seeded([row({ id: 'n1' })])
+    expect(Array.isArray(await listPostingsForUser(store, 'me', { sort: 'newest' }))).toBe(true)
+  })
+})

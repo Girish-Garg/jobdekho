@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { getPostings, setStatus } from '../api.js';
+import { getPostingsPage, setStatus } from '../api.js';
+import { useDebounced } from './useDebounced.js';
 
 // Pulled a page at a time. The feed runs to a few thousand rows, and the old
 // single 500-row read made everything past the cut unreachable.
@@ -12,10 +13,13 @@ export function usePostingsFeed(filters, sort = 'match') {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [more, setMore] = useState(false);
+  const [counts, setCounts] = useState({ total: 0, newToday: 0 });
 
   // Depend on the individual fields, not the filters object: a new object
   // identity every render would refetch on every keystroke elsewhere.
-  const { q, status, maxDegree, minStipend, includeStale, minFit } = filters;
+  const { status, maxDegree, minStipend, includeStale, minFit } = filters;
+  // The search waits for a pause in typing (see useDebounced.js).
+  const q = useDebounced(filters.q ?? '');
   const maxExperienceYears = filters.maxExp;
   const maxDurationMonths = filters.maxMonths;
   const levels = (filters.levels || []).join(',');
@@ -29,9 +33,14 @@ export function usePostingsFeed(filters, sort = 'match') {
   useEffect(() => {
     let alive = true;
     setLoading(true);
-    getPostings({ ...query, limit: PAGE })
-      .then((data) => alive && (setRows(data), setMore(data.length === PAGE)))
-      .catch(() => alive && (setRows([]), setMore(false)))
+    getPostingsPage({ ...query, limit: PAGE })
+      .then((data) => {
+        if (!alive) return;
+        setRows(data.postings);
+        setMore(data.postings.length === PAGE);
+        setCounts({ total: data.total ?? data.postings.length, newToday: data.newToday ?? 0 });
+      })
+      .catch(() => alive && (setRows([]), setMore(false), setCounts({ total: 0, newToday: 0 })))
       .finally(() => alive && setLoading(false));
     return () => {
       alive = false;
@@ -42,7 +51,7 @@ export function usePostingsFeed(filters, sort = 'match') {
   ]);
 
   async function loadMore() {
-    const next = await getPostings({ ...query, limit: PAGE, offset: rows.length }).catch(() => []);
+    const next = await getPostingsPage({ ...query, limit: PAGE, offset: rows.length }).then((d) => d.postings).catch(() => []);
     setMore(next.length === PAGE);
     setRows((prev) => [...prev, ...next]);
   }
@@ -57,5 +66,5 @@ export function usePostingsFeed(filters, sort = 'match') {
     }
   }
 
-  return { rows, loading, more, loadMore, onStatus };
+  return { rows, loading, more, loadMore, onStatus, total: counts.total, newToday: counts.newToday };
 }

@@ -41,7 +41,7 @@ const NO_OPTS = {
   profile: { skills: ['react'], years: 2, degree: 'bachelors' }, minFit: undefined,
   levels: undefined, workModes: undefined, maxDegree: undefined,
   minStipend: undefined, maxDurationMonths: undefined, maxExperienceYears: undefined,
-  includeStale: false, limit: undefined, offset: undefined,
+  includeStale: false, limit: undefined, offset: undefined, withCounts: true,
 }
 
 async function optsFor(store, url) {
@@ -58,14 +58,16 @@ describe('GET /api/postings', () => {
     expect(res.statusCode).toBe(401)
   })
 
-  it('returns { postings } for authenticated user', async () => {
+  // The page comes with the whole match's size and how many are new today,
+  // which the title line reads rather than counting the loaded page.
+  it('returns the page with the match counts for the authenticated user', async () => {
     const store = makeFakeStore()
-    store.listPostingsForUser.mockResolvedValue([{ id: '1', title: 'Dev', status: null }])
+    store.listPostingsForUser.mockResolvedValue({ postings: [{ id: '1', title: 'Dev', status: null }], total: 1, newToday: 0 })
     const app = makeApp(store)
     const cookie = await signedCookie(app)
     const res = await app.inject({ method: 'GET', url: '/api/postings', headers: { cookie } })
     expect(res.statusCode).toBe(200)
-    expect(res.json()).toEqual({ postings: [{ id: '1', title: 'Dev', status: null }] })
+    expect(res.json()).toEqual({ postings: [{ id: '1', title: 'Dev', status: null }], total: 1, newToday: 0 })
     expect(store.listPostingsForUser).toHaveBeenCalledWith('u1', NO_OPTS)
   })
 

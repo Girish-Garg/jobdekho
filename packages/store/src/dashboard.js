@@ -40,11 +40,21 @@ export async function listPostingsForUser(store, userId, opts = {}) {
   const minFit = ranks ? toNumber(opts.minFit) : null
   const gated = minFit ? scored.filter((row) => row.matchScore >= minFit) : scored
   const page = gated.sort(orderFor(sort)).slice(offset, offset + limit)
-  const postings = page.map((row) => {
+  const postings = applyStatusFilter(page.map((row) => {
     const seen = { ...row, status: statusOf(row.id) }
     return toPosting(ranks ? withFit(seen) : withGhost(seen))
-  })
-  return applyStatusFilter(postings, opts.status)
+  }), opts.status)
+  return opts.withCounts ? { postings, ...countsOf(gated) } : postings
+}
+
+// The whole matching set's size and how many of it arrived in the last day,
+// for the feed's title line. Counting the loaded page instead said "100 new
+// today" whenever the first hundred rows happened to be new.
+const DAY_MS = 24 * 60 * 60 * 1000
+
+function countsOf(rows, now = Date.now()) {
+  const newToday = rows.filter((row) => now - Date.parse(row.firstSeenAt ?? '') < DAY_MS).length
+  return { total: rows.length, newToday }
 }
 
 // Rarity comes from a cached corpus scan; without it ranking runs unweighted.

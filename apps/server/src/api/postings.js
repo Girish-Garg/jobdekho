@@ -49,7 +49,9 @@ export async function postingsRoutes(app) {
     // Recommended is what the feed is for, so it is what no sort at all asks
     // for. Unknown values land on it too, keeping stale bookmarks working.
     const sort = SORTS.includes(q.sort) ? q.sort : 'match'
-    const postings = await app.dashboard.listPostingsForUser(request.user.sub, {
+    // With counts: the page, and the whole match's size and new arrivals.
+    return app.dashboard.listPostingsForUser(request.user.sub, {
+      withCounts: true,
       q: q.q, source: q.source, status, sort,
       // The fit, its floor and Best fit all need the profile, which the
       // client should not have to send back on every request. Loaded for
@@ -69,7 +71,6 @@ export async function postingsRoutes(app) {
       limit: parseCount(q.limit),
       offset: parseCount(q.offset),
     })
-    return { postings }
   })
 
   // One posting whole, for the pane a person opens it in. The feed withholds

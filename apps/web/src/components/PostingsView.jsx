@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { isNewToday } from '../lib/time.js';
 import { usePostingsFeed } from '../lib/usePostingsFeed.js';
 import { useMediaQuery } from '../lib/useMediaQuery.js';
 import { useTriage } from '../lib/useTriage.js';
@@ -21,7 +20,7 @@ const WIDE_QUERY = '(min-width: 1100px)';
 export default function PostingsView({
   filters, setFilters, sort = 'match', setSort, viewMode = 'list', setViewMode, onOpenProfile,
 }) {
-  const { rows, loading, more, loadMore, onStatus } = usePostingsFeed(filters, sort);
+  const { rows, loading, more, loadMore, onStatus, total, newToday } = usePostingsFeed(filters, sort);
   const triage = useTriage(rows, onStatus);
   const isWide = useMediaQuery(WIDE_QUERY);
   const { opened, openFromClick: openRow, openById, close: closeCard, dismiss, patchOutside } = useOpenPosting(rows);
@@ -54,7 +53,7 @@ export default function PostingsView({
       <div className="mx-auto w-full min-w-0 max-w-[84rem]">
         <FeedTop
           filters={filters} setFilters={setFilters} sort={sort} setSort={setSort} viewMode={viewMode} setViewMode={setViewMode}
-          shown={rows.length} fresh={rows.filter((p) => isNewToday(p.firstSeenAt)).length}
+          shown={rows.length} total={total} fresh={newToday}
         />
         {unranked && (
           <div className="pb-4">
