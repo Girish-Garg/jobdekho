@@ -36,7 +36,7 @@ describe('ResumeTailorResult with flags', () => {
     expect(screen.getByText('kafka')).toBeInTheDocument();
     expect(screen.getByText('Tata Consultancy Services')).toBeInTheDocument();
     expect(before(notice, screen.getByText(/Matches 9 of 14/))).toBe(true);
-    expect(before(notice, screen.getByText('Picked for this job'))).toBe(true);
+    expect(before(notice, screen.getByText('Leads the resume for this job'))).toBe(true);
     expect(screen.queryByText(/Nothing in the rewrite is missing/)).not.toBeInTheDocument();
   });
 
@@ -64,7 +64,7 @@ describe('ResumeTailorResult without flags', () => {
   it('lists which entries the plan picked, per section, after the coverage', () => {
     render(<ResumeTailorResult record={record()} providers={PROVIDERS} onMakeResume={() => {}} />);
     const coverage = screen.getByText(/Matches 9 of 14/);
-    const picks = screen.getByText('Picked for this job');
+    const picks = screen.getByText('Leads the resume for this job');
     expect(before(coverage, picks)).toBe(true);
     expect(screen.getByText('Experience')).toBeInTheDocument();
     expect(screen.getByText(/Software Developer/)).toBeInTheDocument();

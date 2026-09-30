@@ -8,19 +8,20 @@ const SECTIONS = [
   ['achievements', 'Achievements'],
 ];
 
-// Which of the person's own entries the plan picked, per section, in the
-// order it put them: not the reworded bullets themselves, which are in the
-// resume document made from this plan - the chat is too narrow for a PDF,
-// so it only has to say what got chosen before the person makes one.
+// Which of the person's own entries the plan puts first, per section, in its
+// order: not the reworded bullets themselves, which are in the resume made
+// from this plan, since the chat is too narrow for a PDF. The plan leads the
+// resume rather than being all of it (see the server's
+// resume/tailored-sections.js), so the card says the rest follows.
 export default function TailoredPicks({ sections }) {
   const used = SECTIONS.filter(([key]) => (sections?.[key] ?? []).length > 0);
   if (!used.length) {
-    return <p className="text-sm text-ink/80">Nothing in your career record fit this posting closely enough to pick.</p>;
+    return <p className="text-sm text-ink/80">Nothing in your record stood out for this posting, so the resume keeps all of it in your own order.</p>;
   }
 
   return (
     <div className="flex flex-col gap-2">
-      <p className={`${LABEL} text-muted`}>Picked for this job</p>
+      <p className={`${LABEL} text-muted`}>Leads the resume for this job</p>
       {used.map(([key, title]) => (
         <div key={key}>
           <p className="text-sm font-semibold text-ink">{title}</p>
@@ -34,6 +35,7 @@ export default function TailoredPicks({ sections }) {
           </ul>
         </div>
       ))}
+      <p className="text-xs text-muted">The rest of your record follows these, as you wrote it.</p>
     </div>
   );
 }

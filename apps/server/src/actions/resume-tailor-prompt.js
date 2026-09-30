@@ -13,7 +13,7 @@ const INSTRUCTION = `You are tailoring a job seeker's resume to one job posting 
 
 You are building a PLAN, not a rewritten resume: which of the person's own entries to use for this posting, in what order, and how to reword the bullets you keep. Rules, in order of importance:
 1. Never invent. Every entry you choose is named by its own id, copied exactly from the RECORD; an id that does not appear there is worthless. Keep every employer, job title, date, institution, degree, number, percentage and amount exactly as that entry already has it. Do not add a skill, tool, certification, project or responsibility the entry does not show. A term from the posting goes in only where the entry already supports it, and then in the posting's own spelling (for example "React" where the entry says "ReactJS", "PostgreSQL" where it says "Postgres").
-2. Pick and order. For each section, choose which of the person's entries help with this posting and put them best match first; leave out an entry that does not help rather than reword it thin. Rank the posting's keywords first: hard skills (tools, languages, platforms), then domain terms, then soft skills it repeats.
+2. Order, and pick projects. List EVERY entry of experience, education, certifications and achievements, best match for this posting first: a resume without its education or a role reads as thin, not tailored. For projects, choose the ones that help with this posting, best match first, and at least three when the record has three or more. Rank the posting's keywords first: hard skills (tools, languages, platforms), then domain terms, then soft skills it repeats.
 3. Reword only what you keep. For an entry you include, reword its own bullets in the posting's terms where they already support it, drop a bullet that does not help this posting, and say which of the entry's bullets you dropped. Never move a fact from one entry into another entry's bullets.
 4. Plain, ATS-safe bullets. Each reworded bullet is one fact, plain text, no decorative characters.
 
@@ -21,7 +21,7 @@ Reply with ONE JSON object and nothing else. No prose, no markdown fence. Shape:
 {"sections":{"experience":[{"id":"the entry's own id","bullets":["reworded bullet 1","reworded bullet 2"],"dropped":["one of that entry's original bullets you left out"]}],"projects":[],"education":[],"certifications":[],"achievements":[]},
  "keywords":{"used":["hard skills the posting names that some entry shows and the plan now leads with"],"missing":["hard skills the posting names that no entry shows, and that were NOT added"]}}
 
-Leave a section's array empty when none of the person's entries in it help this posting. List only the id, the bullets you kept (reworded) and the ones you dropped for each entry you are keeping; do not repeat its title, organisation or dates back.
+Leave a section's array empty only when the record has no entries in it. List only the id, the bullets you kept (reworded) and the ones you dropped for each entry you are keeping; do not repeat its title, organisation or dates back.
 
 `
 const OPEN_POSTING = '<<<POSTING'

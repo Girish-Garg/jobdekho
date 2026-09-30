@@ -75,12 +75,15 @@ describe('POST /api/documents', () => {
     expect(doc.versions).toEqual([{ at: doc.createdAt, by: 'template' }])
   })
 
-  it('makes a tailored resume from the job\'s saved plan: its picks, its order, its wording', async () => {
+  // The plan leads and rewords; it no longer decides what exists. A role it
+  // did not pick still follows, as the person wrote it.
+  it('makes a tailored resume from the job\'s saved plan: its picks first in its wording, then the rest of the record', async () => {
     const { call } = await makeApp({ saved: { 'resume-tailor': PLAN } })
     const doc = (await call('POST', '/api/documents', { kind: 'resume', templateId: 'classic', postingId: 'p1', fromPlan: true })).json()
     expect(doc).toMatchObject({ name: 'Resume for Backend Engineer at Razorpay', postingId: 'p1' })
     expect(doc.tex).toContain('Built payments APIs in Node')
-    expect(doc.tex).not.toContain('Wrote tests')
+    expect(doc.tex).not.toContain('Shipped the portal')
+    expect(doc.tex.indexOf('Built payments APIs in Node')).toBeLessThan(doc.tex.indexOf('Wrote tests'))
   })
 
   it('says what to do first when the job has no plan yet, and 404s an unknown job', async () => {
@@ -97,6 +100,17 @@ describe('POST /api/documents', () => {
     expect(doc).toMatchObject({ name: 'Cover letter for Backend Engineer at Razorpay', kind: 'cover-letter', templateId: 'letter' })
     expect(doc.tex).toContain('I cut costs 40\\% at R\\&D.')
     expect(doc.tex).toContain('Hiring Team\\newline Razorpay\\newline Bengaluru')
+  })
+
+  // The chat's card lets a person edit the letter before making it a
+  // document; those words win over the saved ones, escaped the same way.
+  it('makes the letter from the words the person sends, over the saved ones, escaped', async () => {
+    const { call } = await makeApp({ saved: { 'cover-letter': { letter: 'The saved words.' } } })
+    const doc = (await call('POST', '/api/documents', { kind: 'cover-letter', postingId: 'p1', text: 'My own edit: 100% & more.\n\nRegards,\nJane' })).json()
+    expect(doc.tex).toContain('My own edit: 100\\% \\& more.')
+    expect(doc.tex).not.toContain('The saved words.')
+    const blank = (await call('POST', '/api/documents', { kind: 'cover-letter', postingId: 'p1', text: '   ' })).json()
+    expect(blank.tex).toContain('The saved words.')
   })
 
   it('starts a letter with a placeholder when there is no saved letter, and a resume even with no profile', async () => {

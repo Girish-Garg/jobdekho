@@ -39,14 +39,15 @@ export async function documentRoutes(app) {
 
   // A first draft from a template, with no AI call (see documents/
   // first-draft.js). `postingId` ties the document to a job; with `fromPlan`
-  // the draft is that job's saved tailoring plan.
+  // the draft is that job's saved tailoring plan, and `text` is a letter's
+  // own words, as the person edited them in the chat.
   app.post('/api/documents', auth, async (request, reply) => {
     const userId = request.user.sub
     const body = request.body ?? {}
     if (!DOCUMENT_KINDS.includes(body.kind)) return reply.code(400).send({ error: 'Say whether this is a resume or a cover letter.' })
     const postingId = typeof body.postingId === 'string' && body.postingId ? body.postingId : null
     const draft = await firstDraft(app.dashboard, userId, {
-      kind: body.kind, templateId: body.templateId, postingId, fromPlan: body.fromPlan === true,
+      kind: body.kind, templateId: body.templateId, postingId, fromPlan: body.fromPlan === true, text: body.text,
     })
     if (draft.error) return reply.code(draft.status).send({ error: draft.error })
     const name = typeof body.name === 'string' && body.name.trim() ? body.name : draft.name

@@ -10,6 +10,7 @@ import { useChatAnswerer } from '../lib/useChatAnswerer.js';
 import { useChatFeedLinks } from '../lib/useChatFeedLinks.js';
 import { useOpenDocument } from '../lib/useOpenDocument.js';
 import { openTailoredResume } from '../lib/openTailoredResume.js';
+import { makeApplicationDocs, makeLetterDoc } from '../lib/makeApplicationDocs.js';
 import { buildConversation } from '../lib/conversation.js';
 import { takeRequest } from '../lib/askAiSignal.js';
 import { notifyError } from '../lib/toast.js';
@@ -64,12 +65,16 @@ export default function ChatPanelBody({ onClose, context, apply, request, draft 
     return chat.ask(message, onResume ? { ...where, documentId: openDoc?.id ?? null } : where);
   }
 
+  const toResume = () => apply.setView?.('resume');
   const card = {
     providers: cli.providers,
     target,
     onTarget: setTarget,
-    onMakeResume: () => openTailoredResume(posting, () => apply.setView?.('resume'))
-      .catch((err) => notifyError(err, 'Could not make the resume')),
+    tailored: Boolean(actions.results?.some((r) => r.kind === 'resume-tailor')),
+    onMakeResume: () => openTailoredResume(posting, toResume).catch((err) => notifyError(err, 'Could not make the resume')),
+    onMakeLetter: (text) => makeLetterDoc({ posting, text, goToResume: toResume }).catch((err) => notifyError(err, 'Could not make the cover letter')),
+    onMakeBoth: (text, tailored) => makeApplicationDocs({ posting, text, tailored, tailor: () => actions.run('resume-tailor'), goToResume: toResume })
+      .catch((err) => notifyError(err, 'Could not make the documents')),
   };
   const empty = { page, posting, loading: Boolean(posting) && actions.results === undefined, busy: runner.busy, onSend };
 

@@ -4,6 +4,7 @@ import { fill } from './fill.js'
 import { contactLine } from './contact.js'
 import { applySelection } from './selection.js'
 import { buildEntrySection, buildSkillsSection } from './sections.js'
+import { skillRows } from './skill-rows.js'
 import { isKnownTemplate, templatePath } from './templates/registry.js'
 
 const SECTION_TITLES = {
@@ -11,12 +12,12 @@ const SECTION_TITLES = {
   certifications: 'Certifications', achievements: 'Achievements',
 }
 
-function buildBody(picked) {
+function buildBody(picked, skills) {
   const sections = [
     buildEntrySection(SECTION_TITLES.experience, picked.experience),
     buildEntrySection(SECTION_TITLES.projects, picked.projects),
     buildEntrySection(SECTION_TITLES.education, picked.education),
-    buildSkillsSection('Skills', picked.skillGroups),
+    buildSkillsSection('Skills', skills),
     buildEntrySection(SECTION_TITLES.certifications, picked.certifications),
     buildEntrySection(SECTION_TITLES.achievements, picked.achievements),
   ]
@@ -28,15 +29,19 @@ function buildBody(picked) {
 // include (see selection.js) becomes one .tex document, fully escaped, ready
 // to hand to resume/compile.js. Throws on an unknown template id; every
 // profile value is escaped before it reaches the page, so this never needs
-// to trust its caller.
-export function renderTex(templateId, profile, sections) {
+// to trust its caller. `lead` is the skills a tailoring plan puts first (see
+// skill-rows.js). The flat skills list stands in for the groups only when
+// the record has no groups at all, never because a selection left them out.
+export function renderTex(templateId, profile, sections, { lead = [] } = {}) {
   if (!isKnownTemplate(templateId)) throw new Error(`unknown resume template: ${templateId}`)
   const picked = applySelection(profile, sections)
+  const hasGroups = (profile.skillGroups ?? []).some((group) => group.items?.length)
+  const skills = skillRows(hasGroups ? { skillGroups: picked.skillGroups } : { skills: profile.skills ?? [] }, lead)
   const raw = readFileSync(templatePath(templateId), 'utf8')
   return fill(raw, {
     NAME: escapeLine(picked.basics.name) || 'Your Name',
     HEADLINE: escapeLine(picked.basics.headline),
     CONTACT: contactLine(picked.basics),
-    BODY: buildBody(picked),
+    BODY: buildBody(picked, skills),
   })
 }

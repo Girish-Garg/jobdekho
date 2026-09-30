@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
 import { relativeDay } from '../lib/time.js';
+import CoverLetterDocs from './CoverLetterDocs.jsx';
 
 const LABEL = 'font-mono text-[10px] uppercase tracking-[0.18em]';
 
-// The letter is editable before it is copied, since a person always tweaks a
-// name or a detail. Edits live only in this component's state and are never
-// sent back to the server, so reopening the posting shows the draft as it
-// was written, not as it was last edited.
-export default function CoverLetterResult({ record, providers }) {
+// The letter is editable before it is copied or made a document, since a
+// person always tweaks a name or a detail. Edits live in this component's
+// state and go only into a document made from here (see CoverLetterDocs.jsx);
+// the saved answer is never rewritten, so reopening the posting shows the
+// draft as it was written, not as it was last edited.
+export default function CoverLetterResult({ record, providers, tailored = false, onMakeLetter, onMakeBoth }) {
   const { result, createdAt, provider } = record;
   const label = providers.find((p) => p.id === provider)?.label ?? provider;
   const [text, setText] = useState(result.letter);
@@ -48,7 +50,9 @@ export default function CoverLetterResult({ record, providers }) {
         rows={10}
         className="w-full rounded-md border border-line bg-paper p-2 text-sm leading-relaxed text-ink"
       />
-      <p className="text-xs text-muted">Edits here are yours to keep, they are not saved.</p>
+      <p className="text-xs text-muted">Edit freely: the documents below are made from the text as it is here.</p>
+
+      <CoverLetterDocs text={text} tailored={tailored} onMakeLetter={onMakeLetter} onMakeBoth={onMakeBoth} />
 
       <div className="flex flex-wrap items-center gap-3">
         <button type="button" onClick={copy} className="rounded-full border border-line px-4 py-1.5 text-sm text-ink transition hover:border-ink">

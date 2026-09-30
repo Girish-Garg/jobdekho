@@ -26,10 +26,10 @@ export function useChatActions(posting, { runner, providers }) {
 
   async function start(kind, instruction = '') {
     const meta = ACTION_KINDS[kind];
-    if (!posting || !meta) return;
+    if (!posting || !meta) return null;
     if (Array.isArray(providers) && !providerFor(providers, meta.policy)) {
       setBlocked(kind);
-      return;
+      return null;
     }
     setBlocked(null);
     const job = posting;
@@ -39,8 +39,9 @@ export function useChatActions(posting, { runner, providers }) {
     // saved answer instead of starting fresh.
     const record = await runner.run({ ...what, noun: meta.noun, doing: meta.doing }, (onEvent) =>
       runPostingAction(job.id, kind, instruction ? { onEvent, instruction } : { onEvent }));
-    if (!record) return;
+    if (!record) return null;
     put(record);
+    return record;
   }
 
   useEffect(() => {
