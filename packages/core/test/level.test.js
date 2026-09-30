@@ -53,6 +53,20 @@ describe('classifyLevel', () => {
     expect(classifyLevel('Software Engineer', 'You will mentor our interns.')).toBe('mid')
   })
 
+  // Amazon's qualifications, on every engineering role it posts in India.
+  it('does not read "non-internship experience" as an internship', () => {
+    const body = 'Basic qualifications - 3+ years of non-internship professional software development experience'
+    expect(classifyLevel('Software Development Engineer', body)).toBe('mid')
+    expect(classifyLevel('Data Engineer', 'Prior internship experience with SQL is a plus.')).toBe('mid')
+    expect(classifyLevel('Software Engineer', 'This is a 6-month internship in Pune.')).toBe('internship')
+  })
+
+  it('reads the rank at the end of the role when the team follows it', () => {
+    expect(classifyLevel('Software Development Engineer II, Prime Video Resilience, Prime Video App Experience')).toBe('mid')
+    expect(classifyLevel('SysDE I - Multimedia, Silicon and Systems Group')).toBe('entry')
+    expect(classifyLevel('Data Engineer III | Payments')).toBe('senior')
+  })
+
   it('does not read a team number as a rank', () => {
     expect(classifyLevel('Software Engineer - Team 1')).toBe('mid')
     expect(classifyLevel('SDE - Group 2')).toBe('mid')

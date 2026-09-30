@@ -10,7 +10,10 @@ const ENTRY = /\b(graduate|new ?grad|fresher|junior|jr|associate|entry[ -]level|
 
 // A body mention of interns is usually about colleagues ("you will mentor our
 // interns"), so only the programme itself counts as a description-level signal.
-const BODY_INTERNSHIP = /\b(internship|traineeship|apprenticeship|intern (?:programme|program|position|role|opportunity)|(?:as|hiring|seeking) an? intern)\b/i
+// "non-internship" and "internship experience" are the opposite: Amazon asks
+// every engineer for "3+ years of non-internship professional experience",
+// which marked its whole India board as internships.
+const BODY_INTERNSHIP = /(?<!non[- ]?)\b(internship|traineeship|apprenticeship|intern (?:programme|program|position|role|opportunity)|(?:as|hiring|seeking) an? intern)\b(?![- ]?experience)/i
 
 // Trailing rank marker: "Software Engineer II", "SDE 3", "Analyst IV".
 const RANK = /\b(i{1,3}|iv|v|[1-5])\s*$/i
@@ -45,6 +48,11 @@ function fromYears(text) {
 // The title carries the signal; the body is only a fallback. Rules run most
 // specific first, and an explicit "senior" outranks a role word like "manager"
 // so that "Associate Product Manager" still lands on entry rather than senior.
+// Amazon and others put the team after the role: "Software Development
+// Engineer II, Prime Video Resilience". The rank closes the role, not the
+// whole title, so it is also looked for at the end of that first part.
+const ROLE_PART = /\s*,\s*|\s+[-|]\s+/
+
 export function classifyLevel(title = '', description = '') {
   const t = String(title).trim()
   if (INTERNSHIP.test(t)) return 'internship'
@@ -53,8 +61,9 @@ export function classifyLevel(title = '', description = '') {
   if (SENIOR_WORD.test(t)) return 'senior'
   if (ENTRY.test(t)) return 'entry'
   if (SENIOR_ROLE.test(t)) return 'senior'
-  const rank = RANK.exec(t)
-  if (rank && !NOT_RANK.test(t)) return RANK_LEVEL[rank[1].toLowerCase()]
+  const role = t.split(ROLE_PART)[0]
+  const ranked = [t, role].find((part) => RANK.test(part) && !NOT_RANK.test(part))
+  if (ranked) return RANK_LEVEL[RANK.exec(ranked)[1].toLowerCase()]
   if (BODY_INTERNSHIP.test(description)) return 'internship'
   // Some boards put the range in the title itself, e.g. "Firmware Engineer(5-7 years)".
   return fromYears(t) || fromYears(description) || 'mid'
