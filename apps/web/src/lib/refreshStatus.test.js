@@ -50,6 +50,18 @@ describe('refreshStatus', () => {
     expect(refreshStatus(scrape, { finished: false, now: NOW })).toEqual({ tone: 'idle', text: 'Last refreshed 3 h ago' });
   });
 
+  // LinkedIn read less than 20 hours ago is skipped by the server's guard:
+  // the run is still done, and the skip is only a word on hover.
+  it('keeps a run that skipped LinkedIn done, with the skip on hover and not counted as missed', () => {
+    const skipped = [{ name: 'linkedin', note: 'LinkedIn read 5 h ago; next after 15 h' }];
+    const scrape = idle({ total: 117, finishedAt: ago(0), result: { fresh: 12, failed: [], skipped }, lastRun: { at: ago(0) } });
+    expect(refreshStatus(scrape, { finished: true, now: NOW })).toEqual({
+      tone: 'done', text: 'Done: 12 new  ·  just now', title: 'LinkedIn read 5 h ago; next after 15 h.',
+    });
+    const both = { ...scrape, result: { fresh: 12, failed: ['a'], skipped } };
+    expect(refreshStatus(both, { finished: true, now: NOW }).title).toBe('1 of 117 sources could not be reached. LinkedIn read 5 h ago; next after 15 h.');
+  });
+
   it('says the last run failed, with the server\'s sentence on hover', () => {
     const scrape = idle({ error: 'The refresh could not finish.' });
     expect(refreshStatus(scrape, { now: NOW })).toEqual({ tone: 'error', text: 'Refresh failed', title: 'The refresh could not finish.' });

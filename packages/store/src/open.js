@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { resolveDataDir } from './data-dir.js'
 import { openCorpus } from './corpus.js'
 import { userFile } from './user-file.js'
+import { recordFile } from './record-file.js'
 import { openRuns } from './runs.js'
 
 // The handle every store function takes first, in the position the Postgres
@@ -45,6 +46,10 @@ export const FILES = {
   // its own because it is a secret: the others can be opened, shared or
   // attached to a bug report without handing it over. See adzuna-keys.js.
   adzuna: 'adzuna-key.json',
+  // When LinkedIn was last read and whether it has told this computer to
+  // back off. One record, not one per user: LinkedIn limits the address.
+  // See apps/scraper/src/linkedin-guard.js.
+  linkedinGuard: 'linkedin-guard.json',
 }
 
 export function openStore(dir) {
@@ -70,5 +75,6 @@ export function openStore(dir) {
     documents: userFile(at('documents')),
     scrapeSettings: userFile(at('scrapeSettings')),
     adzuna: userFile(at('adzuna')),
+    linkedinGuard: recordFile(at('linkedinGuard')),
   }
 }

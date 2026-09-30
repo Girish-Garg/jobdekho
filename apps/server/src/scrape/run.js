@@ -7,8 +7,10 @@
 // builds the app would load it for nothing.
 const importScraper = () => import('@jobdekho/scraper/scrape.js')
 
-// `userId` is whose Adzuna key in the store the run uses (see the scraper's
-// scrape.js): the one local person server.js runs as.
+// `userId` is whose Adzuna key and LinkedIn switch in the store the run uses
+// (see the scraper's scrape.js): the one local person server.js runs as.
+// `skipped` names a source the run chose not to read and says why, apart
+// from `failed`, so the page can say it quietly (see the web's refreshStatus).
 export function scrapeRunner(store, { load = importScraper, userId = null } = {}) {
   return async ({ onProgress }) => {
     const { runScrape } = await load()
@@ -19,6 +21,7 @@ export function scrapeRunner(store, { load = importScraper, userId = null } = {}
       tooOld: out.tooOld,
       removed: out.removed,
       failed: out.results.filter((r) => !r.ok).map((r) => r.name),
+      skipped: out.results.filter((r) => r.skipped).map((r) => ({ name: r.name, note: r.note ?? '' })),
     }
   }
 }

@@ -7,10 +7,12 @@ const NAMED = 4;
 
 // The last completed refresh, whoever ran it (this page, the daily check or
 // `npm run scrape`): when, what it found, and which sources it could not
-// reach, named briefly with each one's error on hover.
+// reach, named briefly with each one's error on hover. A source it chose not
+// to read (LinkedIn inside its guard's window) is no failure: its own note
+// says why, quietly, under the rest.
 export default function RefreshLastRun({ lastRun }) {
   if (!lastRun) return <p className="mt-4 text-sm text-muted">No refresh has run yet.</p>;
-  const { at, fresh, sources, failed } = lastRun;
+  const { at, fresh, sources, failed, skipped = [] } = lastRun;
   const more = failed.length - NAMED;
 
   return (
@@ -28,6 +30,7 @@ export default function RefreshLastRun({ lastRun }) {
           {more > 0 && <span className="tnum">{` and ${more} more`}</span>}
         </p>
       )}
+      {skipped.map((s) => <p key={s.name} className="tnum mt-1 text-muted">{s.note}</p>)}
     </div>
   );
 }

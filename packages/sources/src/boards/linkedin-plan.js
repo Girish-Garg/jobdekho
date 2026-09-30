@@ -20,13 +20,16 @@ export const TERMS = [
   'android developer intern', 'software testing intern', 'product manager intern',
 ]
 
-// Past month, not past week. A week of "software engineer intern" runs thin
-// by start=100 (5 of 10 cards relevant, 4 of them seen already) where a
-// month still gave 9 of 10. JobDekho runs on a person's own computer, which
-// can be off for days, and a week-wide window loses what was posted while it
-// was. The feed also hides a posting not seen for 21 days, so re-reading
-// postings up to a month old keeps them visible while they are still listed.
-const PAST_MONTH = 'r2592000'
+// Past month for a first sweep. A week of "software engineer intern" runs
+// thin by start=100 (5 of 10 cards relevant, 4 of them seen already) where a
+// month still gave 9 of 10, and a first sweep has nothing stored yet.
+// Afterwards the scrape's guard (apps/scraper/src/linkedin-guard.js) reads
+// LinkedIn about once a day, so a week covers what was posted since, with
+// days to spare; it goes back to a month after a gap longer than that. A
+// posting seen in its first week still stays in the feed for the 21 days
+// the feed keeps one it has stopped seeing.
+export const PAST_MONTH = 'r2592000'
+export const PAST_WEEK = 'r604800'
 const PER_PAGE = 10
 
 // 60 pages is 600 cards at most. 14 terms go 4 pages deep and the first four
@@ -42,9 +45,19 @@ export const MAX_PAGES = 6
 // has, so the cap goes to that day's new postings and then the backlog.
 export const DESCRIBE_CAP = 40
 
-export const searchUrl = (term, page) =>
+// The two sizes of sweep: the first, and every one after it. A daily sweep
+// reads 14 terms 2 deep and the first seven a third page, 35 in all: over a
+// week "software engineer intern" was still 9 of 10 relevant at start=50,
+// and 7 of the week's first 10 cards were not on the month's first page, so
+// a week's newest postings sit in its first pages. Descriptions scale with
+// the pages read, 40 for 60 and so 25 for 35. 60 requests at the polite pace
+// is two to four minutes, once a day.
+export const FIRST_SWEEP = { lookback: PAST_MONTH, searches: SEARCH_BUDGET, views: DESCRIBE_CAP }
+export const DAILY_SWEEP = { lookback: PAST_WEEK, searches: 35, views: 25 }
+
+export const searchUrl = (term, page, lookback = PAST_MONTH) =>
   'https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search' +
-  `?keywords=${encodeURIComponent(term)}&location=India&f_TPR=${PAST_MONTH}&start=${page * PER_PAGE}`
+  `?keywords=${encodeURIComponent(term)}&location=India&f_TPR=${lookback}&start=${page * PER_PAGE}`
 
 // Page 0 of every term before page 1 of any. Relevance falls with depth (10
 // of 10 on page 0, 5 of 10 at start=250), so whatever the budget leaves

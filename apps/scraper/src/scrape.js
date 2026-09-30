@@ -8,6 +8,7 @@ import { readScrapeConfig } from './config.js'
 import { scrapeAdapters } from './sources.js'
 import { runAdapters } from './runner.js'
 import { runPipeline } from './pipeline.js'
+import { startLinkedinTurn } from './linkedin-turn.js'
 
 // One scrape, start to finish: every source the config lists, fetched through
 // the bounded pool, then the pipeline's single write into `db`. The CLI
@@ -17,19 +18,21 @@ import { runPipeline } from './pipeline.js'
 //
 // `userId` is whose Adzuna key to look for in `db`, with ADZUNA_APP_ID and
 // ADZUNA_APP_KEY from `env` as the fallback (see sources.js for how a key
-// adds Adzuna to the run). Resolved here, on the shared path, so the CLI and
-// the app's refresh cannot disagree about whether Adzuna runs.
+// adds Adzuna to the run), and whose "Include LinkedIn" switch to obey (see
+// linkedin-turn.js for that and LinkedIn's guard). Resolved here, on the
+// shared path, so the CLI and the app's refresh cannot disagree.
 //
 // onProgress({ done, total, current }) hears once before the first fetch,
 // with nothing done, and again as each source settles, `current` naming the
-// one that just did. `config`, `adapters` and `http` default to the real
-// thing; tests pass their own, so no test ever reaches the network.
+// one that just did. `config`, `adapters`, `http` and `now` default to the
+// real thing; tests pass their own, so no test ever reaches the network.
 export async function runScrape({
   db, userId = null, env = process.env, config = readScrapeConfig(),
   adzunaKeys = resolveAdzunaKeys(db, userId, env), adapters = scrapeAdapters(config.companies, adzunaKeys),
-  http = createHttp(), onProgress = () => {},
+  http = createHttp(), onProgress = () => {}, now = Date.now,
 }) {
-  const total = adapters.length
+  const linkedin = startLinkedinTurn({ db, userId, adapters, now })
+  const total = linkedin.adapters.length
   onProgress({ done: 0, total, current: null })
   // What an adapter may skip fetching a second page for (LinkedIn's job
   // views): a posting the store already holds a description for, and a card
@@ -38,11 +41,13 @@ export async function runScrape({
   const context = {
     known: (source, externalId) => Boolean(db.corpus.byId().get(makeId(source, externalId))?.descriptionText),
     wanted: (source, raw) => filter(normalize(raw, source), config.rules),
+    ...linkedin.context,
   }
-  const ran = await runAdapters(adapters, http, {
+  const ran = await runAdapters(linkedin.adapters, http, {
     context,
     onResult: (result, { done }) => onProgress({ done, total, current: result.name }),
   })
-  const summary = await runPipeline(ran, { db, rules: config.rules, runId: randomUUID() })
-  return { ...summary, results: ran.results }
+  const results = linkedin.settle(ran.results)
+  const summary = await runPipeline({ items: ran.items, results }, { db, rules: config.rules, runId: randomUUID() })
+  return { ...summary, results }
 }

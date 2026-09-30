@@ -3,17 +3,24 @@ import { createScrapeService } from '../scrape/service.js'
 
 const ALREADY = 'Postings are already being refreshed. The new ones will show when it finishes.'
 
-// Fastify coerces "true" and "false"; anything else is one of its own 400s.
+// Either switch, or both, each a yes or no. Fastify coerces "true" and
+// "false"; anything else, or a body naming neither, is one of its own 400s.
 const settingsSchema = {
-  body: { type: 'object', required: ['autoRefresh'], properties: { autoRefresh: { type: 'boolean' } } },
+  body: {
+    type: 'object',
+    properties: { autoRefresh: { type: 'boolean' }, linkedin: { type: 'boolean' } },
+    anyOf: [{ required: ['autoRefresh'] }, { required: ['linkedin'] }],
+  },
 }
 
 // Fetching new postings from the app, so nobody has to open a terminal for
 // `npm run scrape`. POST starts the server's one scrape (see scrape/job.js)
 // and answers at once, since a run takes minutes; GET says how it is going,
 // for the page that started it and for one reloaded mid-run, with the last
-// completed run on disk, whoever ran it. Beside them, whether the server
-// refreshes on its own once a day (see scrape/auto.js).
+// completed run on disk, whoever ran it, and where LinkedIn's guard stands
+// (read when, paused until when), which changes when a run ends. Beside
+// them, the refresh switches: whether the server refreshes on its own once a
+// day (see scrape/auto.js), and whether a refresh reads LinkedIn at all.
 //
 // server.js decorates `scrape` with the service over its own store handle,
 // and tests with one over a temporary folder and a fake scrape. A server
@@ -26,7 +33,7 @@ export async function scrapeRoutes(app) {
     fallback ??= createScrapeService(openStore(), { log: app.log })
     return fallback
   }
-  const view = () => ({ ...scrape().job.state(), lastRun: scrape().lastRun() })
+  const view = () => ({ ...scrape().job.state(), lastRun: scrape().lastRun(), linkedin: scrape().linkedinStatus() })
   const auth = { preHandler: app.requireAuth }
 
   app.get('/api/scrape', auth, async () => view())
@@ -39,7 +46,8 @@ export async function scrapeRoutes(app) {
   app.get('/api/scrape/settings', auth, async (request) => scrape().getPref(request.user.sub))
 
   app.put('/api/scrape/settings', { ...auth, schema: settingsSchema }, async (request, reply) => {
-    scrape().setPref(request.user.sub, { autoRefresh: request.body.autoRefresh })
+    const { autoRefresh, linkedin } = request.body
+    scrape().setPref(request.user.sub, { autoRefresh, linkedin })
     reply.code(204).send()
   })
 }

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
-import { TERMS, MAX_PAGES, SEARCH_BUDGET, DESCRIBE_CAP, planQueries, searchUrl } from '@jobdekho/sources/boards/linkedin-plan.js'
-import { politeGet, refusalOf, Refused, GAP_MS, JITTER_MS } from '@jobdekho/sources/boards/linkedin-polite.js'
+import { TERMS, MAX_PAGES, SEARCH_BUDGET, DESCRIBE_CAP, FIRST_SWEEP, DAILY_SWEEP, planQueries, searchUrl } from '@jobdekho/sources/boards/linkedin-plan.js'
+import { politeGet, refusalOf, retryAfterMs, Refused, GAP_MS, JITTER_MS } from '@jobdekho/sources/boards/linkedin-polite.js'
 import { sweep } from '@jobdekho/sources/boards/linkedin-sweep.js'
 import { createHttp } from '@jobdekho/sources/http.js'
 
@@ -25,6 +25,14 @@ describe('planQueries', () => {
     expect(DESCRIBE_CAP).toBe(40)
   })
 
+  // A first sweep reads a month at full size; every later one a week, at
+  // about 60% of it: 14 terms 2 deep and the first seven a third page.
+  it('sizes a first sweep and a daily one', () => {
+    expect(FIRST_SWEEP).toEqual({ lookback: 'r2592000', searches: 60, views: 40 })
+    expect(DAILY_SWEEP).toEqual({ lookback: 'r604800', searches: 35, views: 25 })
+    expect(DAILY_SWEEP.searches).toBe(TERMS.length * 2 + TERMS.length / 2)
+  })
+
   // The endpoint ignores f_E, so the level has to be in the words.
   it('names a level in every term and covers the tech families', () => {
     for (const term of TERMS) expect(term).toMatch(/\b(intern|fresher|associate)\b/)
@@ -43,6 +51,10 @@ describe('searchUrl', () => {
     expect(Object.fromEntries(url.searchParams)).toEqual({
       keywords: 'software engineer intern', location: 'India', f_TPR: 'r2592000', start: '30',
     })
+  })
+
+  it('asks for the window it is given', () => {
+    expect(new URL(searchUrl('devops intern', 0, 'r604800')).searchParams.get('f_TPR')).toBe('r604800')
   })
 })
 
@@ -94,6 +106,12 @@ describe('sweep', () => {
     expect([...cards.keys()]).toEqual(['2', '3'])
   })
 
+  it('asks for the window it is given on every page', async () => {
+    const { asked } = await run((url, n) => page(n), { plan: planQueries(['a', 'b'], 2), lookback: 'r604800' })
+    expect(asked).toHaveLength(4)
+    for (const url of asked) expect(url).toContain('f_TPR=r604800')
+  })
+
   it('lets a refusal through at once', async () => {
     const answer = (url, n) => { if (n === 2) throw new Refused('HTTP 429'); return page(n) }
     const cards = new Map()
@@ -130,11 +148,11 @@ describe('politeGet', () => {
 
   it('pauses before every request but the first, jittered within the gap', async () => {
     const waits = []
-    const draws = [0, 0.5, 0.999]
+    const draws = [0, 0.5, 0.9999]
     const get = politeGet(async (url) => ok(url), { wait: async (ms) => { waits.push(ms) }, random: () => draws.shift() })
     for (let i = 0; i < 4; i++) await get(`https://www.linkedin.com/${i}`)
     expect(waits).toEqual([GAP_MS, GAP_MS + JITTER_MS / 2, GAP_MS + JITTER_MS - 1])
-    expect([GAP_MS, JITTER_MS]).toEqual([1500, 1000])
+    expect([GAP_MS, JITTER_MS]).toEqual([2000, 2000])
   })
 
   it('turns 429 and 999 into a refusal and passes any other failure through', async () => {
@@ -156,10 +174,56 @@ describe('politeGet', () => {
     }
   })
 
+  // The header arrives on the error http.js throws (see http.js), so pin the
+  // two together here too.
+  it('carries how long LinkedIn asked to be left alone on the refusal', async () => {
+    const headers = new Headers({ 'Retry-After': '3600' })
+    const http = createHttp({ fetchImpl: async () => ({ ok: false, status: 429, headers }) })
+    const err = await politeGet(http, { wait: async () => {} })('https://www.linkedin.com/x').catch((e) => e)
+    expect(err).toBeInstanceOf(Refused)
+    expect(err.retryAfterMs).toBe(3600 * 1000)
+    const silent = createHttp({ fetchImpl: async () => ({ ok: false, status: 999 }) })
+    expect((await politeGet(silent, { wait: async () => {} })('https://x').catch((e) => e)).retryAfterMs).toBeNull()
+  })
+
+  // What the scrape's guard reads to tell a run that reached LinkedIn from
+  // one on a computer that was offline.
+  it('counts the requests LinkedIn answered, refusals and errors included, but not a network failure', async () => {
+    const answers = [
+      async (url) => ok(url),
+      async () => { throw new Error('HTTP 500 for https://x') },
+      async () => { throw new TypeError('fetch failed') },
+      async () => { throw new DOMException('This operation was aborted', 'AbortError') },
+      async () => { throw new Error('HTTP 429 for https://x') },
+    ]
+    const get = politeGet((url) => answers.shift()(url), { wait: async () => {} })
+    expect(get.answered()).toBe(0)
+    for (let i = 0; i < 5; i++) await get('https://www.linkedin.com/x').catch(() => {})
+    expect(get.answered()).toBe(3)
+  })
+
   it('treats landing on a sign-in page as a refusal', async () => {
     for (const landed of ['https://www.linkedin.com/authwall?trk=x', 'https://www.linkedin.com/uas/login?session_redirect=y']) {
       const get = politeGet(async () => ok(landed), { wait: async () => {} })
       await expect(get('https://www.linkedin.com/jobs-guest/x')).rejects.toBeInstanceOf(Refused)
     }
+  })
+})
+
+describe('retryAfterMs', () => {
+  const NOW = Date.parse('2026-09-30T12:00:00.000Z')
+
+  it('reads whole seconds', () => {
+    expect(retryAfterMs('120', NOW)).toBe(120000)
+    expect(retryAfterMs(' 0 ', NOW)).toBe(0)
+  })
+
+  it('reads an HTTP date as the time left until it, never less than nothing', () => {
+    expect(retryAfterMs('Thu, 01 Oct 2026 12:00:00 GMT', NOW)).toBe(24 * 60 * 60 * 1000)
+    expect(retryAfterMs('Tue, 29 Sep 2026 12:00:00 GMT', NOW)).toBe(0)
+  })
+
+  it('reads anything else as nothing said', () => {
+    for (const value of [undefined, null, '', 'soon', '-5', '1.5']) expect(retryAfterMs(value, NOW)).toBeNull()
   })
 })

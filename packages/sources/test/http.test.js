@@ -35,6 +35,17 @@ describe('createHttp', () => {
     expect(err.cause).toBeUndefined()
   })
 
+  // The response is gone once http throws, so a site's request to stay away
+  // for a while has to travel on the error.
+  it('keeps a Retry-After header on the error, and adds nothing without one', async () => {
+    const headers = new Headers({ 'Retry-After': '120' })
+    const told = await createHttp({ fetchImpl: async () => ({ ok: false, status: 429, headers }) })('https://x').catch((e) => e)
+    expect(told.message).toBe('HTTP 429 for https://x')
+    expect(told.retryAfter).toBe('120')
+    const silent = await createHttp({ fetchImpl: async () => ({ ok: false, status: 429 }) })('https://x').catch((e) => e)
+    expect(silent).not.toHaveProperty('retryAfter')
+  })
+
   it('passes an error with nothing to redact through as it was', async () => {
     const abort = new DOMException('This operation was aborted', 'AbortError')
     const http = createHttp({ fetchImpl: vi.fn(async () => { throw abort }) })

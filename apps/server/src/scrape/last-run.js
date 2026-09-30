@@ -6,14 +6,22 @@ import { cachedFile } from '@jobdekho/store/cached-file.js'
 // while a refresh runs, and the file gains a line per scrape for good, so
 // only its last line is parsed, and only when the file has changed (see the
 // store's cached-file.js).
+//
+// A source the run chose not to read (LinkedIn inside its guard's window,
+// see the scraper's linkedin-turn.js) is neither one of its sources nor a
+// failure: it is listed apart with its note. Kept out of the count, too, so
+// a run offline, in which every source it did try failed, still reads as
+// all failed to auto.js, and is tried again within the hour.
 export function summarizeRun(run) {
   if (!run) return null
-  const results = Array.isArray(run.sourceResults) ? run.sourceResults : []
+  const all = Array.isArray(run.sourceResults) ? run.sourceResults : []
+  const results = all.filter((r) => !r.skipped)
   return {
     at: run.startedAt ?? null,
     fresh: run.newCount ?? 0,
     sources: results.length,
     failed: results.filter((r) => !r.ok).map((r) => ({ name: r.name, error: r.error ?? '' })),
+    skipped: all.filter((r) => r.skipped).map((r) => ({ name: r.name, note: r.note ?? '' })),
   }
 }
 

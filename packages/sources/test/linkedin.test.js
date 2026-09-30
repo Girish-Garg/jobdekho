@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { linkedin, parseLinkedin } from '@jobdekho/sources/boards/linkedin.js'
-import { TERMS, SEARCH_BUDGET, DESCRIBE_CAP } from '@jobdekho/sources/boards/linkedin-plan.js'
+import { TERMS, SEARCH_BUDGET, DESCRIBE_CAP, DAILY_SWEEP } from '@jobdekho/sources/boards/linkedin-plan.js'
 
 // Trimmed from a live seeMoreJobPostings response. Each <li> is one
 // base-search-card whose link carries a title slug, the posting id, and a
@@ -184,15 +184,44 @@ describe('linkedin adapter', () => {
     expect(li.searches().some((c) => c.url.endsWith('start=50'))).toBe(false)
   })
 
-  it('pauses 1.5 to 2.5 seconds between every two requests', async () => {
+  it('pauses 2 to 4 seconds between every two requests', async () => {
     const waits = []
     const li = fakeLinkedin()
     await linkedin({ wait: async (ms) => { waits.push(ms) } }).fetch(li.http)
     expect(waits).toHaveLength(li.calls.length - 1)
     for (const ms of waits) {
-      expect(ms).toBeGreaterThanOrEqual(1500)
-      expect(ms).toBeLessThan(2500)
+      expect(ms).toBeGreaterThanOrEqual(2000)
+      expect(ms).toBeLessThan(4000)
     }
+  })
+
+  // The scrape's guard sizes every sweep after the first: a week, 35 pages
+  // and 25 descriptions.
+  it('sweeps at the size the run asks for', async () => {
+    const li = fakeLinkedin({ search: numbered })
+    const rows = await quiet().fetch(li.http, { linkedin: DAILY_SWEEP })
+    expect(li.searches()).toHaveLength(35)
+    expect(li.views()).toHaveLength(25)
+    for (const c of li.searches()) expect(c.url).toContain('f_TPR=r604800')
+    // 14 terms 2 deep is 28; the last 7 are the first 7 terms' third page.
+    expect(li.searches().filter((c) => c.url.endsWith('start=20'))).toHaveLength(7)
+    expect(described(rows)).toHaveLength(25)
+  })
+
+  it('says how many requests LinkedIn answered, and that it did not refuse', async () => {
+    const li = fakeLinkedin()
+    const adapter = quiet()
+    expect(adapter.outcome).toBeNull()
+    await adapter.fetch(li.http)
+    expect(adapter.outcome).toEqual({ answered: li.calls.length, refusal: null })
+  })
+
+  // A computer offline: every request fails before reaching LinkedIn.
+  it('says nothing was answered when no request reached LinkedIn', async () => {
+    const adapter = quiet()
+    const rows = await adapter.fetch(async () => { throw new TypeError('fetch failed') })
+    expect(rows).toEqual([])
+    expect(adapter.outcome).toEqual({ answered: 0, refusal: null })
   })
 })
 
@@ -239,8 +268,24 @@ describe('linkedin adapter on a refusal', () => {
 
   it('treats a redirect to a sign-in page as a refusal', async () => {
     const li = fakeLinkedin({ landedOn: 'https://www.linkedin.com/authwall?trk=guest' })
-    await expect(quiet().fetch(li.http)).rejects.toThrow(/sign in/)
+    const adapter = quiet()
+    await expect(adapter.fetch(li.http)).rejects.toThrow(/sign in/)
     expect(li.calls).toHaveLength(1)
+    expect(adapter.outcome).toEqual({ answered: 1, refusal: { reason: 'a redirect to sign in', retryAfterMs: null } })
+  })
+
+  // The guard never pauses for less than LinkedIn asked, so the ask has to
+  // reach it, whether the run kept postings or failed outright.
+  it('hands on how long LinkedIn asked to be left alone', async () => {
+    const told = (n) => Object.assign(new Error('HTTP 429 for https://x'), { retryAfter: '7200' })
+    const li = fakeLinkedin({ search: (n) => { if (n === 3) throw told(n); return numbered(n) } })
+    const adapter = quiet()
+    expect(await adapter.fetch(li.http)).toHaveLength(6)
+    expect(adapter.outcome).toEqual({ answered: 3, refusal: { reason: 'HTTP 429', retryAfterMs: 7200000 } })
+    const early = quiet()
+    await expect(early.fetch(fakeLinkedin({ search: (n) => { throw told(n) } }).http)).rejects.toThrow(/HTTP 429/)
+    await expect(early.fetch(fakeLinkedin().http)).rejects.toThrow(/HTTP 429/)
+    expect(early.outcome.refusal).toEqual({ reason: 'HTTP 429', retryAfterMs: 7200000 })
   })
 
   it('treats any other failure as one lost page or one lost description', async () => {

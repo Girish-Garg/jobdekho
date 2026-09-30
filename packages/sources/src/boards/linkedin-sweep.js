@@ -1,6 +1,6 @@
 import { parseLinkedin } from './linkedin-cards.js'
 import { jobUrl, parseLinkedinJob } from './linkedin-job.js'
-import { planQueries, searchUrl, SEARCH_BUDGET, DESCRIBE_CAP } from './linkedin-plan.js'
+import { planQueries, searchUrl, SEARCH_BUDGET, DESCRIBE_CAP, PAST_MONTH } from './linkedin-plan.js'
 import { Refused } from './linkedin-polite.js'
 
 const SOURCE = 'linkedin'
@@ -18,15 +18,16 @@ async function attempt(step) {
 
 // `cards` belongs to the caller, keyed by posting id, so a refusal part way
 // through still leaves it everything that came in first. It is also the
-// dedupe: one internship turns up under several terms.
-export async function sweep(get, cards, { plan = planQueries(), budget = SEARCH_BUDGET } = {}) {
+// dedupe: one internship turns up under several terms. `lookback` is the
+// f_TPR window, a month or a week (see linkedin-plan.js).
+export async function sweep(get, cards, { plan = planQueries(), budget = SEARCH_BUDGET, lookback = PAST_MONTH } = {}) {
   const spent = new Set()
   let used = 0
   for (const { term, page } of plan) {
     if (used >= budget) break
     if (spent.has(term)) continue
     used += 1
-    const rows = await attempt(async () => parseLinkedin(await get(searchUrl(term, page))))
+    const rows = await attempt(async () => parseLinkedin(await get(searchUrl(term, page, lookback))))
     if (!rows) continue
     const fresh = rows.filter((row) => !cards.has(row.externalId))
     for (const row of fresh) cards.set(row.externalId, row)

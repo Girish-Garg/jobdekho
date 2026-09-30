@@ -30,6 +30,16 @@ function redactedError(err) {
   return safe === message ? err : new Error(safe)
 }
 
+// A site that is asking to be left alone may say for how long in a
+// Retry-After header, and the response is gone once this throws, so the
+// header travels on the error for whoever wants it (LinkedIn's guard does).
+function statusError(res, url) {
+  const err = new Error(`HTTP ${res.status} for ${redactUrl(url)}`)
+  const retryAfter = res.headers?.get?.('retry-after')
+  if (retryAfter) err.retryAfter = retryAfter
+  return err
+}
+
 export function createHttp({ fetchImpl = fetch, timeoutMs = DEFAULT_TIMEOUT, userAgent = DEFAULT_UA } = {}) {
   return async function http(url, options = {}) {
     const controller = new AbortController()
@@ -40,7 +50,7 @@ export function createHttp({ fetchImpl = fetch, timeoutMs = DEFAULT_TIMEOUT, use
         signal: controller.signal,
         headers: { 'User-Agent': userAgent, Accept: 'application/json', ...(options.headers || {}) },
       })
-      if (!res.ok) throw new Error(`HTTP ${res.status} for ${redactUrl(url)}`)
+      if (!res.ok) throw statusError(res, url)
       return res
     } catch (err) {
       throw redactedError(err)

@@ -1,5 +1,6 @@
 import { politeGet, Refused } from './linkedin-polite.js'
 import { sweep, describe } from './linkedin-sweep.js'
+import { FIRST_SWEEP } from './linkedin-plan.js'
 
 export { parseLinkedin } from './linkedin-cards.js'
 
@@ -15,9 +16,11 @@ export { parseLinkedin } from './linkedin-cards.js'
 // (linkedin-polite.js).
 //
 // fetch's second argument is optional: { known, wanted }, the predicates
-// linkedin-sweep.js describes. Without them every card is a candidate for a
-// description, up to the cap.
-export function linkedin({ wait, random } = {}) {
+// linkedin-sweep.js describes, and `linkedin`, the sweep's size as the
+// scrape's guard chose it ({ lookback, searches, views }, see
+// apps/scraper/src/linkedin-guard.js). Without them every card is a
+// candidate for a description, and the run is a first sweep's size.
+export function linkedin({ wait, random, now } = {}) {
   let refused = null
   const adapter = {
     name: 'linkedin',
@@ -25,21 +28,27 @@ export function linkedin({ wait, random } = {}) {
     // postings returns them rather than throwing, since the runner keeps
     // nothing from a source that threw, so the reason has to travel here.
     note: null,
+    // How the last run went, for the guard to record: how many requests
+    // LinkedIn answered, and its refusal ({ reason, retryAfterMs }) or null.
+    outcome: null,
     async fetch(http, context) {
       // The runner retries a source that threw. After a refusal that retry
       // must not reach LinkedIn at all.
-      if (refused) throw new Error(refused)
+      if (refused) throw new Error(adapter.note)
       adapter.note = null
-      const get = politeGet(http, { wait, random })
+      const size = { ...FIRST_SWEEP, ...context?.linkedin }
+      const get = politeGet(http, { wait, random, now })
       const cards = new Map()
       try {
-        await sweep(get, cards)
-        await describe(get, cards, { known: context?.known, wanted: context?.wanted })
+        await sweep(get, cards, { budget: size.searches, lookback: size.lookback })
+        await describe(get, cards, { known: context?.known, wanted: context?.wanted, cap: size.views })
       } catch (err) {
         if (!(err instanceof Refused)) throw err
-        refused = `LinkedIn refused (${err.message}); stopped at once with ${cards.size} postings and will not ask again this run`
-        adapter.note = refused
-        if (cards.size === 0) throw new Error(refused)
+        refused = { reason: err.message, retryAfterMs: err.retryAfterMs }
+        adapter.note = `LinkedIn refused (${err.message}); stopped at once with ${cards.size} postings and will not ask again this run`
+        if (cards.size === 0) throw new Error(adapter.note)
+      } finally {
+        adapter.outcome = { answered: get.answered(), refusal: refused }
       }
       return [...cards.values()]
     },

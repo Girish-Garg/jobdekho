@@ -1,8 +1,9 @@
-import { useId } from 'react';
 import { useScrape } from '../lib/useScrape.js';
 import { useRefreshSetting } from '../lib/useRefreshSetting.js';
 import { refreshStatus } from '../lib/refreshStatus.js';
 import SettingsCard from './SettingsCard.jsx';
+import SettingSwitch from './SettingSwitch.jsx';
+import LinkedInSetting from './LinkedInSetting.jsx';
 import RefreshLastRun from './RefreshLastRun.jsx';
 import { CheckIcon, HistoryIcon } from './Icon.jsx';
 
@@ -15,12 +16,12 @@ const SAVED = {
 const TONE = { busy: 'text-ink', error: 'text-ember', done: 'text-applied', idle: 'text-muted' };
 
 // Where the postings come from and how fresh they are kept: the daily
-// refresh, saved as it is flipped like every other setting; the last run and
-// the sources it missed; and a refresh on demand, which the feed's header
-// offers too.
+// refresh and whether it reads LinkedIn, each saved as it is flipped like
+// every other setting; the last run and the sources it missed; and a
+// refresh on demand, which only this card offers.
 export default function RefreshSettingsCard() {
   const { scrape, finished, start } = useScrape();
-  const { autoRefresh, ready, saved, toggle } = useRefreshSetting();
+  const { autoRefresh, linkedin, ready, saved, toggle, toggleLinkedin } = useRefreshSetting();
   const running = Boolean(scrape?.running);
   const status = refreshStatus(scrape, { finished });
 
@@ -31,7 +32,16 @@ export default function RefreshSettingsCard() {
       hint="JobDekho fetches new postings from the job boards and careers pages it follows, from this computer."
       note={<span aria-live="polite" className="shrink-0 pt-1">{SAVED[saved] ?? null}</span>}
     >
-      <AutoRefreshSwitch on={autoRefresh} disabled={!ready} onChange={toggle} />
+      <div className="space-y-4">
+        <SettingSwitch
+          label="Refresh once a day on its own"
+          hint="While JobDekho is running, it fetches new postings whenever the last refresh is a day old."
+          on={autoRefresh}
+          disabled={!ready}
+          onChange={toggle}
+        />
+        <LinkedInSetting on={linkedin} disabled={!ready} onChange={toggleLinkedin} status={scrape?.linkedin ?? null} />
+      </div>
       <RefreshLastRun lastRun={scrape?.lastRun ?? null} />
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <button
@@ -49,37 +59,5 @@ export default function RefreshSettingsCard() {
         </span>
       </div>
     </SettingsCard>
-  );
-}
-
-function AutoRefreshSwitch({ on, disabled, onChange }) {
-  const label = useId();
-  const hint = useId();
-  return (
-    <div className="flex items-start justify-between gap-4">
-      <span className="text-sm">
-        <span id={label} className="block font-semibold text-ink">Refresh once a day on its own</span>
-        <span id={hint} className="text-muted">While JobDekho is running, it fetches new postings whenever the last refresh is a day old.</span>
-      </span>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={on}
-        aria-labelledby={label}
-        aria-describedby={hint}
-        disabled={disabled}
-        onClick={() => onChange(!on)}
-        className={`relative mt-0.5 h-6 w-11 shrink-0 rounded-full border transition-colors duration-fast ease disabled:opacity-60 ${
-          on ? 'border-primary bg-primary' : 'border-edge bg-select'
-        }`}
-      >
-        <span
-          aria-hidden="true"
-          className={`absolute left-px top-px h-5 w-5 rounded-full shadow-raise transition-transform duration-fast ease ${
-            on ? 'translate-x-5 bg-on-primary' : 'bg-panel'
-          }`}
-        />
-      </button>
-    </div>
   );
 }
