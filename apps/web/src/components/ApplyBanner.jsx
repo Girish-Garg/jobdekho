@@ -16,6 +16,7 @@ const WALLS = new Set(['sign-in', 'account', 'code', 'human-check']);
 function headOf(view) {
   if (view.reason === 'closed') return 'This posting looks closed';
   if (view.reason === 'submitted') return 'Looks submitted';
+  if (view.reason === 'click-through') return 'Go on to the application';
   return HEAD[view.state] ?? '';
 }
 

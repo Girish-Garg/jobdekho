@@ -44,7 +44,7 @@ describe('Apply assist routes', () => {
     expect((await app.inject({ url: '/api/apply/browser' })).json()).toEqual({ browser: { name: 'Microsoft Edge' }, canPopOut: true })
     const res = await post(app, '/api/apply/sessions', { postingId: 'p2' })
     expect(res.statusCode).toBe(400)
-    expect(res.json().error).toMatch(/job-board postings/)
+    expect(res.json().error).toMatch(/job board you are signed in to/)
     expect((await post(app, '/api/apply/sessions', { postingId: 'nope' })).statusCode).toBe(404)
   })
 

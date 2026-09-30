@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { pageSignals } from '@jobdekho/server/apply/page-signals.js'
 import { classify } from '@jobdekho/server/apply/field-classify.js'
-import { applyUrlFor, offersApply } from '@jobdekho/server/apply/apply-url.js'
+import { applyUrlFor, offersApply, clickThrough } from '@jobdekho/server/apply/apply-url.js'
 import { questionsUrl, readQuestions, withQuestions } from '@jobdekho/server/apply/greenhouse-questions.js'
 import { sentenceFor } from '@jobdekho/server/apply/handover-copy.js'
 
@@ -50,12 +50,22 @@ describe('applyUrlFor', () => {
     expect(applyUrlFor(posting('workday:nvidia', 'https://nvidia.wd5.myworkdayjobs.com/x/job/1'))).toBe('https://nvidia.wd5.myworkdayjobs.com/x/job/1')
   })
 
-  it('offers nothing for job boards or for a link that is not a web page', () => {
-    for (const source of ['linkedin', 'internshala', 'unstop', 'instahyre', 'adzuna', 'remotive']) {
+  it('offers nothing for a board applied to signed in, or for a link that is not a web page', () => {
+    for (const source of ['linkedin', 'internshala', 'unstop', 'instahyre', 'naukri', 'wellfound', 'indeed']) {
       expect(offersApply(posting(source, 'https://example.com/job'))).toBe(false)
       expect(applyUrlFor(posting(source, 'https://example.com/job'))).toBeNull()
     }
     expect(applyUrlFor(posting('lever:x', 'javascript:alert(1)'))).toBeNull()
+  })
+
+  // An aggregator's page links on to the company's form, which fills like any.
+  it('opens an aggregator where it points, for the person to click through', () => {
+    for (const source of ['adzuna', 'remoteok', 'remotive', 'arbeitnow']) {
+      expect(applyUrlFor(posting(source, 'https://example.com/job'))).toBe('https://example.com/job')
+      expect(clickThrough(posting(source, 'https://example.com/job'))).toBe(true)
+    }
+    expect(clickThrough(posting('lever:x', 'https://jobs.lever.co/x/1'))).toBe(false)
+    expect(sentenceFor('yours', 'click-through')).toMatch(/press Fill this page/)
   })
 })
 

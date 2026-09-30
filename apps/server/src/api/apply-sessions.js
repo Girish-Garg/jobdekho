@@ -28,7 +28,7 @@ export function sessionRoutes(app, registry, deps) {
     const userId = request.user.sub
     const posting = await app.dashboard.getPosting(userId, String(request.body?.postingId ?? ''))
     if (!posting) return reply.code(404).send({ error: 'That posting is not there any more.' })
-    if (!offersApply(posting)) return reply.code(400).send({ error: 'Apply assist is not offered for job-board postings: open the posting and apply there.' })
+    if (!offersApply(posting)) return reply.code(400).send({ error: 'Apply assist does not fill applications inside a job board you are signed in to: open the posting there, with your details laid out to paste.' })
     try {
       const opened = await registry.open({ posting, userId, profile: await app.dashboard.getProfile(userId) })
       if (opened.conflict) {

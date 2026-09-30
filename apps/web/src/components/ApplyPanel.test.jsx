@@ -15,7 +15,9 @@ vi.mock('../api/apply.js', () => ({
   fillApply: vi.fn(async () => ({})),
   takeOverApply: vi.fn(async () => ({})),
   showApplyWindow: vi.fn(async () => ({})),
-  getApplyCopy: vi.fn(async () => ({ rows: [{ label: 'Email', value: 'demo@example.com' }], coverLetter: 'Dear Hiring Team,' })),
+  getApplyCopy: vi.fn(async () => ({ rows: [{ label: 'Email', value: 'demo@example.com' }], coverLetter: 'Dear Hiring Team,', hasResume: true })),
+  getApplyElsewhere: vi.fn(async () => null),
+  APPLY_RESUME_URL: '/api/apply/resume',
   applyFileUrl: (id, kind) => `/f/${id}/${kind}`,
   applySocketUrl: (id) => `ws://test/${id}`,
 }));
@@ -37,8 +39,38 @@ beforeEach(() => {
 });
 
 describe('ApplyAssistButton', () => {
-  it('is not there for job-board postings', () => {
-    render(<ApplyAssistButton posting={{ ...POSTING, source: 'linkedin', url: 'https://in.linkedin.com/jobs/view/1' }} />);
+  const ON_BOARD = { ...POSTING, id: 'b1', source: 'linkedin', url: 'https://in.linkedin.com/jobs/view/1' };
+
+  // A board applied to signed in does not allow a tool in the account, so
+  // the button lays the details out to paste there, needing no browser.
+  it('lays the details and the resume out to paste on a board applied to signed in', async () => {
+    api.getApplyBrowser.mockResolvedValue({ browser: null });
+    render(<ApplyAssistButton posting={ON_BOARD} />);
+    const button = screen.getByRole('button', { name: 'Apply assist' });
+    expect(button).not.toBeDisabled();
+    expect(button).toHaveAttribute('title', expect.stringMatching(/paste into LinkedIn/));
+    fireEvent.click(button);
+    const dialog = await screen.findByRole('dialog', { name: /Apply on LinkedIn/ });
+    expect(dialog).toHaveTextContent('Apply on LinkedIn, with your details ready');
+    expect(await screen.findByText('demo@example.com')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Open on LinkedIn/ })).toHaveAttribute('href', ON_BOARD.url);
+    expect(screen.getByRole('link', { name: 'Your resume (PDF)' })).toHaveAttribute('href', '/api/apply/resume');
+    expect(api.openApply).not.toHaveBeenCalled();
+  });
+
+  it('offers to fill the same job on the company\'s own careers page instead', async () => {
+    const own = { id: 'c1', title: 'SRE', company: 'CRED', source: 'lever:cred', url: 'https://jobs.lever.co/cred/1' };
+    api.getApplyElsewhere.mockResolvedValueOnce(own);
+    api.openApply.mockReturnValue(new Promise(() => {}));
+    render(<ApplyAssistButton posting={ON_BOARD} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Apply assist' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Apply assist there' }));
+    await waitFor(() => expect(api.openApply).toHaveBeenCalledWith('c1'));
+    expect(screen.queryByRole('dialog', { name: /Apply on LinkedIn/ })).not.toBeInTheDocument();
+  });
+
+  it('is not there for a posting with no link', () => {
+    render(<ApplyAssistButton posting={{ ...ON_BOARD, url: '' }} />);
     expect(screen.queryByRole('button', { name: 'Apply assist' })).not.toBeInTheDocument();
   });
 

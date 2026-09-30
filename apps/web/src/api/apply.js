@@ -37,10 +37,20 @@ export function showApplyWindow(id, shown) {
   return post(`${session(id)}/window`, { shown });
 }
 
-// { rows: [{ label, value }], coverLetter }, with no browser needed at all.
+// { rows: [{ label, value }], coverLetter, hasResume }, with no browser
+// needed at all.
 export function getApplyCopy(postingId) {
   return req(`/api/apply/copy/${encodeURIComponent(postingId)}`);
 }
+
+// { posting }: the same job from the company's own careers page, where Apply
+// assist can fill it, for one on a board applied to signed in; or null.
+export function getApplyElsewhere(postingId) {
+  return req(`/api/apply/elsewhere/${encodeURIComponent(postingId)}`).then((d) => d.posting ?? null);
+}
+
+// The resume PDF the person uploaded, to attach to a form by hand.
+export const APPLY_RESUME_URL = '/api/apply/resume';
 
 export const applyFileUrl = (id, kind) => `${session(id)}/files/${kind}`;
 

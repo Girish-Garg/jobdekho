@@ -1,16 +1,23 @@
 // Where Apply assist opens a posting, and whether it opens it at all.
 //
-// Job boards are left out. LinkedIn, Internshala, Unstop, Instahyre, Naukri
-// and the aggregators apply through their own signed-in platforms or send the
-// person on to one (LinkedIn forbids automation outright), so their postings
-// keep "Open posting" only. The web app hides the button for the same list
-// (apps/web/src/lib/applyOffer.js); this is the check that counts.
-export const JOB_BOARDS = new Set([
-  'linkedin', 'internshala', 'unstop', 'instahyre', 'naukri',
-  'adzuna', 'remoteok', 'remotive', 'arbeitnow', 'wellfound', 'indeed',
-])
+// Boards applied on signed in are left out: LinkedIn, Internshala, Unstop,
+// Instahyre, Naukri, Wellfound and Indeed take the application inside the
+// person's own account there, and their terms do not allow a tool to act in
+// it (LinkedIn restricts accounts over it). Their postings get the person's
+// details laid out to paste instead (api/apply-copy.js). The web app makes the
+// same split (apps/web/src/lib/applyOffer.js); this is the check that counts.
+export const SIGNED_IN_BOARDS = new Set(['linkedin', 'internshala', 'unstop', 'instahyre', 'naukri', 'wellfound', 'indeed'])
+
+// Aggregators list a job and link on to where it is applied for, usually the
+// company's own form. Apply assist opens their page and the person follows its
+// Apply link in the window; the form that reaches fills like any other.
+export const AGGREGATORS = new Set(['adzuna', 'remoteok', 'remotive', 'arbeitnow'])
+
+export const JOB_BOARDS = new Set([...SIGNED_IN_BOARDS, ...AGGREGATORS])
 
 export const sourceOf = (posting) => String(posting?.source ?? '').split(':')[0].toLowerCase()
+
+export const clickThrough = (posting) => AGGREGATORS.has(sourceOf(posting))
 
 function webUrl(value) {
   try {
@@ -21,7 +28,7 @@ function webUrl(value) {
   }
 }
 
-export const offersApply = (posting) => !JOB_BOARDS.has(sourceOf(posting)) && webUrl(posting?.url) !== null
+export const offersApply = (posting) => !SIGNED_IN_BOARDS.has(sourceOf(posting)) && webUrl(posting?.url) !== null
 
 const onHost = (url, suffix) => url.hostname === suffix || url.hostname.endsWith(`.${suffix}`)
 

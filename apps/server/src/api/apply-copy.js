@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { profileValues } from '../apply/profile-values.js'
 import { phoneFor } from '../apply/phone-format.js'
+import { sameJobElsewhere } from '../apply/same-job.js'
 
 // The copy panel: everything Apply assist would have filled, for the person
 // to paste into a form in their own browser. It is the way through whenever
@@ -23,11 +24,31 @@ export function copyRows(values) {
 export function copyRoutes(app, registry) {
   const auth = { preHandler: app.requireAuth }
 
+  // `hasResume` says whether the resume PDF the person uploaded is there to
+  // download (below), for a form filled by hand with no session to make one.
   app.get('/api/apply/copy/:postingId', auth, async (request) => {
     const userId = request.user.sub
     const values = profileValues(await app.dashboard.getProfile(userId))
     const saved = await app.dashboard.getAiResult?.(userId, request.params.postingId, 'cover-letter')
-    return { rows: copyRows(values), coverLetter: saved?.result?.letter ?? '' }
+    const hasResume = Boolean(app.dashboard.originalResumePath?.(userId))
+    return { rows: copyRows(values), coverLetter: saved?.result?.letter ?? '', hasResume }
+  })
+
+  // For a job on a board applied to signed in: the same job from the company's
+  // own careers page, where Apply assist can fill it, or null (see
+  // apply/same-job.js).
+  app.get('/api/apply/elsewhere/:postingId', auth, async (request) => {
+    const userId = request.user.sub
+    const posting = await app.dashboard.getPosting(userId, request.params.postingId)
+    return { posting: posting ? await sameJobElsewhere(app.dashboard, userId, posting) : null }
+  })
+
+  app.get('/api/apply/resume', auth, async (request, reply) => {
+    const path = app.dashboard.originalResumePath?.(request.user.sub)
+    if (!path) return reply.code(404).send({ error: 'There is no resume PDF yet. Upload one on the Profile page.' })
+    reply.type('application/pdf')
+    reply.header('content-disposition', 'attachment; filename="resume.pdf"')
+    return readFileSync(path)
   })
 
   // The files an open application prepared, to download and attach by hand.

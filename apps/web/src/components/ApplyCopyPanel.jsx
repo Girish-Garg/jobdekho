@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getApplyCopy, applyFileUrl } from '../api/apply.js';
+import { getApplyCopy, applyFileUrl, APPLY_RESUME_URL } from '../api/apply.js';
 
 // Everything Apply assist would have filled, to paste into the form in the
 // person's own browser: the way through whenever a site will not work in the
@@ -31,6 +31,13 @@ export default function ApplyCopyPanel({ postingId, sessionId, files }) {
   if (!copy) return <p className="px-2 py-3 text-sm text-muted">Gathering your details...</p>;
   return (
     <section aria-label="Copy your details" className="flex min-h-0 flex-col gap-3 overflow-y-auto px-1">
+      {/* With no application open to make one, the resume as uploaded, first,
+          since it is what nearly every form asks to attach. */}
+      {!sessionId && copy.hasResume && (
+        <div className="flex flex-wrap gap-2">
+          <a href={APPLY_RESUME_URL} className="btn btn-quiet btn-sm" download>Your resume (PDF)</a>
+        </div>
+      )}
       <ul className="flex flex-col gap-1">
         {copy.rows.map((row) => (
           <li key={row.label} className="flex items-center gap-2 rounded-md px-1 py-1 hover:bg-select">

@@ -1,6 +1,6 @@
 import { randomBytes, randomUUID } from 'node:crypto'
 import { join } from 'node:path'
-import { applyUrlFor } from './apply-url.js'
+import { applyUrlFor, clickThrough } from './apply-url.js'
 import { atsOf } from './ats-hints.js'
 import { profileValues } from './profile-values.js'
 import { makeProfileDir, removeProfileDir } from './profile-dir.js'
@@ -37,7 +37,7 @@ export async function openSession(deps, { posting, userId, profile }) {
   const browser = deps.findBrowser()
   if (!browser) throw new ApplyError('no-browser', 'Apply assist needs Google Chrome or Microsoft Edge on this computer.')
   const url = applyUrlFor(posting)
-  if (!url) throw new ApplyError('not-offered', 'Apply assist is not offered for job-board postings: open the posting and apply there.')
+  if (!url) throw new ApplyError('not-offered', 'Apply assist does not fill applications inside a job board you are signed in to: open the posting there, with your details laid out to paste.')
   const s = newSession({ posting, userId, url, mode: deps.windowMode(), browserName: browser.name, values: profileValues(profile) })
   s.profileDir = makeProfileDir()
   const hooks = { port: deps.port, onNavigated }
@@ -76,11 +76,14 @@ function followPopups(s, hooks) {
 
 // Loads the posting, lets the page settle, and fills it once: opening Apply
 // assist is the person's press for the first page. A person who pressed in
-// the live view before that has the wheel, and nothing is filled.
+// the live view before that has the wheel, and nothing is filled. An
+// aggregator's page is not the application: the person follows its Apply
+// link first, and presses Fill this page on the form it reaches.
 export async function startApplying(s) {
   await s.active.page.goto(s.url, { waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => {})
   await sleep(1200)
   if (s.closing || s.state !== 'starting') return
+  if (clickThrough(s.posting)) return settle(s, { wall: 'click-through' })
   try {
     await fillPage(s)
   } catch {
