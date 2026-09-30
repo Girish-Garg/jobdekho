@@ -59,9 +59,9 @@ describe('ChatInput', () => {
     expect(screen.getByRole('button', { name: 'Ask' })).toBeDisabled();
   });
 
-  it('says plainly that a question spends the person\'s own subscription', () => {
+  it('says plainly whose AI answers: their own subscription, or a model on their computer', () => {
     render(<ChatInput busy={false} onSend={() => {}} />);
-    expect(screen.getByText(/on your own subscription/)).toBeInTheDocument();
+    expect(screen.getByText('Runs on your own AI CLI: your subscription, or a model on this computer.')).toBeInTheDocument();
   });
 
   it('sends from the round button, which is held back until there is something to send', () => {

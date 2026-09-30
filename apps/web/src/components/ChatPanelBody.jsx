@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useProviders } from '../lib/useProviders.js';
 import { useAiRunner } from '../lib/useAiRunner.js';
 import { useChat } from '../lib/useChat.js';
+import { useChatWatcher } from '../lib/chatSession.js';
 import { useChatScope } from '../lib/useChatScope.js';
 import { useChatActions } from '../lib/useChatActions.js';
 import { useChatLayout } from '../lib/useChatLayout.js';
@@ -36,6 +37,7 @@ export default function ChatPanelBody({ onClose, context, apply, request, draft 
   const layout = useChatLayout({ docked: onResume });
   const runner = useAiRunner(cli.providers);
   const chat = useChat(runner);
+  useChatWatcher();
   const scope = useChatScope();
   const openDoc = useOpenDocument();
   const onFeed = page === 'postings';
@@ -78,11 +80,9 @@ export default function ChatPanelBody({ onClose, context, apply, request, draft 
       {onResume && openDoc && <ChatDocumentScope doc={openDoc} />}
       <ChatMessages
         entries={buildConversation(chat.turns, actions.results ?? [])}
-        pending={runner.pending}
-        progress={runner.progress}
+        call={runner.call}
         empty={empty}
         card={card}
-        answerer={answerer?.label ?? 'AI'}
         onApply={links.onApply}
         onOpenRef={links.onOpenRef}
       />

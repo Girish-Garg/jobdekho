@@ -16,6 +16,7 @@ vi.mock('../api.js', () => ({
   getProviders: vi.fn(async () => []),
   getProviderPreference: vi.fn(async () => ({ provider: 'auto' })),
   putProviderPreference: vi.fn(async () => null),
+  getChatPending: vi.fn(async () => ({ pending: null, failed: null })),
   getChatHistory: vi.fn(async () => ({ turns: [] })),
   getPostingAiResults: vi.fn(async () => []),
   runPostingAction: vi.fn(() => new Promise(() => {})),

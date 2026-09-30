@@ -7,6 +7,7 @@ import { readLayout } from '../lib/chatLayout.js';
 vi.mock('../api.js', () => ({
   getProviders: vi.fn(async () => []),
   getProviderPreference: vi.fn(async () => ({ provider: 'auto' })),
+  getChatPending: vi.fn(async () => ({ pending: null, failed: null })),
   getChatHistory: vi.fn(async () => ({ turns: [] })),
   sendChatMessage: vi.fn(),
   clearChatHistory: vi.fn(async () => null),

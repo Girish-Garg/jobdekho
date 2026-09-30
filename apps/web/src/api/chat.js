@@ -27,3 +27,11 @@ export function applyProposal(id) {
 export function discardProposal(id) {
   return req(`/api/chat/proposals/${encodeURIComponent(id)}/discard`, { method: 'POST', body: '{}' });
 }
+
+// The question the server is answering right now, if any, and the last one
+// that failed with nobody watching: { pending, failed } (see the server's
+// chat/in-flight.js). What a page reloaded mid-answer reads instead of the
+// stream it no longer has.
+export function getChatPending() {
+  return req('/api/chat/pending');
+}

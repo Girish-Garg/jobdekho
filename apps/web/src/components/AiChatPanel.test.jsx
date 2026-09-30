@@ -1,11 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act, within } from '@testing-library/react';
 import AiChatPanel from './AiChatPanel.jsx';
 import { announceOpenPosting, onOpenPostingRequest } from '../lib/openPostingSignal.js';
 
 vi.mock('../api.js', () => ({
   getProviders: vi.fn(),
   getProviderPreference: vi.fn(async () => ({ provider: 'auto' })),
+  getChatPending: vi.fn(async () => ({ pending: null, failed: null })),
   getChatHistory: vi.fn(),
   sendChatMessage: vi.fn(),
   clearChatHistory: vi.fn(async () => null),
@@ -69,19 +70,52 @@ describe('AiChatPanel, plain questions', () => {
     );
   });
 
-  it('shows the question and its progress line while a call is in flight', async () => {
+  it('shows the question and a waiting card naming the CLI and its step while a call is in flight', async () => {
     let finish;
     sendChatMessage.mockImplementationOnce(async (_body, { onEvent }) => {
       onEvent({ event: 'start', provider: 'claude', path: 'x' });
+      onEvent({ event: 'progress', stage: 'send', chars: 10 });
       onEvent({ event: 'progress', stage: 'wait', elapsedMs: 5000 });
       await new Promise((r) => { finish = r; });
       return TURN;
     });
     setup();
     await ask('hi');
-    await screen.findByText('Claude Code is thinking... 5s');
+    const card = await screen.findByRole('region', { name: 'Answer in progress' });
+    expect(within(card).getByText('Claude Code')).toBeInTheDocument();
+    expect(within(card).getByText('Thinking...')).toHaveAttribute('aria-live', 'polite');
+    const steps = within(within(card).getByRole('list', { name: 'Progress' })).getAllByRole('listitem');
+    expect(steps.map((step) => step.textContent)).toEqual(['Sent to Claude Code (done)', 'Thinking', 'Writing it up']);
+    expect(steps[1]).toHaveAttribute('aria-current', 'step');
     expect(screen.getByText('hi')).toBeInTheDocument();
     await waitFor(() => finish());
+  });
+
+  // The answer used to be thrown away with the panel: the call was held in
+  // the panel's own state, so closing it mid-answer lost the question and
+  // the answer, though the server still saved the turn.
+  it('keeps the question in flight across closing and opening the panel, and shows the answer that landed meanwhile', async () => {
+    let finish;
+    sendChatMessage.mockImplementationOnce(async (_body, { onEvent }) => {
+      onEvent({ event: 'start', provider: 'claude' });
+      await new Promise((r) => { finish = r; });
+      return TURN;
+    });
+    const { rerender } = setup();
+    await ask('which are remote?');
+    await screen.findByRole('region', { name: 'Answer in progress' });
+    const closed = <AiChatPanel open={false} onClose={() => {}} context={{ filters: FILTERS, sort: 'match' }} apply={{}} />;
+    const opened = <AiChatPanel open onClose={() => {}} context={{ filters: FILTERS, sort: 'match' }} apply={{}} />;
+    rerender(closed);
+    rerender(opened);
+    expect(await screen.findByRole('region', { name: 'Answer in progress' })).toBeInTheDocument();
+    expect(screen.getByText('which are remote?')).toBeInTheDocument();
+    rerender(closed);
+    await act(async () => finish());
+    rerender(opened);
+    expect(await screen.findByText('Two of these are remote.')).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Answer in progress' })).not.toBeInTheDocument();
+    expect(getChatHistory).toHaveBeenCalledTimes(1);
   });
 
   it('offers the actions a turn came back with, and applies one on click', async () => {
@@ -128,7 +162,7 @@ describe('AiChatPanel, plain questions', () => {
   it('stands one install hint in for the whole panel when no CLI can answer anything', async () => {
     getProviders.mockResolvedValue([{ ...CLAUDE, present: false, runs: false }]);
     setup();
-    await screen.findByText('The chat asks an AI CLI installed on this computer, on your own subscription.');
+    await screen.findByText('The chat asks an AI CLI installed on this computer, on your own subscription or a local model.');
     expect(screen.queryByPlaceholderText('Ask about what is on screen')).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'https://claude.ai/code' })).toBeInTheDocument();
   });
@@ -157,7 +191,7 @@ describe('AiChatPanel, the redesigned panel', () => {
     expect(screen.queryByRole('list', { name: 'Suggested questions' })).not.toBeInTheDocument();
   });
 
-  it('shows the question at once, then a typing row with the progress line, until the answer lands', async () => {
+  it('shows the question at once, then the waiting card, saying the web gets the question only, until the answer lands', async () => {
     let finish;
     sendChatMessage.mockImplementationOnce(async (_body, { onEvent }) => {
       onEvent({ event: 'start', provider: 'claude' });
@@ -165,14 +199,13 @@ describe('AiChatPanel, the redesigned panel', () => {
       await new Promise((r) => { finish = r; });
       return TURN;
     });
-    const { container } = setup();
+    setup();
     await ask('is Acme funded?');
-    expect(await screen.findByText('Searching the web with your question, not your profile...')).toHaveAttribute('aria-live', 'polite');
+    expect(await screen.findByText('Checking the web with your question only, not your profile...')).toHaveAttribute('aria-live', 'polite');
     expect(screen.getByText('is Acme funded?')).toBeInTheDocument();
-    expect(container.querySelectorAll('.typing-dot')).toHaveLength(3);
     await waitFor(() => finish());
     await screen.findByText('Two of these are remote.');
-    expect(container.querySelectorAll('.typing-dot')).toHaveLength(0);
+    expect(screen.queryByRole('region', { name: 'Answer in progress' })).not.toBeInTheDocument();
   });
 
   it('draws a saved turn that also searched the web as the answer, then the web card', async () => {

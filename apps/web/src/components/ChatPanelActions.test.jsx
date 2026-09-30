@@ -7,6 +7,7 @@ import { onNotice } from '../lib/toast.js';
 vi.mock('../api.js', () => ({
   getProviders: vi.fn(),
   getProviderPreference: vi.fn(async () => ({ provider: 'auto' })),
+  getChatPending: vi.fn(async () => ({ pending: null, failed: null })),
   getChatHistory: vi.fn(async () => ({ turns: [] })),
   sendChatMessage: vi.fn(),
   clearChatHistory: vi.fn(async () => null),

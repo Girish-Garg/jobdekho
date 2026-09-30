@@ -1,7 +1,8 @@
 // Slim top strip: wordmark, section nav, keyword search, theme toggle.
 import { useState } from 'react';
 import ThemeToggle from './ThemeToggle.jsx';
-import { SearchIcon, SparkleIcon } from './Icon.jsx';
+import AskAiToggle from './AskAiToggle.jsx';
+import { SearchIcon } from './Icon.jsx';
 
 export default function Topbar({ view, setView, q = '', onSearch, searchRef, chatOpen, onToggleChat }) {
   // Drives the "/" hint: it is only useful before anyone has found the box,
@@ -52,18 +53,7 @@ export default function Topbar({ view, setView, q = '', onSearch, searchRef, cha
 
       <div className="ml-auto flex shrink-0 items-center gap-3">
         {onToggleChat && (
-          <button
-            type="button"
-            onClick={onToggleChat}
-            data-keeps-pane
-            aria-pressed={Boolean(chatOpen)}
-            className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors duration-fast ease ${
-              chatOpen ? 'border-primary bg-primary text-on-primary' : 'border-primary/30 bg-primary/10 text-primary hover:bg-primary/15'
-            }`}
-          >
-            <SparkleIcon size={14} />
-            Ask AI
-          </button>
+          <AskAiToggle open={chatOpen} onToggle={onToggleChat} />
         )}
         <ThemeToggle />
       </div>

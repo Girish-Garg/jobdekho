@@ -12,7 +12,7 @@ import { SparkleIcon } from './Icon.jsx';
 // is what the file is on file for.
 const SECONDARY = 'inline-flex w-full items-center justify-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary transition-colors duration-fast ease-ease hover:bg-primary/15 disabled:opacity-60';
 
-const INTRO = 'Filling in from the resume asks an AI CLI installed on this computer, on your own subscription.';
+const INTRO = 'Filling in from the resume asks an AI CLI installed on this computer, on your own subscription or a local model.';
 
 // The tool policy the extraction runs under on the server: none, since the
 // prompt is the resume. Either CLI can take it, and the server picks the

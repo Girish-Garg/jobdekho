@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { runPostingAction } from '../api.js';
 import { providerFor } from './providerFor.js';
 import { ACTION_KINDS } from './chatActionKinds.js';
@@ -18,6 +18,11 @@ export function useChatActions(posting, { runner, providers }) {
   const { results, put } = useScopedResults(posting?.id ?? null);
   const [blocked, setBlocked] = useState(null);
   const [queued, setQueued] = useState(null);
+  // Taken synchronously, not only through state: the runner's session
+  // updates at once (see chatSession.js), so the render where a quick call
+  // has already ended can come before the one where queued is cleared, and
+  // the queued action would run a second time.
+  const queuedRef = useRef(null);
 
   async function start(kind, instruction = '') {
     const meta = ACTION_KINDS[kind];
@@ -39,9 +44,11 @@ export function useChatActions(posting, { runner, providers }) {
   }
 
   useEffect(() => {
-    if (!queued || runner.busy || results === undefined || queued.postingId !== posting?.id) return;
+    const next = queuedRef.current;
+    if (!next || runner.busy || results === undefined || next.postingId !== posting?.id) return;
+    queuedRef.current = null;
     setQueued(null);
-    if (!results.some((r) => r.kind === queued.kind)) start(queued.kind);
+    if (!results.some((r) => r.kind === next.kind)) start(next.kind);
   }, [queued, results, runner.busy, posting?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
@@ -50,6 +57,9 @@ export function useChatActions(posting, { runner, providers }) {
     clearBlocked: () => setBlocked(null),
     run: (kind) => start(kind),
     refine: (kind, instruction) => start(kind, instruction),
-    queue: (postingId, kind) => setQueued({ postingId, kind }),
+    queue: (postingId, kind) => {
+      queuedRef.current = { postingId, kind };
+      setQueued(queuedRef.current);
+    },
   };
 }

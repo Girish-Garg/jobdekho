@@ -13,7 +13,7 @@ import ChatPending from './ChatPending.jsx';
 // read from its top, so the newest card is brought to its top instead; and a
 // chat opening on a job lands on that job's newest card, which is how an
 // answer paid for days ago is seen rather than buried above today's turns.
-export default function ChatMessages({ entries, pending, progress, empty, card, answerer, onApply, onOpenRef }) {
+export default function ChatMessages({ entries, call, empty, card, onApply, onOpenRef }) {
   const listRef = useRef(null);
   const endRef = useRef(null);
   const lastKey = entries.at(-1)?.key;
@@ -23,7 +23,7 @@ export default function ChatMessages({ entries, pending, progress, empty, card, 
   // browser, so these are optional calls rather than only optional reads.
   useEffect(() => {
     endRef.current?.scrollIntoView?.({ block: 'end' });
-  }, [lastKey, Boolean(pending)]);
+  }, [lastKey, Boolean(call)]);
 
   useEffect(() => {
     if (!lastCard) return;
@@ -33,11 +33,11 @@ export default function ChatMessages({ entries, pending, progress, empty, card, 
   return (
     <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]">
       <div className="mx-auto flex min-h-full w-full max-w-3xl flex-col gap-6 px-4 py-5">
-        {!entries.length && !pending && <ChatEmptyState {...empty} />}
+        {!entries.length && !call && <ChatEmptyState {...empty} />}
         {entries.map((entry) => (entry.type === 'turn'
           ? <ChatTurn key={entry.key} turn={entry.turn} providers={card.providers} onApply={onApply} onOpenRef={onOpenRef} />
           : <ChatResultEntry key={entry.key} entry={entry} card={card} />))}
-        {pending && <ChatPending pending={pending} progress={progress} name={answerer} />}
+        {call && <ChatPending call={call} providers={card.providers} />}
         <div ref={endRef} />
       </div>
     </div>

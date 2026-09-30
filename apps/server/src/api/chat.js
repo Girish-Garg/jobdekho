@@ -4,8 +4,11 @@ import { chatStore } from '../chat/store.js'
 import { documentStore } from '../documents/store.js'
 import { assemblePageContext } from '../chat/page-context.js'
 import { runChatTurn } from '../chat/run.js'
+import { beginQuestion, noteEvent, endQuestion, questionState } from '../chat/in-flight.js'
 
 const MAX_MESSAGE = 2000
+const STILL_ANSWERING = 'Still answering your last question. Its answer will appear in the chat when it is ready.'
+const COULD_NOT = 'The assistant could not answer that question.'
 
 // The chat panel, on every page: a conversation that knows what the page
 // holds (see chat/page-context.js) without ever taking the client's word
@@ -21,6 +24,10 @@ export async function chatRoutes(app) {
   app.get('/api/chat/history', { preHandler: app.requireAuth }, async (request) => ({
     turns: await getChatHistory(store, request.user.sub),
   }))
+
+  // The question being answered right now and the last one that failed
+  // unseen (see chat/in-flight.js), for a page that reloaded mid-answer.
+  app.get('/api/chat/pending', { preHandler: app.requireAuth }, async (request) => questionState(request.user.sub))
 
   // "Start a new one": the person is asking to forget the old conversation,
   // not to file it away, so this clears rather than archiving. Any change
@@ -44,10 +51,20 @@ export async function chatRoutes(app) {
       dashboard: app.dashboard, documents, detect: app.ai.detect, userId, body: request.body ?? {}, question: message,
     })
     const history = await getChatHistory(store, userId)
+    if (!beginQuestion(userId, message)) return reply.code(409).send({ error: STILL_ANSWERING })
+    // The turn is saved before the question is marked done, so a watcher
+    // that sees it end finds the answer already in the history.
     return answer(request, reply, async (emit) => {
-      const turn = await runChatTurn({ message, context, history, select: app.ai.select, emit, ...cli })
-      await appendChatTurn(store, userId, turn)
-      return turn
+      try {
+        const watch = (event) => { noteEvent(userId, event); emit(event) }
+        const turn = await runChatTurn({ message, context, history, select: app.ai.select, emit: watch, ...cli })
+        await appendChatTurn(store, userId, turn)
+        endQuestion(userId)
+        return turn
+      } catch (err) {
+        endQuestion(userId, err?.kind ? err.message : COULD_NOT)
+        throw err
+      }
     })
   })
 }

@@ -86,7 +86,7 @@ export default function ChatInput({ busy, onSend, placeholder = ASK, submitLabel
           <ArrowUpIcon size={16} />
         </button>
       </div>
-      <p className="px-1 text-xs text-muted">Runs on your own AI CLI, on your own subscription.</p>
+      <p className="px-1 text-xs text-muted">Runs on your own AI CLI: your subscription, or a model on this computer.</p>
     </div>
   );
 }

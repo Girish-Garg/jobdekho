@@ -5,6 +5,7 @@ import { useAiRunner } from './useAiRunner.js';
 import { onNotice } from './toast.js';
 
 vi.mock('../api.js', () => ({
+  getChatPending: vi.fn(async () => ({ pending: null, failed: null })),
   getChatHistory: vi.fn(async () => ({ turns: [] })),
   sendChatMessage: vi.fn(),
   clearChatHistory: vi.fn(async () => null),
