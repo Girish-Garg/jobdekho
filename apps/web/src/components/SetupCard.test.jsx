@@ -14,7 +14,7 @@ const CHECKS = [
     fix: 'Install MiKTeX from https://miktex.org/download on Windows, or TeX Live from https://tug.org/texlive elsewhere, then restart JobDekho.',
   },
   { id: 'profile', label: 'Your profile', state: 'ok', detail: 'Postings are ranked against your 3 skills.', fix: 'never shown' },
-  { id: 'postings', label: 'Postings', state: 'missing', detail: 'No postings are stored yet.', fix: 'Refresh postings from the Postings page.' },
+  { id: 'postings', label: 'Postings', state: 'missing', detail: 'No postings are stored yet.', fix: 'Press Refresh now in Settings.' },
   { id: 'web', label: 'Web search', state: 'optional', detail: 'No AI here can search the web right now.', fix: 'Sign in with "ollama signin".' },
 ];
 const ALL_OK = CHECKS.map((c) => ({ ...c, state: 'ok', fix: null }));
@@ -51,7 +51,7 @@ describe('SetupCard', () => {
 
   it('shows the fix only where the check is not ok', async () => {
     await mount();
-    expect(within(row('Postings')).getByText('Refresh postings from the Postings page.')).toBeInTheDocument();
+    expect(within(row('Postings')).getByText('Press Refresh now in Settings.')).toBeInTheDocument();
     expect(within(row('Web search')).getByText('Sign in with "ollama signin".')).toBeInTheDocument();
     expect(screen.queryByText('never shown')).not.toBeInTheDocument();
   });

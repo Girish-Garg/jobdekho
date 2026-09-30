@@ -192,7 +192,7 @@ describe('the profile check', () => {
 describe('the postings check', () => {
   const NOW = Date.parse('2026-09-30T12:00:00Z')
   const run = (startedAt) => ({ id: startedAt, startedAt, sourceResults: [], newCount: 0 })
-  const FIX = 'Refresh postings from the Postings page, or run "npm run scrape" in a terminal.'
+  const FIX = 'Press "Refresh now" in Settings, under Postings, or run "npm run scrape" in a terminal.'
 
   it('is missing when nothing was ever scraped', () => {
     expect(postingsCheck({ sources: [], runs: [], now: NOW })).toEqual({

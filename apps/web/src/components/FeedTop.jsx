@@ -2,7 +2,6 @@ import FilterBar from './FilterBar.jsx';
 import PostingsHeader from './PostingsHeader.jsx';
 import DensityToggle from './DensityToggle.jsx';
 import SortSelect from './SortSelect.jsx';
-import RefreshPostings from './RefreshPostings.jsx';
 import SetupNotice from './SetupNotice.jsx';
 
 // Everything above the rows. The filters sit in the feed's own column rather
@@ -24,7 +23,6 @@ export default function FeedTop({ filters, setFilters, sort, setSort, viewMode, 
         fresh={fresh}
         controls={(
           <>
-            <RefreshPostings />
             <DensityToggle mode={viewMode} setMode={setViewMode} />
             <SortSelect sort={sort} setSort={setSort} />
           </>

@@ -5,8 +5,8 @@
 // last one finished.
 //
 // The fix names both ways to refresh, since either is true on any install:
-// the Postings page's own button and the scrape script it stands for.
-const FIX = 'Refresh postings from the Postings page, or run "npm run scrape" in a terminal.'
+// Settings' own "Refresh now" and the scrape script it stands for.
+const FIX = 'Press "Refresh now" in Settings, under Postings, or run "npm run scrape" in a terminal.'
 const DAY_MS = 24 * 60 * 60 * 1000
 
 // "today", "yesterday", "3 days ago": a first-run check wants to know

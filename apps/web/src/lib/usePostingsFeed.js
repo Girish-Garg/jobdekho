@@ -15,7 +15,7 @@ export function usePostingsFeed(filters, sort = 'match') {
   const [loading, setLoading] = useState(true);
   const [more, setMore] = useState(false);
   const [counts, setCounts] = useState({ total: 0, newToday: 0 });
-  // A finished "Refresh postings" (see useScrape.js) reads the feed again,
+  // A finished refresh (Settings' "Refresh now", see useScrape.js) reads the feed again,
   // so new postings show without a reload of the page.
   const [reloads, setReloads] = useState(0);
   useEffect(() => onRefreshed(() => setReloads((n) => n + 1)), []);
