@@ -16,8 +16,9 @@ const app = buildApp({ config, dashboardStore, logger: true })
 // and the hourly check, so the two never run a scrape each and the corpus a
 // refresh writes is the one the feed already reads (see scrape/service.js).
 // The check starts only once the server is listening, and only here, so no
-// test that builds the app ever starts a timer or a scrape.
-const scrape = createScrapeService(store, { log: app.log })
+// test that builds the app ever starts a timer or a scrape. The user id says
+// whose Adzuna key from Settings a run uses.
+const scrape = createScrapeService(store, { userId: config.devUserId, log: app.log })
 app.decorate('scrape', scrape)
 
 app.listen({ port: config.port, host: config.host })

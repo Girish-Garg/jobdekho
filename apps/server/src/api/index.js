@@ -13,6 +13,7 @@ import { documentFileRoutes } from './document-files.js'
 import { aiRoutes } from '../ai/routes.js'
 import { setupRoutes } from './setup.js'
 import { scrapeRoutes } from './scrape.js'
+import { adzunaRoutes } from './adzuna.js'
 import { createDetector } from '../ai/detect.js'
 import { createSelector } from '../ai/select.js'
 
@@ -65,4 +66,5 @@ export async function apiRoutes(app) {
   await app.register(aiRoutes)
   await app.register(setupRoutes)
   await app.register(scrapeRoutes)
+  await app.register(adzunaRoutes)
 }

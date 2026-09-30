@@ -102,3 +102,17 @@ describe('recordRun', () => {
     expect(store.runs.all()).toEqual(lines)
   })
 })
+
+// LinkedIn's description is fetched once; the next day the same job comes
+// back as a bare card, which must not wipe what was read the day before.
+describe('a posting seen again without its text', () => {
+  it('keeps the stored description and what was read from it, and still refreshes the rest', async () => {
+    const store = openStore(dir)
+    const card = { id: 'li1', source: 'linkedin', externalId: '1', title: 'Software Engineer Intern', company: 'Acme', url: 'u1', descriptionSnippet: '', descriptionText: '', level: 'mid', type: 'job' }
+    await upsertPostings(store, [{ ...card, descriptionSnippet: 'Build it.', descriptionText: 'Build it. Internship.', level: 'internship', type: 'internship' }])
+    await upsertPostings(store, [{ ...card, title: 'Software Engineer Intern (Updated)' }])
+    const row = store.corpus.byId().get('li1')
+    expect(row).toMatchObject({ title: 'Software Engineer Intern (Updated)', descriptionText: 'Build it. Internship.', level: 'internship', type: 'internship' })
+  })
+})
+

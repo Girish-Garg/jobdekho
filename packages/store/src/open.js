@@ -41,6 +41,10 @@ export const FILES = {
   // Whether the running server refreshes postings on its own once a day.
   // See apps/server/src/scrape/prefs.js.
   scrapeSettings: 'scrape-settings.json',
+  // The person's own Adzuna app id and key, pasted into Settings. A file of
+  // its own because it is a secret: the others can be opened, shared or
+  // attached to a bug report without handing it over. See adzuna-keys.js.
+  adzuna: 'adzuna-key.json',
 }
 
 export function openStore(dir) {
@@ -65,5 +69,6 @@ export function openStore(dir) {
     chatArchive: userFile(at('chatArchive')),
     documents: userFile(at('documents')),
     scrapeSettings: userFile(at('scrapeSettings')),
+    adzuna: userFile(at('adzuna')),
   }
 }

@@ -25,6 +25,21 @@ describe('createHttp', () => {
     await expect(http(url)).rejects.toThrow(/app_key=REDACTED/)
     await expect(http(url)).rejects.not.toThrow(/abc123|secretvalue/)
   })
+
+  // fetch itself can fail with the URL in its message, before any status.
+  it('redacts credentials out of an error fetch itself throws', async () => {
+    const url = 'https://api.adzuna.com/v1/api/jobs/in/search/1?app_id=abc123&app_key=secretvalue'
+    const fetchImpl = vi.fn(async (u) => { throw new TypeError(`Failed to parse URL from ${u}`) })
+    const err = await createHttp({ fetchImpl })(url).catch((e) => e)
+    expect(err.message).toBe('Failed to parse URL from https://api.adzuna.com/v1/api/jobs/in/search/1?app_id=REDACTED&app_key=REDACTED')
+    expect(err.cause).toBeUndefined()
+  })
+
+  it('passes an error with nothing to redact through as it was', async () => {
+    const abort = new DOMException('This operation was aborted', 'AbortError')
+    const http = createHttp({ fetchImpl: vi.fn(async () => { throw abort }) })
+    await expect(http('https://x/y?app_key=secret')).rejects.toBe(abort)
+  })
 })
 
 describe('redactUrl', () => {

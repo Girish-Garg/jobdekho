@@ -18,9 +18,14 @@ export function sourceName(source) {
 // the board under it, or a whole job board by its own name. The company part
 // is the board's slug for it, so only its separators and first letter change;
 // guessing word breaks inside "PhonePeLimited" would get as many wrong.
+//
+// Adzuna's key is "adzuna:in": what follows the colon is the country it was
+// searched in, not a company, so it is a whole board like Internshala.
+const COUNTRY_BOARDS = new Set(['adzuna']);
+
 export function sourceLabel(source) {
   const [board, ...rest] = String(source || '').split(':');
   const company = rest.join(':').replace(/[-_]+/g, ' ').trim();
-  if (!company) return { title: sourceName(board), board: 'Job board' };
+  if (!company || COUNTRY_BOARDS.has(board.trim().toLowerCase())) return { title: sourceName(board), board: 'Job board' };
   return { title: company[0].toUpperCase() + company.slice(1), board: sourceName(board) };
 }

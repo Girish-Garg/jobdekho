@@ -17,6 +17,12 @@ describe('greenhouse adapter', () => {
   it('names itself by slug', () => {
     expect(greenhouse({ slug: 'acme' }).name).toBe('greenhouse:acme')
   })
+
+  // "arcesiumllc" is a slug, not a name; the config may say "Arcesium".
+  it('uses the company name the config gives, else the capitalised slug', async () => {
+    expect((await greenhouse({ slug: 'arcesiumllc', company: 'Arcesium' }).fetch(http))[0].company).toBe('Arcesium')
+    expect((await greenhouse({ slug: 'acme' }).fetch(http))[0].company).toBe('Acme')
+  })
   it('maps jobs to RawPosting', async () => {
     const [raw] = await greenhouse({ slug: 'acme' }).fetch(http)
     expect(raw.externalId).toBe('5')

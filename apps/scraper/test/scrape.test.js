@@ -56,4 +56,18 @@ describe('readScrapeConfig', () => {
     expect(Array.isArray(companies.providers)).toBe(true)
     expect(Array.isArray(rules.includeKeywords)).toBe(true)
   })
+
+  // LinkedIn fetches a job's description once; the run tells it which it
+  // may skip: ones the store already describes, and ones the filter drops.
+  it('tells adapters which postings are already described and which the filter keeps', async () => {
+    const db = openStore(dir)
+    await runScrape({ db, config, http: noHttp, adapters: [board('a', [{ ...job('1'), description: 'Build the thing.' }])] })
+    let seen
+    const asking = { name: 'a', fetch: async (http, context) => { seen = context; return [] } }
+    await runScrape({ db, config, http: noHttp, adapters: [asking] })
+    expect(seen.known('a', '1')).toBe(true)
+    expect(seen.known('a', '2')).toBe(false)
+    expect(seen.wanted('a', job('3'))).toBe(true)
+    expect(seen.wanted('a', { ...job('4'), title: 'Chef' })).toBe(false)
+  })
 })

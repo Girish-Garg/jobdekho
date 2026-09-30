@@ -8,3 +8,4 @@ export * from './api/documents.js';
 export * from './api/chat.js';
 export * from './api/setup.js';
 export * from './api/scrape.js';
+export * from './api/adzuna.js';

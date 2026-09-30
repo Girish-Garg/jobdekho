@@ -27,6 +27,10 @@ vi.mock('../api.js', () => ({
   getScrapeSettings: vi.fn(async () => ({ autoRefresh: true })),
   putScrapeSettings: vi.fn(async () => null),
   getSetup: vi.fn(async () => []),
+  getAdzunaKey: vi.fn(async () => ({ configured: false, from: null, appId: null, keyEnd: null, lastRun: null })),
+  saveAdzunaKey: vi.fn(async () => null),
+  removeAdzunaKey: vi.fn(async () => null),
+  checkAdzunaKey: vi.fn(async () => ({ ok: true })),
   getProviders: vi.fn(async () => [
     { id: 'claude', label: 'Claude Code', policies: ['none', 'web'], present: true, runs: true, version: '2.1.245', error: null },
     { id: 'agy', label: 'Antigravity', policies: ['none', 'web'], present: false, runs: false, version: null, error: null },
@@ -49,7 +53,7 @@ describe('SettingsView structure', () => {
   it('renders the cards in order: the setup check and the AI, then postings, appearance and data', async () => {
     await mount();
     const headings = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent);
-    expect(headings).toEqual(['Setup check', 'AI CLI', 'Postings', 'Appearance', 'Your data']);
+    expect(headings).toEqual(['Setup check', 'AI CLI', 'Postings', 'Adzuna', 'Appearance', 'Your data']);
   });
 
   it('puts the theme choice under Appearance', async () => {

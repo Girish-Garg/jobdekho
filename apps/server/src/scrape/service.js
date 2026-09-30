@@ -10,8 +10,11 @@ import { scrapeRunner } from './run.js'
 // holds in memory (see the store's cached-file.js) rather than a second
 // parsed copy of it, and the next page of the feed reads the new postings.
 //
-// `run` is for tests, which pass a fake so no source is ever fetched.
-export function createScrapeService(store, { run = scrapeRunner(store), now = Date.now, log = null } = {}) {
+// `userId` is whose Adzuna key a run looks for (see run.js). `run` is for
+// tests, which pass a fake so no source is ever fetched.
+export function createScrapeService(store, {
+  userId = null, run = scrapeRunner(store, { userId }), now = Date.now, log = null,
+} = {}) {
   return {
     job: createScrapeJob({ run, now, log }),
     lastRun: lastRunReader(store.runs.path),

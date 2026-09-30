@@ -18,8 +18,9 @@ export function summarizeRun(run) {
 }
 
 // A last line that does not parse (an edit by hand) reads as no run rather
-// than failing every status check until someone finds it.
-function lastRecord(text) {
+// than failing every status check until someone finds it. Settings' Adzuna
+// card reads the same last line (see adzuna/last-result.js).
+export function lastRecord(text) {
   const body = text.trimEnd()
   if (!body) return null
   try {

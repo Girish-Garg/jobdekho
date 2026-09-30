@@ -61,4 +61,12 @@ describe('runAdapters', () => {
     expect(attempts).toBe(3)
     expect(results[0]).toMatchObject({ name: 'flaky', ok: false })
   })
+
+  it('hands each adapter the run context, and keeps an adapter note beside its count', async () => {
+    let got
+    const cut = { name: 'li', fetch: async (http, context) => { got = context; cut.note = 'LinkedIn refused after 12 requests'; return [{ externalId: 'x' }] } }
+    const { results } = await runAdapters([cut], {}, { context: { known: () => false } })
+    expect(typeof got.known).toBe('function')
+    expect(results[0]).toMatchObject({ name: 'li', ok: true, count: 1, note: 'LinkedIn refused after 12 requests' })
+  })
 })

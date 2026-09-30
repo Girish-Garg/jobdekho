@@ -5,7 +5,11 @@ import { toIso } from '../iso-date.js'
 // empty body and the degree classifier has nothing to read.
 const url = (slug) => `https://boards-api.greenhouse.io/v1/boards/${slug}/jobs?content=true`
 
-export function greenhouse({ slug }) {
+// A board's slug is not its name ("razorpaysoftwareprivatelimited",
+// "arcesiumllc"), so a config entry may give `company`; without one the slug,
+// capitalised, is all Greenhouse's job list offers.
+export function greenhouse({ slug, company }) {
+  const named = company || slug.charAt(0).toUpperCase() + slug.slice(1)
   return {
     name: `greenhouse:${slug}`,
     async fetch(http) {
@@ -14,7 +18,7 @@ export function greenhouse({ slug }) {
       return (data.jobs || []).map((j) => ({
         externalId: String(j.id),
         title: j.title,
-        company: slug.charAt(0).toUpperCase() + slug.slice(1),
+        company: named,
         location: j.location?.name || '',
         url: j.absolute_url,
         description: stripHtml(j.content || ''),

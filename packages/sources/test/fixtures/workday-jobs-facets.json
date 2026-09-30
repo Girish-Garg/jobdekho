@@ -1,0 +1,61 @@
+{
+  "total": 2000,
+  "jobPostings": [
+    {
+      "title": "Staff Firmware Engineer",
+      "externalPath": "/job/US-CA-Santa-Clara/Staff-Firmware-Engineer_JR0000101",
+      "locationsText": "2 Locations",
+      "postedOn": "Posted Today",
+      "bulletFields": ["JR0000101"]
+    }
+  ],
+  "facets": [
+    {
+      "facetParameter": "jobFamilyGroup",
+      "descriptor": "Job Category",
+      "values": [
+        { "descriptor": "Engineering", "id": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0001", "count": 1725 },
+        { "descriptor": "Sales", "id": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0002", "count": 326 }
+      ]
+    },
+    {
+      "facetParameter": "timeType",
+      "descriptor": "Time Type",
+      "values": [
+        { "descriptor": "Full time", "id": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0001", "count": 1998 }
+      ]
+    },
+    {
+      "facetParameter": "locationMainGroup",
+      "values": [
+        {
+          "facetParameter": "locationHierarchy2",
+          "descriptor": "Location Type",
+          "values": [
+            { "descriptor": "Office", "id": "0c0c0c0c0c0c0c0c0c0c0c0c0c0c0001", "count": 1492 },
+            { "descriptor": "Remote", "id": "0c0c0c0c0c0c0c0c0c0c0c0c0c0c0002", "count": 571 }
+          ]
+        },
+        {
+          "facetParameter": "locationHierarchy1",
+          "descriptor": "Locations",
+          "values": [
+            { "descriptor": "Germany", "id": "0d0d0d0d0d0d0d0d0d0d0d0d0d0d0001", "count": 40 },
+            { "descriptor": "India", "id": "0d0d0d0d0d0d0d0d0d0d0d0d0d0d0002", "count": 248 },
+            { "descriptor": "United States", "id": "0d0d0d0d0d0d0d0d0d0d0d0d0d0d0003", "count": 1400 }
+          ]
+        },
+        {
+          "facetParameter": "locations",
+          "descriptor": "Sites",
+          "values": [
+            { "descriptor": "India, Bengaluru", "id": "0e0e0e0e0e0e0e0e0e0e0e0e0e0e0001", "count": 200 },
+            { "descriptor": "India, Pune", "id": "0e0e0e0e0e0e0e0e0e0e0e0e0e0e0002", "count": 71 },
+            { "descriptor": "US, IN, Indianapolis", "id": "0e0e0e0e0e0e0e0e0e0e0e0e0e0e0003", "count": 3 }
+          ]
+        }
+      ]
+    }
+  ],
+  "userAuthenticated": false
+}

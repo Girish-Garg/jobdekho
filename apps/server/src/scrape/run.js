@@ -7,10 +7,12 @@
 // builds the app would load it for nothing.
 const importScraper = () => import('@jobdekho/scraper/scrape.js')
 
-export function scrapeRunner(store, { load = importScraper } = {}) {
+// `userId` is whose Adzuna key in the store the run uses (see the scraper's
+// scrape.js): the one local person server.js runs as.
+export function scrapeRunner(store, { load = importScraper, userId = null } = {}) {
   return async ({ onProgress }) => {
     const { runScrape } = await load()
-    const out = await runScrape({ db: store, onProgress })
+    const out = await runScrape({ db: store, userId, onProgress })
     return {
       fresh: out.fresh,
       total: out.total,

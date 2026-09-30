@@ -20,6 +20,16 @@ export function redactUrl(url) {
     (SENSITIVE_NAME_RE.test(name) ? `${sep}${name}=REDACTED` : match))
 }
 
+// fetch's own errors can quote the URL too ("Failed to parse URL from ..."),
+// so they get the same redaction. Only an error that needed it is replaced,
+// and with a plain one carrying no cause: the original still holds the key.
+// The rest pass through untouched, an abort's DOMException included.
+function redactedError(err) {
+  const message = String(err?.message ?? '')
+  const safe = redactUrl(message)
+  return safe === message ? err : new Error(safe)
+}
+
 export function createHttp({ fetchImpl = fetch, timeoutMs = DEFAULT_TIMEOUT, userAgent = DEFAULT_UA } = {}) {
   return async function http(url, options = {}) {
     const controller = new AbortController()
@@ -32,6 +42,8 @@ export function createHttp({ fetchImpl = fetch, timeoutMs = DEFAULT_TIMEOUT, use
       })
       if (!res.ok) throw new Error(`HTTP ${res.status} for ${redactUrl(url)}`)
       return res
+    } catch (err) {
+      throw redactedError(err)
     } finally {
       clearTimeout(timer)
     }

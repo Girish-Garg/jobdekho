@@ -26,4 +26,10 @@ describe('sourceLabel', () => {
     expect(sourceLabel('internshala')).toEqual({ title: 'Internshala', board: 'Job board' });
     expect(sourceLabel('linkedin')).toEqual({ title: 'LinkedIn', board: 'Job board' });
   });
+
+  // "in" is the country Adzuna was searched in, not a company called In.
+  it('names Adzuna as a whole board, whatever country it searched', () => {
+    expect(sourceLabel('adzuna:in')).toEqual({ title: 'Adzuna', board: 'Job board' });
+    expect(sourceName('adzuna:in')).toBe('Adzuna');
+  });
 });

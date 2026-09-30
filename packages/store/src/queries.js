@@ -74,9 +74,18 @@ export async function upsertPostings(store, items, nowMs = Date.now()) {
   return { removed }
 }
 
+// A posting seen again as a bare search card (LinkedIn lists cards, and its
+// description is fetched once, see boards/linkedin.js) carries no text, and
+// copying that over would wipe the description fetched on an earlier run,
+// with what was read from it. Those stay until a sighting brings text again.
+const READ_FROM_TEXT = ['descriptionSnippet', 'descriptionText', 'level', 'degreeMin', 'degreeRequired', 'type']
+
 function refreshed(existing, row) {
   const out = { ...existing }
-  for (const column of REFRESHABLE) out[column] = row[column]
+  const bare = !row.descriptionText && Boolean(existing.descriptionText)
+  for (const column of REFRESHABLE) {
+    if (!(bare && READ_FROM_TEXT.includes(column))) out[column] = row[column]
+  }
   return out
 }
 

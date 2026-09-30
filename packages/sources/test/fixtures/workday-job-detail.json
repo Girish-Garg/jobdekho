@@ -1,0 +1,21 @@
+{
+  "jobPostingInfo": {
+    "id": "0f0f0f0f0f0f0f0f0f0f0f0f0f0f0001",
+    "title": "Senior System Software Engineer - Video",
+    "jobDescription": "<p><span>Acme&#39;s video team builds the streaming stack.</span></p><p><b>What you need:</b></p><ul><li>B.Tech in Computer Science or equivalent</li><li>5+ years of C++</li></ul>",
+    "location": "India, Bengaluru",
+    "additionalLocations": ["India, Hyderabad", "India, Pune"],
+    "postedOn": "Posted Today",
+    "startDate": "2026-09-30",
+    "timeType": "Full time",
+    "jobReqId": "JR0000201",
+    "jobPostingId": "Senior-System-Software-Engineer_JR0000201",
+    "jobPostingSiteId": "AcmeCareers",
+    "country": { "descriptor": "India", "id": "c4f78be1a8f14da0ab49ce1162348a5e" },
+    "canApply": true,
+    "posted": true,
+    "externalUrl": "https://acme.wd5.myworkdayjobs.com/AcmeCareers/job/India-Bengaluru/Senior-System-Software-Engineer_JR0000201"
+  },
+  "hiringOrganization": { "name": "IN01 Acme Graphics Bengaluru", "url": "" },
+  "userAuthenticated": false
+}

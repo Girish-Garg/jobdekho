@@ -6,6 +6,7 @@ import ModelChoice from './ModelChoice.jsx';
 import SettingsCard from './SettingsCard.jsx';
 import SetupCard from './SetupCard.jsx';
 import RefreshSettingsCard from './RefreshSettingsCard.jsx';
+import AdzunaCard from './AdzunaCard.jsx';
 import { CheckIcon, FolderIcon, GlobeIcon, PaletteIcon, ShieldCheckIcon, SparkleIcon } from './Icon.jsx';
 
 const SAVED = {
@@ -55,6 +56,7 @@ export default function SettingsView() {
 
           <div className="flex flex-col gap-5">
             <RefreshSettingsCard />
+            <AdzunaCard />
             <SettingsCard icon={<PaletteIcon size={18} />} title="Appearance" hint="How JobDekho looks on this computer.">
               <ThemeChoice />
             </SettingsCard>

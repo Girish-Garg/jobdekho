@@ -1,0 +1,28 @@
+{
+  "total": 3,
+  "jobPostings": [
+    {
+      "title": "Senior System Software Engineer - Video",
+      "externalPath": "/job/India-Bengaluru/Senior-System-Software-Engineer_JR0000201",
+      "locationsText": "3 Locations",
+      "postedOn": "Posted Today",
+      "bulletFields": ["JR0000201"]
+    },
+    {
+      "title": "Software Engineering Intern",
+      "externalPath": "/job/India-Pune/Software-Engineering-Intern_JR0000202",
+      "locationsText": "India, Pune",
+      "postedOn": "Posted Yesterday",
+      "bulletFields": ["JR0000202"]
+    },
+    {
+      "title": "Data Engineer",
+      "externalPath": "/job/India-Hyderabad/Data-Engineer_JR0000203",
+      "locationsText": "India, Hyderabad",
+      "postedOn": "Posted 30+ Days Ago",
+      "bulletFields": ["JR0000203"]
+    }
+  ],
+  "facets": [],
+  "userAuthenticated": false
+}
