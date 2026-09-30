@@ -9,7 +9,7 @@ const REFRESHABLE = [
   'title', 'company', 'location', 'url', 'descriptionSnippet', 'descriptionText', 'tags',
   'stipend', 'duration', 'experience', 'postedAt',
   'level', 'degreeMin', 'degreeRequired', 'workMode', 'type',
-  'stipendMin', 'currency', 'durationMonths', 'experienceYears', 'groupKey', 'logoUrl',
+  'stipendMin', 'currency', 'durationMonths', 'experienceYears', 'groupKey', 'logoUrl', 'features',
   // Bumping this on every conflict is what makes staleness detectable: a row
   // whose lastSeenAt stops advancing is no longer being listed anywhere.
   'lastSeenAt',
@@ -19,7 +19,7 @@ const REFRESHABLE = [
 // description is fetched once, see boards/linkedin.js) carries no text, and
 // copying that over would wipe the description fetched on an earlier run,
 // with what was read from it. Those stay until a sighting brings text again.
-const READ_FROM_TEXT = ['descriptionSnippet', 'descriptionText', 'level', 'degreeMin', 'degreeRequired', 'type']
+const READ_FROM_TEXT = ['descriptionSnippet', 'descriptionText', 'level', 'degreeMin', 'degreeRequired', 'type', 'features']
 
 // A sighting without a logo (a card whose image had not loaded, a board that
 // shows none today) says nothing about the company's logo, so the one already

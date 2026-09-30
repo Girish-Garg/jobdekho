@@ -2,6 +2,7 @@ import { toIso } from './timestamp.js'
 import { pruneRows } from './corpus-prune.js'
 import { touchedPostingIds } from './corpus-keep.js'
 import { refreshed, markSeen } from './corpus-merge.js'
+import { withFeatures } from './corpus-features.js'
 
 export function toRow(p) {
   const level = p.level ?? 'mid'
@@ -27,6 +28,8 @@ export function toRow(p) {
     durationMonths: p.durationMonths ?? null,
     experienceYears: p.experienceYears ?? null,
     groupKey: p.groupKey ?? null,
+    // What the fit reads, taken from the full body by normalize.js.
+    features: p.features ?? null,
     lastSeenAt: toIso(new Date()),
     type: p.type ?? (level === 'internship' ? 'internship' : 'job'),
   }
@@ -42,7 +45,7 @@ export async function getExistingIds(store, ids) {
 // rename lands leaves the previous corpus intact (see atomic-write.js), which
 // the batched Postgres upsert could not promise: a failure on the third of
 // six batches left a run half applied. The copy rather than mutation matters
-// too: the rarity cache in skill-doc-freq.js is keyed on the loaded rows and
+// too: the fit's caches in fit-inputs.js are keyed on the loaded rows and
 // must never see them change underneath it.
 //
 // The same write drops what is too old to be of use (corpus-prune.js), and
@@ -60,6 +63,7 @@ export async function upsertPostings(store, items, nowMs = Date.now(), seenIds =
   }
   markSeen(next, seenIds, now)
   const { rows, removed } = pruneRows(next, { keep: touchedPostingIds(store), now: nowMs })
+  withFeatures(rows)
   store.corpus.save(rows)
   return { removed }
 }

@@ -1,14 +1,12 @@
 import { LEVEL_OPTIONS, STATUS_OPTIONS, WORK_MODE_OPTIONS } from '../lib/taxonomy.js';
-import { FIT_RANGES, FIT_GRADE } from '../lib/ranges.js';
 import { useSources } from '../lib/useSources.js';
-import { gradePillTone } from '../lib/gradeTone.js';
 import { activeChips } from '../lib/activeChips.js';
 import Dropdown from './Dropdown.jsx';
 import PillGroup from './PillGroup.jsx';
 import SourceSelect from './SourceSelect.jsx';
 import MoreFilters from './MoreFilters.jsx';
 import ActiveChips from './ActiveChips.jsx';
-import { BookmarkIcon, BriefcaseIcon, MapPinIcon, SlidersIcon, TargetIcon } from './Icon.jsx';
+import { BookmarkIcon, BriefcaseIcon, MapPinIcon, SlidersIcon } from './Icon.jsx';
 
 const ADVANCED = ['maxDegree', 'minStipend', 'maxExp', 'maxMonths', 'includeStale'];
 
@@ -36,17 +34,6 @@ export default function FilterBar({ filters, setFilters, trailing }) {
       {/* One line at every width the grid is usable at; wrapping only kicks in
           on a phone, where the alternative is scrolling the page sideways. */}
       <div className="flex flex-wrap items-center gap-1">
-        {/* Fit leads the row: it is the axis the default order sorts by, so
-            its floor reads before the taxonomy refinements. Single-select like
-            Status - one floor at a time, a second would just shadow the first. */}
-        <Dropdown label="Fit" icon={TargetIcon} title="Pick a grade to see it and every grade above it." count={filters.minFit ? 1 : 0}>
-          <PillGroup
-            options={FIT_RANGES}
-            selected={[filters.minFit]}
-            onPick={(v) => patch('minFit', v)}
-            tone={(v, on) => gradePillTone(FIT_GRADE[v], on)}
-          />
-        </Dropdown>
         <Dropdown label="Level" icon={BriefcaseIcon} title="Seniority. Pick any number." count={filters.levels.length}>
           <PillGroup
             options={LEVEL_OPTIONS}

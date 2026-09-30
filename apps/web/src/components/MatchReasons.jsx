@@ -1,23 +1,26 @@
 import FitBreakdown from './FitBreakdown.jsx';
+import FitWhy from './FitWhy.jsx';
 import { gradeTone } from '../lib/gradeTone.js';
 import { useCountUp } from '../lib/useCountUp.js';
 
-// The phrases are the server's, verbatim: it scores the full description, and
-// a reason recomputed here against the snippet could disagree with the very
-// ranking it is explaining. Some of them ("well outside your experience") are
-// warnings, which is why the heading says fit rather than recommended, and
-// why each reason gets a plain dot rather than a tick. Their text stays
-// verbatim; only the first letter is raised, by CSS. The score, the grade
-// and the breakdown are one judgement at three zoom levels, so they share
-// one card.
+// The fit card: the score, its grade, why (FitWhy), and where the content
+// part came from (FitBreakdown). Every word is the server's: it scores the
+// full description, and a reason recomputed here against the snippet could
+// disagree with the very ranking it is explaining. The score, the grade and
+// the rows are one judgement at three zoom levels, so they share one card.
 //
-// The number is printed without "out of 100": real scores rarely pass the
-// 70s, and the grade is what answers "is 58 good?". It counts up as the pane
-// opens (see useCountUp.js), which a screen reader never hears: the grade
-// and the breakdown carry the same judgement in words.
-export default function MatchReasons({ fit, reasons, grade, breakdown }) {
+// A server that sends no `why` (an older one) still sends its reasons as
+// phrases, shown as a plain list. Some are warnings ("asks at least 5
+// years"), which is why the heading says fit rather than recommended, and
+// why each gets a plain dot rather than a tick.
+//
+// The number is printed without "out of 100": the grade is what answers "is
+// 58 good?". It counts up as the pane opens (see useCountUp.js), which a
+// screen reader never hears: the grade and the rows carry the same judgement
+// in words.
+export default function MatchReasons({ fit, reasons, grade, breakdown, why, gates }) {
   const shown = useCountUp(fit);
-  if (!reasons?.length && !grade && !breakdown?.length) return null;
+  if (!reasons?.length && !grade && !breakdown?.length && !why) return null;
   const tone = gradeTone(grade);
 
   return (
@@ -29,7 +32,7 @@ export default function MatchReasons({ fit, reasons, grade, breakdown }) {
         </div>
         {grade && <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${tone.soft} ${tone.text}`}>Grade {grade}</span>}
       </div>
-      {reasons?.length > 0 && (
+      {why ? <FitWhy why={why} gates={gates} /> : reasons?.length > 0 && (
         <ul className="mt-3 flex flex-col gap-1 text-sm text-ink/85">
           {reasons.map((reason) => (
             <li key={reason} className="flex gap-2">

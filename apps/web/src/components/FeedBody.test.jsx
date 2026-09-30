@@ -26,7 +26,7 @@ describe('FeedBody', () => {
 
   it('names the active filter in the empty message', () => {
     render(
-      <FeedBody loading={false} rows={[]} viewMode="list" filters={{ ...EMPTY_FILTERS, minFit: '50' }} {...handlers} />,
+      <FeedBody loading={false} rows={[]} viewMode="list" filters={{ ...EMPTY_FILTERS, minFit: '40' }} {...handlers} />,
     );
     expect(screen.getByText(/Grade B or better filter/)).toBeInTheDocument();
   });

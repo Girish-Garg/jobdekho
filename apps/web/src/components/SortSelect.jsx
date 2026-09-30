@@ -1,26 +1,19 @@
 import { usePopover } from '../lib/usePopover.js';
+import { DEFAULT_SORT, SORTS, sortLabel } from '../lib/sorts.js';
 import { PANEL, Caret } from './Dropdown.jsx';
 import { CheckIcon, SortIcon } from './Icon.jsx';
 
-// Best fit leads because it is the default. Each option is named for the
-// axis it orders by, with a line saying what that means where the name
-// alone could be read two ways ("posted" by the board, "added" to JobDekho).
-const SORTS = [
-  ['match', 'Best fit', 'Highest grade first'],
-  ['newest', 'Newest posted', 'By the date the board posted it'],
-  ['oldest', 'Oldest posted', 'The longest open first'],
-  ['added', 'Recently added', 'Newest to JobDekho first'],
-  ['company', 'Company A-Z', 'Grouped by company'],
-];
-
 // A menu in the filters' own style rather than the browser's select, which
-// drew a system list under a control that matched nothing around it.
+// drew a system list under a control that matched nothing around it. Best fit
+// is not an item: it always comes first (see lib/sorts.js), so the menu says
+// that once and offers the orders that arrange each grade. Picking the order
+// already picked puts it back to fit alone.
 export default function SortSelect({ sort, setSort }) {
   const { open, setOpen, ref } = usePopover();
-  const [, label] = SORTS.find(([value]) => value === sort) ?? SORTS[0];
+  const label = sortLabel(sort);
 
   function pick(value) {
-    setSort(value);
+    setSort(value === sort ? DEFAULT_SORT : value);
     setOpen(false);
   }
 
@@ -31,25 +24,26 @@ export default function SortSelect({ sort, setSort }) {
         onClick={() => setOpen(!open)}
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label={`Sort: ${label}`}
-        className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm transition-colors duration-fast ease ${
+        aria-label={label ? `Sort: Best fit, then ${label}` : 'Sort: Best fit'}
+        className={`dither flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm ${
           open ? 'border-edge bg-select text-ink' : 'border-line bg-panel text-ink hover:border-edge'
         }`}
       >
         <SortIcon size={14} className="text-muted" />
-        <span className="text-muted">Sort</span>
-        <span className="font-semibold">{label}</span>
+        <span className={label ? 'text-muted' : 'text-ink'}>{label ? 'Best fit, then' : 'Best fit'}</span>
+        {label && <span className="font-semibold">{label}</span>}
         <Caret open={open} />
       </button>
       {open && (
         <div role="menu" aria-label="Sort" className={`${PANEL} right-0 w-64 p-1.5`}>
+          <p className="px-3 pb-1.5 pt-1 text-xs text-muted">Best fit always leads. Within each grade:</p>
           {SORTS.map(([value, name, hint]) => {
             const on = value === sort;
             return (
               <button
                 key={value}
                 type="button"
-                role="menuitemradio"
+                role="menuitemcheckbox"
                 aria-checked={on}
                 onClick={() => pick(value)}
                 className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors duration-fast ease ${

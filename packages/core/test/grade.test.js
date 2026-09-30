@@ -3,29 +3,29 @@ import { gradeFor, GRADE_BANDS } from '@jobdekho/core/grade.js'
 import { gradeFor as viaScore } from '@jobdekho/core/score.js'
 
 describe('gradeFor', () => {
-  // Percentiles of the measured corpus, not schoolroom 90/80/70/60, which
-  // would grade every posting F: the best of 1880 live postings scored 84.
-  it('grades each band edge on the calibrated floors, not schoolroom ones', () => {
-    expect(gradeFor(84)).toBe('A')
-    expect(gradeFor(62)).toBe('A')
-    expect(gradeFor(61)).toBe('B')
-    expect(gradeFor(50)).toBe('B')
-    expect(gradeFor(49)).toBe('C')
-    expect(gradeFor(38)).toBe('C')
-    expect(gradeFor(37)).toBe('D')
-    expect(gradeFor(25)).toBe('D')
-    expect(gradeFor(24)).toBe('F')
+  // Floors with a meaning on the content-times-gates scale, set before
+  // labelling and checked against 269 hand labels on two profiles.
+  it('grades each band edge on the floors', () => {
+    expect(gradeFor(90)).toBe('A')
+    expect(gradeFor(55)).toBe('A')
+    expect(gradeFor(54)).toBe('B')
+    expect(gradeFor(40)).toBe('B')
+    expect(gradeFor(39)).toBe('C')
+    expect(gradeFor(25)).toBe('C')
+    expect(gradeFor(24)).toBe('D')
+    expect(gradeFor(12)).toBe('D')
+    expect(gradeFor(11)).toBe('F')
     expect(gradeFor(0)).toBe('F')
   })
 
-  // The web app calls the same floor "Strong fit"; an A that disagreed with
-  // that chip would put two contradictory judgements on one card.
-  it('keeps the A floor on the UI Strong fit threshold', () => {
-    expect(GRADE_BANDS[0]).toEqual(['A', 62])
+  // The web app's Fit floors and the chat's allow-list mirror these, and a
+  // test on each side guards the copy.
+  it('lists the floors best first', () => {
+    expect(GRADE_BANDS).toEqual([['A', 55], ['B', 40], ['C', 25], ['D', 12]])
   })
 
-  // The query layer imports everything score-shaped through score.js, so the
-  // grade has to stay reachable from there too.
+  // The store reads everything score-shaped through score.js, so the grade
+  // has to stay reachable from there too.
   it('stays importable beside the fit it grades', () => {
     expect(viaScore).toBe(gradeFor)
   })

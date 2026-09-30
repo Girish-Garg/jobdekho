@@ -46,6 +46,12 @@ describe('getPosting', () => {
     expect((await getPosting(store, 'someone-else', 'p1')).status).toBeNull()
   })
 
+  // What the fit read from the ad is the feed's working, not part of the job.
+  it('leaves out the features the fit read', async () => {
+    const store = seeded([row({ features: { v: 1, skills: { python: 'req' } } })])
+    expect(await getPosting(store, 'me', 'p1')).not.toHaveProperty('features')
+  })
+
   it('computes the blast signal over the whole corpus, so it agrees with the card', async () => {
     const sources = ['internshala', 'naukri', 'linkedin', 'lever', 'ashby']
     const store = seeded(sources.map((source, i) => row({ id: `p${i}`, source })))

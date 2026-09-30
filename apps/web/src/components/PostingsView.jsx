@@ -1,9 +1,8 @@
-import { useState } from 'react';
 import { usePostingsFeed } from '../lib/usePostingsFeed.js';
 import { useMediaQuery } from '../lib/useMediaQuery.js';
 import { useTriage } from '../lib/useTriage.js';
 import { useOpenPosting } from '../lib/useOpenPosting.js';
-import { useListKeys } from '../lib/useListKeys.js';
+import { usePostingSelection } from '../lib/usePostingSelection.js';
 import { rankingNotice } from '../lib/rankingNotice.js';
 import FeedTop from './FeedTop.jsx';
 import FeedBody from './FeedBody.jsx';
@@ -20,30 +19,14 @@ const WIDE_QUERY = '(min-width: 1100px)';
 export default function PostingsView({
   filters, setFilters, sort = 'match', setSort, viewMode = 'list', setViewMode, onOpenProfile, onOpenSettings,
 }) {
-  const { rows, loading, more, loadMore, onStatus, total, newToday } = usePostingsFeed(filters, sort);
+  const { rows, loading, more, loadMore, onStatus, total, newToday, bands } = usePostingsFeed(filters, sort);
   const triage = useTriage(rows, onStatus);
   const isWide = useMediaQuery(WIDE_QUERY);
-  const { opened, openFromClick: openRow, openById, close: closeCard, dismiss, patchOutside } = useOpenPosting(rows);
+  const pane = useOpenPosting(rows);
   const { fitFiltered, unranked } = rankingNotice(filters, sort, rows);
 
-  // Selection (keyboard highlight) is separate from "open": only Enter or a
-  // click commits to viewing a posting.
-  const [selectedId, setSelectedId] = useState(null);
-
-  function openFromClick(posting, element) {
-    setSelectedId(posting.id);
-    openRow(posting, element);
-  }
-
-  useListKeys({
-    rows,
-    selectedId,
-    onSelect: setSelectedId,
-    onOpen: openById,
-    onStatus: triage.setStatus,
-    onUndo: triage.undo,
-    onClear: () => (opened ? closeCard() : setSelectedId(null)),
-  });
+  const selection = usePostingSelection(rows, pane, triage);
+  const { selectedId, setSelectedId, openFromClick } = selection;
 
   // The feed keeps the Profile page's width, centred, rather than running
   // edge to edge: full-width rows and cards spread a title, its company and
@@ -63,6 +46,7 @@ export default function PostingsView({
         <FeedBody
           loading={loading}
           rows={rows}
+          bands={bands}
           viewMode={viewMode}
           filters={filters}
           selectedId={selectedId}
@@ -85,10 +69,10 @@ export default function PostingsView({
       </div>
       <PostingDetailSlot
         isWide={isWide}
-        opened={opened}
-        onClose={closeCard}
-        onDismiss={dismiss}
-        onStatus={(id, value) => { patchOutside(id, value); triage.setStatus(id, value); }}
+        opened={pane.opened}
+        onClose={selection.closePane}
+        onDismiss={selection.dismissPane}
+        onStatus={(id, value) => { pane.patchOutside(id, value); triage.setStatus(id, value); }}
       />
     </section>
   );

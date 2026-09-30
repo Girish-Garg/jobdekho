@@ -12,8 +12,10 @@ import { withGroupWindows } from './posting-groups.js'
 // is nothing next to the minutes of AI work that follow it. The feed windows
 // only the rows its filters kept, so a count here can run a little higher.
 export async function getPosting(store, userId, id) {
-  const row = store.corpus.byId().get(id)
-  if (!row) return null
+  const stored = store.corpus.byId().get(id)
+  if (!stored) return null
+  // What the fit read from the ad is the feed's working, not part of the job.
+  const { features, ...row } = stored
   const windowed = withGroupWindows(store.corpus.rows()).find((r) => r.id === id) ?? row
   return {
     ...row,

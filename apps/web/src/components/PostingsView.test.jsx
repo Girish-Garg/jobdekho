@@ -95,7 +95,7 @@ describe('PostingsView server-side filters', () => {
     render(<Harness filters={{ ...EMPTY, minFit: '50' }} />);
     await waitFor(() => expect(getPostings).toHaveBeenCalled());
     fireEvent.click(screen.getByRole('button', { name: /^Sort:/ }));
-    fireEvent.click(screen.getByRole('menuitemradio', { name: /^Newest posted/ }));
+    fireEvent.click(screen.getByRole('menuitemcheckbox', { name: /^Newest posted/ }));
     await waitFor(() =>
       expect(getPostings).toHaveBeenLastCalledWith(
         expect.objectContaining({ sort: 'newest', minFit: '50' }),
@@ -251,7 +251,7 @@ describe('PostingsView rows and view mode', () => {
   });
 
   it('names the active filter when nothing matches it', async () => {
-    render(<Harness filters={{ ...EMPTY, minFit: '50' }} />);
+    render(<Harness filters={{ ...EMPTY, minFit: '40' }} />);
     expect(await screen.findByText(/Grade B or better filter/)).toBeInTheDocument();
   });
 
@@ -272,7 +272,7 @@ describe('PostingsView best-fit ranking', () => {
   const NAMES = { company: 'Company A-Z', newest: 'Newest posted' };
   const pickSort = (value) => {
     fireEvent.click(screen.getByRole('button', { name: /^Sort:/ }));
-    fireEvent.click(screen.getByRole('menuitemradio', { name: new RegExp(`^${NAMES[value]}`) }));
+    fireEvent.click(screen.getByRole('menuitemcheckbox', { name: new RegExp(`^${NAMES[value]}`) }));
   };
 
   it('lets another sort replace the match ordering', async () => {

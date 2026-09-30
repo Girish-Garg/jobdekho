@@ -5,9 +5,7 @@
 const primaryTone = (value, selected) =>
   selected ? 'border-primary bg-primary text-on-primary font-semibold' : 'border-line bg-panel text-ink/80 hover:border-primary/40 hover:text-ink';
 
-// tone lets the Fit row wear its grades, the same letters the cards carry, so
-// the control and the data cannot drift apart.
-export default function PillGroup({ options, selected, onPick, tone = primaryTone }) {
+export default function PillGroup({ options, selected, onPick }) {
   return (
     <div className="flex flex-wrap gap-1.5">
       {options.map(([value, label]) => (
@@ -16,7 +14,7 @@ export default function PillGroup({ options, selected, onPick, tone = primaryTon
           type="button"
           aria-pressed={selected.includes(value)}
           onClick={() => onPick(value)}
-          className={`rounded-full border px-3 py-1.5 text-[13px] transition-colors duration-fast ease ${tone(value, selected.includes(value))}`}
+          className={`rounded-full border px-3 py-1.5 text-[13px] transition-colors duration-fast ease ${primaryTone(value, selected.includes(value))}`}
         >
           {label}
         </button>

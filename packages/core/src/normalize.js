@@ -6,6 +6,7 @@ import { classifyDegree } from './degree.js'
 import { classifyWorkMode } from './work-mode.js'
 import { tidyLines, oneLine, clipText } from './text-layout.js'
 import { logoUrl } from './logo.js'
+import { postingFeatures } from './posting-features.js'
 
 const SNIPPET_MAX = 280
 
@@ -34,6 +35,7 @@ export function normalize(raw, source) {
   const level = raw.level || classifyLevel(title, description)
   const { degreeMin, degreeRequired } = classifyDegree(title, description)
   const company = (raw.company || '').trim()
+  const years = experienceYears(raw.experience)
   return {
     id: makeId(source, externalId),
     groupKey: makeGroupKey(title, company),
@@ -59,7 +61,11 @@ export function normalize(raw, source) {
     // the source actually quoted, so the original figure stays explainable.
     currency: raw.stipend == null ? null : detectCurrency(raw.stipend),
     durationMonths: durationMonths(raw.duration),
-    experienceYears: experienceYears(raw.experience),
+    experienceYears: years,
+    // What the fit needs (skills by section, years asked), read here from the
+    // full body for the same reason as level and degree: big ads spend the
+    // first 4000 characters on company copy, and the requirements come after.
+    features: postingFeatures({ title, description, tags, company, experienceYears: years }),
     level,
     degreeMin,
     degreeRequired,

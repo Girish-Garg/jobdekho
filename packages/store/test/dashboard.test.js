@@ -142,7 +142,7 @@ describe('ranking', () => {
     expect(py.fit).toBeGreaterThanOrEqual(50)
     expect(py.matchScore).toBe(py.fit)
     expect(py.grade).toMatch(/^[ABCD]$/)
-    expect(py.reasons).toContain('matches python')
+    expect(py.reasons).toContain('has Python')
     expect(py.breakdown).toBeTruthy()
     expect(py.legitimacy).toBeTruthy()
   })
@@ -175,10 +175,12 @@ describe('ranking', () => {
   })
 
   it('never returns descriptionText or query scaffolding, ranked or not', async () => {
-    const store = seeded([row({ id: 'a', groupKey: 'k' })])
+    // Stored features are the fit's working; the card gets `why` instead.
+    const features = { v: 1, skills: { python: 'intro' }, band: null, from: null, titleLevel: null }
+    const store = seeded([row({ id: 'a', groupKey: 'k', features })])
     for (const opts of [{}, { sort: 'match', profile: PROFILE }]) {
       const [p] = await listPostingsForUser(store, 'me', opts)
-      for (const key of ['descriptionText', 'groupRank', 'groupSourceCount', 'externalId', 'groupKey', 'currency']) {
+      for (const key of ['descriptionText', 'groupRank', 'groupSourceCount', 'externalId', 'groupKey', 'currency', 'features']) {
         expect(p).not.toHaveProperty(key)
       }
       expect(p.descriptionSnippet).toBe('Build things.')
@@ -276,5 +278,27 @@ describe('counts beside the page', () => {
   it('stays a plain list for callers that did not ask for counts', async () => {
     const store = seeded([row({ id: 'n1' })])
     expect(Array.isArray(await listPostingsForUser(store, 'me', { sort: 'newest' }))).toBe(true)
+  })
+})
+
+// The list draws a divider where each grade begins, with how many the whole
+// feed holds in it, so the counts cover every matching row, not the page.
+describe('grade band counts', () => {
+  it('counts each grade across the whole feed when the profile ranks', async () => {
+    const store = seeded([
+      row({ id: 'py1', title: 'Python Developer', level: 'entry' }),
+      row({ id: 'py2', title: 'Python Developer', level: 'entry' }),
+      row({ id: 'chef', title: 'Chef', descriptionText: 'Cook. '.repeat(60), level: 'executive' }),
+    ])
+    const out = await listPostingsForUser(store, 'me', { withCounts: true, sort: 'match', profile: PROFILE, limit: 1 })
+    expect(out.postings).toHaveLength(1)
+    const total = Object.values(out.bands).reduce((sum, n) => sum + n, 0)
+    expect(total).toBe(3)
+  })
+
+  it('sends no bands when nothing could be ranked', async () => {
+    const store = seeded([row({ id: 'x' })])
+    const out = await listPostingsForUser(store, 'me', { withCounts: true, sort: 'match', profile: {} })
+    expect(out.bands).toBeUndefined()
   })
 })

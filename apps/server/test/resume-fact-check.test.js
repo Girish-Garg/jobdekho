@@ -7,7 +7,7 @@ import { checkNames } from '@jobdekho/server/actions/resume-names.js'
 import { checkTitles } from '@jobdekho/server/actions/resume-titles.js'
 import { contextAt } from '@jobdekho/server/actions/flag-context.js'
 import { SKILL_TERMS } from '@jobdekho/server/actions/skill-terms.js'
-import { spellingsOf } from '@jobdekho/server/actions/skill-aliases.js'
+import { spellingsOf } from '@jobdekho/core/skill-find.js'
 import { TOOL_TERMS } from '@jobdekho/core/ghost.js'
 import { ORIGINAL, HONEST, JD } from './fixtures/tailored-resume.js'
 

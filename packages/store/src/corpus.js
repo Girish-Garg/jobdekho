@@ -8,8 +8,9 @@ import { parseNdjson, toNdjson } from './ndjson.js'
 // feed spreading a Map on every request.
 //
 // A load or a save builds a NEW array and Map rather than mutating the old
-// ones. Anything derived from the corpus (the rarity counts in
-// skill-doc-freq.js) is cached against that identity, so it is invalidated
+// ones. Anything derived from the corpus (the fit's features, skill rarity
+// and per-profile context in fit-inputs.js) is cached against that identity,
+// so it is invalidated
 // the moment the corpus changes, by construction rather than by a clock.
 function indexed(rows) {
   const byId = new Map(rows.map((row) => [row.id, row]))

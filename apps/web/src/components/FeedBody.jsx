@@ -8,7 +8,7 @@ import { SearchIcon } from './Icon.jsx';
 // The area under the header: a skeleton, a reason nothing matched, or the
 // rows/cards themselves - never more than one of the three at once.
 export default function FeedBody({
-  loading, rows, viewMode, filters, selectedId, flashId, onOpen, onSelect, onStatus, onUndo,
+  loading, rows, bands = null, viewMode, filters, selectedId, flashId, onOpen, onSelect, onStatus, onUndo,
 }) {
   if (loading) return <FeedSkeleton mode={viewMode} />;
 
@@ -25,6 +25,7 @@ export default function FeedBody({
     return (
       <PostingGrid
         postings={rows}
+        bands={bands}
         selectedId={selectedId}
         flashId={flashId}
         onOpen={onOpen}
@@ -37,6 +38,7 @@ export default function FeedBody({
   return (
     <PostingList
       postings={rows}
+      bands={bands}
       selectedId={selectedId}
       flashId={flashId}
       onOpen={onOpen}

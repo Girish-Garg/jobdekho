@@ -245,3 +245,14 @@ describe('PostingCard quick actions', () => {
     expect(screen.queryByRole('button', { name: 'Save' })).toBeNull();
   });
 });
+
+// Up by the company name the actions covered the New badge and long names;
+// in the footer they take the pay's place, the way a row's take its score's.
+describe('PostingCard actions placement', () => {
+  it('keeps the actions in the footer, beside the pay, and the New badge free', () => {
+    render(<PostingCard posting={{ ...base, stipend: '20,000 /month' }} selected onOpen={() => {}} onStatus={() => {}} />);
+    const cell = screen.getByRole('button', { name: 'Save' }).closest('.relative');
+    expect(cell.textContent).toContain('20');
+    expect(screen.getByLabelText('New today').closest('.relative')).not.toBe(cell);
+  });
+});

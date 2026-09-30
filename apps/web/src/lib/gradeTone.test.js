@@ -1,14 +1,16 @@
 import { describe, it, expect } from 'vitest';
-import { gradePillTone, gradeTone } from './gradeTone.js';
+import { gradeTone } from './gradeTone.js';
 
-describe('gradePillTone', () => {
-  it('fills a picked grade with its own colour, and tints an unpicked one', () => {
-    expect(gradePillTone('B', true)).toContain(gradeTone('B').fill);
-    expect(gradePillTone('B', false)).toContain(gradeTone('B').text);
+describe('gradeTone', () => {
+  it("spells out each grade's classes, so Tailwind finds them in source", () => {
+    for (const grade of ['A', 'B', 'C', 'D']) {
+      expect(gradeTone(grade).text).toBe(`text-grade-${grade.toLowerCase()}`);
+      expect(gradeTone(grade).fill).toBe(`bg-grade-${grade.toLowerCase()}`);
+    }
   });
 
-  it('gives Any the plain saffron pick every other filter pill has', () => {
-    expect(gradePillTone(undefined, true)).toContain('bg-primary');
-    expect(gradePillTone(undefined, false)).not.toContain('grade');
+  it('falls back to plain ink for anything else', () => {
+    expect(gradeTone('F').text).toBe('text-ink');
+    expect(gradeTone(undefined).text).toBe('text-ink');
   });
 });

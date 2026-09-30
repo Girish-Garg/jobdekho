@@ -1,13 +1,12 @@
 import { skillRegex } from '@jobdekho/core/fit-dimensions.js'
 import { SKILL_TERMS } from './skill-terms.js'
-import { spellingsOf } from './skill-aliases.js'
+import { spellingsOf } from '@jobdekho/core/skill-find.js'
 import { contextAt } from './flag-context.js'
 
 // Rules 2 and 4 of the fact check: a skill the rewrite names that the
 // original does not show is a flag, and keyword coverage is counted before
-// and after. Presence is decided by core's skillRegex on lowercased text,
-// the same matcher the feed's fit score uses, so "matches 9 of 14" here
-// means what "matches react, node" means on a card.
+// and after. Presence is decided by core's skillRegex on lowercased text: a
+// strict word match, so "matches 9 of 14" counts exactly the words named.
 //
 // The terms looked for are the vocabulary plus whatever the model itself
 // listed as used or missing. The model's list can only widen the check: a
@@ -25,8 +24,9 @@ function candidates(keywords) {
 const found = (term, hay) => hay.search(skillRegex(term))
 
 // Shown loosely: the term, its plural or one of its other spellings, so
-// "React" in the rewrite is honest when the original says "ReactJS". This is
-// the one place aliases are read; the counts stay strict.
+// "React" in the rewrite is honest when the original says "ReactJS". The
+// spellings are core's skill table, the one the fit reads (skill-find.js),
+// so the two never disagree about what React is; the counts stay strict.
 const shownIn = (term, hay) => spellingsOf(term).some((s) => skillRegex(s).test(hay))
 
 export function checkSkills({ original, tailored, jd, keywords = [] }) {

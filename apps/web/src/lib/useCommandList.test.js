@@ -23,7 +23,8 @@ describe('buildCommands navigation', () => {
 });
 
 describe('buildCommands sort', () => {
-  it('offers the five sorts only on the postings view', () => {
+  // Four orders within a grade, and the way back to best fit alone.
+  it('offers the five sort commands only on the postings view', () => {
     const onPostings = buildCommands(base());
     expect(labels(onPostings).filter((l) => l.startsWith('Sort:'))).toHaveLength(5);
 
@@ -33,9 +34,9 @@ describe('buildCommands sort', () => {
 });
 
 describe('buildCommands filters', () => {
-  it('offers a command per fit grade, level and status option', () => {
+  it('offers a command per level and status option, and none for a fit floor', () => {
     const found = buildCommands(base());
-    expect(labels(found).filter((l) => l.startsWith('Fit:'))).toHaveLength(5);
+    expect(labels(found).filter((l) => l.startsWith('Fit:'))).toHaveLength(0);
     expect(labels(found).filter((l) => l.startsWith('Level:'))).toHaveLength(6);
     expect(labels(found).filter((l) => l.startsWith('Status:'))).toHaveLength(5);
   });

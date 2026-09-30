@@ -100,3 +100,27 @@ describe('MatchReasons breakdown bars', () => {
     expect(fills.map((fill) => fill.style.width)).toEqual([`${(29 / 45) * 100}%`, '100%']);
   });
 });
+
+// The server now sends why and gates beside the phrases; the card lays those
+// out and keeps the phrase list only for a server that sends no why.
+describe('MatchReasons with a why', () => {
+  const why = {
+    has: [{ skill: 'React', where: 'title' }], close: [], missing: [{ skill: 'Go', where: 'req' }],
+    asked: { min: 5, max: 9, from: 'years', phrase: 'at least 5 years' }, place: 'in Bengaluru',
+  };
+  const gates = [{ gate: 'level', value: 0.3, why: 'asks at least 5 years, you have 2 years' }, { gate: 'place', value: 1, why: 'in Bengaluru' }];
+
+  it('lays out the why instead of repeating it as phrases', () => {
+    render(<MatchReasons fit={26} grade="C" reasons={['has React', 'missing Go']} why={why} gates={gates} />);
+    const card = screen.getByRole('region', { name: 'Fit' });
+    expect(within(card).getByLabelText('Why this grade')).toBeInTheDocument();
+    expect(within(card).getByText('React')).toBeInTheDocument();
+    expect(within(card).getByText('x0.3')).toBeInTheDocument();
+    expect(within(card).queryByText('has React')).not.toBeInTheDocument();
+  });
+
+  it('renders a card from a why alone', () => {
+    render(<MatchReasons why={why} gates={gates} />);
+    expect(screen.getByRole('region', { name: 'Fit' })).toBeInTheDocument();
+  });
+});

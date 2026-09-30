@@ -43,7 +43,7 @@ export function usePostingsFeed(filters, sort = 'match') {
         if (!alive) return;
         setRows(data.postings);
         setMore(data.postings.length === PAGE);
-        setCounts({ total: data.total ?? data.postings.length, newToday: data.newToday ?? 0 });
+        setCounts({ total: data.total ?? data.postings.length, newToday: data.newToday ?? 0, bands: data.bands ?? null });
       })
       .catch(() => alive && (setRows([]), setMore(false), setCounts({ total: 0, newToday: 0 })))
       .finally(() => alive && setLoading(false));
@@ -71,5 +71,6 @@ export function usePostingsFeed(filters, sort = 'match') {
     }
   }
 
-  return { rows, loading, more, loadMore, onStatus, total: counts.total, newToday: counts.newToday };
+  // bands: how many of the whole feed fall in each grade, for the dividers.
+  return { rows, loading, more, loadMore, onStatus, total: counts.total, newToday: counts.newToday, bands: counts.bands ?? null };
 }

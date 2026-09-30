@@ -1,15 +1,8 @@
 import { CHOICES, applyTheme, readChoice, writeChoice } from './theme.js';
 import { EMPTY_FILTERS } from './savedFilters.js';
 import { LEVEL_OPTIONS, STATUS_OPTIONS } from './taxonomy.js';
-import { FIT_RANGES, fitFloorLabel } from './ranges.js';
+import { DEFAULT_SORT, SORTS } from './sorts.js';
 
-const SORTS = [
-  ['match', 'Best fit'],
-  ['newest', 'Newest posted'],
-  ['oldest', 'Oldest posted'],
-  ['added', 'Recently added'],
-  ['company', 'Company A-Z'],
-];
 
 const VIEWS = [
   ['postings', 'Postings'],
@@ -37,7 +30,9 @@ export function buildCommands({ view, setView, filters, setFilters, setSort, onO
   }
 
   if (view === 'postings') {
-    for (const [value, label] of SORTS) {
+    // Best fit is the order under every sort, so it is not one of them; it is
+    // what clearing the sort goes back to.
+    for (const [value, label] of [...SORTS, [DEFAULT_SORT, 'Best fit only']]) {
       commands.push({
         id: `sort-${value}`,
         label: `Sort: ${label}`,
@@ -45,15 +40,6 @@ export function buildCommands({ view, setView, filters, setFilters, setSort, onO
         run: () => setSort?.(value),
       });
     }
-  }
-
-  for (const [value] of FIT_RANGES) {
-    commands.push({
-      id: `fit-${value || 'any'}`,
-      label: `Fit: ${value ? fitFloorLabel(value) : 'any grade'}`,
-      category: 'Filter',
-      run: () => setFilters({ ...filters, minFit: value }),
-    });
   }
 
   for (const [value, label] of LEVEL_OPTIONS) {

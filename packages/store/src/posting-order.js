@@ -1,3 +1,5 @@
+import { GRADE_BANDS, gradeFor } from '@jobdekho/core/grade.js'
+
 // Time is compared as canonical ISO strings (see timestamp.js) and every
 // ordering ends on the posting id, for the reason given at idDesc.
 export const SORTS = ['newest', 'oldest', 'added', 'company', 'match']
@@ -36,10 +38,20 @@ const ORDERS = {
   company: by((row) => String(row.company || '').toLowerCase(), asc),
 }
 
-export function orderFor(sort) {
-  // Ties fall back to newest, or a whole score band would come back arbitrary.
-  if (sort === 'match') return chain(by((row) => row.matchScore, desc), postedDesc, idDesc)
-  return chain(ORDERS[sort] || ORDERS.newest, idDesc)
+// Best fit is not one sort among the others but the order under all of
+// them: the grade band first (A, B, C, D, then the rest), and the chosen sort
+// only within a band. Newest then means the newest strong fits first, never a
+// job posted this morning that fits nothing ahead of a week-old A. The
+// default within a band is the score itself, ties falling back to newest, or
+// a run of equal scores would come back arbitrary. Unranked (an empty
+// profile) there are no bands, and the chosen order stands alone.
+const BAND_OF = Object.fromEntries(GRADE_BANDS.map(([grade], i) => [grade, i]))
+export const bandOf = (row) => BAND_OF[gradeFor(row.matchScore)] ?? GRADE_BANDS.length
+const bestFit = chain(by((row) => row.matchScore, desc), postedDesc)
+
+export function orderFor(sort, { ranked = true } = {}) {
+  if (!ranked) return chain(ORDERS[sort] || ORDERS.newest, idDesc)
+  return chain(by(bandOf, asc), ORDERS[sort] || bestFit, idDesc)
 }
 
 // A company board is named "provider:slug" and an aggregator is named by

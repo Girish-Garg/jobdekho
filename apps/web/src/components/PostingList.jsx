@@ -1,5 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { Fragment, useEffect, useRef } from 'react';
 import PostingRow from './PostingRow.jsx';
+import GradeBand from './GradeBand.jsx';
+import { bandStarts } from '../lib/gradeBands.js';
 import { scrollSelectedIntoView } from '../lib/scrollSelectedIntoView.js';
 
 // The mode nearly every row on screen shares is not information; only a row
@@ -20,9 +22,12 @@ function dominantWorkMode(postings) {
   return top;
 }
 
-export default function PostingList({ postings, selectedId, flashId, onOpen, onSelect, onStatus, onUndo }) {
+// Each grade opens with its band row (see GradeBand.jsx); `bands` holds how
+// many jobs the whole feed has in each, not just the loaded page.
+export default function PostingList({ postings, bands = null, selectedId, flashId, onOpen, onSelect, onStatus, onUndo }) {
   const containerRef = useRef(null);
   const dominant = dominantWorkMode(postings);
+  const starts = bandStarts(postings);
 
   useEffect(() => {
     if (selectedId) scrollSelectedIntoView(selectedId, containerRef.current);
@@ -31,17 +36,19 @@ export default function PostingList({ postings, selectedId, flashId, onOpen, onS
   return (
     <div ref={containerRef} role="grid" aria-label="Postings" data-testid="posting-list" className="overflow-hidden rounded-xl border border-line bg-panel">
       {postings.map((posting) => (
-        <PostingRow
-          key={posting.id}
-          posting={posting}
-          selected={posting.id === selectedId}
-          flashUndo={posting.id === flashId}
-          dominantWorkMode={dominant}
-          onOpen={onOpen}
-          onSelect={onSelect}
-          onStatus={onStatus}
-          onUndo={onUndo}
-        />
+        <Fragment key={posting.id}>
+          {starts.has(posting.id) && <GradeBand grade={posting.grade} count={bands?.[posting.grade]} />}
+          <PostingRow
+            posting={posting}
+            selected={posting.id === selectedId}
+            flashUndo={posting.id === flashId}
+            dominantWorkMode={dominant}
+            onOpen={onOpen}
+            onSelect={onSelect}
+            onStatus={onStatus}
+            onUndo={onUndo}
+          />
+        </Fragment>
       ))}
     </div>
   );

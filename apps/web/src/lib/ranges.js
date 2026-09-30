@@ -45,10 +45,10 @@ export const DURATION_RANGES = [
 // that grade and every better one.
 export const FIT_RANGES = [
   ['', 'Any'],
-  ['62', 'A'],
-  ['50', 'B'],
-  ['38', 'C'],
-  ['25', 'D'],
+  ['55', 'A'],
+  ['40', 'B'],
+  ['25', 'C'],
+  ['12', 'D'],
 ];
 
 export const FIT_GRADE = Object.fromEntries(FIT_RANGES.filter(([value]) => value));

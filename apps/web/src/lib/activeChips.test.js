@@ -28,8 +28,8 @@ describe('activeChips', () => {
   });
 
   it('names the fit floor by its grade', () => {
-    expect(labels({ ...EMPTY_FILTERS, minFit: '62' })).toEqual(['Grade A']);
-    expect(labels({ ...EMPTY_FILTERS, minFit: '38' })).toEqual(['Grade C or better']);
+    expect(labels({ ...EMPTY_FILTERS, minFit: '55' })).toEqual(['Grade A']);
+    expect(labels({ ...EMPTY_FILTERS, minFit: '25' })).toEqual(['Grade C or better']);
   });
 
   // An action button in a chat turn from before the grades can still set 44.
@@ -57,7 +57,7 @@ describe('activeChips', () => {
     const chips = activeChips({
       ...EMPTY_FILTERS,
       q: 'go',
-      minFit: '50',
+      minFit: '40',
       levels: ['senior'],
       workModes: ['remote'],
       excludedSources: ['lever'],
@@ -98,7 +98,7 @@ describe('activeChips removal patches', () => {
   });
 
   it('blanks the scalar fields', () => {
-    const filters = { ...EMPTY_FILTERS, q: 'x', status: 'saved', maxExp: '2', minFit: '62' };
+    const filters = { ...EMPTY_FILTERS, q: 'x', status: 'saved', maxExp: '2', minFit: '55' };
     expect(patchFor(filters, 'Search: x')).toEqual({ q: '' });
     expect(patchFor(filters, 'Saved')).toEqual({ status: '' });
     expect(patchFor(filters, 'Up to 2 years experience')).toEqual({ maxExp: '' });

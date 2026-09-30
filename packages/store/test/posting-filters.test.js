@@ -82,6 +82,33 @@ describe('orderFor', () => {
   })
 })
 
+// Best fit is the order under every sort: the grade band first, and the
+// picked order only within a band (see posting-order.js).
+describe('orderFor with grade bands', () => {
+  // Scores that sit in the same bands under any floors tried so far.
+  const rows = [
+    { id: 'b-new', matchScore: 52, postedAt: '2026-03-01T00:00:00.000Z', company: 'Alpha' },
+    { id: 'a-old', matchScore: 80, postedAt: '2026-01-01T00:00:00.000Z', company: 'Zeta' },
+    { id: 'a-new', matchScore: 75, postedAt: '2026-02-01T00:00:00.000Z', company: 'Beta' },
+    { id: 'f', matchScore: 3, postedAt: '2026-04-01T00:00:00.000Z', company: 'Aardvark' },
+  ]
+  const sorted = (sort, opts) => [...rows].sort(orderFor(sort, opts)).map((r) => r.id)
+
+  it('keeps every A ahead of every B, whatever the picked order', () => {
+    expect(sorted('newest')).toEqual(['a-new', 'a-old', 'b-new', 'f'])
+    expect(sorted('company')).toEqual(['a-new', 'a-old', 'b-new', 'f'])
+    expect(sorted('oldest')).toEqual(['a-old', 'a-new', 'b-new', 'f'])
+  })
+
+  it('orders a band by score when nothing is picked', () => {
+    expect(sorted('match')).toEqual(['a-old', 'a-new', 'b-new', 'f'])
+  })
+
+  it('has no bands where nothing could be ranked', () => {
+    expect(sorted('newest', { ranked: false })).toEqual(['f', 'b-new', 'a-new', 'a-old'])
+  })
+})
+
 describe('groupOrder', () => {
   it('prefers a company board, then the newer posting, then the higher id', () => {
     const rows = [

@@ -80,6 +80,21 @@ describe('normalize', () => {
     const p = normalize({ externalId: '1', title: 'T', company: 'C', url: 'u', description: 'About us\n\n- Ship\n- Learn' }, 's')
     expect(p.descriptionSnippet).toBe('About us - Ship - Learn')
   })
+  // Big ads spend the stored 4000 characters on company copy; the fit's
+  // features are read from the whole body before it is clipped.
+  it('reads the fit features from the full body past the stored cut', () => {
+    const description = `About us\n${'We build things. '.repeat(300)}\nRequirements:\n- Go and Kubernetes\n- 3+ years of experience`
+    const p = normalize({ externalId: '1', title: 'Engineer', company: 'C', url: 'u', description }, 's')
+    expect(p.descriptionText).not.toContain('Kubernetes')
+    expect(p.features.skills).toEqual({ go: 'req', kubernetes: 'req' })
+    expect(p.features.band).toEqual([3, 7])
+  })
+
+  it('reads the board experience field into the years asked', () => {
+    const p = normalize({ externalId: '1', title: 'Developer', company: 'C', url: 'u', experience: '1 year(s)' }, 's')
+    expect(p.features).toMatchObject({ band: [1, 4], from: 'board' })
+  })
+
   it('still reads a degree and a level across line breaks', () => {
     const description = 'Requirements:\n- 3+ years of experience in Go\n- B.Tech in Computer Science'
     const p = normalize({ externalId: '1', title: 'Engineer', company: 'C', url: 'u', description }, 's')

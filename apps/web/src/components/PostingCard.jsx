@@ -37,7 +37,7 @@ export default function PostingCard({ posting, selected = false, flashUndo = fal
         className="absolute inset-0 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
       />
 
-      <span className="flex items-center gap-3 pr-2">
+      <span className="flex items-center gap-3">
         <CompanyMark company={posting.company} size="sm" logoOf={posting.logoUrl ? posting.id : null} />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-semibold text-ink">{posting.company}</span>
@@ -46,7 +46,7 @@ export default function PostingCard({ posting, selected = false, flashUndo = fal
           </span>
         </span>
         {fresh && (
-          <span aria-label="New today" className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary transition-opacity duration-fast ease group-hover:opacity-0">
+          <span aria-label="New today" className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">
             New
           </span>
         )}
@@ -57,26 +57,32 @@ export default function PostingCard({ posting, selected = false, flashUndo = fal
       <PostingTags posting={posting} align="start" />
 
       {/* mt-auto only on the foot: grid rows stretch to their tallest card, so
-          this keeps the rule aligned across a row instead of floating. */}
+          this keeps the rule aligned across a row instead of floating. The
+          quick actions live here, in the pay's place while the card is
+          hovered, focused inside or selected, the way a row's take its
+          score's place. Up beside the company name they covered the New badge
+          and the end of long names. */}
       <span className="mt-auto flex items-center justify-between gap-3 border-t border-line pt-3">
         {Number.isInteger(posting.fit)
           ? <FitMeter fit={posting.fit} grade={posting.grade} breakdown={posting.breakdown} />
           : <span className="text-xs text-muted">{age}</span>}
-        {pay ? <span className="tnum truncate text-sm font-semibold text-ink">{pay}</span> : <span className="text-xs text-muted">{Number.isInteger(posting.fit) ? age : ''}</span>}
-      </span>
-
-      {/* Above the stretched button, so a click here saves or dismisses and
-          never opens the job as well. Shown while hovered, focused inside or
-          selected, rising the two pixels it would have travelled. */}
-      {onStatus && (
-        <span
-          className={`absolute right-3 top-3 z-10 transition duration-fast ease ${
-            pinned ? '' : 'pointer-events-none translate-y-0.5 opacity-0 group-focus-within:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100'
-          }`}
-        >
-          <RowActions posting={posting} flashUndo={flashUndo} onStatus={onStatus} onUndo={onUndo} />
+        <span className="relative flex min-h-7 min-w-0 items-center justify-end">
+          <span className={`min-w-0 transition-opacity duration-fast ease ${onStatus ? (pinned ? 'invisible' : 'group-focus-within:opacity-0 group-hover:opacity-0') : ''}`}>
+            {pay ? <span className="tnum block truncate text-sm font-semibold text-ink">{pay}</span> : <span className="text-xs text-muted">{Number.isInteger(posting.fit) ? age : ''}</span>}
+          </span>
+          {/* Above the stretched button, so a click here saves or dismisses
+              and never opens the job as well. */}
+          {onStatus && (
+            <span
+              className={`absolute inset-y-0 right-0 z-10 flex items-center transition duration-fast ease ${
+                pinned ? '' : 'pointer-events-none translate-y-0.5 opacity-0 group-focus-within:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100'
+              }`}
+            >
+              <RowActions posting={posting} flashUndo={flashUndo} onStatus={onStatus} onUndo={onUndo} />
+            </span>
+          )}
         </span>
-      )}
+      </span>
     </article>
   );
 }

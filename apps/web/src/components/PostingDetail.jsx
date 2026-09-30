@@ -38,7 +38,7 @@ export default function PostingDetail({ posting, onClose, onStatus, onAsked }) {
         <div className="flex flex-col gap-4 px-5 py-4">
           <PostingFacts posting={posting} />
           <StaleNote posting={posting} />
-          <MatchReasons fit={posting.fit} reasons={posting.reasons} grade={posting.grade} breakdown={posting.breakdown} />
+          <MatchReasons fit={posting.fit} reasons={posting.reasons} grade={posting.grade} breakdown={posting.breakdown} why={posting.why} gates={posting.gates} />
           <GhostSignals signals={posting.ghostSignals}>{withEvidence && ask}</GhostSignals>
           {!withEvidence && ask}
           <PostingDescription key={posting.id} posting={posting} />

@@ -1,88 +1,51 @@
-import { normalizeProfile, levelsForYears } from './profile.js'
-import { titleFit, levelFit, degreeFit, titleTokens } from './fit-dimensions.js'
-import { skillFit } from './skill-fit.js'
+import { normalizeProfile } from './profile.js'
+import { titleTokens } from './fit-dimensions.js'
+import { featuresOf } from './posting-features.js'
+import { skillCoverage } from './skill-coverage.js'
+import { titleMatch } from './title-match.js'
+import { fitGates, gateProduct } from './fit-gates.js'
 import { buildBreakdown } from './breakdown.js'
+import { explainFit } from './fit-explain.js'
 
-// Fit is a percentage, not an accumulating tally. The tally it replaced scored
-// 1485 real postings onto 22 distinct values, with 45% of the feed sharing one
-// of them, so two thirds of a "recommended" feed was really just ordered by
-// date. A percentage built from continuous dimensions separates rows that a
-// sum of fixed bonuses could not tell apart.
-//
-// The weights are a claim about what makes a job worth reading: what it is
-// built with, what it is called, whether you can get it, and whether you are
-// allowed to apply.
-export const WEIGHTS = { skills: 45, titles: 25, level: 20, degree: 10 }
-
-// packages/db reads every constant and table through this module so the SQL
-// mirror cannot drift from the scorer; pieces that moved to their own files
-// stay exported here for the same reason.
-export { skillFit }
-export { levelFitTable } from './fit-dimensions.js'
 export { GRADE_BANDS, gradeFor } from './grade.js'
+export { fitContext } from './fit-context.js'
 
-// A dimension the profile says nothing about is dropped rather than scored
-// zero. Scoring it zero would punish an incomplete profile with a low ceiling:
-// somebody who listed skills but no target titles could never clear 75.
-export function dimensionWeights(profile) {
-  const p = normalizeProfile(profile)
-  const active = {
-    skills: p.skills.length > 0,
-    titles: p.titles.length > 0,
-    level: p.years !== null,
-    degree: true,
-  }
-  const weights = Object.fromEntries(
-    Object.entries(WEIGHTS).map(([k, w]) => [k, active[k] ? w : 0]),
-  )
-  const total = Object.values(weights).reduce((a, b) => a + b, 0)
-  return { ...weights, total }
-}
+// Fit is content times gates. Content is what the job is built with (how
+// much of what it asks for the person holds) and what it is called (how
+// close the title is to one they want). The gates are the level, the place,
+// internship or job, and the degree: the things that make a well-worded job
+// one this person cannot take (see fit-gates.js).
+//
+// It replaced a weighted sum of skills, title, level and degree whose skill
+// part barely moved (mean 0.07 across a real feed), so title words and a
+// default "mid" level decided the order, and a test role in the wrong city
+// graded A. Measured against hand labels on two profiles, nDCG@10 went from
+// 0.21 and 0.60 to 0.90 and 1.00.
+//
+// A part the profile says nothing about is dropped rather than scored zero,
+// so an incomplete profile is not capped below a hundred forever. With
+// neither skills nor titles, content is 1 and only the gates rank.
+export const CONTENT_WEIGHTS = { skills: 60, titles: 40 }
 
-// The single source of truth for the ranking. packages/db/src/posting-score.js
-// mirrors it as SQL so that ordering happens across the whole matching set
-// before LIMIT, and reads the weights and tables from here so the two cannot
-// drift apart on what counts as a match.
-export function scorePosting(posting, profile, idf = {}) {
-  const p = normalizeProfile(profile)
-  const w = dimensionWeights(p)
-  const skills = skillFit(posting, p.skills, idf)
-  const values = {
-    skills: skills.value,
-    titles: titleFit(posting.title, p.titles),
-    level: levelFit(posting.level || 'mid', levelsForYears(p.years)),
-    degree: degreeFit(posting.degreeMin, p.degree),
-  }
-  const earned = Object.entries(values).reduce((sum, [k, v]) => sum + w[k] * v, 0)
-  const breakdown = buildBreakdown(values, w)
+// `ctx` is fitContext(profile, rarity), built once per request. `features`
+// are the posting's stored ones; the store passes them already read for
+// rows stored before features existed.
+export function scorePosting(row, ctx, features = featuresOf(row)) {
+  const cov = ctx.skills ? skillCoverage(features.skills, ctx, row) : null
+  const title = ctx.titles.length ? titleMatch(row.title, ctx.titles) : null
+  const weights = { skills: cov ? CONTENT_WEIGHTS.skills : 0, titles: title ? CONTENT_WEIGHTS.titles : 0 }
+  weights.total = weights.skills + weights.titles
+  const values = { skills: cov?.value ?? 0, titles: title?.value ?? 0 }
+  const content = weights.total
+    ? (weights.skills * values.skills + weights.titles * values.titles) / weights.total
+    : 1
+  const gates = fitGates(row, features, ctx)
   return {
-    fit: w.total ? Math.round((100 * earned) / w.total) : 0,
-    matched: skills.matched,
-    mentioned: skills.mentioned,
-    titleFit: values.titles,
-    levelFit: values.level,
-    reachable: values.degree === 1,
-    breakdown,
+    fit: Math.round(100 * content * gateProduct(gates)),
+    content: Math.round(100 * content),
+    breakdown: buildBreakdown(values, weights),
+    ...explainFit({ cov, title, gates, features }),
   }
-}
-
-// Why a posting ranked where it did, in the user's words rather than a number.
-// An opaque score is not trustworthy enough to sort a job hunt by, and two of
-// these are warnings, which is why the UI labels the block fit rather than
-// recommendation.
-// The breakdown rides along because the caller that wants reasons wants it
-// too, and scoring twice to collect both was the alternative.
-export function explainScore(posting, profile, idf = {}) {
-  const { fit, matched, mentioned, titleFit: title, levelFit: level, reachable, breakdown } =
-    scorePosting(posting, profile, idf)
-  const reasons = []
-  if (matched.length) reasons.push(`matches ${matched.join(', ')}`)
-  else if (mentioned.length) reasons.push(`mentions ${mentioned.join(', ')}`)
-  if (title >= 0.5) reasons.push('close to a title you want')
-  if (level === 1) reasons.push('suits your experience')
-  else if (level <= 0.2) reasons.push('well outside your experience')
-  if (!reachable) reasons.push('needs a higher degree than you listed')
-  return { fit, reasons, breakdown }
 }
 
 // An empty profile scores every posting alike, so ranking by it would only

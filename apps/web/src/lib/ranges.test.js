@@ -5,13 +5,13 @@ describe('FIT_RANGES', () => {
   // Mirrors GRADE_BANDS in @jobdekho/core/grade.js; a drift here would make
   // the filter's "B" cut at a number the cards do not call B.
   it('is Any plus each grade at its lower bound', () => {
-    expect(FIT_RANGES).toEqual([['', 'Any'], ['62', 'A'], ['50', 'B'], ['38', 'C'], ['25', 'D']]);
-    expect(FIT_GRADE).toEqual({ 62: 'A', 50: 'B', 38: 'C', 25: 'D' });
+    expect(FIT_RANGES).toEqual([['', 'Any'], ['55', 'A'], ['40', 'B'], ['25', 'C'], ['12', 'D']]);
+    expect(FIT_GRADE).toEqual({ 55: 'A', 40: 'B', 25: 'C', 12: 'D' });
   });
 
   it('says a floor in grade words, and an old number as a number', () => {
-    expect(fitFloorLabel('62')).toBe('Grade A');
-    expect(fitFloorLabel('25')).toBe('Grade D or better');
+    expect(fitFloorLabel('55')).toBe('Grade A');
+    expect(fitFloorLabel('12')).toBe('Grade D or better');
     expect(fitFloorLabel('44')).toBe('Fit 44 and up');
   });
 });

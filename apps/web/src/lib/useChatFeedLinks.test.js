@@ -19,6 +19,14 @@ describe('useChatFeedLinks', () => {
     expect(apply.setView).not.toHaveBeenCalled();
   });
 
+  // A kept conversation's button still carries the number it was made with.
+  it('applies a kept Fit button at today\'s floor for the letter it showed', () => {
+    const apply = applyFns();
+    const { result } = renderHook(() => useChatFeedLinks({ onFeed: true, filters: FILTERS, apply }));
+    result.current.onApply({ type: 'filters', patch: { minFit: '50' }, label: 'Show grade B or better' });
+    expect(apply.setFilters).toHaveBeenCalledWith({ workModes: [], q: 'react', minFit: '40' });
+  });
+
   it('opens a named job straight away on the feed', () => {
     const opened = vi.fn();
     const stop = onOpenPostingRequest(opened);

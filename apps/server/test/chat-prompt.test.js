@@ -91,6 +91,14 @@ describe('buildChatPrompt', () => {
     expect(prompt).toContain('has not filled in a career record yet')
   })
 
+  // The floors are read from GRADE_BANDS, so the prompt can never offer one
+  // the action validator no longer accepts.
+  it('offers the fit floors the grades use today', () => {
+    const prompt = buildChatPrompt({ message: 'q', context: { postingCount: 0, sort: 'match', top: [], open: null, profile: null }, history: [] })
+    expect(prompt).toContain('55 for grade A only, 40 for B or better, 25 for C or better, 12 for D or better')
+    expect(prompt).not.toContain('62 for grade A')
+  })
+
   it('asks for the ids of the postings the reply names, and only ids from the data', () => {
     const prompt = buildChatPrompt({ message: 'q', context: { postingCount: 0, sort: 'match', top: [], open: null, profile: null }, history: [] })
     expect(prompt).toContain('"refs":["id","id"]')

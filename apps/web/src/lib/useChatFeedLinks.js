@@ -1,5 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { requestOpenPosting } from './openPostingSignal.js';
+import { chatFitFloor } from './chatFitFloor.js';
+
+// A kept conversation's Fit button applies today's floor for the letter it
+// showed (see chatFitFloor.js).
+const withTodaysFloor = ({ patch, label }) => ('minFit' in patch ? { ...patch, minFit: chatFitFloor(patch.minFit, label) } : patch);
 
 // What an answer can do to the feed: apply a filter or sort it offered, or
 // open a job it named. Both act on the feed, so on any other page they take
@@ -22,7 +27,7 @@ export function useChatFeedLinks({ onFeed, filters, apply }) {
   }, [onFeed]);
 
   function onApply(action) {
-    if (action.type === 'filters') apply.setFilters({ ...filters, ...action.patch });
+    if (action.type === 'filters') apply.setFilters({ ...filters, ...withTodaysFloor(action) });
     else if (action.type === 'sort') apply.setSort(action.value);
     if (!onFeed) apply.setView?.('postings');
   }

@@ -1,10 +1,9 @@
-import { idfWeights } from '@jobdekho/core/fit-dimensions.js'
-import { normalizeProfile } from '@jobdekho/core/profile.js'
 import { postingPredicate, clampPage, toNumber } from './posting-filters.js'
 import { orderFor } from './posting-order.js'
+import { gradeFor } from '@jobdekho/core/grade.js'
 import { withGroupWindows } from './posting-groups.js'
 import { scoreRows, canRank } from './posting-score.js'
-import { skillDocFreq } from './skill-doc-freq.js'
+import { fitContextFor } from './fit-inputs.js'
 import { withFit, withGhost } from './posting-fit.js'
 
 export function applyStatusFilter(rows, status) {
@@ -34,40 +33,42 @@ export async function listPostingsForUser(store, userId, opts = {}) {
   const matching = store.corpus.rows().filter(postingPredicate(opts, statusOf))
   const windowed = withGroupWindows(matching)
   const leads = opts.group === false ? windowed : windowed.filter((row) => row.groupRank === 1)
-  const scored = ranks ? scoreRows(leads, opts.profile, idfFor(store, opts.profile)) : leads
+  const scored = ranks ? scoreRows(leads, fitContextFor(store, opts.profile), store.corpus.rows()) : leads
   // The floor only means anything against a real score. Unranked, every row
   // "scores" zero, so applying it would empty the feed rather than filter it.
   const minFit = ranks ? toNumber(opts.minFit) : null
   const gated = minFit ? scored.filter((row) => row.matchScore >= minFit) : scored
-  const page = gated.sort(orderFor(sort)).slice(offset, offset + limit)
+  const page = gated.sort(orderFor(sort, { ranked: ranks })).slice(offset, offset + limit)
   const postings = applyStatusFilter(page.map((row) => {
     const seen = { ...row, status: statusOf(row.id) }
     return toPosting(ranks ? withFit(seen) : withGhost(seen))
   }), opts.status)
-  return opts.withCounts ? { postings, ...countsOf(gated) } : postings
+  return opts.withCounts ? { postings, ...countsOf(gated, ranks) } : postings
 }
 
 // The whole matching set's size and how many of it arrived in the last day,
 // for the feed's title line. Counting the loaded page instead said "100 new
-// today" whenever the first hundred rows happened to be new.
+// today" whenever the first hundred rows happened to be new. Ranked, also how
+// many fall in each grade, for the band dividers in the list.
 const DAY_MS = 24 * 60 * 60 * 1000
 
-function countsOf(rows, now = Date.now()) {
+function countsOf(rows, ranked, now = Date.now()) {
   const newToday = rows.filter((row) => now - Date.parse(row.firstSeenAt ?? '') < DAY_MS).length
-  return { total: rows.length, newToday }
-}
-
-// Rarity comes from a cached corpus scan; without it ranking runs unweighted.
-function idfFor(store, profile) {
-  const { docFreq, totalDocs } = skillDocFreq(store, normalizeProfile(profile).skills)
-  return idfWeights(docFreq, totalDocs)
+  if (!ranked) return { total: rows.length, newToday }
+  const bands = {}
+  for (const row of rows) {
+    const grade = gradeFor(row.matchScore)
+    bands[grade] = (bands[grade] ?? 0) + 1
+  }
+  return { total: rows.length, newToday, bands }
 }
 
 // groupRank and groupSourceCount are query scaffolding: one picked the row
 // that leads its group, the other fed the ghost signals, and neither is a
 // field a card shows. externalId, groupKey and currency were never part of
-// the feed's row either. No window value means a group of one.
-const SCAFFOLDING = ['groupRank', 'groupSourceCount', 'externalId', 'groupKey', 'currency']
+// the feed's row either, and features are what the fit read, already
+// explained by why. No window value means a group of one.
+const SCAFFOLDING = ['groupRank', 'groupSourceCount', 'externalId', 'groupKey', 'currency', 'features']
 
 function toPosting(row) {
   const out = { ...row, groupCount: Number(row.groupCount ?? 1), matchScore: Number(row.matchScore ?? 0) }

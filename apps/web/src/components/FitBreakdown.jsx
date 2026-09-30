@@ -4,14 +4,17 @@ const DIMENSION_WORD = { skills: 'Skills', titles: 'Title', level: 'Level', degr
 // How full a row's bar is: the points it earned against its own ceiling.
 const fillPct = ({ points, max }) => (max > 0 ? Math.min(100, Math.max(0, (points / max) * 100)) : 0);
 
+// The parts are the content of the fit (what the job is built with, what it
+// is called); the gates that multiply content into the score are FitWhy's
+// rows, so these bars can sum past the score a gate cut down.
+//
 // Every row gets the same full-width track, filled to how well that part
 // did. Each track used to be drawn to its part's share of the total (skills
-// long, degree short), so a fully earned degree drew a short full bar that
-// read as broken; how much each part is worth is what "29 of 45" says. Points
-// are rounded for reading and can drift a point off the card's total; the
-// unrounded values are the server's, and rows keep the server's order so two
-// postings compare line for line. The bars are ink, like the feed's meter:
-// the grade beside them carries the tone, and four saffron bars shouted.
+// long, title short), so a fully earned part drew a short full bar that read
+// as broken; how much each part is worth is what "29 of 60" says. Points are
+// rounded for reading; the unrounded values are the server's, and rows keep
+// the server's order so two postings compare line for line. The bars are
+// ink, like the feed's meter: the grade beside them carries the tone.
 export default function FitBreakdown({ breakdown }) {
   if (!breakdown?.length) return null;
 

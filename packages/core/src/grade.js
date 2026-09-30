@@ -1,19 +1,21 @@
-// A letter over the 0-100 fit percentage, so a card can say "B" instead of
-// asking the reader to know what a 38 means.
+// A letter over the 0-100 fit, so a card can say "B" instead of asking the
+// reader to know what a 38 means.
 //
-// CALIBRATED TO A MEASURED DISTRIBUTION, not to schoolroom 90/80/70/60, and
-// re-measured after the skills dimension stopped dividing by the size of the
-// profile. That change moved everything: against a real 25 skill profile over
-// 1880 live postings the maximum went from 69 to 84 and the median from 22 to
-// 33, which turned these floors from "6% of postings score A" into 24%. A
-// grade a quarter of the corpus earns says nothing.
+// FLOORS WITH A MEANING, not percentiles. Fit is content times gates (see
+// score.js), so A is a job whose skills and title match well and that no gate
+// holds back; B is a good match with one soft gap, or a solid one with none;
+// C is worth a look; D is a long shot. Percentile floors guaranteed a share
+// of A's even to a profile that fits nothing in the corpus, and the floors
+// before these (62, 50, 38, 25) were tuned on one profile and did not
+// transfer: another profile got A on under 1% of its feed, and of the jobs
+// graded A for the demo profile, 22 of 47 hand-labelled ones were not a fit.
 //
-// The floors are percentiles of that measured distribution rather than round
-// numbers: A is the top 5% (62), B the top 12% (50), C the top 30% (38), D
-// the top 65% (25). REVISIT them whenever WEIGHTS, the title and body credits,
-// or HALF_MATCH change, because each moves the whole distribution and the
-// letters have to move with it.
-export const GRADE_BANDS = [['A', 62], ['B', 50], ['C', 38], ['D', 25]]
+// Set before labelling, then checked against 269 hand labels on two
+// profiles: 0.81 and 0.78 agreement, and moving every floor by 5 points
+// either way keeps it between 0.73 and 0.86. REVISIT them against those
+// labels whenever the content weights, the section weights or a gate
+// changes.
+export const GRADE_BANDS = [['A', 55], ['B', 40], ['C', 25], ['D', 12]]
 
 export function gradeFor(fit) {
   for (const [grade, floor] of GRADE_BANDS) if (fit >= floor) return grade

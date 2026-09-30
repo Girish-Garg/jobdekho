@@ -1,15 +1,16 @@
 import { DEGREES } from './degree.js'
 
-// What a resume reduces to. Every field maps onto a dimension score.js
-// already understands, which is what lets one profile rank postings.
+// What a resume reduces to. Every field maps onto a part of the fit
+// (skills and titles to content; years, degree and locations to the gates),
+// which is what lets one profile rank postings.
 export const EMPTY_PROFILE = { skills: [], years: null, degree: 'none', titles: [], locations: [] }
 
 const clean = (list) => [...new Set(
   (Array.isArray(list) ? list : []).map((s) => String(s).toLowerCase().trim()).filter(Boolean),
 )]
 
-// Enough to rank well without building a SQL statement thousands of characters
-// long. A resume listing 40 skills is mostly listing noise anyway.
+// Enough to rank well. A resume listing 40 skills is mostly listing noise,
+// and every skill listed is one more thing each posting is checked for.
 const MAX_SKILLS = 25
 
 // Number(null) and Number('') are both 0, so an unstated number of years read
@@ -30,16 +31,4 @@ export function normalizeProfile(input) {
     titles: clean(src.titles).slice(0, MAX_SKILLS),
     locations: clean(src.locations),
   }
-}
-
-// Seniority you are plausibly a fit for, spanning one rung either side rather
-// than a single point: someone with two years should still see entry roles.
-// Null years means the resume never said, so nothing is ruled out.
-export function levelsForYears(years) {
-  if (years === null || years === undefined) return []
-  if (years < 1) return ['internship', 'entry']
-  if (years < 3) return ['entry', 'mid']
-  if (years < 6) return ['mid', 'senior']
-  if (years < 10) return ['senior', 'staff']
-  return ['staff', 'executive']
 }

@@ -33,7 +33,7 @@ beforeEach(() => vi.clearAllMocks());
 describe('FilterBar row', () => {
   it('collapses every control into a single row of triggers', async () => {
     await setup();
-    for (const name of [/^Fit$/, /^Level$/, /^Status$/, /^Work mode$/, /^All sources$/, /^More filters$/]) {
+    for (const name of [/^Level$/, /^Status$/, /^Work mode$/, /^All sources$/, /^More filters$/]) {
       expect(screen.getByRole('button', { name })).toHaveAttribute('aria-expanded', 'false');
     }
   });
@@ -118,42 +118,17 @@ describe('FilterBar work mode filter', () => {
   });
 });
 
-describe('FilterBar fit filter', () => {
-  it('keeps the grades behind the trigger, unset by default', async () => {
+// The feed runs strong fits first under every sort (see lib/sorts.js), so a
+// floor to hide the weak ones had nothing left to do and the Fit trigger went.
+// A floor the chat sets still shows, as a chip, and still comes off there.
+describe('FilterBar fit floor', () => {
+  it('has no Fit trigger in the bar', async () => {
     await setup();
-    expect(screen.queryByRole('button', { name: 'A' })).not.toBeInTheDocument();
-    open('Fit');
-    expect(screen.getByRole('button', { name: 'Any' })).toHaveAttribute('aria-pressed', 'true');
-    for (const grade of ['A', 'B', 'C', 'D']) expect(screen.getByRole('button', { name: grade })).toBeInTheDocument();
-  });
-
-  // Each grade is a floor: B shows the B jobs and the A ones.
-  it('writes the picked grade as its lower bound', async () => {
-    const { setFilters } = await setup();
-    open('Fit');
-    fireEvent.click(screen.getByRole('button', { name: 'B' }));
-    expect(setFilters).toHaveBeenCalledWith(expect.objectContaining({ minFit: '50' }));
-    fireEvent.click(screen.getByRole('button', { name: 'D' }));
-    expect(setFilters).toHaveBeenCalledWith(expect.objectContaining({ minFit: '25' }));
-  });
-
-  // A second floor would just shadow the first, so the pick replaces like
-  // Status rather than stacking like Level.
-  it('replaces rather than stacks the floor', async () => {
-    const { setFilters } = await setup({ minFit: '50' });
-    open('Fit');
-    expect(screen.getByRole('button', { name: 'B' })).toHaveAttribute('aria-pressed', 'true');
-    fireEvent.click(screen.getByRole('button', { name: 'A' }));
-    expect(setFilters).toHaveBeenCalledWith(expect.objectContaining({ minFit: '62' }));
-  });
-
-  it('counts an active floor on the closed trigger', async () => {
-    await setup({ minFit: '62' });
-    expect(screen.getByRole('button', { name: 'Fit (1)' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Fit/ })).toBeNull();
   });
 
   it('surfaces the floor as a chip in grade words and removes it from there', async () => {
-    const { setFilters } = await setup({ minFit: '50' });
+    const { setFilters } = await setup({ minFit: '40' });
     expect(screen.getByText('Grade B or better')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Remove Grade B or better filter' }));
     expect(setFilters).toHaveBeenCalledWith(expect.objectContaining({ minFit: '' }));
