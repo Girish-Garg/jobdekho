@@ -2,6 +2,7 @@ import { homedir } from 'node:os'
 import { PROVIDERS } from './providers.js'
 import { locateBinary } from './locate.js'
 import { runCli } from './spawn.js'
+import { httpJson, offline } from './http-json.js'
 
 // A version probe is a process start, not a model call: it costs nothing and
 // proves the binary runs. Whether the person is signed in is deliberately not
@@ -24,10 +25,17 @@ const firstLine = (text) => String(text).trim().split('\n')[0] || null
 // its settings, see agy-settings.js) is reported the way one that will not
 // run is: present, runs false, and the sentence saying why. It is asked
 // before the probe because it is a file read where the probe is a process.
-async function inspect(provider, { locate, run, home }) {
+//
+// A provider served on this computer (Ollama) is installed when its binary
+// is on PATH like any other, and then asked by its own probe, which reads
+// its local server rather than starting a process, and also lists the models
+// it could answer with (see ollama-probe.js). Its row always has `models`.
+async function inspect(provider, { locate, run, home, http }) {
   const base = { id: provider.id, label: provider.label, install: provider.install, policies: provider.policies }
   const path = locate(provider.binary)
-  if (!path) return { ...base, present: false, path: null, runs: false, version: null, error: null }
+  const listed = provider.probe ? { models: [] } : {}
+  if (!path) return { ...base, present: false, path: null, runs: false, version: null, error: null, ...listed }
+  if (provider.probe) return { ...base, present: true, path, ...(await provider.probe({ http })) }
   const unusable = (error) => ({ ...base, present: true, path, runs: false, version: null, error })
   const broken = (detail) => unusable(`${provider.label} is installed at ${path} but could not run: ${detail}`)
   const refusal = provider.unusable?.({ home })
@@ -44,14 +52,17 @@ async function inspect(provider, { locate, run, home }) {
 // Returns a detect() whose answer is cached for ttlMs. The promise itself is
 // cached, so two loads arriving together share one probe instead of racing.
 // `home` is where a CLI's own settings are looked for, injectable so a test
-// never reads the real ones.
+// never reads the real ones. `http` reaches a local model server; a caller
+// that fakes `run` but not `http` gets one where nothing answers, so a test
+// never finds the Ollama that may be running on the machine it runs on.
 export function createDetector({
-  locate = locateBinary, run = runCli, providers = PROVIDERS, ttlMs = DEFAULT_TTL_MS, now = Date.now, home = homedir(),
+  locate = locateBinary, run = runCli, http = run === runCli ? httpJson : offline,
+  providers = PROVIDERS, ttlMs = DEFAULT_TTL_MS, now = Date.now, home = homedir(),
 } = {}) {
   let cached = null
   return function detect({ refresh = false } = {}) {
     if (refresh || !cached || now() - cached.at >= ttlMs) {
-      cached = { at: now(), list: Promise.all(providers.map((p) => inspect(p, { locate, run, home }))) }
+      cached = { at: now(), list: Promise.all(providers.map((p) => inspect(p, { locate, run, home, http }))) }
     }
     return cached.list
   }

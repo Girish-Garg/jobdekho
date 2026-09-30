@@ -11,13 +11,23 @@ export function providerState({ runs, version, error }) {
 
 export const searchesWeb = (provider) => (provider.policies || []).includes('web');
 
+// "A", "A and B", "A, B and C".
+function listed(labels) {
+  if (labels.length < 3) return labels.join(' and ');
+  return `${labels.slice(0, -1).join(', ')} and ${labels.at(-1)}`;
+}
+
+const TOGETHER = { 1: 'can', 2: 'can both' };
+
 // "Is this job real?" is the one job action that searches the web, so it can
-// only run on a CLI that honours the 'web' policy (see ai/policies.js).
+// only run on a CLI that honours the 'web' policy (see ai/policies.js). Ollama
+// honours 'none' alone, so on a machine with all three it is the one named
+// as unable.
 export function webSentence(providers) {
   const canSearch = providers.filter(searchesWeb);
   if (!canSearch.length) return '"Is this job real?" needs a CLI that can search the web; none of these can.';
-  const can = canSearch.map((p) => p.label).join(' and ');
-  const rest = providers.filter((p) => !canSearch.includes(p)).map((p) => p.label).join(' or ');
-  const intro = `"Is this job real?" searches the web, which ${can} ${canSearch.length > 1 ? 'can both' : 'can'} do.`;
-  return rest ? `${intro} ${rest} cannot.` : intro;
+  const rest = providers.filter((p) => !canSearch.includes(p)).map((p) => p.label);
+  const intro = `"Is this job real?" searches the web, which ${listed(canSearch.map((p) => p.label))} ${TOGETHER[canSearch.length] ?? 'can all'} do.`;
+  if (!rest.length) return intro;
+  return rest.length === 1 ? `${intro} ${rest[0]} cannot.` : `${intro} Neither ${rest.join(' nor ')} can.`;
 }

@@ -51,7 +51,7 @@ const MESSAGE = {
   unconfirmed: (p, detail) =>
     `${p.label} answered, but JobDekho could not confirm it kept to the tools this call allows `
     + `(${trimStop(detail)}), so the answer was not used. This can follow an update to ${p.label}; `
-    + 'pick the other AI in Settings, or update JobDekho.',
+    + 'pick another AI in Settings, or update JobDekho.',
   unreadable: (p) =>
     `${p.label} answered, but the reply was not in the shape JobDekho expected. Try again.`,
 }
@@ -62,12 +62,16 @@ export const FAILURE_KINDS = Object.keys(STATUS)
 // three places used to decide it (both unwrappers and a non-zero exit).
 // Busy is asked first: Claude Code's refresh race says "OAuth token", which
 // the login pattern also matches, and a transient wait must not read as a
-// broken sign-in.
+// broken sign-in. A provider with nothing to sign in to (Ollama) has no
+// login wording, and its failures are only ever failures.
 export function classify(provider, detail) {
   if (provider.busyPattern?.test(detail)) return 'busy'
-  if (provider.loginPattern.test(detail)) return 'login'
+  if (provider.loginPattern?.test(detail)) return 'login'
   return 'failed'
 }
+
+// Both ways of calling (a process, a local API) run out of time the same way.
+export const timedOut = (provider, ms) => new ProviderError('timeout', provider, `${Math.round(ms / 1000)} seconds`)
 
 export class ProviderError extends Error {
   constructor(kind, provider, detail = '') {

@@ -1,8 +1,9 @@
 import { Fragment } from 'react';
 
-// Both CLIs take both policies today (Antigravity searches through an agent
-// of its own, see the server's ai/agy-agent.js), so a CLI that cannot serve
-// an action is one added later, and the sentence for it is the plain one.
+// Claude Code and Antigravity take both policies (Antigravity searches
+// through an agent of its own, see the server's ai/agy-agent.js). Ollama
+// takes 'none' alone, so it is the one a web action names with the plain
+// "cannot take this action" sentence.
 const serves = (p, policies) => policies.some((policy) => p.policies.includes(policy));
 
 // Shown in place of an AI button when no installed CLI can take the action.

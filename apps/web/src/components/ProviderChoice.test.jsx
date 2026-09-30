@@ -55,4 +55,29 @@ describe('ProviderChoice', () => {
     render(<ProviderChoice providers={[stuck]} pref="auto" onChange={() => {}} />);
     expect(screen.getByRole('radio', { name: 'Antigravity' })).toHaveAccessibleDescription('Antigravity is installed, but blocked');
   });
+
+  // Ollama runs on this computer and cannot search, so its card has the dot
+  // and version like the others but never the web tag.
+  it('shows an Ollama card with its version and no web tag', () => {
+    const ollama = { id: 'ollama', label: 'Ollama', policies: ['none'], runs: true, version: '0.32.12', error: null, models: [] };
+    render(<ProviderChoice providers={[...PROVIDERS, ollama]} pref="ollama" onChange={() => {}} />);
+    const card = screen.getByRole('radio', { name: 'Ollama' });
+    expect(card).toHaveAttribute('aria-checked', 'true');
+    expect(card).toHaveAccessibleDescription('0.32.12');
+    expect(card).not.toHaveTextContent('Searches the web');
+  });
+
+  it('shows why Ollama cannot answer when its server is not up', () => {
+    const stopped = {
+      id: 'ollama', label: 'Ollama', policies: ['none'], runs: false, version: null, models: [],
+      error: 'Ollama is installed but not running: start the Ollama app, or run "ollama serve" in a terminal.',
+    };
+    render(<ProviderChoice providers={[stopped]} pref="auto" onChange={() => {}} />);
+    expect(screen.getByRole('radio', { name: 'Ollama' })).toHaveAccessibleDescription(/not running: start the Ollama app/);
+  });
+
+  it('describes "Whichever is available" in words that fit any number of AIs', () => {
+    render(<ProviderChoice providers={PROVIDERS} pref="auto" onChange={() => {}} />);
+    expect(screen.getByRole('radio', { name: 'Whichever is available' })).toHaveAccessibleDescription('Asks the first that answers, then the next in line.');
+  });
 });

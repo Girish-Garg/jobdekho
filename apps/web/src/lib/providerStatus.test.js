@@ -4,6 +4,7 @@ import { providerState, searchesWeb, webSentence } from './providerStatus.js';
 const CLAUDE = { id: 'claude', label: 'Claude Code', policies: ['none', 'web'], present: true, runs: true, version: '2.1.245', error: null };
 const AGY = { id: 'agy', label: 'Antigravity', policies: ['none', 'web'], present: true, runs: true, version: '1.2.13', error: null };
 const NO_WEB = { id: 'other', label: 'Other CLI', policies: ['none'], present: true, runs: true, version: '1.0', error: null };
+const OLLAMA = { id: 'ollama', label: 'Ollama', policies: ['none'], present: true, runs: true, version: '0.32.12', error: null, models: [] };
 const AGY_GATED = { ...AGY, runs: false, error: 'Antigravity is installed, but ... pre-approves tools' };
 const CLAUDE_ABSENT = { ...CLAUDE, present: false, runs: false, version: null, error: null };
 
@@ -33,6 +34,20 @@ describe('webSentence', () => {
 
   it('says so when nothing detected can search', () => {
     expect(webSentence([NO_WEB])).toMatch(/none of these can/);
+  });
+
+  // Ollama runs on this computer and has no web search to hand over.
+  it('names Ollama as the one that cannot, beside both CLIs', () => {
+    expect(webSentence([CLAUDE, AGY, OLLAMA])).toBe(
+      '"Is this job real?" searches the web, which Claude Code and Antigravity can both do. Ollama cannot.',
+    );
+  });
+
+  it('reads right for three that can and two that cannot', () => {
+    const third = { ...CLAUDE, id: 'third', label: 'Third CLI' };
+    expect(webSentence([CLAUDE, AGY, third, OLLAMA, NO_WEB])).toBe(
+      '"Is this job real?" searches the web, which Claude Code, Antigravity and Third CLI can all do. Neither Ollama nor Other CLI can.',
+    );
   });
 
   it('reads a missing policy list as no web search', () => {

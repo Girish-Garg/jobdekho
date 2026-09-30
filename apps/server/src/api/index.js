@@ -1,6 +1,6 @@
 import { postingsRoutes } from './postings.js'
 import { filtersRoutes } from './filters.js'
-import { aiProviderRoutes } from './ai-provider.js'
+import { aiProviderRoutes, MODEL_FIELD } from './ai-provider.js'
 import { profileRoutes } from './profile.js'
 import { postingAiRoutes } from './posting-ai.js'
 import { resumeRoutes } from './resume.js'
@@ -23,9 +23,20 @@ function preferenceReader(app) {
   return async () => {
     const userId = app.devUser?.sub
     if (!userId || typeof app.dashboard?.getProviderPref !== 'function') return null
-    const pref = await app.dashboard.getProviderPref(userId)
+    return app.dashboard.getProviderPref(userId)
+  }
+}
+
+// The chooser every AI call goes through: the saved provider first when it
+// can take the action, and for Ollama the saved model (see ai/select.js).
+function selector(app, detect) {
+  const read = preferenceReader(app)
+  const preferred = async () => {
+    const pref = await read()
     return pref && pref.provider !== 'auto' ? pref.provider : null
   }
+  const model = async (providerId) => (MODEL_FIELD[providerId] ? (await read())?.[MODEL_FIELD[providerId]] ?? null : null)
+  return createSelector(detect, preferred, model)
 }
 
 export async function apiRoutes(app) {
@@ -34,7 +45,7 @@ export async function apiRoutes(app) {
   // disagree about what is installed. Tests decorate `cli` with fakes before
   // ready() so no real binary is probed or spawned.
   const detect = createDetector(app.hasDecorator('cli') ? app.cli : {})
-  app.decorate('ai', { detect, select: createSelector(detect, preferenceReader(app)) })
+  app.decorate('ai', { detect, select: selector(app, detect) })
 
   await app.register(postingsRoutes)
   await app.register(filtersRoutes)

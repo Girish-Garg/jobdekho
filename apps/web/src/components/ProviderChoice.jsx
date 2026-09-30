@@ -7,16 +7,17 @@ const AUTO = 'auto';
 const DOT = { ready: 'bg-applied', stuck: 'bg-ember', missing: 'bg-muted/50' };
 
 // Radio cards: "Whichever is available" plus one per CLI the providers
-// endpoint knows about, so a third CLI added later shows up here with no copy
-// change. Each card carries what the probe found, so the pick and whether it
-// can run are read in one place. The radio's name is only the label; the
-// status is its description, so "Claude Code" is still what is announced.
+// endpoint knows about, so Ollama, added third, showed up here with no copy
+// change, and without the web tag because it cannot search. Each card
+// carries what the probe found, so the pick and whether it can run are read
+// in one place. The radio's name is only the label; the status is its
+// description, so "Claude Code" is still what is announced.
 export default function ProviderChoice({ providers, pref, onChange }) {
   return (
     <div role="radiogroup" aria-label="AI CLI" className="grid grid-cols-1 gap-3 sm:grid-cols-2">
       <Option
         label="Whichever is available"
-        detail="Asks the first that answers, then the other."
+        detail="Asks the first that answers, then the next in line."
         icon={<SparkleIcon size={15} />}
         active={!pref || pref === AUTO}
         onClick={() => onChange(AUTO)}

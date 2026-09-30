@@ -15,6 +15,7 @@
 export const NDJSON_TYPE = 'application/x-ndjson'
 
 // start:    { event: 'start', provider, path }         the CLI that will answer
+//           (for Ollama, which is not run as a process, `path` is the model)
 // progress: { event: 'progress', stage: 'send', chars }           prompt handed over
 //           { event: 'progress', stage: 'wait', elapsedMs }       heartbeat while it thinks
 //           { event: 'progress', stage: 'reply', elapsedMs, chars } answer received, being read

@@ -1,8 +1,11 @@
 import { locateBinary } from './locate.js'
 import { runStaged } from './staged-run.js'
 import { inEmptyDir } from './scratch-dir.js'
-import { ProviderError, classify } from './errors.js'
+import { httpJson, offline } from './http-json.js'
+import { ProviderError } from './errors.js'
 import { startEvent, progressEvent } from './events.js'
+import { overProcess } from './over-process.js'
+import { overRequest } from './over-request.js'
 
 const DEFAULT_TIMEOUT_MS = 120000
 
@@ -18,7 +21,9 @@ const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 // One prompt to one provider, answered with the model's text. Reading a shape
 // out of that text is the feature's job, because every feature asks for a
-// different one.
+// different one. `json` says that shape is one JSON object, as it is for every
+// feature today (see loose-json.js): a provider that can be held to it
+// (Ollama) is, and a CLI ignores it.
 //
 // `tools` is the policy the feature chose (see policies.js) and has no
 // default on purpose: leaving it out is a bug that must fail before a CLI
@@ -26,28 +31,38 @@ const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 // cannot honour the policy is the same kind of bug: select.js never picks
 // one, so reaching here with it is a caller wiring the wrong CLI in.
 //
-// `run`, `locate`, `scratch` and `sleep` are injectable so a test never
-// spawns a real CLI, touches the real temp directory or waits in real time.
+// A CLI is a process (over-process.js); a provider with a request hook is a
+// local API (over-request.js). Both get the same events, heartbeat, timeout
+// and retry here, so a browser cannot tell them apart but by name.
+//
+// `run`, `locate`, `scratch`, `http` and `sleep` are injectable so a test never
+// spawns a real CLI, touches the real temp directory, reaches a real model
+// server or waits in real time. A caller that fakes `run` but not `http`
+// gets a network where nothing answers (see http-json.js).
 export async function callProvider({
-  provider, prompt, tools, timeoutMs = DEFAULT_TIMEOUT_MS, emit = () => {},
-  run = runStaged, locate = locateBinary, scratch = inEmptyDir, heartbeatMs = HEARTBEAT_MS, now = Date.now,
-  sleep = pause, busyWaits = BUSY_WAITS_MS,
+  provider, prompt, tools, timeoutMs = DEFAULT_TIMEOUT_MS, emit = () => {}, json = true,
+  run = runStaged, locate = locateBinary, scratch = inEmptyDir, http = run === runStaged ? httpJson : offline,
+  heartbeatMs = HEARTBEAT_MS, now = Date.now, sleep = pause, busyWaits = BUSY_WAITS_MS,
 }) {
   const args = provider.promptArgs(tools)
   if (!args) throw new Error(`${provider.label} cannot honour the "${tools}" tool policy and should not have been chosen for it`)
-  const file = locate(provider.binary)
+  // A provider behind an API has no binary to find; the start event names
+  // the model that will answer instead, the one the person picked.
+  const file = provider.request ? provider.model?.name ?? provider.id : locate(provider.binary)
   if (!file) throw new ProviderError('not_found', provider)
+  const limit = timeoutMs * (provider.timeoutScale ?? 1)
 
   // The send event counts the prompt, not the wrapper a CLI's input protocol
   // adds around it: the wrapper is not content anyone wrote.
   emit(startEvent({ provider: provider.id, path: file }))
   emit(progressEvent({ stage: 'send', chars: prompt.length }))
   const started = now()
-  const call = { file, args, provider, prompt, tools, timeoutMs, run, scratch, emit, heartbeatMs, now, started }
+  const call = { file, args, provider, prompt, tools, json, timeoutMs: limit, run, scratch, http }
+  const ask = () => (provider.request ? overRequest(call) : overProcess(call))
 
   for (let tries = 0; ; tries += 1) {
     try {
-      const text = await once(call)
+      const text = await beating(ask, { emit, heartbeatMs, now, started })
       emit(progressEvent({ stage: 'reply', elapsedMs: now() - started, chars: text.length }))
       return { provider: provider.id, text }
     } catch (err) {
@@ -58,42 +73,11 @@ export async function callProvider({
   }
 }
 
-// A CLI that takes its toolset from a file in its directory gets the file
-// there, and its word on what ran is checked once it has answered: an answer
-// it cannot vouch for is not used (see agy-agent.js).
-async function once({ file, args, provider, prompt, tools, timeoutMs, run, scratch, emit, heartbeatMs, now, started }) {
+async function beating(work, { emit, heartbeatMs, now, started }) {
   const beat = setInterval(() => emit(progressEvent({ stage: 'wait', elapsedMs: now() - started })), heartbeatMs)
-  const staged = provider.stage ? { files: provider.stage(tools), collect: provider.collect } : {}
-  let result
   try {
-    result = await scratch((cwd) => run({ file, args, input: provider.encodeInput(prompt), timeoutMs, cwd, ...staged }))
-  } catch (err) {
-    throw notRun(err, provider, timeoutMs)
+    return await work()
   } finally {
     clearInterval(beat)
   }
-  if (result.code !== 0) throw exited(result, provider)
-  const text = provider.unwrap(result.stdout, provider)
-  provider.verify?.({ ...result, tools }, provider)
-  return text
-}
-
-function notRun(err, provider, timeoutMs) {
-  if (err.code === 'ETIMEDOUT') return new ProviderError('timeout', provider, `${Math.round(timeoutMs / 1000)} seconds`)
-  if (err.code === 'ENOENT') return new ProviderError('not_found', provider)
-  return err
-}
-
-// A CLI that is installed but not signed in usually says so on stderr and
-// exits non-zero. Claude Code 2.1 prints its is_error envelope on stdout AND
-// exits 1 with nothing on stderr, so the envelope is read first or the person
-// sees "exited with code 1" where the real sentence was.
-function exited({ stdout, stderr, code }, provider) {
-  try {
-    provider.unwrap(stdout, provider)
-  } catch (err) {
-    if (err instanceof ProviderError) return err
-  }
-  const detail = stderr.trim().slice(0, 200) || `exited with code ${code}`
-  return new ProviderError(classify(provider, detail), provider, detail)
 }

@@ -277,6 +277,12 @@ describe('GET /api/ai/providers', () => {
         id: 'agy', label: 'Antigravity', install: 'https://antigravity.google', policies: ['none', 'web'],
         present: true, path: '/usr/local/bin/claude', runs: true, version: '2.1.245 (Claude Code)', error: null,
       },
+      // No model server answers in a test, so Ollama is found but not running.
+      {
+        id: 'ollama', label: 'Ollama', install: 'https://ollama.com', policies: ['none'],
+        present: true, path: '/usr/local/bin/claude', runs: false, version: null, models: [],
+        error: 'Ollama is installed but not running: start the Ollama app, or run "ollama serve" in a terminal.',
+      },
     ] })
   })
 

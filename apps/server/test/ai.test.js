@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { locateBinary } from '@jobdekho/server/ai/locate.js'
 import { unwrapClaude } from '@jobdekho/server/ai/claude.js'
-import { CLAUDE, AGY, PROVIDERS, TOOL_POLICIES, providerById } from '@jobdekho/server/ai/providers.js'
+import { CLAUDE, AGY, OLLAMA, PROVIDERS, TOOL_POLICIES, providerById } from '@jobdekho/server/ai/providers.js'
 import { underPolicies } from '@jobdekho/server/ai/policies.js'
 import { callProvider } from '@jobdekho/server/ai/call.js'
 import { inEmptyDir } from '@jobdekho/server/ai/scratch-dir.js'
@@ -58,10 +58,12 @@ describe('locateBinary', () => {
 })
 
 describe('the provider registry', () => {
-  it('knows Claude Code and Antigravity, in that order of preference, and finds each by id', () => {
-    expect(PROVIDERS.map((p) => p.id)).toEqual(['claude', 'agy'])
+  // Ollama last, so a machine with either CLI behaves as it did before it.
+  it('knows Claude Code, Antigravity and Ollama, in that order of preference, and finds each by id', () => {
+    expect(PROVIDERS.map((p) => p.id)).toEqual(['claude', 'agy', 'ollama'])
     expect(providerById('claude')).toBe(CLAUDE)
     expect(providerById('agy')).toBe(AGY)
+    expect(providerById('ollama')).toBe(OLLAMA)
     expect(providerById('antigravity')).toBeNull()
   })
 
@@ -312,6 +314,13 @@ describe('createDetector', () => {
       {
         id: 'agy', label: 'Antigravity', install: 'https://antigravity.google', policies: ['none', 'web'],
         present: true, path: '/usr/local/bin/agy', runs: true, version: '2.1.245', error: null,
+      },
+      // Found on PATH, but a detector whose `run` is faked reaches no model
+      // server (see http-json.js), so it reads as not running.
+      {
+        id: 'ollama', label: 'Ollama', install: 'https://ollama.com', policies: ['none'],
+        present: true, path: '/usr/local/bin/ollama', runs: false, version: null, models: [],
+        error: 'Ollama is installed but not running: start the Ollama app, or run "ollama serve" in a terminal.',
       },
     ])
   })
