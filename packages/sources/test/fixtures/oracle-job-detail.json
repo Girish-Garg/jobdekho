@@ -1,0 +1,63 @@
+{
+  "items": [
+    {
+      "Id": "25000101",
+      "Title": "Senior Embedded Software Engineer",
+      "Category": "Engineering - Product Dev",
+      "RequisitionType": "Experienced (Standard - Professional)",
+      "RequisitionId": 300000000000174,
+      "ExternalPostedStartDate": "2026-09-30T13:09:42+00:00",
+      "ExternalPostedEndDate": null,
+      "JobSchedule": "Full time",
+      "JobShift": null,
+      "StudyLevel": "Bachelor's Degree",
+      "ContractType": null,
+      "GeographyId": 300000000000484,
+      "ExternalDescriptionStr": "<p><strong>Change the world. Love your job.</strong><br>\n The <strong>Acme Embedded Group</strong> builds the firmware in every Acme controller.</p>",
+      "CorporateDescriptionStr": "<div>\n <div>\n  <b>Why Acme?</b>\n </div>\n <ul>\n  <li>Engineer your future at Acme.</li>\n </ul>\n</div>",
+      "OrganizationDescriptionStr": "Acme does not make hiring decisions based on citizenship.",
+      "ShortDescriptionStr": "",
+      "ContentLocale": "en",
+      "PrimaryLocation": "India",
+      "PrimaryLocationCountry": "IN",
+      "ExternalQualificationsStr": "<p><strong>Minimum qualifications:</strong><br>\n •&nbsp;&nbsp;B.Tech in Computer Science or Electronics<br>\n •&nbsp;&nbsp;5+ years of embedded C</p>",
+      "InternalQualificationsStr": "<p>Internal only</p>",
+      "InternalResponsibilitiesStr": "",
+      "ExternalResponsibilitiesStr": "<ul><li>Own the RTOS drivers</li><li>Review the team&#39;s code</li></ul>",
+      "JobFunctionCode": "SOFTWR",
+      "HotJobFlag": false,
+      "WorkplaceTypeCode": "ORA_HYBRID",
+      "WorkplaceType": "Hybrid",
+      "WorkerType": null,
+      "JobType": null,
+      "JobFunction": "Software Engineering",
+      "secondaryLocations": [
+        {
+          "RequisitionLocationId": 300000000000076,
+          "GeographyNodeId": 300000000000854,
+          "GeographyId": 100000000000645,
+          "Name": "Bengaluru, Karnataka, India",
+          "CountryCode": "IN",
+          "Latitude": 12.96618,
+          "Longitude": 77.5869
+        }
+      ],
+      "media": [],
+      "workLocation": [
+        {
+          "LocationId": 300000000000943,
+          "LocationName": "Bengaluru > India, Bengaluru-Tech Park",
+          "TownOrCity": "Bengaluru",
+          "PostalCode": "560093",
+          "Country": "IN"
+        }
+      ],
+      "otherWorkLocations": [],
+      "skills": []
+    }
+  ],
+  "count": 1,
+  "hasMore": false,
+  "limit": 25,
+  "offset": 0
+}

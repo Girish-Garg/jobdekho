@@ -1,0 +1,72 @@
+{
+  "requesterTitle": "",
+  "reqDetailsBOList": [
+    {
+      "reqId": 28001,
+      "statusId": 3,
+      "buName": "Food MarketPlace",
+      "reqTitle": "Software Development Engineer II",
+      "expMin": 2,
+      "expMax": 4,
+      "location": "Bangalore",
+      "locationAddress": "Bangalore",
+      "jdDisplay": "About Swiggy:\n\nSwiggy is a food delivery platform.\n\nWhat you will do:\n- Build backend services in Go\n\nQualifications:\n- B.Tech in Computer Science",
+      "approvedOn": "2026-09-09T04:43:38.697+0000",
+      "employmentType": "full_time",
+      "totalPositions": 1,
+      "priority": 301,
+      "positionType": 1,
+      "customFields": {},
+      "locationList": [
+        {
+          "office": "Bangalore",
+          "address": "Bangalore"
+        }
+      ],
+      "roleId": 0,
+      "roleName": "custom",
+      "designation": "SDE II",
+      "careerStream": "Engineering",
+      "jobLevel": "4",
+      "locationGroup": [],
+      "fresher": false,
+      "reqCurrency": "INR_Annual"
+    },
+    {
+      "reqId": 28002,
+      "statusId": 3,
+      "buName": "Instamart",
+      "reqTitle": "Sales Manager II",
+      "expMin": 1,
+      "expMax": 3,
+      "location": "Kolkata",
+      "locationAddress": "Bangalore",
+      "jdDisplay": "Own the restaurant partners in your city.",
+      "approvedOn": "2026-09-08T10:00:00.000+0000",
+      "employmentType": "full_time",
+      "totalPositions": 1,
+      "priority": 301,
+      "positionType": 1,
+      "customFields": {},
+      "locationList": [
+        {
+          "office": "Kolkata",
+          "address": "Kolkata"
+        },
+        {
+          "office": "Sumadhura Capitol Towers",
+          "address": "Bangalore"
+        }
+      ],
+      "roleId": 0,
+      "roleName": "custom",
+      "designation": "Sales Manager II",
+      "careerStream": "Sales",
+      "jobLevel": "4",
+      "locationGroup": [],
+      "fresher": false,
+      "reqCurrency": "INR_Annual"
+    }
+  ],
+  "hrXmlModel": null
+}

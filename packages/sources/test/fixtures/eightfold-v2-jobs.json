@@ -1,0 +1,32 @@
+{
+  "domain": "acme.com", "user": "", "isUserAuthenticated": false,
+  "positions": [
+    {
+      "id": 563770000001, "name": "Full Stack Tester / Consultant Specialist",
+      "posting_name": "Full Stack Tester / Consultant Specialist",
+      "location": "Pune, Maharashtra, India", "locations": ["Pune, Maharashtra, India", "Pune, MH, In"],
+      "hot": 0, "department": "Technology", "business_unit": "GCIO",
+      "t_update": 1790768654, "t_create": 1790760992, "ats_job_id": "61967", "display_job_id": "61967",
+      "type": "ATS", "id_locale": "61967-en_GB", "job_description": "", "locale": "en_GB", "stars": 0.0,
+      "medallionProgram": null, "location_flexibility": "flexible_within_country", "work_location_option": "hybrid",
+      "canonicalPositionUrl": "https://acme.eightfold.ai/careers/job/563770000001", "isPrivate": false,
+      "latlongs": "18.5246091,73.8786239",
+      "custom_data": { "location": "Pune, Maharashtra, India", "brand": "Acme", "postedDate": null }
+    },
+    {
+      "id": 563770000002, "name": "Assistant Manager Operations - Apprentice (12 Months)",
+      "posting_name": "Assistant Manager Operations - Apprentice (12 Months)",
+      "location": "Nashik, Maharashtra, India", "locations": ["Nashik, Maharashtra, India"],
+      "hot": 0, "department": "Wealth and Personal Banking", "business_unit": "WPB",
+      "t_update": 1790768654, "t_create": 1790640000, "ats_job_id": "61901", "display_job_id": "61901",
+      "type": "ATS", "id_locale": "61901-en_GB", "job_description": "", "locale": "en_GB", "stars": 0.0,
+      "medallionProgram": null, "location_flexibility": null, "work_location_option": "onsite",
+      "canonicalPositionUrl": "https://acme.eightfold.ai/careers/job/563770000002", "isPrivate": false,
+      "latlongs": "19.99,73.78",
+      "custom_data": { "location": "Nashik, Maharashtra, India", "brand": "Acme", "postedDate": null }
+    }
+  ],
+  "debug": {}, "count": 2, "location_used": "India",
+  "query": { "query": null, "location": "India", "department": [], "skill": [], "seniority": [] },
+  "facets": { "department": { "Technology": 1 } }
+}

@@ -1,0 +1,38 @@
+{
+  "companyVO": {
+    "companyMstrSeq": "72",
+    "companyCd": "ACMEINDIA",
+    "companyName": "Acme"
+  },
+  "jobVO": {
+    "jobSeq": "898001",
+    "jobTitle": "Specialist - Software Engineering",
+    "jobDesc": "<p>Senior Java Engineer<br><br>Location- Bangalore</p>\r\n<p>Build services on Spring Boot.</p>\r\n<p>B.E. or B.Tech required.</p>",
+    "jobLocation": "Bengaluru",
+    "jobReqExp": "5 - 8 Years",
+    "numOfOpening": "1",
+    "jobType": "R",
+    "jobPostingDate": "29-Sep-2026",
+    "isHotJob": "N",
+    "jobStatus": "ACTIVE",
+    "jobCode": "1496001",
+    "jobSkills": "<p><strong>Mandatory Skills : </strong>Java, Spring Boot</p>",
+    "locations": "Bengaluru",
+    "mobileReqJobExp": "5-8 Yrs",
+    "jobMaxExp": 96,
+    "jobMinExp": 60,
+    "allowCareerSite": "Y",
+    "jobId": "898001",
+    "jobTypeCustom3": "Permanent",
+    "companySeq": "72",
+    "publishDetails": {
+      "AGENCY": "2026-09-30T11:09:03Z",
+      "CAREER_SITE": "2026-09-30T11:09:03Z",
+      "EMPLOYEE": "2026-09-30T11:09:03Z"
+    }
+  },
+  "jobSeq": "898001",
+  "jobCount": 1233,
+  "enableLink": "Y",
+  "linkDeactivated": false
+}

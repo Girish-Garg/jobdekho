@@ -1,0 +1,179 @@
+{
+  "code": 200,
+  "type": null,
+  "message": null,
+  "exception": null,
+  "data": {
+    "data": [
+      {
+        "_index": "es-g7-v1",
+        "_type": "_doc",
+        "_id": "1143001",
+        "_score": null,
+        "_source": {
+          "departmentId": 60001,
+          "referenceNumber": "243001",
+          "jobCollaborationRecord": [],
+          "desiredSkillList": [],
+          "text1": "New",
+          "text2": "Onsite",
+          "newJobCode": "126001",
+          "careerSiteUrl": "careers.acme.com",
+          "minYearOfExperience": 2,
+          "locationSeparatedbySlash": "Mumbai",
+          "jobCreatedDate": 1790094960000,
+          "createdDate": 1789583400000,
+          "mediumDescriptionWithoutHtml": "Job Title: SENIOR ENGINEER Location: Greater Noida Summary: Build software with Java & React for a banking client, working with product owners on claims services. Qualifications: B.Tech in Computer Science. 2 to 5 years of Java.",
+          "shortDescriptionWithoutHtml": "Job Title: SENIOR ENGINEER Location: Greater Noida Summary: Build software with Java & React for a banking client, working with product owners on clai...",
+          "requisitionStatus": "A",
+          "modifiedDate": 1790110211000,
+          "requisitionApprovedDate": 1790094959000,
+          "yrsOfExperience": "2.0 to 5.0 Years ",
+          "maxYearOfExperience": 5,
+          "roles": "SENIOR ENGINEER",
+          "jobType": "J",
+          "mediumDescription": "<h1>Job Title: SENIOR ENGINEER</h1><p><strong>Location:</strong> Greater Noida</p><p><strong>Summary:</strong> Build software with Java &amp; React for a banking client, working with product owners on claims services.</p><p><strong>Qualifications:</strong> B.Tech in Computer Science. 2 to 5 years of",
+          "location": "Mumbai",
+          "jobCode": 126001,
+          "id": 1143001,
+          "positionsRequired": 1,
+          "experienceUIField": "2.0 - 5.0 years",
+          "displayStatus": "Open",
+          "jobUrl": "senior-engineer-mumbai-2026071617413065",
+          "createDate": "17-Sep-2026",
+          "jobTitle": "SENIOR ENGINEER",
+          "companyId": 15001,
+          "departmentName": "Digital",
+          "jobLocationRecord": [
+            {
+              "jobId": 1143001,
+              "country": "India",
+              "companyId": 15001,
+              "city": "",
+              "location": "Mumbai",
+              "id": 1143002
+            }
+          ]
+        }
+      },
+      {
+        "_index": "es-g7-v1",
+        "_type": "_doc",
+        "_id": "1150002",
+        "_score": null,
+        "_source": {
+          "departmentId": 60001,
+          "referenceNumber": "250002",
+          "jobCollaborationRecord": [],
+          "desiredSkillList": [],
+          "text1": "New",
+          "text2": "Onsite",
+          "newJobCode": "126001",
+          "careerSiteUrl": "careers.acme.com",
+          "minYearOfExperience": 2,
+          "locationSeparatedbySlash": "Hyderabad, Telangāna, India",
+          "jobCreatedDate": 1790000000000,
+          "createdDate": 1789583400000,
+          "mediumDescriptionWithoutHtml": "Job Title: Reliability Engineer Location: Greater Noida Summary: Build software with Java & React for a banking client, working with product owners on claims services. Qualifications: B.Tech in Computer Science. 2 to 5 years of Java.",
+          "shortDescriptionWithoutHtml": "Job Title: Reliability Engineer Location: Greater Noida Summary: Build software with Java & React for a banking client, working with product owners on...",
+          "requisitionStatus": "A",
+          "modifiedDate": 1790110211000,
+          "requisitionApprovedDate": null,
+          "yrsOfExperience": "2.0 to 5.0 Years ",
+          "maxYearOfExperience": 5,
+          "roles": "SENIOR ENGINEER",
+          "jobType": "J",
+          "mediumDescription": "<h1>Job Title: Reliability Engineer</h1><p><strong>Location:</strong> Greater Noida</p><p><strong>Summary:</strong> Build software with Java &amp; React for a banking client, working with product owners on claims services.</p><p><strong>Qualifications:</strong> B.Tech in Computer Science. 2 to 5 yea",
+          "location": "Hyderabad, Telangāna, India",
+          "jobCode": 126001,
+          "id": 1150002,
+          "positionsRequired": 1,
+          "experienceUIField": "2.0 - 5.0 years",
+          "displayStatus": "Open",
+          "jobUrl": "reliability-engineer-hyderabad-india-2026092110464136",
+          "createDate": "17-Sep-2026",
+          "jobTitle": "Reliability Engineer",
+          "companyId": 15001,
+          "departmentName": "Digital",
+          "jobLocationRecord": [
+            {
+              "jobId": 1150002,
+              "country": "India",
+              "companyId": 15001,
+              "city": "",
+              "location": "Hyderabad, Telangāna, India",
+              "id": 1150003
+            }
+          ],
+          "role": "Under direct supervision, measures and analyses the reliability of designs and materials."
+        }
+      },
+      {
+        "_index": "es-g7-v1",
+        "_type": "_doc",
+        "_id": "897003",
+        "_score": null,
+        "_source": {
+          "departmentId": 60001,
+          "referenceNumber": "-2997",
+          "jobCollaborationRecord": [],
+          "desiredSkillList": [],
+          "text1": "New",
+          "text2": "Onsite",
+          "newJobCode": "126001",
+          "careerSiteUrl": "careers.acme.com",
+          "minYearOfExperience": 2,
+          "locationSeparatedbySlash": "Bangalore",
+          "jobCreatedDate": 1790094960000,
+          "createdDate": 1789583400000,
+          "requisitionStatus": "A",
+          "modifiedDate": 1790110211000,
+          "requisitionApprovedDate": 1790094959000,
+          "yrsOfExperience": "2.0 to 5.0 Years ",
+          "maxYearOfExperience": 5,
+          "roles": "SENIOR ENGINEER",
+          "jobType": "J",
+          "location": "Bangalore",
+          "jobCode": 126001,
+          "id": 897003,
+          "positionsRequired": 1,
+          "experienceUIField": "2.0 - 5.0 years",
+          "displayStatus": "Open",
+          "jobUrl": "engineering-lead-bangalore-02601231025593",
+          "createDate": "17-Sep-2026",
+          "jobTitle": "ENGINEERING LEAD",
+          "companyId": 15001,
+          "departmentName": "Digital",
+          "jobLocationRecord": [
+            {
+              "jobId": 897003,
+              "country": "India",
+              "companyId": 15001,
+              "city": "",
+              "location": "Bangalore",
+              "id": 897004
+            }
+          ],
+          "shortDescription": "<h1>Job Title: MuleSoft Developer</h1><p><strong>Summary:</strong> Build APIs for a bank.</p><ul><li>BE or B.Tech</li></ul>"
+        }
+      }
+    ],
+    "facets": {
+      "Country": [
+        {
+          "doc_count": 67,
+          "key": "India"
+        }
+      ]
+    },
+    "totalCount": 3,
+    "hasMoreData": false,
+    "facetedSearchConfig": {
+      "companyId": "15001",
+      "domain": "careers.acme.com",
+      "paginationHowMuch": "10",
+      "paginationRequired": true
+    }
+  },
+  "webserviceAPIResponseCode": null
+}

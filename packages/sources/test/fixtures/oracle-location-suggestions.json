@@ -1,0 +1,12 @@
+{
+  "items": [
+    { "Id": "300000000000484", "Name": "India", "Level": 1, "City": "", "State": "", "Country": "India" },
+    { "Id": "100000000000698", "Name": "India Cement Factory Chilamakuru > Andhra Pradesh > India", "Level": 3, "City": "India Cement Factory Chilamakuru", "State": "Andhra Pradesh", "Country": "India" },
+    { "Id": "300000000000056", "Name": "Indiahoma > OK > United States", "Level": 3, "City": "Indiahoma", "State": "OK", "Country": "United States" },
+    { "Id": "300000000000591", "Name": "Indian > AK > United States", "Level": 3, "City": "Indian", "State": "AK", "Country": "United States" }
+  ],
+  "count": 4,
+  "hasMore": false,
+  "limit": 20,
+  "offset": 0
+}

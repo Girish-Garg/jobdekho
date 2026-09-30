@@ -1,0 +1,39 @@
+{
+  "status": 200,
+  "error": { "message": "", "body": "" },
+  "data": {
+    "positions": [
+      {
+        "id": 446710000001, "displayJobId": "3090001", "name": "Software Engineer - Modem Firmware",
+        "locations": ["Bangalore BTP", "Hyderabad, Telangāna, India"],
+        "standardizedLocations": ["Bengaluru, KA, IN", "Hyderabad, TS, IN"],
+        "postedTs": 1790726400, "solrScore": null, "stars": 0, "department": "Software Engineering",
+        "creationTs": 1789084800, "isHot": 0, "workLocationOption": "hybrid", "locationFlexibility": null,
+        "atsJobId": "3090001", "positionUrl": "/careers/job/446710000001"
+      },
+      {
+        "id": 446710000002, "displayJobId": "3090002", "name": "2027 Campus Hire - Engineer Intern",
+        "locations": ["IN-Coimbatore (3811)"],
+        "standardizedLocations": ["Coimbatore, TN, IN"],
+        "postedTs": 1790640000, "solrScore": null, "stars": 0, "department": "Interim Engineering Intern - SW",
+        "creationTs": 1784160000, "isHot": 0, "workLocationOption": "onsite", "locationFlexibility": null,
+        "atsJobId": "3090002", "positionUrl": "/careers/job/446710000002"
+      },
+      {
+        "id": 446710000003, "displayJobId": "3090003", "name": "Regional Sales Manager",
+        "locations": ["Noida, Uttar Pradesh, India"],
+        "standardizedLocations": ["Noida, UP, IN"],
+        "postedTs": null, "solrScore": null, "stars": 0, "department": "Sales",
+        "creationTs": 1776384000, "isHot": 0, "workLocationOption": "onsite", "locationFlexibility": null,
+        "atsJobId": "3090003", "positionUrl": "/careers/job/446710000003"
+      }
+    ],
+    "filterDef": { "facets": { "locations": [["Bengaluru, KA, India", 383], ["Hyderabad, TS, India", 165]] } },
+    "count": 3,
+    "sortBy": "timestamp",
+    "appliedFilters": { "includeRemote": ["0"], "includeRelocation": ["0"] },
+    "debug": {},
+    "savedSearchMetadata": { "savedSearchParamsHash": null, "isSavedSearchActive": false },
+    "resultsMetaData": { "usedFuzzSearch": false, "mocTitle": null }
+  }
+}

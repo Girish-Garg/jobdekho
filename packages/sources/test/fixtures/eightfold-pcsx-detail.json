@@ -1,0 +1,19 @@
+{
+  "status": 200,
+  "error": { "message": "", "body": "" },
+  "data": {
+    "id": 446710000001, "displayJobId": "3090001", "name": "Software Engineer - Modem Firmware",
+    "locations": ["Bangalore BTP", "Hyderabad, Telangāna, India"],
+    "standardizedLocations": ["Bengaluru, KA, IN", "Hyderabad, TS, IN"],
+    "postedTs": 1790756596, "stars": 0, "department": "Software Engineering", "creationTs": 1789084800,
+    "jobDescription": "<h2><br><b>Company:</b></h2>Acme India Private Limited<p style=\"text-align:inherit\"></p><p><u><b>Minimum Qualifications:</b></u></p>&bull;&nbsp;&nbsp;Bachelor&#39;s degree in Engineering, Computer Science, or related field and 2+ years of Software Engineering experience.<br><p>&bull; Programming in C, C++ &amp; Python.</p>",
+    "location": "Bangalore BTP", "isHot": 0, "workLocationOption": "hybrid", "locationFlexibility": null,
+    "atsJobId": "3090001", "positionUrl": "/careers/job/446710000001",
+    "publicUrl": "https://careers.acme.com/careers/job/446710000001",
+    "jdHighlight": [],
+    "efcustomTextEmploymentType": ["Full-Time"],
+    "positionExtraDetails": { "videos": [], "blogs": [], "perks": [], "pymww": [], "customContent": [] },
+    "positionUserActions": { "isSaved": false, "applyAction": { "status": "log_in" } }
+  },
+  "metadata": null
+}

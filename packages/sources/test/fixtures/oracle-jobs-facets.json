@@ -1,0 +1,47 @@
+{
+  "items": [
+    {
+      "SearchId": 1,
+      "Keyword": null,
+      "LocationId": null,
+      "SelectedLocationsFacet": null,
+      "LastSelectedFacet": null,
+      "Facets": "LOCATIONS",
+      "Offset": 0,
+      "Limit": 1,
+      "SortBy": "POSTING_DATES_DESC",
+      "TotalJobsCount": 809,
+      "SiteNumber": "CX_1",
+      "requisitionList": [
+        {
+          "Id": "25000099",
+          "Title": "Manufacturing Quality Engineer",
+          "PostedDate": "2026-09-30",
+          "PrimaryLocationCountry": "MY",
+          "GeographyId": 100000000000901,
+          "PrimaryLocation": "Wilayah Persekutuan Kuala Lumpur, Malaysia",
+          "WorkplaceTypeCode": null,
+          "WorkplaceType": "",
+          "ShortDescriptionStr": "",
+          "secondaryLocations": []
+        }
+      ],
+      "locationsFacet": [
+        { "Id": 300000000000862, "Name": "United States", "TotalCount": 446 },
+        { "Id": 300000000000120, "Name": "TX, United States", "TotalCount": 327 },
+        { "Id": 300000000000337, "Name": "Dallas, TX, United States", "TotalCount": 254 },
+        { "Id": 300000000000484, "Name": "India", "TotalCount": 132 },
+        { "Id": 100000000000892, "Name": "Karnataka, India", "TotalCount": 124 },
+        { "Id": 100000000000645, "Name": "Bengaluru, Karnataka, India", "TotalCount": 124 },
+        { "Id": 300000000000316, "Name": "China", "TotalCount": 94 },
+        { "Id": 100000000000757, "Name": "Shanghai, China", "TotalCount": 50 },
+        { "Id": 300000000000225, "Name": "Richardson, TX, United States", "TotalCount": 47 },
+        { "Id": 300000000000121, "Name": "UT, United States", "TotalCount": 43 }
+      ]
+    }
+  ],
+  "count": 1,
+  "hasMore": false,
+  "limit": 25,
+  "offset": 0
+}

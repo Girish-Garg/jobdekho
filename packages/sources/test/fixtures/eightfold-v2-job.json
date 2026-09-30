@@ -1,0 +1,14 @@
+{
+  "id": 563770000001, "name": "Full Stack Tester / Consultant Specialist",
+  "posting_name": "Full Stack Tester / Consultant Specialist",
+  "location": "Pune, Maharashtra, India", "locations": ["Pune, Maharashtra, India"],
+  "hot": 0, "department": "Technology", "business_unit": "GCIO",
+  "t_update": 1790768654, "t_create": 1790760992, "ats_job_id": "61967", "display_job_id": "61967",
+  "type": "ATS",
+  "job_description": "<p style=\"margin: 0in;\"><span>Some careers shine brighter than others.</span><br><span>We are seeking a Full Stack Tester with a B.E. in Computer Science &amp; 3+ years of Selenium.</span></p>",
+  "id_locale": "61967-en_GB", "locale": "en_GB", "stars": 0, "medallionProgram": null,
+  "location_flexibility": null, "work_location_option": null,
+  "canonicalPositionUrl": "https://acme.eightfold.ai/careers/job/563770000001",
+  "isPrivate": false, "urls": { "links": { "blogs": [] } }, "apply_redirect_url": null,
+  "preApplyInfoBanner": null, "custom_JD": null, "hideUploadResumeOption": false
+}

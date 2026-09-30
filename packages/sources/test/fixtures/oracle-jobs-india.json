@@ -1,0 +1,106 @@
+{
+  "items": [
+    {
+      "SearchId": 1,
+      "Keyword": null,
+      "SelectedLocationsFacet": "300000000000484",
+      "LastSelectedFacet": "LOCATIONS",
+      "Facets": "LOCATIONS",
+      "Offset": 0,
+      "Limit": 25,
+      "SortBy": "POSTING_DATES_DESC",
+      "TotalJobsCount": 3,
+      "SiteNumber": "CX_1",
+      "requisitionList": [
+        {
+          "Id": "25000101",
+          "Title": "Senior Embedded Software Engineer",
+          "PostedDate": "2026-09-30",
+          "PostingEndDate": null,
+          "Language": "US",
+          "PrimaryLocationCountry": "IN",
+          "GeographyId": 300000000000484,
+          "HotJobFlag": false,
+          "WorkplaceTypeCode": "ORA_HYBRID",
+          "JobFamily": null,
+          "WorkerType": null,
+          "ContractType": null,
+          "JobSchedule": null,
+          "ShortDescriptionStr": "",
+          "PrimaryLocation": "India",
+          "TrendingFlag": true,
+          "WorkplaceType": "Hybrid",
+          "secondaryLocations": [
+            {
+              "RequisitionLocationId": 300000000000076,
+              "GeographyNodeId": 300000000000854,
+              "GeographyId": 100000000000645,
+              "Name": "Bengaluru, Karnataka, India",
+              "CountryCode": "IN",
+              "Latitude": 12.96618,
+              "Longitude": 77.5869
+            }
+          ]
+        },
+        {
+          "Id": "25000102",
+          "Title": "Software Engineering Intern",
+          "PostedDate": "2026-09-29",
+          "PostingEndDate": null,
+          "Language": "US",
+          "PrimaryLocationCountry": "IN",
+          "GeographyId": 100000000000812,
+          "HotJobFlag": false,
+          "WorkplaceTypeCode": null,
+          "JobFamily": null,
+          "WorkerType": null,
+          "ContractType": null,
+          "JobSchedule": null,
+          "ShortDescriptionStr": "",
+          "PrimaryLocation": "Pune, Maharashtra, India",
+          "TrendingFlag": false,
+          "WorkplaceType": "",
+          "secondaryLocations": []
+        },
+        {
+          "Id": "25000103",
+          "Title": "Data Engineer",
+          "PostedDate": "2026-08-31",
+          "PostingEndDate": null,
+          "Language": "US",
+          "PrimaryLocationCountry": "SG",
+          "GeographyId": 300000000000065,
+          "HotJobFlag": false,
+          "WorkplaceTypeCode": "ORA_REMOTE",
+          "JobFamily": null,
+          "WorkerType": null,
+          "ContractType": null,
+          "JobSchedule": null,
+          "ShortDescriptionStr": "",
+          "PrimaryLocation": "Singapore",
+          "TrendingFlag": false,
+          "WorkplaceType": "Work From Home",
+          "secondaryLocations": [
+            {
+              "RequisitionLocationId": 300000000000077,
+              "GeographyNodeId": 300000000000855,
+              "GeographyId": 100000000000781,
+              "Name": "Hyderabad, Telangana, India",
+              "CountryCode": "IN",
+              "Latitude": 17.38405,
+              "Longitude": 78.45636
+            }
+          ]
+        }
+      ],
+      "locationsFacet": [
+        { "Id": 300000000000862, "Name": "United States", "TotalCount": 446 },
+        { "Id": 300000000000484, "Name": "India", "TotalCount": 132 }
+      ]
+    }
+  ],
+  "count": 1,
+  "hasMore": false,
+  "limit": 25,
+  "offset": 0
+}

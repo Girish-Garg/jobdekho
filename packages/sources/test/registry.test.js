@@ -2,6 +2,9 @@ import { readFileSync } from 'node:fs'
 import { describe, it, expect } from 'vitest'
 import { buildAdapters } from '@jobdekho/sources/registry.js'
 import { parseSite } from '@jobdekho/sources/providers/workday-site.js'
+import { parseSite as successfactorsSite } from '@jobdekho/sources/providers/successfactors-site.js'
+import { parseSite as eightfoldSite } from '@jobdekho/sources/providers/eightfold-site.js'
+import { parseSite as avatureSite } from '@jobdekho/sources/providers/avature-site.js'
 
 const config = JSON.parse(readFileSync(new URL('../../../config/companies.json', import.meta.url)))
 
@@ -16,7 +19,10 @@ describe('buildAdapters', () => {
   })
 
   it('knows every multi-tenant ATS provider', () => {
-    const providers = ['greenhouse', 'lever', 'ashby', 'smartrecruiters', 'workable', 'recruitee', 'personio', 'workday']
+    const providers = [
+      'greenhouse', 'lever', 'ashby', 'smartrecruiters', 'workable', 'recruitee', 'personio', 'workday',
+      'successfactors', 'oracle', 'eightfold', 'avature',
+    ]
     const adapters = buildAdapters({ providers: providers.map((provider) => ({ provider, slug: 'acme' })) })
     expect(adapters.map((a) => a.name)).toEqual(providers.map((p) => `${p}:acme`))
   })
@@ -30,8 +36,12 @@ describe('buildAdapters', () => {
     expect(a.name).toBe('workday:acme')
   })
 
-  it('no longer builds the company adapters whose endpoints are gone', () => {
-    expect(buildAdapters({ companies: ['google', 'microsoft', 'ey'] })).toEqual([])
+  // Microsoft's and EY's own adapters read endpoints that are gone; both are
+  // read through their platforms now (Eightfold, SuccessFactors). Google's
+  // came back, reading its careers site's results page.
+  it('builds no company adapter for Microsoft or EY, and one for Google', () => {
+    expect(buildAdapters({ companies: ['microsoft', 'ey'] })).toEqual([])
+    expect(buildAdapters({ companies: ['google'] }).map((a) => a.name)).toEqual(['google'])
   })
 })
 
@@ -62,6 +72,21 @@ describe('config/companies.json', () => {
   // name shown for a Workday company has to be written out.
   it('names the company on every Workday entry', () => {
     for (const p of config.providers.filter((e) => e.provider === 'workday')) {
+      expect(p.company, JSON.stringify(p)).toBeTruthy()
+    }
+  })
+
+  // Each platform reads its site from the URL, so a URL its parser cannot
+  // read would only fail at scrape time, one run after another.
+  it('gives every platform entry a careers site URL its provider can read', () => {
+    const SITES = {
+      successfactors: (p) => successfactorsSite(p.url),
+      eightfold: (p) => eightfoldSite(p.url, p.domain),
+      avature: (p) => avatureSite(p.url),
+      oracle: (p) => (p.url.startsWith('https://') ? p.url : null),
+    }
+    for (const p of config.providers.filter((e) => SITES[e.provider])) {
+      expect(SITES[p.provider](p), JSON.stringify(p)).not.toBeNull()
       expect(p.company, JSON.stringify(p)).toBeTruthy()
     }
   })

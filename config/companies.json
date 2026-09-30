@@ -1070,10 +1070,219 @@
       "provider": "workday",
       "url": "https://trellix.wd1.myworkdayjobs.com/EnterpriseCareers",
       "company": "Trellix"
+    },
+    {
+      "provider": "successfactors",
+      "url": "https://careers.ey.com/ey/",
+      "company": "EY",
+      "slug": "ey"
+    },
+    {
+      "provider": "successfactors",
+      "url": "https://jobs.volvogroup.com/",
+      "company": "Volvo Group",
+      "slug": "volvo"
+    },
+    {
+      "provider": "successfactors",
+      "url": "https://careers.asianpaints.com/",
+      "company": "Asian Paints",
+      "slug": "asianpaints"
+    },
+    {
+      "provider": "successfactors",
+      "url": "https://careers.yash.com/",
+      "company": "YASH Technologies",
+      "slug": "yash"
+    },
+    {
+      "provider": "successfactors",
+      "url": "https://jobs.mahindracareers.com/",
+      "company": "Mahindra Group",
+      "slug": "mahindra"
+    },
+    {
+      "provider": "successfactors",
+      "url": "https://jobs.zf.com/",
+      "company": "ZF",
+      "slug": "zf"
+    },
+    {
+      "provider": "oracle",
+      "url": "https://careers.honeywell.com/en/sites/Honeywell",
+      "company": "Honeywell",
+      "slug": "honeywell"
+    },
+    {
+      "provider": "oracle",
+      "url": "https://iaaviz.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/Jobs-at-Icertis",
+      "company": "Icertis",
+      "slug": "icertis"
+    },
+    {
+      "provider": "oracle",
+      "url": "https://careers.ti.com/en/sites/CX",
+      "company": "Texas Instruments",
+      "slug": "ti"
+    },
+    {
+      "provider": "oracle",
+      "url": "https://fa-ewjt-saasfaprod1.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_2",
+      "company": "EXL",
+      "slug": "exl"
+    },
+    {
+      "provider": "oracle",
+      "url": "https://hdjq.fa.us2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1",
+      "company": "Emerson",
+      "slug": "emerson"
+    },
+    {
+      "provider": "oracle",
+      "url": "https://hdid.fa.us2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1",
+      "company": "Jefferies",
+      "slug": "jefferies"
+    },
+    {
+      "provider": "oracle",
+      "url": "https://fa-etvl-saasfaprod1.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1",
+      "company": "Zensar Technologies",
+      "slug": "zensar"
+    },
+    {
+      "provider": "oracle",
+      "url": "https://iaagiz.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/bristlecone-careers",
+      "company": "Bristlecone",
+      "slug": "bristlecone"
+    },
+    {
+      "provider": "oracle",
+      "url": "https://fa-ewdg-saasfaprod1.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CynclyJobs",
+      "company": "Cyncly",
+      "slug": "cyncly"
+    },
+    {
+      "provider": "oracle",
+      "url": "https://ebfr.fa.us2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/jobs",
+      "company": "Oceaneering",
+      "slug": "oceaneering"
+    },
+    {
+      "provider": "oracle",
+      "url": "https://hccz.fa.em3.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_2",
+      "company": "Pearson",
+      "slug": "pearson"
+    },
+    {
+      "provider": "oracle",
+      "url": "https://careers.americanexpress.com/en/sites/CX_1",
+      "company": "American Express",
+      "slug": "amex"
+    },
+    {
+      "provider": "oracle",
+      "url": "https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001",
+      "company": "JPMorgan Chase",
+      "slug": "jpmc"
+    },
+    {
+      "provider": "oracle",
+      "url": "https://careers.oracle.com/en/sites/jobsearch",
+      "company": "Oracle",
+      "slug": "oracle"
+    },
+    {
+      "provider": "eightfold",
+      "url": "https://careers.qualcomm.com/careers",
+      "domain": "qualcomm.com",
+      "company": "Qualcomm",
+      "slug": "qualcomm"
+    },
+    {
+      "provider": "eightfold",
+      "url": "https://apply.careers.microsoft.com/careers",
+      "domain": "microsoft.com",
+      "company": "Microsoft",
+      "slug": "microsoft"
+    },
+    {
+      "provider": "eightfold",
+      "url": "https://jobs.ericsson.com/careers",
+      "domain": "ericsson.com",
+      "company": "Ericsson",
+      "slug": "ericsson"
+    },
+    {
+      "provider": "eightfold",
+      "url": "https://jobs.infineon.com/careers",
+      "domain": "infineon.com",
+      "company": "Infineon",
+      "slug": "infineon"
+    },
+    {
+      "provider": "eightfold",
+      "url": "https://careers.lamresearch.com/careers",
+      "domain": "lamresearch.com",
+      "company": "Lam Research",
+      "slug": "lamresearch"
+    },
+    {
+      "provider": "eightfold",
+      "url": "https://portal.careers.hsbc.com/careers",
+      "domain": "hsbc.com",
+      "company": "HSBC",
+      "slug": "hsbc"
+    },
+    {
+      "provider": "eightfold",
+      "url": "https://netapp.eightfold.ai/careers",
+      "domain": "netapp.com",
+      "company": "NetApp",
+      "slug": "netapp"
+    },
+    {
+      "provider": "eightfold",
+      "url": "https://mlp.eightfold.ai/careers",
+      "domain": "mlp.com",
+      "company": "Millennium",
+      "slug": "millennium"
+    },
+    {
+      "provider": "avature",
+      "url": "https://usijobs.deloitte.com/en_US/careersUSI/SearchJobs",
+      "company": "Deloitte",
+      "slug": "deloitte-usi"
+    },
+    {
+      "provider": "avature",
+      "url": "https://jobs.lenovo.com/en_US/careers/SearchJobs/?13036%5B0%5D=12016672&listFilterMode=1",
+      "company": "Lenovo",
+      "slug": "lenovo"
+    },
+    {
+      "provider": "avature",
+      "url": "https://jobs.siemens.com/en_US/externaljobs/SearchJobs/?42386%5B0%5D=812053&listFilterMode=1",
+      "company": "Siemens",
+      "slug": "siemens"
+    },
+    {
+      "provider": "avature",
+      "url": "https://jobs.ea.com/en_US/careers/SearchJobs/?8171%5B0%5D=10590&listFilterMode=1",
+      "company": "Electronic Arts",
+      "slug": "ea"
     }
   ],
   "companies": [
-    "amazon"
+    "amazon",
+    "google",
+    "infosys",
+    "apple",
+    "swiggy",
+    "ltimindtree",
+    "mphasis",
+    "hdfcbank",
+    "coforge",
+    "cyient"
   ],
   "boards": [
     "internshala",

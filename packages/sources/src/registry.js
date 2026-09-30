@@ -6,7 +6,20 @@ import { workable } from './providers/workable.js'
 import { recruitee } from './providers/recruitee.js'
 import { personio } from './providers/personio.js'
 import { workday } from './providers/workday.js'
+import { successfactors } from './providers/successfactors.js'
+import { oracle } from './providers/oracle.js'
+import { eightfold } from './providers/eightfold.js'
+import { avature } from './providers/avature.js'
 import { amazon } from './companies/amazon.js'
+import { google } from './companies/google.js'
+import { infosys } from './companies/infosys.js'
+import { apple } from './companies/apple.js'
+import { swiggy } from './companies/swiggy.js'
+import { ltimindtree } from './companies/ltimindtree.js'
+import { mphasis } from './companies/mphasis.js'
+import { hdfcbank } from './companies/hdfcbank.js'
+import { coforge } from './companies/coforge.js'
+import { cyient } from './companies/cyient.js'
 import { internshala } from './boards/internshala.js'
 import { unstop } from './boards/unstop.js'
 import { adzuna } from './boards/adzuna.js'
@@ -16,8 +29,14 @@ import { arbeitnow } from './boards/arbeitnow.js'
 import { linkedin } from './boards/linkedin.js'
 import { instahyre } from './boards/instahyre.js'
 
-const PROVIDERS = { greenhouse, lever, ashby, smartrecruiters, workable, recruitee, personio, workday }
-const COMPANIES = { amazon }
+const PROVIDERS = {
+  greenhouse, lever, ashby, smartrecruiters, workable, recruitee, personio, workday,
+  successfactors, oracle, eightfold, avature,
+}
+// A company's own careers site, where it runs one no platform above covers.
+const COMPANIES = {
+  amazon, google, infosys, apple, swiggy, ltimindtree, mphasis, hdfcbank, coforge, cyient,
+}
 // adzuna is registered but intentionally not in config/companies.json: it needs
 // API credentials, and listing it before those exist would log a failed source
 // on every run.
