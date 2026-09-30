@@ -1,4 +1,5 @@
 import { locatePdflatex } from '../resume/locate-latex.js'
+import { findBrowser } from '../apply/browser-find.js'
 import { setupStore } from '../setup/store.js'
 import { setupChecks } from '../setup/checks.js'
 
@@ -10,13 +11,15 @@ import { setupChecks } from '../setup/checks.js'
 // Settings' "Check again" does for /api/ai/providers, and every later call
 // picks its AI from that fresh answer too.
 //
-// Tests decorate `setupStore` (anything with runs.all()) and `latexLocate`
-// (() -> a path or null) before ready(), so no real file is read and no
-// real PATH is searched. Both are looked up per request rather than at
-// registration, so a suite that never asks for this route opens nothing.
+// Tests decorate `setupStore` (anything with runs.all()), `latexLocate`
+// (() -> a path or null) and `browserLocate` (() -> a browser or null) before
+// ready(), so no real file is read and no real PATH is searched. They are
+// looked up per request rather than at registration, so a suite that never
+// asks for this route opens nothing.
 export async function setupRoutes(app) {
   const store = () => (app.hasDecorator('setupStore') ? app.setupStore : setupStore())
   const locate = () => (app.hasDecorator('latexLocate') ? app.latexLocate() : locatePdflatex())
+  const browser = () => (app.hasDecorator('browserLocate') ? app.browserLocate() : findBrowser())
 
   app.get('/api/setup', { preHandler: app.requireAuth }, async (request) => {
     const [rows, profile, sources] = await Promise.all([
@@ -24,6 +27,6 @@ export async function setupRoutes(app) {
       app.dashboard.getProfile(request.user.sub),
       app.dashboard.listSources(),
     ])
-    return { checks: setupChecks({ rows, latexPath: locate(), profile, sources, runs: store().runs.all() }) }
+    return { checks: setupChecks({ rows, latexPath: locate(), profile, sources, runs: store().runs.all(), browser: browser() }) }
   })
 }

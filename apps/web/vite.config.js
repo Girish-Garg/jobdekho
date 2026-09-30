@@ -10,7 +10,8 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/api': proxy,
+      // ws: Apply assist's live view is a WebSocket under /api.
+      '/api': { ...proxy, ws: true },
       '/auth': proxy,
     },
   },

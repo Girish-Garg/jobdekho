@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Apply: Senior Frontend Engineer at Acme</title>
+<style>
+  body { font: 15px system-ui, sans-serif; margin: 24px; width: 900px; }
+  label { display: block; margin-top: 12px; font-weight: 600; }
+  input[type=text], input[type=email], input[type=tel], select, textarea { width: 380px; padding: 5px; }
+  [role=listbox] { list-style: none; margin: 0; padding: 0; border: 1px solid #888; width: 380px; }
+  [role=option] { padding: 5px; cursor: pointer; }
+  .tall { height: 900px; }
+</style>
+<script src="/react.js"></script>
+<script src="/react-dom.js"></script>
+</head>
+<body>
+<h1>Senior Frontend Engineer</h1>
+<div id="root"></div>
+<pre id="state"></pre>
+<div class="tall">The rest of the page, for scrolling.</div>
+<script>
+  // A form shaped like a Greenhouse job board, with every input controlled by
+  // React, so a value set any way but the browser's own events is lost.
+  window.__submitted = false
+  window.__submitClicks = 0
+  const h = React.createElement
+  const COUNTRIES = ['British Indian Ocean Territory (+246)', 'India (+91)', 'Indonesia (+62)']
+  const CITIES = ['Mumbai, Maharashtra, India', 'Pune, Maharashtra, India', 'Punjab, India']
+  function Combo({ id, label, options, value, onPick }) {
+    const [text, setText] = React.useState('')
+    const shown = text ? options.filter((o) => o.toLowerCase().includes(text.toLowerCase())) : []
+    return h('div', null,
+      h('label', { htmlFor: id }, label),
+      h('span', { className: 'picked' }, value),
+      h('input', { id, type: 'text', role: 'combobox', 'aria-controls': id + '-list', autoComplete: 'off', value: text, onChange: (e) => setText(e.target.value) }),
+      shown.length > 0 && h('ul', { id: id + '-list', role: 'listbox' }, shown.map((o) =>
+        h('li', { key: o, role: 'option', onMouseDown: (e) => { e.preventDefault(), onPick(o), setText('') } }, o))))
+  }
+  function App() {
+    const [s, set] = React.useState({ firstName: '', lastName: '', email: '', phoneCountry: '', phone: '', city: '', linkedin: '',
+      residence: '', company: '', resume: '', cover: '', sample: '', gender: '', notice: '', why: '', consent: false })
+    const put = (k) => (e) => set((o) => ({ ...o, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }))
+    const file = (k) => (e) => set((o) => ({ ...o, [k]: e.target.files[0] ? e.target.files[0].name : '' }))
+    React.useEffect(() => { document.getElementById('state').textContent = JSON.stringify(s) })
+    return h('form', { onSubmit: (e) => { e.preventDefault(), window.__submitted = true } },
+      h('label', { htmlFor: 'first_name' }, 'First Name*'),
+      h('input', { id: 'first_name', type: 'text', autoComplete: 'given-name', required: true, value: s.firstName, onChange: put('firstName') }),
+      h('label', { htmlFor: 'last_name' }, 'Last Name*'),
+      h('input', { id: 'last_name', type: 'text', required: true, value: s.lastName, onChange: put('lastName') }),
+      h('label', { htmlFor: 'email' }, 'Email*'),
+      h('input', { id: 'email', type: 'email', required: true, value: s.email, onChange: put('email') }),
+      h(Combo, { id: 'phone_country', label: 'Country code', options: COUNTRIES, value: s.phoneCountry, onPick: (v) => set((o) => ({ ...o, phoneCountry: v })) }),
+      h('label', { htmlFor: 'phone' }, 'Phone*'),
+      h('input', { id: 'phone', type: 'tel', value: s.phone, onChange: put('phone') }),
+      h(Combo, { id: 'candidate-location', label: 'Location (City)', options: CITIES, value: s.city, onPick: (v) => set((o) => ({ ...o, city: v })) }),
+      h('label', { htmlFor: 'question_1' }, 'LinkedIn Profile'),
+      h('input', { id: 'question_1', type: 'text', value: s.linkedin, onChange: put('linkedin') }),
+      h('label', { htmlFor: 'residence' }, 'Country'),
+      h('select', { id: 'residence', value: s.residence, onChange: put('residence') },
+        h('option', { value: '' }, 'Select...'), h('option', { value: 'IN' }, 'India'), h('option', { value: 'US' }, 'United States')),
+      h('label', { htmlFor: 'company' }, 'Current company'),
+      h('input', { id: 'company', type: 'text', value: s.company, onChange: put('company') }),
+      h('label', null, 'Resume/CV*'),
+      h('button', { id: 'attach', type: 'button', onClick: () => document.getElementById('resume').click() }, 'Attach'),
+      h('input', { id: 'resume', type: 'file', style: { display: 'none' }, onChange: file('resume') }),
+      h('label', { htmlFor: 'cover_letter' }, 'Cover Letter'),
+      h('input', { id: 'cover_letter', type: 'file', onChange: file('cover') }),
+      h('label', null, 'Work sample'),
+      h('button', { id: 'add-sample', type: 'button', onClick: () => document.getElementById('sample').click() }, 'Add a work sample'),
+      h('input', { id: 'sample', type: 'file', style: { display: 'none' }, onChange: file('sample') }),
+      h('label', { htmlFor: 'gender' }, 'Gender'),
+      h('select', { id: 'gender', value: s.gender, onChange: put('gender') },
+        h('option', { value: '' }, 'Decline to answer'), h('option', { value: 'f' }, 'Female'), h('option', { value: 'm' }, 'Male')),
+      h('label', { htmlFor: 'notice' }, 'Notice period'),
+      h('select', { id: 'notice', value: s.notice, onChange: put('notice') },
+        h('option', { value: '' }, 'Select...'), h('option', { value: '0' }, 'Immediate'), h('option', { value: '30' }, '30 days')),
+      h('label', { htmlFor: 'why' }, 'Why do you want to work at Acme?*'),
+      h('textarea', { id: 'why', required: true, rows: 3, value: s.why, onChange: put('why') }),
+      h('label', null, h('input', { id: 'consent', type: 'checkbox', checked: s.consent, onChange: put('consent') }), ' I agree to the privacy policy'),
+      h('p', null, h('button', { id: 'submit', type: 'submit', onClick: () => { window.__submitClicks += 1 } }, 'Submit application')))
+  }
+  ReactDOM.createRoot(document.getElementById('root')).render(h(App))</script>
+</body>
+</html>

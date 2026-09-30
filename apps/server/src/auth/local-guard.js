@@ -43,5 +43,13 @@ export function refusal({ method, headers }) {
 
 export async function localGuard(request, reply) {
   const why = refusal(request)
-  if (why) return reply.code(403).send({ error: why })
+  if (!why) return undefined
+  // A refused WebSocket upgrade has been handed over by the HTTP server and
+  // nothing else will ever end it, so without this each one left a socket
+  // open for good: one a page from another site could repeat at will.
+  if (String(request.headers.upgrade || '').toLowerCase() === 'websocket') {
+    reply.header('connection', 'close')
+    reply.raw.once('finish', () => request.raw.socket?.destroy())
+  }
+  return reply.code(403).send({ error: why })
 }

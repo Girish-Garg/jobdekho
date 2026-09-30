@@ -5,6 +5,7 @@ import { getProfile, getResumeText, upsertProfile, deleteProfile } from '@jobdek
 import { getPosting } from '@jobdekho/store/posting-lookup.js'
 import { getAiResult, setAiResult, listAiResults } from '@jobdekho/store/ai-results.js'
 import { getProviderPref, upsertProviderPref } from '@jobdekho/store/ai-provider-pref.js'
+import { saveOriginal, deleteOriginal, findOriginal } from '../resume/original.js'
 
 export function createDashboardStore(db) {
   return {
@@ -26,5 +27,10 @@ export function createDashboardStore(db) {
     listAiResults: (userId, postingId) => listAiResults(db, userId, postingId),
     getProviderPref: (userId) => getProviderPref(db, userId),
     upsertProviderPref: (userId, p) => upsertProviderPref(db, userId, p),
+    // The uploaded resume file itself, which Apply assist attaches when no
+    // LaTeX-made PDF exists (see resume/original.js).
+    saveOriginalResume: (userId, bytes) => saveOriginal(db, userId, bytes),
+    deleteOriginalResume: (userId) => deleteOriginal(db, userId),
+    originalResumePath: (userId) => findOriginal(db, userId),
   }
 }

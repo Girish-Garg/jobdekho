@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sign in to apply</title>
+</head>
+<body>
+<h1>Sign in to continue your application</h1>
+<form onsubmit="event.preventDefault(), window.__submitted = true">
+  <label for="email">Email</label>
+  <input id="email" type="email" autocomplete="username">
+  <label for="password">Password</label>
+  <input id="password" type="password" autocomplete="current-password">
+  <button type="submit" onclick="window.__signInClicks = (window.__signInClicks || 0) + 1">Sign in</button>
+</form>
+</body>
+</html>

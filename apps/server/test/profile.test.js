@@ -295,3 +295,32 @@ describe('GET /api/ai/providers', () => {
     expect(res.json().providers[0]).toMatchObject({ id: 'claude', present: false, runs: false })
   })
 })
+
+// Apply assist attaches the resume file itself when no LaTeX-made PDF exists,
+// so an upload keeps the file as well as its text, and deleting the profile
+// deletes the file with it.
+describe('the uploaded resume file', () => {
+  it('is kept as uploaded, once its text has been read', async () => {
+    const store = { ...makeFakeStore(), saveOriginalResume: vi.fn() }
+    const pdf = tinyPdf(RESUME)
+    const res = await upload(store, 'cv.pdf', pdf)
+    expect(res.statusCode).toBe(200)
+    const [userId, bytes] = store.saveOriginalResume.mock.calls[0]
+    expect(userId).toBe('u1')
+    expect(Buffer.compare(bytes, pdf)).toBe(0)
+  })
+
+  it('is not kept when the upload is refused', async () => {
+    const store = { ...makeFakeStore(), saveOriginalResume: vi.fn() }
+    await upload(store, 'scan.pdf', tinyPdf('short'))
+    expect(store.saveOriginalResume).not.toHaveBeenCalled()
+  })
+
+  it('goes when the profile is deleted', async () => {
+    const store = { ...makeFakeStore(), deleteOriginalResume: vi.fn() }
+    const { app, cookie } = await makeApp(store)
+    const res = await app.inject({ method: 'DELETE', url: '/api/profile', headers: { cookie } })
+    expect(res.statusCode).toBe(204)
+    expect(store.deleteOriginalResume).toHaveBeenCalledWith('u1')
+  })
+})

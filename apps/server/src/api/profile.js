@@ -31,6 +31,8 @@ export async function profileRoutes(app) {
 
   app.delete('/api/profile', { preHandler: app.requireAuth }, async (request, reply) => {
     await app.dashboard.deleteProfile(request.user.sub)
+    // The uploaded resume file goes with the profile: it is the same resume.
+    app.dashboard.deleteOriginalResume?.(request.user.sub)
     return reply.code(204).send()
   })
 
@@ -41,16 +43,21 @@ export async function profileRoutes(app) {
   app.post('/api/profile/resume', { preHandler: app.requireAuth }, async (request, reply) => {
     const file = await request.file({ limits: { fileSize: MAX_BYTES } })
     if (!file) return reply.code(400).send({ error: 'no file' })
+    const bytes = await file.toBuffer()
     let text
     try {
-      text = await pdfToText(await file.toBuffer())
+      text = await pdfToText(bytes)
     } catch (err) {
       // A scanned PDF has no text layer, and the message tells the user to type
       // the details in by hand, which is the right next step.
       return reply.code(422).send({ error: err.message })
     }
     const current = await app.dashboard.getProfile(request.user.sub)
-    return app.dashboard.upsertProfile(request.user.sub, { ...current, resumeText: text, resumeName: file.filename })
+    const saved = await app.dashboard.upsertProfile(request.user.sub, { ...current, resumeText: text, resumeName: file.filename })
+    // The file itself too, as uploaded: Apply assist attaches it to an
+    // application when there is no LaTeX-made PDF (see resume/original.js).
+    app.dashboard.saveOriginalResume?.(request.user.sub, bytes)
+    return saved
   })
 
   // Send Accept: application/x-ndjson to watch it happen (see ai/events.js).
