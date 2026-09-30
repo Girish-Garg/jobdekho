@@ -55,10 +55,10 @@ describe('Shell saved filter hydration', () => {
     expect(screen.getByRole('button', { name: 'Work mode (1)' })).toBeInTheDocument();
 
     openMore();
-    expect(screen.getByLabelText('Highest degree')).toHaveValue('masters');
-    expect(screen.getByLabelText('Min stipend')).toHaveValue('10000');
-    expect(screen.getByLabelText('Max experience')).toHaveValue('3');
-    expect(screen.getByLabelText('Max duration')).toHaveValue('6');
+    expect(within(screen.getByRole('group', { name: 'Your highest degree' })).getByRole('button', { name: "Master's" })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByLabelText('Pay, at least')).toHaveAttribute('aria-valuetext', '₹10,000+ /mo');
+    expect(screen.getByLabelText('Experience asked, at most')).toHaveAttribute('aria-valuetext', 'Up to 3 years experience');
+    expect(within(screen.getByRole('group', { name: 'Internship length, at most' })).getByRole('button', { name: '6 months' })).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('fetches postings with the saved level, degree, work modes and exclusions', async () => {
@@ -98,7 +98,7 @@ describe('Shell saved filter hydration', () => {
     await waitFor(() => expect(getPostings).toHaveBeenCalled());
     expect(screen.getByRole('button', { name: 'Level' })).toBeInTheDocument();
     openMore();
-    expect(screen.getByLabelText('Max experience')).toHaveValue('');
+    expect(screen.getByLabelText('Experience asked, at most')).toHaveAttribute('aria-valuetext', 'Any');
   });
 
   it('keeps a saved Fresher ceiling of zero rather than reading it as unset', async () => {
@@ -106,7 +106,7 @@ describe('Shell saved filter hydration', () => {
     render(<Shell />);
     await waitFor(() => expect(getPostings).toHaveBeenCalled());
     openMore();
-    expect(screen.getByLabelText('Max experience')).toHaveValue('0');
+    expect(screen.getByLabelText('Experience asked, at most')).toHaveAttribute('aria-valuetext', 'Fresher roles only');
   });
 });
 

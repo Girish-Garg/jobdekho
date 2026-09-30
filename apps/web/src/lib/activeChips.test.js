@@ -27,9 +27,14 @@ describe('activeChips', () => {
     expect(labels({ ...EMPTY_FILTERS, q: 'react' })).toEqual(['Search: react']);
   });
 
-  it('reuses the pill copy for the fit floor', () => {
-    expect(labels({ ...EMPTY_FILTERS, minFit: '44' })).toEqual(['Good fit']);
-    expect(labels({ ...EMPTY_FILTERS, minFit: '62' })).toEqual(['Strong fit']);
+  it('names the fit floor by its grade', () => {
+    expect(labels({ ...EMPTY_FILTERS, minFit: '62' })).toEqual(['Grade A']);
+    expect(labels({ ...EMPTY_FILTERS, minFit: '38' })).toEqual(['Grade C or better']);
+  });
+
+  // An action button in a chat turn from before the grades can still set 44.
+  it('names a floor from before the grades by its number', () => {
+    expect(labels({ ...EMPTY_FILTERS, minFit: '44' })).toEqual(['Fit 44 and up']);
   });
 
   it('collapses the exclusions into one counted chip', () => {
@@ -39,20 +44,20 @@ describe('activeChips', () => {
 
   it('reuses the select copy for the numeric ceilings', () => {
     const filters = { ...EMPTY_FILTERS, minStipend: '10000', maxExp: '2', maxMonths: '3', maxDegree: 'masters' };
-    expect(labels(filters)).toEqual(["Master's", 'Rs 10,000+ /mo', 'Max 2 years', 'Max 3 months']);
+    expect(labels(filters)).toEqual(["Master's", '₹10,000+ /mo', 'Up to 2 years experience', 'Up to 3 months']);
   });
 
   // '0' is a real ceiling, and the falsy-string trap is exactly how it goes
   // missing.
   it('keeps a Fresher ceiling of zero', () => {
-    expect(labels({ ...EMPTY_FILTERS, maxExp: '0' })).toEqual(['Fresher']);
+    expect(labels({ ...EMPTY_FILTERS, maxExp: '0' })).toEqual(['Fresher roles only']);
   });
 
   it('gives every remove control a spoken name', () => {
     const chips = activeChips({
       ...EMPTY_FILTERS,
       q: 'go',
-      minFit: '44',
+      minFit: '50',
       levels: ['senior'],
       workModes: ['remote'],
       excludedSources: ['lever'],
@@ -60,11 +65,11 @@ describe('activeChips', () => {
     });
     expect(chips.map((c) => c.remove)).toEqual([
       'Remove search filter',
-      'Remove Good fit filter',
+      'Remove Grade B or better filter',
       'Remove Senior filter',
       'Remove Remote filter',
       'Remove source exclusions filter',
-      'Remove Rs 10,000+ /mo filter',
+      'Remove ₹10,000+ /mo filter',
     ]);
   });
 
@@ -96,7 +101,7 @@ describe('activeChips removal patches', () => {
     const filters = { ...EMPTY_FILTERS, q: 'x', status: 'saved', maxExp: '2', minFit: '62' };
     expect(patchFor(filters, 'Search: x')).toEqual({ q: '' });
     expect(patchFor(filters, 'Saved')).toEqual({ status: '' });
-    expect(patchFor(filters, 'Max 2 years')).toEqual({ maxExp: '' });
-    expect(patchFor(filters, 'Strong fit')).toEqual({ minFit: '' });
+    expect(patchFor(filters, 'Up to 2 years experience')).toEqual({ maxExp: '' });
+    expect(patchFor(filters, 'Grade A')).toEqual({ minFit: '' });
   });
 });

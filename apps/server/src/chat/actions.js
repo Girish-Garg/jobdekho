@@ -1,6 +1,7 @@
 import { LEVELS } from '@jobdekho/core/level.js'
 import { WORK_MODES } from '@jobdekho/core/work-mode.js'
 import { SORTS } from '@jobdekho/store/posting-order.js'
+import { GRADE_BANDS } from '@jobdekho/core/grade.js'
 import { labelForFilters, labelForSort } from './action-label.js'
 
 // The known value for every ceiling the filter bar itself offers (see
@@ -9,10 +10,11 @@ import { labelForFilters, labelForSort } from './action-label.js'
 // reach, the same reason taxonomy.js already duplicates the LEVELS/DEGREES
 // core carries as plain values.
 const DEGREE_FLOORS = ['', 'bachelors', 'masters', 'phd']
-const STIPEND_FLOORS = ['', '1', '10000', '25000', '50000', '100000']
-const EXP_CEILINGS = ['', '0', '1', '2', '3', '5']
+const STIPEND_FLOORS = ['', '1', '5000', '10000', '15000', '20000', '25000', '35000', '50000', '75000', '100000', '150000']
+const EXP_CEILINGS = ['', '0', '1', '2', '3', '4', '5', '7', '10']
 const DURATION_CEILINGS = ['', '1', '2', '3', '6']
-const FIT_FLOORS = ['', '44', '62']
+// Each grade's lower bound, the only floors the Fit filter offers.
+const FIT_FLOORS = ['', ...GRADE_BANDS.map(([, floor]) => String(floor))]
 const STATUS_VALUES = ['', 'new', 'saved', 'applied', 'dismissed']
 
 // An empty array in is a real request ("clear this list"), so it survives as

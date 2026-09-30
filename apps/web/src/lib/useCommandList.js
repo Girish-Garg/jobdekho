@@ -1,7 +1,7 @@
 import { CHOICES, applyTheme, readChoice, writeChoice } from './theme.js';
 import { EMPTY_FILTERS } from './savedFilters.js';
 import { LEVEL_OPTIONS, STATUS_OPTIONS } from './taxonomy.js';
-import { FIT_RANGES } from './ranges.js';
+import { FIT_RANGES, fitFloorLabel } from './ranges.js';
 
 const SORTS = [
   ['match', 'Best fit'],
@@ -47,10 +47,10 @@ export function buildCommands({ view, setView, filters, setFilters, setSort, onO
     }
   }
 
-  for (const [value, label] of FIT_RANGES) {
+  for (const [value] of FIT_RANGES) {
     commands.push({
       id: `fit-${value || 'any'}`,
-      label: `Fit floor: ${label}`,
+      label: `Fit: ${value ? fitFloorLabel(value) : 'any grade'}`,
       category: 'Filter',
       run: () => setFilters({ ...filters, minFit: value }),
     });

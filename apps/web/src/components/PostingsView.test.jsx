@@ -236,8 +236,8 @@ describe('PostingsView rows and view mode', () => {
   });
 
   it('names the active filter when nothing matches it', async () => {
-    render(<Harness filters={{ ...EMPTY, minFit: '44' }} />);
-    expect(await screen.findByText(/Good fit filter/)).toBeInTheDocument();
+    render(<Harness filters={{ ...EMPTY, minFit: '50' }} />);
+    expect(await screen.findByText(/Grade B or better filter/)).toBeInTheDocument();
   });
 
   it('shows skeleton rows instead of a spinner or a loading line while the first page is in flight', async () => {

@@ -1,45 +1,62 @@
-// Threshold menus for the three numeric refinements. Shared by the selects and
-// by the active-filter chips so the two cannot drift apart. The labels read
-// standalone because a chip is shown without its caption.
+// The steps of the refinements in More filters and the Fit floor. Shared by
+// the controls and by the active-filter chips so the two cannot drift apart,
+// and mirrored by the chat's allow-lists in apps/server/src/chat/actions.js.
+// The labels read standalone because a chip is shown without its caption.
+
 // Pay is stored normalised to monthly rupees so an internship stipend and an
-// annual salary compare on one scale. The ladder therefore has to span both:
-// it used to stop at 15,000/mo, which is 1.8 LPA, so every actual job landed in
-// a single bucket. The LPA gloss is there because job ads are quoted that way.
+// annual salary compare on one scale, so the steps span both: close together
+// at stipend sizes, where 5,000 a month is a real difference, and wider at
+// salary sizes. The LPA gloss is there because job ads are quoted that way.
+const PAY_STEPS = [5000, 10000, 15000, 20000, 25000, 35000, 50000, 75000, 100000, 150000];
+
+function lpa(monthly) {
+  const yearly = (monthly * 12) / 100000;
+  return `${Number.isInteger(yearly) ? yearly : yearly.toFixed(1)} LPA`;
+}
+
+const payLabel = (n) => `₹${n.toLocaleString('en-IN')}+ /mo${n >= 20000 ? ` (${lpa(n)})` : ''}`;
+
 export const STIPEND_RANGES = [
   ['', 'Any'],
   ['1', 'Paid only'],
-  ['10000', 'Rs 10,000+ /mo'],
-  ['25000', 'Rs 25,000+ /mo (3 LPA)'],
-  ['50000', 'Rs 50,000+ /mo (6 LPA)'],
-  ['100000', 'Rs 1,00,000+ /mo (12 LPA)'],
+  ...PAY_STEPS.map((n) => [String(n), payLabel(n)]),
 ];
 
+// A ceiling, so the steps run from the tightest to none at all: a slider
+// then narrows the feed as it moves left, the way the pay one widens it.
+const YEARS = [1, 2, 3, 4, 5, 7, 10];
 export const EXPERIENCE_RANGES = [
+  ['0', 'Fresher roles only'],
+  ...YEARS.map((n) => [String(n), `Up to ${n} year${n === 1 ? '' : 's'} experience`]),
   ['', 'Any'],
-  ['0', 'Fresher'],
-  ['1', 'Max 1 year'],
-  ['2', 'Max 2 years'],
-  ['3', 'Max 3 years'],
-  ['5', 'Max 5 years'],
 ];
 
 export const DURATION_RANGES = [
   ['', 'Any'],
-  ['1', 'Max 1 month'],
-  ['2', 'Max 2 months'],
-  ['3', 'Max 3 months'],
-  ['6', 'Max 6 months'],
+  ['1', 'Up to 1 month'],
+  ['2', 'Up to 2 months'],
+  ['3', 'Up to 3 months'],
+  ['6', 'Up to 6 months'],
 ];
 
-// Fit is the server's 0-100 score of a posting against the profile. A perfect
-// score needs every dimension perfect and the skills curve only approaches
-// its ceiling, so the top of the scale stays thin: measured over 1880 live
-// postings the best was 84 and the median 33. The rungs are percentiles of
-// that measurement, not round numbers - a quarter of the feed clears 44 and
-// the strongest twentieth clears 62 - and they are words rather than numbers
-// so a later recalibration cannot turn the copy into a lie.
+// Fit is filtered by the letter the cards print, not by a number nobody
+// reads: each floor is its grade's lower bound, mirrored from GRADE_BANDS in
+// @jobdekho/core/grade.js (the web bundle cannot import core), and shows
+// that grade and every better one.
 export const FIT_RANGES = [
   ['', 'Any'],
-  ['44', 'Good fit'],
-  ['62', 'Strong fit'],
+  ['62', 'A'],
+  ['50', 'B'],
+  ['38', 'C'],
+  ['25', 'D'],
 ];
+
+export const FIT_GRADE = Object.fromEntries(FIT_RANGES.filter(([value]) => value));
+
+// "Grade B or better" for a floor, and the bare number for one a chat turn
+// written before the grades still carries (it offered 44 as "Good fit").
+export function fitFloorLabel(value) {
+  const grade = FIT_GRADE[value];
+  if (!grade) return `Fit ${value} and up`;
+  return grade === 'A' ? 'Grade A' : `Grade ${grade} or better`;
+}

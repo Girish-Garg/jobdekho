@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act, within } from '@testing-library/react';
 import FilterBar from './FilterBar.jsx';
 import { EMPTY_FILTERS } from '../lib/savedFilters.js';
 
@@ -119,29 +119,31 @@ describe('FilterBar work mode filter', () => {
 });
 
 describe('FilterBar fit filter', () => {
-  it('keeps the floors behind the trigger, unset by default', async () => {
+  it('keeps the grades behind the trigger, unset by default', async () => {
     await setup();
-    expect(screen.queryByRole('button', { name: 'Good fit' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'A' })).not.toBeInTheDocument();
     open('Fit');
     expect(screen.getByRole('button', { name: 'Any' })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByRole('button', { name: 'Good fit' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Strong fit' })).toBeInTheDocument();
+    for (const grade of ['A', 'B', 'C', 'D']) expect(screen.getByRole('button', { name: grade })).toBeInTheDocument();
   });
 
-  it('writes the picked floor to minFit', async () => {
+  // Each grade is a floor: B shows the B jobs and the A ones.
+  it('writes the picked grade as its lower bound', async () => {
     const { setFilters } = await setup();
     open('Fit');
-    fireEvent.click(screen.getByRole('button', { name: 'Good fit' }));
-    expect(setFilters).toHaveBeenCalledWith(expect.objectContaining({ minFit: '44' }));
+    fireEvent.click(screen.getByRole('button', { name: 'B' }));
+    expect(setFilters).toHaveBeenCalledWith(expect.objectContaining({ minFit: '50' }));
+    fireEvent.click(screen.getByRole('button', { name: 'D' }));
+    expect(setFilters).toHaveBeenCalledWith(expect.objectContaining({ minFit: '25' }));
   });
 
   // A second floor would just shadow the first, so the pick replaces like
   // Status rather than stacking like Level.
   it('replaces rather than stacks the floor', async () => {
-    const { setFilters } = await setup({ minFit: '44' });
+    const { setFilters } = await setup({ minFit: '50' });
     open('Fit');
-    expect(screen.getByRole('button', { name: 'Good fit' })).toHaveAttribute('aria-pressed', 'true');
-    fireEvent.click(screen.getByRole('button', { name: 'Strong fit' }));
+    expect(screen.getByRole('button', { name: 'B' })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(screen.getByRole('button', { name: 'A' }));
     expect(setFilters).toHaveBeenCalledWith(expect.objectContaining({ minFit: '62' }));
   });
 
@@ -150,10 +152,10 @@ describe('FilterBar fit filter', () => {
     expect(screen.getByRole('button', { name: 'Fit (1)' })).toBeInTheDocument();
   });
 
-  it('surfaces the floor as a chip and removes it from there', async () => {
-    const { setFilters } = await setup({ minFit: '44' });
-    expect(screen.getByText('Good fit')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Remove Good fit filter' }));
+  it('surfaces the floor as a chip in grade words and removes it from there', async () => {
+    const { setFilters } = await setup({ minFit: '50' });
+    expect(screen.getByText('Grade B or better')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Remove Grade B or better filter' }));
     expect(setFilters).toHaveBeenCalledWith(expect.objectContaining({ minFit: '' }));
   });
 });
@@ -209,7 +211,7 @@ describe('FilterBar active chips', () => {
 
   it('shows what is active even with every dropdown closed', async () => {
     await setup({ levels: ['senior'], workModes: ['remote'], minStipend: '10000', excludedSources: ['a', 'b', 'c'] });
-    for (const label of ['Senior', 'Remote', 'Rs 10,000+ /mo', '3 sources excluded']) {
+    for (const label of ['Senior', 'Remote', '₹10,000+ /mo', '3 sources excluded']) {
       expect(screen.getByText(label)).toBeInTheDocument();
     }
   });
@@ -241,33 +243,45 @@ describe('FilterBar active chips', () => {
 describe('FilterBar More filters disclosure', () => {
   it('keeps the rarely used ceilings collapsed by default', async () => {
     await setup();
-    expect(screen.queryByLabelText('Highest degree')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Pay, at least')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'More filters' })).toHaveAttribute('aria-expanded', 'false');
   });
 
-  it('reveals the degree and the numeric ceilings when opened', async () => {
+  // Pay and experience are sliders over the known steps, so a move reports
+  // the step's value, never a free number the chat could not also set.
+  it('sets pay and experience from their sliders, by step', async () => {
     const { setFilters } = await setup();
     openMore();
-
-    fireEvent.change(screen.getByLabelText('Highest degree'), { target: { value: 'masters' } });
-    expect(setFilters).toHaveBeenCalledWith(expect.objectContaining({ maxDegree: 'masters' }));
-
-    fireEvent.change(screen.getByLabelText('Min stipend'), { target: { value: '10000' } });
+    fireEvent.change(screen.getByLabelText('Pay, at least'), { target: { value: '3' } });
     expect(setFilters).toHaveBeenCalledWith(expect.objectContaining({ minStipend: '10000' }));
-
-    fireEvent.change(screen.getByLabelText('Max experience'), { target: { value: '2' } });
+    fireEvent.change(screen.getByLabelText('Experience asked, at most'), { target: { value: '0' } });
+    expect(setFilters).toHaveBeenCalledWith(expect.objectContaining({ maxExp: '0' }));
+    fireEvent.change(screen.getByLabelText('Experience asked, at most'), { target: { value: '2' } });
     expect(setFilters).toHaveBeenCalledWith(expect.objectContaining({ maxExp: '2' }));
+  });
 
-    fireEvent.change(screen.getByLabelText('Max duration'), { target: { value: '3' } });
+  it('reads the current step in words on each slider, Any at the open end', async () => {
+    await setup({ minStipend: '25000' });
+    openMore();
+    expect(screen.getByLabelText('Pay, at least')).toHaveAttribute('aria-valuetext', '₹25,000+ /mo (3 LPA)');
+    expect(screen.getByLabelText('Experience asked, at most')).toHaveAttribute('aria-valuetext', 'Any');
+  });
+
+  it('sets the length and the degree from their pills', async () => {
+    const { setFilters } = await setup();
+    openMore();
+    fireEvent.click(within(screen.getByRole('group', { name: 'Your highest degree' })).getByRole('button', { name: "Master's" }));
+    expect(setFilters).toHaveBeenCalledWith(expect.objectContaining({ maxDegree: 'masters' }));
+    fireEvent.click(within(screen.getByRole('group', { name: 'Internship length, at most' })).getByRole('button', { name: '3 months' }));
     expect(setFilters).toHaveBeenCalledWith(expect.objectContaining({ maxMonths: '3' }));
   });
 
   it('collapses again on a second click', async () => {
     await setup();
     openMore();
-    expect(screen.getByLabelText('Highest degree')).toBeInTheDocument();
+    expect(screen.getByLabelText('Pay, at least')).toBeInTheDocument();
     openMore();
-    expect(screen.queryByLabelText('Highest degree')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Pay, at least')).not.toBeInTheDocument();
   });
 
   // Filters you cannot see still change the feed, so the trigger has to say

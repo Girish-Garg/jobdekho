@@ -33,9 +33,9 @@ describe('buildCommands sort', () => {
 });
 
 describe('buildCommands filters', () => {
-  it('offers a command per fit floor, level and status option', () => {
+  it('offers a command per fit grade, level and status option', () => {
     const found = buildCommands(base());
-    expect(labels(found).filter((l) => l.startsWith('Fit floor:'))).toHaveLength(3);
+    expect(labels(found).filter((l) => l.startsWith('Fit:'))).toHaveLength(5);
     expect(labels(found).filter((l) => l.startsWith('Level:'))).toHaveLength(6);
     expect(labels(found).filter((l) => l.startsWith('Status:'))).toHaveLength(5);
   });

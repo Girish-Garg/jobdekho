@@ -1,7 +1,8 @@
 import { LEVEL_OPTIONS, STATUS_OPTIONS, WORK_MODE_OPTIONS } from '../lib/taxonomy.js';
-import { FIT_RANGES } from '../lib/ranges.js';
+import { FIT_RANGES, FIT_GRADE } from '../lib/ranges.js';
 import { useSources } from '../lib/useSources.js';
 import { levelPillTone } from '../lib/levelColor.js';
+import { gradePillTone } from '../lib/gradeTone.js';
 import { activeChips } from '../lib/activeChips.js';
 import Dropdown from './Dropdown.jsx';
 import PillGroup from './PillGroup.jsx';
@@ -39,11 +40,12 @@ export default function FilterBar({ filters, setFilters, trailing }) {
         {/* Fit leads the row: it is the axis the default order sorts by, so
             its floor reads before the taxonomy refinements. Single-select like
             Status - one floor at a time, a second would just shadow the first. */}
-        <Dropdown label="Fit" icon={TargetIcon} title="Only jobs that fit you at least this well." count={filters.minFit ? 1 : 0}>
+        <Dropdown label="Fit" icon={TargetIcon} title="Pick a grade to see it and every grade above it." count={filters.minFit ? 1 : 0}>
           <PillGroup
             options={FIT_RANGES}
             selected={[filters.minFit]}
             onPick={(v) => patch('minFit', v)}
+            tone={(v, on) => gradePillTone(FIT_GRADE[v], on)}
           />
         </Dropdown>
         <Dropdown label="Level" icon={BriefcaseIcon} title="Seniority. Pick any number." count={filters.levels.length}>
