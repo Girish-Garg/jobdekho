@@ -18,6 +18,7 @@ async function main() {
   const ran = await runAdapters(buildAdapters(config), http)
   const summary = await runPipeline(ran, { db, rules, runId: randomUUID() })
   console.log(`Done. ${summary.fresh} new of ${summary.total} relevant.`)
+  console.log(`  ${summary.tooOld} skipped as posted over 60 days ago; ${summary.removed} old postings cleaned out of the store.`)
   for (const r of ran.results) console.log(`  ${r.name}: ${r.ok ? r.count : 'FAIL ' + r.error}`)
 }
 

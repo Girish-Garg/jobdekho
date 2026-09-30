@@ -1,4 +1,6 @@
 import { toIso } from './timestamp.js'
+import { pruneRows } from './corpus-prune.js'
+import { touchedPostingIds } from './corpus-keep.js'
 
 // Everything a re-scrape may legitimately correct. firstSeenAt and id are
 // absent on purpose: the first is what "new today" is measured from, and the
@@ -55,16 +57,21 @@ export async function getExistingIds(store, ids) {
 // six batches left a run half applied. The copy rather than mutation matters
 // too: the rarity cache in skill-doc-freq.js is keyed on the loaded rows and
 // must never see them change underneath it.
-export async function upsertPostings(store, items) {
-  if (items.length === 0) return
+//
+// The same write drops what is too old to be of use (corpus-prune.js), and
+// resolves with how many went, so the run can say so.
+export async function upsertPostings(store, items, nowMs = Date.now()) {
+  if (items.length === 0) return { removed: 0 }
   const next = new Map(store.corpus.byId())
-  const now = toIso(new Date())
+  const now = toIso(new Date(nowMs))
   for (const item of items) {
     const row = toRow(item)
     const existing = next.get(row.id)
     next.set(row.id, existing ? refreshed(existing, row) : { ...row, firstSeenAt: now })
   }
-  store.corpus.save(next)
+  const { rows, removed } = pruneRows(next, { keep: touchedPostingIds(store), now: nowMs })
+  store.corpus.save(rows)
+  return { removed }
 }
 
 function refreshed(existing, row) {

@@ -53,7 +53,7 @@ export default function MoreFilters({ filters, setFilters }) {
         />
         <span className="text-sm">
           <span className="block font-medium text-ink">Include stale postings</span>
-          <span className="text-xs text-muted">Jobs their board stopped listing, which may be filled.</span>
+          <span className="text-xs text-muted">Jobs no board lists any more, likely filled. Kept for 60 days, then cleaned out.</span>
         </span>
       </label>
       <div className="border-t border-line pt-3">

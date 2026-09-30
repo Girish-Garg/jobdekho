@@ -36,4 +36,20 @@ describe('runPipeline', () => {
     expect(out.fresh).toBe(0)
     expect(out.freshPostings).toHaveLength(0)
   })
+
+  // A careers board sends every open job whatever its date; the old ones
+  // are dropped before anything is stored, and the run says how many, with
+  // what the store's write cleaned out.
+  it('skips postings posted over two months ago, and reports them with what the store removed', async () => {
+    const now = Date.parse('2026-09-30T12:00:00.000Z')
+    const dated = (id, days) => ({ source: 's', raw: { externalId: id, title: 'Software Intern', company: 'A', url: 'u' + id, location: 'Remote', postedAt: new Date(now - days * 86400000).toISOString() } })
+    const ports = {
+      getExistingIds: vi.fn(async () => new Set()),
+      upsertPostings: vi.fn(async () => ({ removed: 3 })),
+      recordRun: vi.fn(async () => {}),
+    }
+    const out = await runPipeline({ items: [dated('1', 10), dated('2', 75)], results: [] }, { db: {}, rules, runId: 'r2', ports, now })
+    expect(out).toMatchObject({ total: 1, tooOld: 1, removed: 3 })
+    expect(ports.upsertPostings.mock.calls[0][1].map((p) => p.externalId)).toEqual(['1'])
+  })
 })
