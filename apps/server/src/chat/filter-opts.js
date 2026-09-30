@@ -16,7 +16,7 @@ export function toListOpts(filters, sort, profile) {
     q: f.q || undefined,
     status,
     sort,
-    profile: sort === 'match' ? profile : undefined,
+    profile,
     minFit: parseMinFit(f.minFit),
     excludedSources: parseSources((f.excludedSources || []).join(',')),
     levels: parseLevels((f.levels || []).join(',')),

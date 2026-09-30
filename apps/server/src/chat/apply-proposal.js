@@ -3,7 +3,7 @@ import { findProposal, updateProposal } from '@jobdekho/store/chat-proposals.js'
 import { getDocument, createDocument, saveDocumentTex } from '@jobdekho/store/documents.js'
 import { textChangedAt } from '@jobdekho/store/document-versions.js'
 import { checkTex } from '../resume/guard/check.js'
-import { documentView } from '../documents/view.js'
+import { documentViewFor } from '../documents/view.js'
 import { applyProfileOps } from './profile-proposal.js'
 
 // The one place a chat proposal changes anything, and only because the
@@ -32,15 +32,16 @@ async function applyProfile({ dashboard, userId, proposal }) {
 
 // The guard runs again here rather than trusting the verdict stored with
 // the proposal, so a proposal made before a guard change is held to the
-// guard as it is now.
-async function applyDocument({ documents, userId, proposal }) {
+// guard as it is now. The document goes back with its header notice, as it
+// does from every document route, so a chat change does not hide the offer.
+async function applyDocument({ dashboard, documents, userId, proposal }) {
   const { problems } = checkTex(proposal.tex)
   if (problems.length) return refuse(422, UNSAFE, { kind: 'unsafe', problems })
   if (!proposal.documentId) {
     const doc = await createDocument(documents, userId, {
       name: proposal.name, kind: proposal.documentKind, templateId: null, postingId: null, tex: proposal.tex, by: 'ai',
     })
-    return { document: documentView(doc) }
+    return { document: documentViewFor(doc, await dashboard.getProfile(userId)) }
   }
   const current = await getDocument(documents, userId, proposal.documentId)
   if (!current) return refuse(409, `"${proposal.name}" was deleted after this was proposed, so there is nothing to apply it to.`)
@@ -48,7 +49,7 @@ async function applyDocument({ documents, userId, proposal }) {
     return refuse(409, `"${current.name}" changed after this was proposed, and applying it would undo that. Nothing was applied; ask again so the change starts from the latest version.`)
   }
   const doc = await saveDocumentTex(documents, userId, current.id, { tex: proposal.tex, by: 'ai' })
-  return { document: documentView(doc) }
+  return { document: documentViewFor(doc, await dashboard.getProfile(userId)) }
 }
 
 export async function applyProposal({ chat, documents, dashboard, userId, proposalId }) {

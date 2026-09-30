@@ -38,5 +38,9 @@ export function useDocument(id) {
     return next;
   }
 
-  return { doc, save, restore };
+  // A document another call already saved (the header brought up to date
+  // from the profile, or kept), taken exactly as the server answered it.
+  const replace = (next) => setDoc(next);
+
+  return { doc, save, restore, replace };
 }

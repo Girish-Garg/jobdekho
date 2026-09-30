@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { openStore, FILES } from '@jobdekho/store/open.js'
 import {
-  listDocuments, getDocument, createDocument, saveDocumentTex, revertDocument, deleteDocument,
+  listDocuments, getDocument, createDocument, saveDocumentTex, revertDocument, deleteDocument, keepProfileHeader,
 } from '@jobdekho/store/documents.js'
 import { MAX_VERSIONS, textChangedAt } from '@jobdekho/store/document-versions.js'
 
@@ -88,6 +88,19 @@ describe('documents', () => {
     expect(await deleteDocument(store, 'me', 'nope')).toBe(false)
     expect(await deleteDocument(store, 'me', doc.id)).toBe(true)
     expect(await getDocument(store, 'me', doc.id)).toBeNull()
+  })
+
+  it('remembers a declined profile header without a new version, a move up the list, or a place in the summary', async () => {
+    const header = ['Asha Rao', 'Backend Engineer', 'Pune'].join('\n')
+    const doc = await createDocument(store, 'me', draft())
+    const kept = await keepProfileHeader(store, 'me', doc.id, header)
+    expect(kept).toEqual({ ...doc, headerKept: header })
+    expect((await getDocument(store, 'me', doc.id)).headerKept).toBe(header)
+    expect((await listDocuments(store, 'me'))[0]).not.toHaveProperty('headerKept')
+    const edited = await saveDocumentTex(store, 'me', doc.id, { tex: 'v2', by: 'profile' })
+    expect(edited).toMatchObject({ headerKept: header, versions: [{ by: 'template' }, { by: 'profile' }] })
+    expect(await keepProfileHeader(store, 'me', doc.id, null)).not.toHaveProperty('headerKept')
+    expect(await keepProfileHeader(store, 'me', 'nope', 'x')).toBeNull()
   })
 
   it('falls back to a name when given only whitespace', async () => {

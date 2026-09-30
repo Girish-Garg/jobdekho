@@ -1,7 +1,7 @@
 import { getDocument, saveDocumentTex, revertDocument } from '@jobdekho/store/documents.js'
 import { versionAt } from '@jobdekho/store/document-versions.js'
 import { documentStore } from '../documents/store.js'
-import { documentView } from '../documents/view.js'
+import { documentViewFor } from '../documents/view.js'
 import { MAX_TEX } from '../resume/guard/raw.js'
 import { NO_DOCUMENT } from './documents.js'
 
@@ -20,8 +20,9 @@ export async function documentEditRoutes(app) {
     if (typeof tex !== 'string' || !tex.trim()) return reply.code(400).send({ error: 'The document has no text.' })
     if (tex.length > MAX_TEX) return reply.code(400).send({ error: `The document is longer than ${MAX_TEX} characters.` })
     if (name !== undefined && typeof name !== 'string') return reply.code(400).send({ error: 'name must be text' })
-    const doc = await saveDocumentTex(store, request.user.sub, request.params.id, { tex, name, by: 'you' })
-    return doc ? documentView(doc) : reply.code(404).send({ error: NO_DOCUMENT })
+    const userId = request.user.sub
+    const doc = await saveDocumentTex(store, userId, request.params.id, { tex, name, by: 'you' })
+    return doc ? documentViewFor(doc, await app.dashboard.getProfile(userId)) : reply.code(404).send({ error: NO_DOCUMENT })
   })
 
   // { at }: that version's text back as the newest version.
@@ -30,6 +31,6 @@ export async function documentEditRoutes(app) {
     const doc = await getDocument(store, userId, request.params.id)
     if (!doc) return reply.code(404).send({ error: NO_DOCUMENT })
     if (!versionAt(doc, request.body?.at)) return reply.code(404).send({ error: 'That version is no longer kept.' })
-    return documentView(await revertDocument(store, userId, doc.id, request.body.at))
+    return documentViewFor(await revertDocument(store, userId, doc.id, request.body.at), await app.dashboard.getProfile(userId))
   })
 }

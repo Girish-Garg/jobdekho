@@ -24,9 +24,13 @@ export async function listPostingsForUser(store, userId, opts = {}) {
   const statuses = store.statuses.get(userId) ?? {}
   const statusOf = (id) => statuses[id] ?? null
   const { limit, offset } = clampPage(opts)
-  // An empty profile scores every row alike, so fall back to normal ordering.
-  const ranks = opts.sort === 'match' && canRank(opts.profile)
-  const sort = ranks ? 'match' : (opts.sort === 'match' ? 'newest' : opts.sort)
+  // Every order is scored when the profile can rank, not only Best fit: the
+  // fit floor and the grade on each card mean the same under Newest, and
+  // scoring only for Best fit made the floor silently do nothing under any
+  // other order. An empty profile scores every row alike, so Best fit falls
+  // back to newest first then.
+  const ranks = canRank(opts.profile)
+  const sort = opts.sort === 'match' && !ranks ? 'newest' : opts.sort
   const matching = store.corpus.rows().filter(postingPredicate(opts, statusOf))
   const windowed = withGroupWindows(matching)
   const leads = opts.group === false ? windowed : windowed.filter((row) => row.groupRank === 1)

@@ -207,7 +207,7 @@ it('keeps the filters, the sort and the density toggle with the feed', async () 
   await screen.findByRole('button', { name: 'Level' });
   const main = screen.getByRole('main');
   expect(main.contains(screen.getByRole('button', { name: 'More filters' }))).toBe(true);
-  expect(main.contains(screen.getByLabelText('Sort'))).toBe(true);
+  expect(main.contains(screen.getByRole('button', { name: 'Sort: Best fit' }))).toBe(true);
   expect(main.contains(screen.getByRole('button', { name: 'Cards' }))).toBe(true);
 });
 

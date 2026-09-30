@@ -8,6 +8,7 @@ import { chatRoutes } from './chat.js'
 import { chatProposalRoutes } from './chat-proposals.js'
 import { documentRoutes } from './documents.js'
 import { documentEditRoutes } from './document-edits.js'
+import { documentProfileRoutes } from './document-profile.js'
 import { documentFileRoutes } from './document-files.js'
 import { aiRoutes } from '../ai/routes.js'
 import { createDetector } from '../ai/detect.js'
@@ -45,6 +46,7 @@ export async function apiRoutes(app) {
   await app.register(chatProposalRoutes)
   await app.register(documentRoutes)
   await app.register(documentEditRoutes)
+  await app.register(documentProfileRoutes)
   await app.register(documentFileRoutes)
   await app.register(aiRoutes)
 }

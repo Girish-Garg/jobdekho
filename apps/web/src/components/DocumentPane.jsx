@@ -5,13 +5,16 @@ import { useSourceDraft } from '../lib/useSourceDraft.js';
 import DocumentToolbar from './DocumentToolbar.jsx';
 import DocumentPreview from './DocumentPreview.jsx';
 import DocumentSource from './DocumentSource.jsx';
+import ProfileHeaderNotice from './ProfileHeaderNotice.jsx';
 
-// The open document: its toolbar, then the PDF or the source. The source's
-// unsaved draft lives here rather than in the editor, so flipping to the
-// preview and back does not lose it. `onChanged` tells the list a save or a
-// restore moved this document to the top.
+// The open document: its toolbar, then the PDF or the source, under an
+// offer to bring its header up to date when the profile changed since it
+// was made. The source's unsaved draft lives here rather than in the
+// editor, so flipping to the preview and back does not lose it. `onChanged`
+// tells the list a save, a restore or a header update moved this document
+// to the top.
 export default function DocumentPane({ id, onChanged, onDelete }) {
-  const { doc, save, restore } = useDocument(id);
+  const { doc, save, restore, replace } = useDocument(id);
   const pdf = useDocumentPdf(doc);
   const draft = useSourceDraft(doc?.tex);
   const [view, setView] = useState('preview');
@@ -35,6 +38,11 @@ export default function DocumentPane({ id, onChanged, onDelete }) {
     onChanged();
   }
 
+  function headerApplied(next) {
+    replace(next);
+    onChanged();
+  }
+
   return (
     <div className="flex h-full min-h-0 flex-col">
       <DocumentToolbar
@@ -47,6 +55,7 @@ export default function DocumentPane({ id, onChanged, onDelete }) {
         onRestore={restoreVersion}
         onDelete={onDelete}
       />
+      {doc.profileHeader && <ProfileHeaderNotice doc={doc} onApplied={headerApplied} onKept={replace} />}
       {view === 'source'
         ? <DocumentSource draft={draft} pdf={pdf} onSave={saveSource} />
         : <DocumentPreview pdf={pdf} onOpenSource={() => setView('source')} />}

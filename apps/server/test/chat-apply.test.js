@@ -116,6 +116,17 @@ describe('applying a document proposal', () => {
     expect((await getDocument(store, 'u1', doc.id)).tex).toBe(TIGHTER)
   })
 
+  // Every document route answers with the header notice (see
+  // documents/view.js), so a chat change does not hide the offer.
+  it('answers the applied rewrite with its header notice', async () => {
+    const B = String.fromCharCode(92)
+    const header = `${B}resHeader{Jane Roe}{}{}`
+    const { post, propose } = await setup(rewrite(TIGHTER.replace('Jane Doe', header)))
+    const { id } = await propose('resume')
+    const res = await post(`/api/chat/proposals/${id}/apply`)
+    expect(res.json().document.profileHeader).toEqual({ fields: ['Name'] })
+  })
+
   it('refuses a rewrite the guard refuses, with its problems, and saves nothing', async () => {
     const { post, propose, store, doc } = await setup(rewrite(TEX.replace('Jane Doe', '\\input{C:/secret}')))
     const { id } = await propose('resume')

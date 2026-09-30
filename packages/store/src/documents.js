@@ -7,7 +7,7 @@ import { firstVersion, withVersion, versionAt } from './document-versions.js'
 // by chat proposals they applied. One record per user, like every other file
 // the person made (see open.js), holding
 //
-//   { id, name, kind, templateId, postingId, tex, versions, createdAt, updatedAt }
+//   { id, name, kind, templateId, postingId, tex, versions, createdAt, updatedAt, headerKept? }
 //
 // `tex` always mirrors the newest version (see document-versions.js), so a
 // reader that only wants the current text never walks the history.
@@ -64,6 +64,14 @@ export async function saveDocumentTex(store, userId, id, { tex, name, by, restor
     if (tex === doc.tex) return named.name === doc.name ? doc : { ...named, updatedAt: toIso(new Date()) }
     return withVersion(named, { tex, by, restoredFrom })
   })
+}
+
+// The header the person's profile would write, which they chose not to take
+// (see the server's documents/profile-header.js), remembered so the offer
+// stays away until the profile changes again. Not a version and not an
+// update: the text is untouched. A falsy `rendered` forgets it.
+export async function keepProfileHeader(store, userId, id, rendered) {
+  return change(store, userId, id, ({ headerKept, ...doc }) => (rendered ? { ...doc, headerKept: rendered } : doc))
 }
 
 // A restore is a new version carrying the old text, never a rewind: the

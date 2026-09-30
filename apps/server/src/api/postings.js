@@ -51,9 +51,10 @@ export async function postingsRoutes(app) {
     const sort = SORTS.includes(q.sort) ? q.sort : 'match'
     const postings = await app.dashboard.listPostingsForUser(request.user.sub, {
       q: q.q, source: q.source, status, sort,
-      // "Recommended" needs the profile, which the client should not have to
-      // send back on every request. Loaded only for that sort.
-      profile: sort === 'match' ? await app.dashboard.getProfile(request.user.sub) : undefined,
+      // The fit, its floor and Best fit all need the profile, which the
+      // client should not have to send back on every request. Loaded for
+      // every order, since each one shows the fit and honours the floor.
+      profile: await app.dashboard.getProfile(request.user.sub),
       minFit: parseMinFit(q.minFit),
       sources: parseSources(q.sources),
       excludedSources: parseSources(q.excludedSources),

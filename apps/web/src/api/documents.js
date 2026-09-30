@@ -37,6 +37,14 @@ export function revertDocument(id, at) {
   return req(path(id, '/revert'), { method: 'POST', body: JSON.stringify({ at }) });
 }
 
+// The header the person's profile would now write, when the document says
+// it differs (`profileHeader`). 'preview' answers { fields, tex } and saves
+// nothing; 'apply' saves it as a version, and 'keep' declines it until the
+// profile changes again, each answering with the document.
+export function documentProfileHeader(id, action) {
+  return req(path(id, '/profile-header'), { method: 'POST', body: JSON.stringify({ action }) });
+}
+
 export function deleteDocument(id) {
   return req(path(id), { method: 'DELETE' });
 }

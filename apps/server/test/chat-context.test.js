@@ -145,10 +145,13 @@ describe('assembleChatContext', () => {
     expect(context.profile).toBeNull()
   })
 
-  it('scores for match only when the sort actually is match', async () => {
-    const dashboard = fakeDashboard({ profile: { skills: ['react'] } })
+  // The screen scores under every order (the fit floor and the grades hold
+  // under Newest too), so the chat's view of it has to as well.
+  it('scores under every sort, as the feed does', async () => {
+    const profile = { skills: ['react'] }
+    const dashboard = fakeDashboard({ profile })
     await assembleChatContext(dashboard, 'u1', { filters: {}, sort: 'newest' })
-    expect(dashboard.listPostingsForUser).toHaveBeenCalledWith('u1', expect.objectContaining({ profile: undefined }))
+    expect(dashboard.listPostingsForUser).toHaveBeenCalledWith('u1', expect.objectContaining({ sort: 'newest', profile }))
   })
 
   it('never lets the request body stand in for the store: filters, sort and an id only say where to look', async () => {

@@ -2,11 +2,12 @@ import { toIso } from './timestamp.js'
 
 // A document's history, newest last: { tex, at, by } where `by` says who
 // wrote that text ('template' for a first draft, 'ai' for a chat proposal
-// the person applied, 'you' for their own edit or a restore). Kept short
+// the person applied, 'profile' for a header brought up to date from their
+// profile, 'you' for their own edit or a restore). Kept short
 // enough that a document edited all afternoon does not carry every keystroke
 // save forever, long enough to walk back a change the person regrets.
 export const MAX_VERSIONS = 20
-export const AUTHORS = ['template', 'ai', 'you']
+export const AUTHORS = ['template', 'ai', 'profile', 'you']
 
 // `at` is what a restore names a version by, so two saves inside the same
 // millisecond must not share one: the second is nudged a millisecond past

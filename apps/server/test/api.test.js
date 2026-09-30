@@ -181,7 +181,9 @@ describe('GET /api/postings forwards every option', () => {
 
   // The profile is only fetched for the sort that needs it - which the
   // default now is, so a bare request loads it too.
-  it('loads the profile only for the match sort, including by default', async () => {
+  // Every order shows the fit and honours its floor, so every order needs
+  // the profile; loading it only for Best fit made the floor a no-op.
+  it('loads the profile for every sort', async () => {
     const store = makeFakeStore()
     await optsFor(store, '/api/postings?sort=match')
     expect(store.getProfile).toHaveBeenCalled()
@@ -189,8 +191,8 @@ describe('GET /api/postings forwards every option', () => {
     await optsFor(store, '/api/postings')
     expect(store.getProfile).toHaveBeenCalled()
     store.getProfile.mockClear()
-    await optsFor(store, '/api/postings?sort=newest')
-    expect(store.getProfile).not.toHaveBeenCalled()
+    await optsFor(store, '/api/postings?sort=newest&minFit=50')
+    expect(store.getProfile).toHaveBeenCalled()
   })
 })
 

@@ -45,4 +45,12 @@ describe('useDocument', () => {
     expect(revertDocument).toHaveBeenCalledWith('d1', 't1');
     expect(result.current.doc.tex).toBe('v1 again');
   });
+
+  it('takes a document another call already saved, as it is', async () => {
+    const { result } = renderHook(() => useDocument('d1'));
+    await waitFor(() => expect(result.current.doc).toEqual(DOC));
+    act(() => result.current.replace({ ...DOC, tex: 'v2 from profile', profileHeader: null }));
+    expect(result.current.doc).toEqual({ ...DOC, tex: 'v2 from profile', profileHeader: null });
+    expect(saveDocument).not.toHaveBeenCalled();
+  });
 });

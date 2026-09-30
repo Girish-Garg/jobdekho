@@ -70,6 +70,10 @@ export function PenIcon(props) {
   return <Svg {...props}><path d="M10.5 2.5l3 3-7.5 7.5H3v-3zM9 4l3 3" /></Svg>;
 }
 
+export function UserIcon(props) {
+  return <Svg {...props}><circle cx="8" cy="5.5" r="2.5" /><path d="M3 13.5c.6-2.4 2.6-4 5-4s4.4 1.6 5 4" /></Svg>;
+}
+
 export function DocumentIcon(props) {
   return <Svg {...props}><path d="M4 2.5h5l3 3v8H4zM9 2.5v3h3M6 8.5h4M6 11h4" /></Svg>;
 }
@@ -84,4 +88,8 @@ export function PaletteIcon(props) {
 
 export function SlidersIcon(props) {
   return <Svg {...props}><path d="M2.5 4.5h6M11.5 4.5h2M2.5 11.5h2M7.5 11.5h6" /><circle cx="10" cy="4.5" r="1.5" /><circle cx="6" cy="11.5" r="1.5" /></Svg>;
+}
+
+export function SortIcon(props) {
+  return <Svg {...props}><path d="M5 13V3M2.5 5.5L5 3l2.5 2.5M11 3v10M8.5 10.5L11 13l2.5-2.5" /></Svg>;
 }

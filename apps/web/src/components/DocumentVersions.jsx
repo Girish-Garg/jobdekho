@@ -3,13 +3,15 @@ import { usePopover } from '../lib/usePopover.js';
 import { shortStamp } from '../lib/time.js';
 import { notifyError } from '../lib/toast.js';
 import { TOOL } from './DocumentToolButton.jsx';
-import { DocumentIcon, HistoryIcon, PenIcon, SparkleIcon } from './Icon.jsx';
+import { DocumentIcon, HistoryIcon, PenIcon, SparkleIcon, UserIcon } from './Icon.jsx';
 
 // Who wrote each kept version: the template's first draft, a chat change
-// the person applied, or the person's own edit or restore.
+// the person applied, a header brought up to date from their profile, or
+// the person's own edit or restore.
 const AUTHOR = {
   template: { word: 'First draft from the template', Icon: DocumentIcon, tone: 'bg-ink/5 text-muted' },
   ai: { word: 'Chat change you applied', Icon: SparkleIcon, tone: 'bg-primary/10 text-primary' },
+  profile: { word: 'Header from your profile', Icon: UserIcon, tone: 'bg-ink/5 text-ink' },
   you: { word: 'Your edit', Icon: PenIcon, tone: 'bg-accent/10 text-accent' },
 };
 

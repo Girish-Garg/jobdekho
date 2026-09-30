@@ -41,7 +41,7 @@ export default function DocumentSource({ draft, pdf, onSave }) {
       {draft.stale && (
         <ChangedNotice
           title="This document changed while you were editing"
-          detail="A chat change was applied or a version restored. Loading it drops your unsaved edits; keeping yours means your next save replaces it."
+          detail="A chat change or the header from your profile was applied, or a version restored. Loading it drops your unsaved edits; keeping yours means your next save replaces it."
           loadLabel="Load the new version"
           onLoad={draft.load}
           onKeep={draft.keep}

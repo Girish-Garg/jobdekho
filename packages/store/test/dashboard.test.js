@@ -147,6 +147,23 @@ describe('ranking', () => {
     expect(py.legitimacy).toBeTruthy()
   })
 
+  // The bug this guards: the floor was applied only under Best fit, so
+  // "Fit B or better" under Newest showed every row, unscored, and the feed
+  // asked a person with a full profile to set one up.
+  it('scores and applies minFit under every order, keeping that order', async () => {
+    const store = seeded([
+      row({ id: 'old-py', title: 'Python Developer', level: 'entry', firstSeenAt: ago(5), postedAt: ago(5) }),
+      row({ id: 'chef', title: 'Chef', descriptionText: 'Cook. '.repeat(60), level: 'executive' }),
+      row({ id: 'new-py', title: 'Python Developer', level: 'entry', firstSeenAt: ago(0), postedAt: ago(0) }),
+    ])
+    const page = await listPostingsForUser(store, 'me', { sort: 'newest', profile: PROFILE, minFit: 50 })
+    expect(ids(page)).toEqual(['new-py', 'old-py'])
+    expect(page.every((p) => Number.isInteger(p.fit) && /^[ABCD]$/.test(p.grade))).toBe(true)
+    const all = await listPostingsForUser(store, 'me', { sort: 'company', profile: PROFILE })
+    expect(all).toHaveLength(3)
+    expect(all.every((p) => Number.isInteger(p.fit))).toBe(true)
+  })
+
   it('orders by fit, then newest, then id', async () => {
     const store = seeded([
       row({ id: 'chef', title: 'Chef', level: 'executive', postedAt: ago(0) }),

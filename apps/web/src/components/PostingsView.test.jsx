@@ -78,12 +78,13 @@ describe('PostingsView server-side filters', () => {
   // The whole point of fit-as-a-filter: another sort reorders the matches, it
   // does not widen the feed back out.
   it('keeps the fit floor in the request when the sort changes to newest', async () => {
-    render(<Harness filters={{ ...EMPTY, minFit: '45' }} />);
+    render(<Harness filters={{ ...EMPTY, minFit: '50' }} />);
     await waitFor(() => expect(getPostings).toHaveBeenCalled());
-    fireEvent.change(screen.getByLabelText(/sort/i), { target: { value: 'newest' } });
+    fireEvent.click(screen.getByRole('button', { name: /^Sort:/ }));
+    fireEvent.click(screen.getByRole('menuitemradio', { name: /^Newest posted/ }));
     await waitFor(() =>
       expect(getPostings).toHaveBeenLastCalledWith(
-        expect.objectContaining({ sort: 'newest', minFit: '45' }),
+        expect.objectContaining({ sort: 'newest', minFit: '50' }),
       ),
     );
   });
@@ -254,8 +255,11 @@ describe('PostingsView rows and view mode', () => {
 });
 
 describe('PostingsView best-fit ranking', () => {
-  const pickSort = (value) =>
-    fireEvent.change(screen.getByLabelText(/sort/i), { target: { value } });
+  const NAMES = { company: 'Company A-Z', newest: 'Newest posted' };
+  const pickSort = (value) => {
+    fireEvent.click(screen.getByRole('button', { name: /^Sort:/ }));
+    fireEvent.click(screen.getByRole('menuitemradio', { name: new RegExp(`^${NAMES[value]}`) }));
+  };
 
   it('lets another sort replace the match ordering', async () => {
     getPostings.mockResolvedValue([row()]);

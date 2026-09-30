@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   getDocumentTemplates, listDocuments, getDocument, createDocument, saveDocument, revertDocument, deleteDocument,
-  compileDocument, applyProposal, discardProposal,
+  compileDocument, documentProfileHeader, applyProposal, discardProposal,
 } from './api.js';
 
 function mockFetch({ body, blob, status = 200 } = {}) {
@@ -52,6 +52,17 @@ describe('document api calls', () => {
     fetchMock = mockFetch({ status: 204 });
     expect(await deleteDocument('d2')).toBeNull();
     expect(call(fetchMock).method).toBe('DELETE');
+  });
+
+  it('asks for the header from the profile with the action named', async () => {
+    let fetchMock = mockFetch({ body: { fields: ['Name'], tex: 'new' } });
+    expect(await documentProfileHeader('d/1', 'preview')).toEqual({ fields: ['Name'], tex: 'new' });
+    expect(call(fetchMock)).toEqual({ url: '/api/documents/d%2F1/profile-header', method: 'POST', body: { action: 'preview' } });
+    mockFetch({ body: { error: 'Nothing to update: the header already matches your profile.' }, status: 409 });
+    await expect(documentProfileHeader('d1', 'apply')).rejects.toMatchObject({ message: 'Nothing to update: the header already matches your profile.', status: 409 });
+    fetchMock = mockFetch({ body: { id: 'd1', profileHeader: null } });
+    await documentProfileHeader('d1', 'keep');
+    expect(call(fetchMock).body).toEqual({ action: 'keep' });
   });
 
   it('returns the compiled PDF as a blob', async () => {
