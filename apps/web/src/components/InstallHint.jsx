@@ -54,7 +54,7 @@ export default function InstallHint({ intro, policies, providers, checking, onRe
           type="button"
           disabled={checking}
           onClick={onRecheck}
-          className="rounded-full border border-line px-4 py-1.5 text-sm text-ink transition hover:border-ink disabled:opacity-60"
+          className="btn btn-quiet font-normal"
         >
           {checking ? 'Checking...' : 'Check again'}
         </button>

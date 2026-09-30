@@ -24,7 +24,7 @@ export default function TagInput({ label, values, onChange, plain = false }) {
             type="button"
             onClick={() => onChange(values.filter((x) => x !== v))}
             aria-label={`Remove ${v}`}
-            className="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/10 px-2.5 py-1 text-xs font-medium text-accent transition-colors duration-fast ease hover:border-ember/40 hover:bg-ember/10 hover:text-ember"
+            className="inline-flex items-center gap-1.5 rounded-full border border-line bg-select px-2.5 py-1 text-xs font-medium text-ink transition-colors duration-fast ease hover:border-ember/40 hover:bg-ember/10 hover:text-ember"
           >
             {v}
             <CloseIcon size={10} />

@@ -14,7 +14,7 @@ export default function AskAiControl({ prompt = '', where, label = 'Add with AI'
       onClick={() => startChatDraft(prompt)}
       aria-label={where ? `${label}: ${where}` : label}
       title={`Opens the chat with "${prompt.trim()}" to finish`}
-      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-colors duration-fast ease hover:bg-primary/15"
+      className="btn btn-tint btn-sm shrink-0 px-3 py-1.5"
     >
       <SparkleIcon size={12} />
       {label}

@@ -15,6 +15,11 @@ const TRACKS =
   'grid items-center gap-x-4 grid-cols-[2.25rem_minmax(0,1fr)_auto] '
   + 'lg:grid-cols-[2.25rem_minmax(0,1fr)_auto_6.5rem_10.5rem]';
 
+// The selected row keeps a thin saffron bar at its edge as well as the
+// surface step: a tint alone read as muddy, and the bar says which one is
+// open from across the page.
+const SELECTED = 'bg-select before:absolute before:inset-y-2.5 before:left-0 before:w-0.5 before:rounded-full before:bg-primary';
+
 export default function PostingRow({
   posting, selected, flashUndo, dominantWorkMode, onOpen, onSelect, onStatus, onUndo,
 }) {
@@ -30,8 +35,8 @@ export default function PostingRow({
       aria-selected={selected}
       tabIndex={-1}
       onClick={(event) => { onSelect(posting.id); onOpen(posting, event.currentTarget); }}
-      className={`group relative cursor-pointer border-b border-line px-4 py-3 transition-colors duration-fast ease last:border-b-0 ${TRACKS} ${
-        selected ? 'bg-select' : 'hover:bg-select/40'
+      className={`dither-spot group relative cursor-pointer border-b border-line px-4 py-3 last:border-b-0 ${TRACKS} ${
+        selected ? SELECTED : 'hover:bg-select/40'
       } ${posting.status === 'dismissed' ? 'opacity-60' : ''}`}
     >
       <span role="gridcell"><CompanyMark company={posting.company} size="sm" /></span>

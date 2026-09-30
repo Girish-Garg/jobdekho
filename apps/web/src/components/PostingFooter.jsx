@@ -1,4 +1,5 @@
 import PostingActions from './PostingActions.jsx';
+import LinkButton from './LinkButton.jsx';
 import { ExternalLinkIcon } from './Icon.jsx';
 
 // The apply step is the point of the screen, so it stays in reach without
@@ -12,15 +13,10 @@ export default function PostingFooter({ posting, onStatus }) {
         status={posting.status}
         onStatus={(value) => onStatus(posting.id, posting.status === value ? null : value)}
       />
-      <a
-        href={posting.url}
-        target="_blank"
-        rel="noreferrer"
-        className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary transition-colors duration-fast ease hover:bg-primary/90"
-      >
+      <LinkButton href={posting.url} className="gap-2 px-5 py-2.5 text-sm">
         Open posting
         <ExternalLinkIcon size={13} />
-      </a>
+      </LinkButton>
     </footer>
   );
 }

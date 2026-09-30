@@ -7,11 +7,11 @@ import { ChevronDownIcon } from './Icon.jsx';
 // base bg-paper under a conditional one lets Tailwind's stylesheet order,
 // not the state, decide which colour actually wins.
 export const TRIGGER =
-  'flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm outline-none transition-colors duration-fast ease';
+  'dither flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm outline-none';
 
 // The panel every trigger opens, so the filters, the source list and More
 // filters read as one family of surfaces.
-export const PANEL = 'absolute top-full z-30 mt-2 rounded-2xl border border-line bg-overlay shadow-pop';
+export const PANEL = 'pop-in absolute top-full z-30 mt-2 rounded-2xl border border-line bg-overlay shadow-pop';
 
 // Three readable states, not two: a saffron trigger means it is holding a
 // value, a tinted one means it is only open, and the quiet default means

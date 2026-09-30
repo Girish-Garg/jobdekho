@@ -14,7 +14,7 @@ export default function NewDocumentMenu({ templates, busy, onPick }) {
         type="button"
         aria-expanded={open}
         onClick={() => setOpen(!open)}
-        className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-on-primary shadow-raise transition duration-fast ease hover:brightness-110"
+        className="btn btn-primary btn-sm"
       >
         <PlusIcon size={12} />
         New

@@ -76,7 +76,7 @@ export default function PostingsView({
           <div className="flex justify-center pt-6">
             <button
               onClick={loadMore}
-              className="rounded-full border border-line bg-panel px-6 py-2 text-sm font-medium text-ink transition-colors duration-fast ease hover:border-primary/50 hover:text-primary"
+              className="btn btn-quiet px-6 py-2 font-medium"
             >
               Load more
             </button>

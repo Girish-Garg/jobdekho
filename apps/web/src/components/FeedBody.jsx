@@ -22,7 +22,16 @@ export default function FeedBody({
   }
 
   if (viewMode === 'grid') {
-    return <PostingGrid postings={rows} selectedId={selectedId} onOpen={onOpen} />;
+    return (
+      <PostingGrid
+        postings={rows}
+        selectedId={selectedId}
+        flashId={flashId}
+        onOpen={onOpen}
+        onStatus={onStatus}
+        onUndo={onUndo}
+      />
+    );
   }
 
   return (

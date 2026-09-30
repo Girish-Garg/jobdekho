@@ -7,7 +7,7 @@ function Fit({ fit }) {
   return (
     <span className="flex shrink-0 items-center gap-1.5 text-xs text-muted tnum">
       <span aria-hidden="true" className="h-1 w-8 overflow-hidden rounded-full bg-ink/10">
-        <span className="block h-full rounded-full bg-primary" style={{ width: `${Math.max(0, Math.min(100, fit))}%` }} />
+        <span className="block h-full rounded-full bg-ink/45" style={{ width: `${Math.max(0, Math.min(100, fit))}%` }} />
       </span>
       fit {fit}
     </span>

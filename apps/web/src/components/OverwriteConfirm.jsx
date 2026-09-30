@@ -19,7 +19,7 @@ export default function OverwriteConfirm({ label, onConfirm, onCancel }) {
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-full border border-line px-4 py-1.5 text-sm text-ink transition hover:border-ink"
+          className="btn btn-quiet font-normal"
         >
           Keep my edits
         </button>

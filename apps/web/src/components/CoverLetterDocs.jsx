@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import { DocumentIcon, SparkleIcon } from './Icon.jsx';
 
-const BOTH = 'inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-sm font-semibold text-on-primary '
-  + 'transition duration-fast ease hover:brightness-110 disabled:opacity-60';
-const ONE = 'inline-flex items-center gap-1.5 rounded-full border border-line px-4 py-1.5 text-sm font-medium text-ink '
-  + 'transition-colors duration-fast ease hover:border-edge disabled:opacity-60';
+const BOTH = 'btn btn-primary';
+const ONE = 'btn btn-quiet font-medium';
 
 // What the letter becomes next: a cover letter document, or that and a
 // resume tailored to the same job in one go (see lib/makeApplicationDocs.js).

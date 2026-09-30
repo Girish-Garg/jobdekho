@@ -6,7 +6,7 @@ import { BookmarkIcon, CheckIcon, CloseIcon } from './Icon.jsx';
 // the row's trailing column with the fit meter rather than owning one: a
 // column of buttons empty on every row but the hovered one cost the title.
 const ACTIONS = [
-  ['saved', 'Save', BookmarkIcon, 'border-accent/40 bg-accent/10 text-accent'],
+  ['saved', 'Save', BookmarkIcon, 'border-primary/40 bg-primary/10 text-primary'],
   ['applied', 'Applied', CheckIcon, 'border-applied/40 bg-applied/10 text-applied'],
   ['dismissed', 'Dismiss', CloseIcon, 'border-edge bg-select text-ink'],
 ];

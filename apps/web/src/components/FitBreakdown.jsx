@@ -10,9 +10,9 @@ const fillPct = ({ points, max }) => (max > 0 ? Math.min(100, Math.max(0, (point
 // read as broken; how much each part is worth is what "29 of 45" says. Points
 // are rounded for reading and can drift a point off the card's total; the
 // unrounded values are the server's, and rows keep the server's order so two
-// postings compare line for line. `fill` is the grade's colour (see
-// MatchReasons.jsx), so the bars and the grade read as one judgement.
-export default function FitBreakdown({ breakdown, fill = 'bg-ink/70' }) {
+// postings compare line for line. The bars are ink, like the feed's meter:
+// the grade beside them carries the tone, and four saffron bars shouted.
+export default function FitBreakdown({ breakdown }) {
   if (!breakdown?.length) return null;
 
   return (
@@ -21,7 +21,7 @@ export default function FitBreakdown({ breakdown, fill = 'bg-ink/70' }) {
         <li key={row.dimension} className="flex items-center gap-3">
           <span className="w-16 shrink-0 text-xs text-muted">{DIMENSION_WORD[row.dimension] || row.dimension}</span>
           <span aria-hidden="true" className="h-2 flex-1 overflow-hidden rounded-full bg-line">
-            <span className={`block h-full rounded-full ${fill}`} style={{ width: `${fillPct(row)}%` }} />
+            <span className="block h-full rounded-full bg-ink/55" style={{ width: `${fillPct(row)}%` }} />
           </span>
           <span className="tnum w-14 shrink-0 text-right text-xs text-ink">
             {Math.round(row.points)} of {Math.round(row.max)}

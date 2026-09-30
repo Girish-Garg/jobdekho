@@ -61,7 +61,7 @@ function Option({ label, detail, icon, provider, active, onClick }) {
           </span>
         ) : detail}
         {provider && searchesWeb(provider) && (
-          <span className="inline-flex w-fit items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 font-medium text-accent">
+          <span className="inline-flex w-fit items-center gap-1 rounded-full bg-select px-2 py-0.5 font-medium text-ink">
             <GlobeIcon size={11} /> Searches the web
           </span>
         )}

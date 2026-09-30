@@ -18,9 +18,7 @@ export default function AskAiToggle({ open, onToggle }) {
       data-keeps-pane
       aria-pressed={Boolean(open)}
       title={title}
-      className={`relative inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors duration-fast ease ${
-        open ? 'border-primary bg-primary text-on-primary' : 'border-primary/30 bg-primary/10 text-primary hover:bg-primary/15'
-      }`}
+      className={`btn px-3.5 font-medium ${open ? 'btn-primary' : 'btn-tint'}`}
     >
       <SparkleIcon size={14} />
       Ask AI

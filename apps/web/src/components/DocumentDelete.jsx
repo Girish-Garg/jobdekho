@@ -35,7 +35,7 @@ export default function DocumentDelete({ name, onDelete }) {
           <p className="break-words text-sm font-semibold text-ink">Delete &ldquo;{name}&rdquo;?</p>
           <p className="mt-1 text-xs text-muted">Every version goes with it. There is no undo.</p>
           <div className="mt-3 flex justify-end gap-2">
-            <button type="button" onClick={() => setOpen(false)} className="rounded-full border border-line px-3.5 py-1.5 text-sm text-muted transition-colors duration-fast ease hover:text-ink">
+            <button type="button" onClick={() => setOpen(false)} className="btn btn-quiet px-3.5 font-normal text-muted hover:text-ink">
               Keep it
             </button>
             <button

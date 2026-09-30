@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { TrashIcon } from './Icon.jsx';
 
-const CONTINUE = 'rounded-full bg-primary px-4 py-1.5 text-sm font-semibold text-on-primary shadow-raise transition duration-fast ease hover:brightness-110 '
-  + 'disabled:bg-ink/10 disabled:text-muted disabled:shadow-none disabled:hover:brightness-100';
-const QUIET = 'rounded-full border border-line px-3.5 py-1.5 text-sm text-muted transition-colors duration-fast ease hover:border-edge hover:text-ink disabled:opacity-50';
+const CONTINUE = 'btn btn-primary';
+const QUIET = 'btn btn-quiet text-muted hover:text-ink font-normal';
 
 // Under a filed conversation: carry on with it, saffron because it is the
 // one thing here that acts, or delete it, which asks first, since a

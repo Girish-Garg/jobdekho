@@ -5,8 +5,8 @@ import AdzunaKeyFields from './AdzunaKeyFields.jsx';
 import { CheckIcon, SearchIcon } from './Icon.jsx';
 
 const TONE = { ok: 'text-applied', error: 'text-ember', muted: 'text-muted' };
-const LINK = 'font-medium text-accent underline underline-offset-2';
-const OUTLINE = 'rounded-full border border-line px-4 py-1.5 text-sm text-ink transition hover:border-ink disabled:opacity-60';
+const LINK = 'font-medium text-ink underline decoration-edge underline-offset-2 transition-colors duration-fast ease hover:decoration-ink';
+const OUTLINE = 'btn btn-quiet font-normal';
 
 // The person's own free Adzuna key, so Adzuna joins every refresh without
 // anyone editing .env (see the server's api/adzuna.js). What it says about
@@ -53,7 +53,7 @@ export default function AdzunaCard() {
           <button
             type="submit"
             disabled={!typed || Boolean(busy)}
-            className="rounded-full bg-primary px-4 py-1.5 text-sm font-semibold text-on-primary transition-opacity duration-fast ease hover:opacity-90 disabled:cursor-default disabled:opacity-60"
+            className="btn btn-primary"
           >
             {busy === 'save' ? 'Saving...' : 'Save'}
           </button>

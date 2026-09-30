@@ -1,3 +1,7 @@
+/* Inlined before the layers below exist, and placed by their @layer blocks. */
+@import './buttons.css';
+@import './dither.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -6,100 +10,89 @@
    and bg-ember/10 keep working across both themes. Names are semantic, never
    literal colours, because the same class has to mean "the raised surface" in
    both. The light theme also answers to data-theme="light" so one element
-   can show it inside the dark one (the theme previews in Settings). */
+   can show it inside the dark one (the theme previews in Settings).
+
+   The palette is a band, not a spectrum: graphite neutrals, ink, and one
+   saffron accent, with green and red kept for states alone. It used to give
+   teal to "worth a second look", a hue to every seniority rung and another
+   to every grade, and ten hues on one screen read as noise, not as meaning.
+   Everything that used to be told apart by hue is now told apart by its word,
+   its letter, or its weight. */
 :root,
 [data-theme='light'] {
   color-scheme: light;
 
   /* Ground, then the two surfaces that sit above it. Depth is a surface step
-     plus a hairline first, a shadow only where something really floats. */
-  --paper: 255 248 236;
+     plus a hairline first, a shadow only where something really floats. The
+     greys are neutral rather than cream, so the saffron is the only warmth. */
+  --paper: 247 247 248;
   --panel: 255 255 255;
   --overlay: 255 255 255;
 
-  --ink: 28 26 23;
-  --muted: 107 93 74;
-  --line: 240 227 204;
-  --edge: 220 199 164;
+  /* Muted clears 5.39 to 1 on a panel and 5.03 on the ground. */
+  --ink: 24 24 27;
+  --muted: 104 106 115;
+  --line: 232 232 236;
+  --edge: 212 212 218;
   --ring: 184 84 16;
-  --select: 253 233 207;
+  --select: 243 243 245;
 
   /* Saffron is what you act with, and it is deepened from the bright marigold
      of the brand so white text on it clears 4.87 to 1; the bright one only
-     reached 3.23. Teal marks what deserves a second look. */
+     reached 3.23. */
   --primary: 184 84 16;
   --on-primary: 255 255 255;
-  --accent: 15 100 100;
-  --on-accent: 255 255 255;
 
-  /* Ember was an orange accent reserved for "new today" and errors; next to a
-     saffron primary it no longer stood out, so it is a red now, the colour of
-     something that wants attention. 5.35 to 1 on the ground. */
+  /* The states, and nothing else, take their own hues: red for something
+     that wants attention (5.35 to 1 on the ground), green for applied. */
   --ember: 196 43 34;
-
-  /* Statuses and grades carry colour because colour is how a list of a
-     hundred is scanned, always paired with a word or a letter so nothing
-     depends on telling hues apart. */
   --applied: 45 110 51;
-  --grade-a: 15 100 100;
-  --grade-b: 184 84 16;
-  --grade-c: 138 106 47;
-  --grade-d: 123 114 102;
 
-  /* Seniority is an ordered ladder, so the rungs are one ramp: lightness falls
-     a fixed step per rung, which keeps the order legible in greyscale and to a
-     dichromat. Measured on paper: 4.70, 5.60, 6.74, 8.04, 9.54, 11.21 to 1. */
-  --level-internship: 75 119 86;
-  --level-entry: 11 109 108;
-  --level-mid: 24 90 133;
-  --level-senior: 96 62 102;
-  --level-staff: 97 48 64;
-  --level-executive: 73 47 27;
+  /* Grades run down the one band: saffron, a bronze of it, then two greys.
+     Each letter clears 4.5 to 1 on its own tinted square, and the letter is
+     always printed, so the order never rests on telling tones apart. */
+  --grade-a: 184 84 16;
+  --grade-b: 135 98 60;
+  --grade-c: 96 96 105;
+  --grade-d: 118 118 126;
 
   --duration-fast: 120ms;
   --duration-slow: 220ms;
   --ease: cubic-bezier(0.2, 0, 0, 1);
+  /* For things that arrive: fast out of the gate, settling slowly, which is
+     what makes a hover feel smooth rather than switched. */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Roasted paper rather than black: the warmth is the product's, and a true
-   black ground under warm text reads as a different app at night. */
+/* Graphite rather than black: a true black ground makes every surface on it
+   a hole, and a blue-black one fights the saffron. */
 [data-theme='dark'] {
   color-scheme: dark;
 
-  --paper: 16 17 20;
-  --panel: 24 26 31;
-  --overlay: 32 35 42;
+  --paper: 12 13 15;
+  --panel: 20 21 24;
+  --overlay: 27 29 33;
 
-  --ink: 242 239 232;
-  --muted: 158 163 173;
-  --line: 38 42 49;
-  --edge: 54 59 68;
+  /* Muted clears 5.80 to 1 on a panel and 5.35 on the overlay. */
+  --ink: 236 237 239;
+  --muted: 142 145 153;
+  --line: 36 38 43;
+  --edge: 54 57 64;
   --ring: 255 159 28;
-  --select: 42 36 16;
+  --select: 32 34 39;
 
   /* The bright saffron takes dark text: 9.13 to 1. */
   --primary: 255 159 28;
   --on-primary: 17 18 20;
-  --accent: 46 196 182;
-  --on-accent: 17 18 20;
 
   --ember: 255 107 94;
-
   --applied: 95 208 122;
-  --grade-a: 46 196 182;
-  --grade-b: 255 159 28;
-  --grade-c: 215 180 106;
-  --grade-d: 139 144 154;
 
-  /* The same six hues, lightness solved to step down 60, 54, 48, 42, 37, 32
-     so the ramp keeps its order the way the light one does. Every rung clears
-     5.5 to 1 even on the overlay surface, the lightest of the three. */
-  --level-internship: 169 214 182;
-  --level-entry: 136 206 205;
-  --level-mid: 149 189 218;
-  --level-senior: 201 160 208;
-  --level-staff: 209 147 167;
-  --level-executive: 194 143 98;
+  /* The lowest grade still clears 4.87 to 1 on a panel. */
+  --grade-a: 255 159 28;
+  --grade-b: 196 150 96;
+  --grade-c: 190 193 200;
+  --grade-d: 128 132 140;
 }
 
 html,
@@ -140,6 +133,20 @@ body {
 
 .rise {
   animation: rise var(--duration-slow) var(--ease) both;
+}
+
+/* A menu unfolds from its trigger: a few pixels of drop and a hair of scale,
+   gone in a sixth of a second, so it arrives rather than appears. */
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+}
+
+.pop-in {
+  transform-origin: top;
+  animation: pop-in 160ms var(--ease-out) both;
 }
 
 /* A side panel arrives from the edge it lives on, so the eye knows where it

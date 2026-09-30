@@ -12,7 +12,7 @@ const AUTHOR = {
   template: { word: 'First draft from the template', Icon: DocumentIcon, tone: 'bg-ink/5 text-muted' },
   ai: { word: 'Chat change you applied', Icon: SparkleIcon, tone: 'bg-primary/10 text-primary' },
   profile: { word: 'Header from your profile', Icon: UserIcon, tone: 'bg-ink/5 text-ink' },
-  you: { word: 'Your edit', Icon: PenIcon, tone: 'bg-accent/10 text-accent' },
+  you: { word: 'Your edit', Icon: PenIcon, tone: 'bg-select text-ink' },
 };
 
 const describe = (version) => (version.restoredFrom
@@ -65,7 +65,7 @@ export default function DocumentVersions({ versions, onRestore }) {
                       type="button"
                       disabled={Boolean(busy)}
                       onClick={() => restore(version.at)}
-                      className="rounded-full border border-line px-2.5 py-1 text-xs font-semibold text-ink transition-colors duration-fast ease hover:border-primary/40 hover:text-primary disabled:opacity-50"
+                      className="btn btn-quiet btn-sm px-2.5"
                     >
                       {busy === version.at ? 'Restoring...' : 'Restore'}
                     </button>

@@ -15,7 +15,7 @@ const QUICK = [
   ['resume-tailor', 'Tailor resume', DocumentIcon],
 ];
 
-const CHIP = 'inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-panel px-3 py-1.5 text-xs font-medium text-ink transition-colors duration-fast ease hover:border-primary hover:text-primary';
+const CHIP = 'btn btn-quiet btn-sm font-medium';
 
 export default function AskAiButton({ posting, onAsked }) {
   const doubtful = isDoubtful(posting);
@@ -26,7 +26,7 @@ export default function AskAiButton({ posting, onAsked }) {
   };
 
   return (
-    <section aria-label="AI" className="rounded-xl border border-primary/25 bg-primary/5 p-4">
+    <section aria-label="AI" className="dither-spot rounded-xl border border-line bg-panel p-4 hover:border-edge">
       <button type="button" aria-label={title} onClick={() => ask(doubtful ? 'fake-check' : null)} className="group flex w-full items-center gap-3 text-left">
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary text-on-primary">
           <SparkleIcon size={16} />

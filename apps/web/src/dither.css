@@ -1,0 +1,93 @@
+/* Dithered hovers. The dots are drawn by lib/ditherWorklet.js from the
+   pointer's position (lib/ditherPointer.js writes it) outward to a radius.
+   Registering the radius and strength is what lets a transition animate them,
+   so a hover dissolves in from where the pointer entered and dissolves back
+   out where it left, instead of switching on. Where the Paint API is missing,
+   paint() is an invalid value and the plain hover is all that is left. */
+@property --dither-r {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+@property --dither-strength {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+
+/* Kept from inheriting too, so the ground's light (canvas.css) never becomes
+   a button's origin: unset, the worklet starts from the element's centre,
+   which is where a keyboard focus lights it from. */
+@property --dither-x {
+  syntax: '*';
+  inherits: false;
+}
+
+@property --dither-y {
+  syntax: '*';
+  inherits: false;
+}
+
+@layer components {
+  /* Buttons: fine dots of the text's own colour, so the hover reads as the
+     button's surface catching light rather than as a new colour. */
+  .btn,
+  .dither {
+    --dither-color: rgb(var(--ink) / 0.16);
+    --dither-pitch: 3;
+    --dither-dot: 1;
+    background-image: paint(dither);
+    transition:
+      --dither-r 420ms var(--ease),
+      --dither-strength 320ms var(--ease),
+      background-color var(--duration-fast) var(--ease),
+      border-color var(--duration-fast) var(--ease),
+      color var(--duration-fast) var(--ease),
+      opacity var(--duration-fast) var(--ease),
+      transform var(--duration-fast) var(--ease);
+  }
+
+  .btn-primary {
+    --dither-color: rgb(var(--on-primary) / 0.22);
+  }
+
+  .btn-tint {
+    --dither-color: rgb(var(--primary) / 0.4);
+  }
+
+  .btn:hover:not(:disabled),
+  .btn:focus-visible,
+  .btn:has(:focus-visible),
+  .dither:hover {
+    --dither-r: 150px;
+    --dither-strength: 0.95;
+    transition-duration: 620ms, 420ms, var(--duration-fast), var(--duration-fast),
+      var(--duration-fast), var(--duration-fast), var(--duration-fast);
+    transition-timing-function: var(--ease-out);
+  }
+
+  /* Rows and cards: a wide, sparse saffron light that follows the pointer, so
+     the thing under it is lit without anything on it moving. */
+  .dither-spot {
+    --dither-color: rgb(var(--primary) / 0.34);
+    --dither-pitch: 4;
+    --dither-dot: 1.5;
+    background-image: paint(dither);
+    transition:
+      --dither-r 480ms var(--ease),
+      --dither-strength 360ms var(--ease),
+      background-color var(--duration-fast) var(--ease),
+      border-color var(--duration-fast) var(--ease),
+      box-shadow var(--duration-fast) var(--ease),
+      opacity var(--duration-fast) var(--ease);
+  }
+
+  .dither-spot:hover {
+    --dither-r: 240px;
+    --dither-strength: 0.5;
+    transition-duration: 700ms, 480ms, var(--duration-fast), var(--duration-fast),
+      var(--duration-fast), var(--duration-fast);
+    transition-timing-function: var(--ease-out);
+  }
+}

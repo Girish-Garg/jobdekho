@@ -1,0 +1,91 @@
+/* The app's buttons, in four weights: primary (saffron, the one thing to do
+   on a surface), tint (a saffron wash, for the ways into AI), quiet (a
+   hairline, for everything else) and ghost (text only, for dense rows).
+   Each used to be spelled out in utilities at every call site, and forty
+   slightly different buttons read as a cheap app.
+
+   They sit in Tailwind's components layer (index.css imports this file
+   above its @tailwind lines): after the base reset, so a class beats the
+   reset's bare button rule, and before the utilities, so a utility on the
+   element (a different padding, a full width) still wins without an
+   !important. Motion and the dithered hover live in dither.css. */
+@layer components {
+  .btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    border: 1px solid transparent;
+    border-radius: 9999px;
+    padding: 0.375rem 1rem;
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: 1.5;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .btn-sm {
+    padding: 0.25rem 0.75rem;
+    font-size: 11px;
+  }
+
+  .btn-icon {
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+  }
+
+  .btn-primary {
+    background-color: rgb(var(--primary));
+    color: rgb(var(--on-primary));
+  }
+
+  .btn-tint {
+    border-color: rgb(var(--primary) / 0.3);
+    background-color: rgb(var(--primary) / 0.1);
+    color: rgb(var(--primary));
+  }
+
+  .btn-tint:hover:not(:disabled) {
+    background-color: rgb(var(--primary) / 0.15);
+  }
+
+  .btn-quiet {
+    border-color: rgb(var(--line));
+    background-color: rgb(var(--panel));
+    color: rgb(var(--ink));
+  }
+
+  .btn-quiet:hover:not(:disabled) {
+    border-color: rgb(var(--edge));
+  }
+
+  .btn-ghost {
+    color: rgb(var(--muted));
+  }
+
+  .btn-ghost:hover:not(:disabled) {
+    color: rgb(var(--ink));
+  }
+
+  /* A press gives a little, which is feedback before anything else answers. */
+  .btn:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  .btn:disabled {
+    cursor: default;
+    opacity: 0.55;
+  }
+
+  /* A faded saffron still reads as something to press, so a primary that
+     cannot be pressed yet goes grey instead. */
+  .btn-primary:disabled {
+    background-color: rgb(var(--ink) / 0.1);
+    color: rgb(var(--muted));
+    opacity: 1;
+  }
+}

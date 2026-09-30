@@ -35,7 +35,7 @@ export default function ProfileHero({ basics, profile, onChange }) {
               type="button"
               aria-expanded={editing}
               onClick={() => setEditing(!editing)}
-              className="inline-flex items-center justify-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-ink transition-colors duration-fast ease hover:border-edge"
+              className="btn btn-quiet btn-sm px-3 py-1.5"
             >
               <PenIcon size={12} />
               {editing ? 'Done editing' : 'Edit basics'}

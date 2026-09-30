@@ -47,7 +47,7 @@ export default function SettingsView() {
               )}
               {providers.length > 0 && (
                 <p className="mt-4 flex items-start gap-2 text-sm text-muted">
-                  <GlobeIcon size={14} className="mt-[3px] shrink-0 text-accent" />
+                  <GlobeIcon size={14} className="mt-[3px] shrink-0 text-muted" />
                   {webSentence(providers)}
                 </p>
               )}
@@ -82,7 +82,7 @@ export default function SettingsView() {
 function Fact({ icon, title, children }) {
   return (
     <li className="flex gap-3 rounded-xl border border-line bg-paper/60 p-3.5">
-      <span className="mt-0.5 shrink-0 text-accent">{icon}</span>
+      <span className="mt-0.5 shrink-0 text-muted">{icon}</span>
       <span className="text-sm">
         <span className="block font-semibold text-ink">{title}</span>
         <span className="text-muted">{children}</span>

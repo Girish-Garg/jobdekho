@@ -1,7 +1,6 @@
 import { LEVEL_OPTIONS, STATUS_OPTIONS, WORK_MODE_OPTIONS } from '../lib/taxonomy.js';
 import { FIT_RANGES, FIT_GRADE } from '../lib/ranges.js';
 import { useSources } from '../lib/useSources.js';
-import { levelPillTone } from '../lib/levelColor.js';
 import { gradePillTone } from '../lib/gradeTone.js';
 import { activeChips } from '../lib/activeChips.js';
 import Dropdown from './Dropdown.jsx';
@@ -53,7 +52,6 @@ export default function FilterBar({ filters, setFilters, trailing }) {
             options={LEVEL_OPTIONS}
             selected={filters.levels}
             onPick={(v) => toggle('levels', v)}
-            tone={levelPillTone}
           />
         </Dropdown>
         <Dropdown label="Status" icon={BookmarkIcon} title="Where you are with each job." count={filters.status ? 1 : 0}>

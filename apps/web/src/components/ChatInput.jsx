@@ -6,8 +6,7 @@ const ASK = 'Ask about what is on screen';
 
 const BOX = 'flex items-end gap-2 rounded-2xl border border-line bg-paper py-1.5 pl-3.5 pr-1.5 shadow-raise transition duration-fast ease '
   + 'focus-within:border-primary/50 focus-within:ring-4 focus-within:ring-primary/15';
-const SEND = 'grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary text-on-primary transition duration-fast ease '
-  + 'hover:brightness-110 disabled:bg-ink/10 disabled:text-muted disabled:hover:brightness-100';
+const SEND = 'btn btn-primary btn-icon h-8 w-8 shrink-0';
 
 // Enter sends, shift+Enter writes a new line - the one binding a multi-line
 // question box needs beyond what a plain input already gives for free.

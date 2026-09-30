@@ -54,7 +54,7 @@ export default function DocumentProposalBody({ proposal }) {
           type="button"
           aria-expanded={open}
           onClick={() => setOpen((now) => !now)}
-          className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1 text-xs font-semibold text-ink transition-colors duration-fast ease hover:border-edge"
+          className="btn btn-quiet btn-sm"
         >
           {open ? 'Hide changes' : 'View changes'}
           {open ? <ChevronUpIcon size={12} /> : <ChevronDownIcon size={12} />}

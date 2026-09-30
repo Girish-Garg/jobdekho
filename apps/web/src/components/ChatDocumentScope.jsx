@@ -10,7 +10,7 @@ export default function ChatDocumentScope({ doc }) {
   return (
     <div className="shrink-0 border-b border-line px-3 py-2.5">
       <div className="flex items-center gap-3 rounded-xl border border-line bg-paper px-2 py-2">
-        <span aria-hidden="true" className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${letter ? 'bg-accent/10 text-accent' : 'bg-primary/10 text-primary'}`}>
+        <span aria-hidden="true" className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${letter ? 'bg-select text-ink' : 'bg-primary/10 text-primary'}`}>
           <Icon size={15} />
         </span>
         <div className="min-w-0 flex-1">

@@ -3,8 +3,7 @@ import { notifyError } from '../lib/toast.js';
 import GuardProblems from './GuardProblems.jsx';
 import ChangedNotice from './ChangedNotice.jsx';
 
-const SAVE = 'rounded-full bg-primary px-5 py-2 text-sm font-semibold text-on-primary shadow-raise transition duration-fast ease hover:brightness-110 '
-  + 'disabled:bg-ink/10 disabled:text-muted disabled:shadow-none disabled:hover:brightness-100';
+const SAVE = 'btn btn-primary px-5 py-2';
 
 // The document's LaTeX, edited by hand. A save is a new version (restorable
 // from Versions) and compiles at once; the LaTeX guard stands in front of
@@ -61,7 +60,7 @@ export default function DocumentSource({ draft, pdf, onSave }) {
       <div className="flex flex-wrap items-center gap-2">
         <button type="button" onClick={save} disabled={!draft.dirty || saving} className={SAVE}>{saving ? 'Saving...' : 'Save'}</button>
         {draft.dirty && (
-          <button type="button" onClick={draft.discard} className="rounded-full border border-line px-4 py-2 text-sm text-muted transition-colors duration-fast ease hover:border-edge hover:text-ink">
+          <button type="button" onClick={draft.discard} className="btn btn-quiet py-2 font-normal text-muted hover:text-ink">
             Discard edits
           </button>
         )}

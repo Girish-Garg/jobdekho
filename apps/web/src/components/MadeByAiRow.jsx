@@ -2,14 +2,14 @@ import { describeMade, isJobItem } from '../lib/madeByAi.js';
 import { DocumentIcon, MailIcon, PenIcon, ShieldCheckIcon, SparkleIcon } from './Icon.jsx';
 
 // The colours the rest of the app already gives each thing: saffron for a
-// resume, teal for a letter (see DocumentList.jsx), green for a change the
+// resume, neutral for a letter (see DocumentList.jsx), green for a change the
 // person applied, and plain ink for a check, which only says something.
 const LOOK = {
   'fake-check': { Icon: ShieldCheckIcon, tone: 'bg-ink/5 text-ink' },
-  'cover-letter': { Icon: MailIcon, tone: 'bg-accent/10 text-accent' },
+  'cover-letter': { Icon: MailIcon, tone: 'bg-select text-ink' },
   'resume-tailor': { Icon: SparkleIcon, tone: 'bg-primary/10 text-primary' },
   resume: { Icon: DocumentIcon, tone: 'bg-primary/10 text-primary' },
-  letter: { Icon: MailIcon, tone: 'bg-accent/10 text-accent' },
+  letter: { Icon: MailIcon, tone: 'bg-select text-ink' },
   profile: { Icon: PenIcon, tone: 'bg-applied/15 text-applied' },
 };
 
@@ -18,7 +18,7 @@ const lookOf = (item) => {
   return LOOK[item.kind] ?? LOOK.profile;
 };
 
-const LINK = 'rounded-full border border-line px-2.5 py-1 text-xs font-semibold text-ink transition-colors duration-fast ease hover:border-primary/40 hover:text-primary';
+const LINK = 'btn btn-quiet btn-sm px-2.5';
 
 function Links({ item, links, onOpenConversation }) {
   const link = (label, act) => <button type="button" onClick={act} className={LINK}>{label}</button>;

@@ -28,7 +28,7 @@ export default function SaveBar({ onSave, label: idleLabel = 'Save changes' }) {
       <button
         onClick={save}
         disabled={state === 'saving'}
-        className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-on-primary transition-colors duration-fast ease hover:bg-primary/90 disabled:opacity-60"
+        className="btn btn-primary px-5 py-2"
       >
         {label}
       </button>

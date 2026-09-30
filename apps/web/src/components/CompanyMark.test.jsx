@@ -10,10 +10,11 @@ describe('CompanyMark', () => {
     expect(initials('')).toBe('?');
   });
 
-  it('gives the same company the same tint every time, and hides from screen readers', () => {
+  it('draws every company in the same neutral tile, hidden from screen readers', () => {
     const a = render(<CompanyMark company="Acme" />).container.firstChild;
-    const b = render(<CompanyMark company="Acme" />).container.firstChild;
+    const b = render(<CompanyMark company="Zeta Labs" />).container.firstChild;
     expect(a.className).toBe(b.className);
+    expect(a.className).toContain('bg-select');
     expect(a).toHaveAttribute('aria-hidden', 'true');
   });
 });

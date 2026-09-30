@@ -39,7 +39,7 @@ export function AddControl({ label, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-line bg-panel px-3 py-1.5 text-xs font-semibold text-ink transition-colors duration-fast ease hover:border-edge"
+      className="btn btn-quiet btn-sm shrink-0 px-3 py-1.5"
     >
       <PlusIcon size={12} />
       {label}

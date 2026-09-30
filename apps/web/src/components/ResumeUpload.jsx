@@ -53,7 +53,7 @@ export default function ResumeUpload({ resumeName, onUploaded, children }) {
             <span className="block text-xs text-muted">{busy ? 'Pulling the text out of the PDF' : 'PDF on file'}</span>
           </span>
           {!busy && (
-            <label htmlFor={inputId} title="Replace the resume" className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs font-medium text-ink transition-colors duration-fast ease hover:border-edge">
+            <label htmlFor={inputId} title="Replace the resume" className="btn btn-quiet btn-sm shrink-0 px-3 py-1.5 font-medium">
               <UploadIcon size={12} />
               Replace
             </label>

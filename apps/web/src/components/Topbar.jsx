@@ -1,6 +1,8 @@
 // Slim top strip: wordmark, section nav, keyword search, theme toggle.
 import { useState } from 'react';
 import ThemeToggle from './ThemeToggle.jsx';
+import SlidingPill from './SlidingPill.jsx';
+import { useSlidingPill } from '../lib/useSlidingPill.js';
 import AskAiToggle from './AskAiToggle.jsx';
 import { SearchIcon } from './Icon.jsx';
 
@@ -8,6 +10,7 @@ export default function Topbar({ view, setView, q = '', onSearch, searchRef, cha
   // Drives the "/" hint: it is only useful before anyone has found the box,
   // so it drops out the moment there is a reason it would be in the way.
   const [searchFocused, setSearchFocused] = useState(false);
+  const pill = useSlidingPill(view);
 
   // Never wraps: the two end groups keep their size and the search takes what
   // is left, down to nothing on a phone. A compact 48px row is the budget the
@@ -16,11 +19,12 @@ export default function Topbar({ view, setView, q = '', onSearch, searchRef, cha
     <header className="flex h-12 shrink-0 items-center gap-4 border-b border-line bg-panel px-5">
       <div className="flex shrink-0 items-center gap-6">
         <span className="hidden font-display text-lg font-extrabold tracking-tight text-ink sm:inline">Job<span className="text-primary">Dekho</span></span>
-        <nav className="flex items-center gap-1">
-          <NavItem active={view === 'postings'} onClick={() => setView?.('postings')}>Postings</NavItem>
-          <NavItem active={view === 'profile'} onClick={() => setView?.('profile')}>Profile</NavItem>
-          <NavItem active={view === 'resume'} onClick={() => setView?.('resume')}>Resume</NavItem>
-          <NavItem active={view === 'settings'} onClick={() => setView?.('settings')}>Settings</NavItem>
+        <nav ref={pill.ref} className="relative flex items-center gap-1">
+          <SlidingPill style={pill.style} glides={pill.glides} />
+          <NavItem value="postings" active={view === 'postings'} onClick={() => setView?.('postings')}>Postings</NavItem>
+          <NavItem value="profile" active={view === 'profile'} onClick={() => setView?.('profile')}>Profile</NavItem>
+          <NavItem value="resume" active={view === 'resume'} onClick={() => setView?.('resume')}>Resume</NavItem>
+          <NavItem value="settings" active={view === 'settings'} onClick={() => setView?.('settings')}>Settings</NavItem>
         </nav>
       </div>
 
@@ -61,12 +65,14 @@ export default function Topbar({ view, setView, q = '', onSearch, searchRef, cha
   );
 }
 
-function NavItem({ active, onClick, children }) {
-  const cls = `rounded-full px-2.5 py-1.5 text-sm font-medium transition-colors duration-fast ease sm:px-3.5 ${
-    active ? 'bg-select font-semibold text-ink' : 'text-muted hover:bg-select/50 hover:text-ink'
+// The active item's background is the sliding pill behind the row, so an
+// item only brings its text; it sits above the pill.
+function NavItem({ value, active, onClick, children }) {
+  const cls = `relative rounded-full px-2.5 py-1.5 text-sm font-medium transition-colors duration-fast ease sm:px-3.5 ${
+    active ? 'text-ink' : 'text-muted hover:text-ink'
   }`;
   return (
-    <button type="button" onClick={onClick} aria-current={active ? 'page' : undefined} className={cls}>
+    <button type="button" data-pill-key={value} onClick={onClick} aria-current={active ? 'page' : undefined} className={cls}>
       {children}
     </button>
   );

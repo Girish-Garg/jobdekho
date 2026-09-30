@@ -31,7 +31,7 @@ export default function EntryCard({ entry, titleLabel, orgLabel, startOpen, isFi
           {place && <span className="block truncate text-[13px] text-muted">{place}</span>}
         </span>
         <span className="flex shrink-0 items-center gap-3 text-sm text-muted">
-          {entry.pinned && <span className="rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">Pinned</span>}
+          {entry.pinned && <span className="rounded-full bg-select px-2 py-0.5 text-xs font-medium text-ink">Pinned</span>}
           {bullets > 0 && <span className="text-xs group-open:hidden">{bullets} {bullets === 1 ? 'bullet' : 'bullets'}</span>}
           {dates && <span className="tnum">{dates}</span>}
           <ChevronDownIcon className="transition-transform duration-fast ease-ease group-open:rotate-180" />

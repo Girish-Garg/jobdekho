@@ -1,12 +1,8 @@
 // No logos: fetching one would tell a third party which jobs someone is
-// reading. A monogram in one of the palette's tints stands in, picked from
-// the name so the same company always gets the same one.
-const TINTS = [
-  'bg-primary/15 text-primary',
-  'bg-accent/15 text-accent',
-  'bg-level-mid/15 text-level-mid',
-  'bg-applied/15 text-applied',
-];
+// reading. A monogram stands in, in one neutral tile for every company: four
+// tints picked by name put saffron, teal, blue and green on every screen,
+// and a hue that means nothing about the company is only noise.
+const TILE = 'bg-select text-muted ring-1 ring-inset ring-line';
 
 // Legal tails say nothing about who the company is.
 const SKIP = new Set(['the', 'pvt', 'private', 'ltd', 'limited', 'inc', 'llp', 'llc', 'india', 'technologies', 'solutions']);
@@ -15,12 +11,6 @@ export function initials(company) {
   const words = String(company || '').split(/[^\p{L}\p{N}]+/u).filter((w) => w && !SKIP.has(w.toLowerCase()));
   if (!words.length) return '?';
   return (words.length === 1 ? words[0].slice(0, 2) : words[0][0] + words[1][0]).toUpperCase();
-}
-
-function tintFor(company) {
-  let hash = 0;
-  for (const ch of String(company || '').toLowerCase()) hash = (hash * 31 + ch.codePointAt(0)) >>> 0;
-  return TINTS[hash % TINTS.length];
 }
 
 // Large in the job pane's header, small beside a row or on a card.
@@ -33,7 +23,7 @@ export default function CompanyMark({ company, size = 'md' }) {
   return (
     <span
       aria-hidden="true"
-      className={`grid shrink-0 place-items-center font-display font-extrabold tracking-tight ${SIZES[size] ?? SIZES.md} ${tintFor(company)}`}
+      className={`grid shrink-0 place-items-center font-display font-extrabold tracking-tight ${SIZES[size] ?? SIZES.md} ${TILE}`}
     >
       {initials(company)}
     </span>

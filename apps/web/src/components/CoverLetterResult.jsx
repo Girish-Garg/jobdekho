@@ -55,7 +55,7 @@ export default function CoverLetterResult({ record, providers, tailored = false,
       <CoverLetterDocs text={text} tailored={tailored} onMakeLetter={onMakeLetter} onMakeBoth={onMakeBoth} />
 
       <div className="flex flex-wrap items-center gap-3">
-        <button type="button" onClick={copy} className="rounded-full border border-line px-4 py-1.5 text-sm text-ink transition hover:border-ink">
+        <button type="button" onClick={copy} className="btn btn-quiet font-normal">
           {copied ? 'Copied' : 'Copy'}
         </button>
         {copyError && <span className="text-sm text-ember">Could not copy, select the text and copy it by hand.</span>}

@@ -6,11 +6,11 @@ const GROUPS = [
   ['cover-letter', 'Cover letters'],
 ];
 
-// Saffron for a resume, teal for a letter, so the two kinds tell apart in
-// a long list by colour and by shape, never by colour alone.
+// Saffron for a resume, neutral for a letter, so the two kinds tell apart in
+// a long list by tone and by shape, never by colour alone.
 const TILE = {
   resume: { Icon: DocumentIcon, tone: 'bg-primary/10 text-primary' },
-  'cover-letter': { Icon: MailIcon, tone: 'bg-accent/10 text-accent' },
+  'cover-letter': { Icon: MailIcon, tone: 'bg-select text-ink' },
 };
 
 // A document with edits not saved yet carries the same saffron dot the

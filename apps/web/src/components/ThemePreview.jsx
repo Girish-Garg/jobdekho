@@ -30,9 +30,9 @@ function Scene({ theme }) {
         <span className="h-1.5 w-8 rounded-full border border-primary/40 bg-primary/15" />
         {[0.8, 0.6, 0.7].map((width) => (
           <div key={width} className="flex items-center gap-1.5 rounded-md border border-line bg-panel px-1.5 py-1">
-            <span className="h-2 w-2 shrink-0 rounded-sm bg-accent/30" />
+            <span className="h-2 w-2 shrink-0 rounded-sm bg-primary/30" />
             <span className="h-1 rounded-full bg-ink/60" style={{ width: `${width * 50}%` }} />
-            <span className="ml-auto h-1 w-3 rounded-full bg-accent" />
+            <span className="ml-auto h-1 w-3 rounded-full bg-primary" />
           </div>
         ))}
       </div>

@@ -4,10 +4,8 @@ import { foldUnchanged } from '../lib/foldDiff.js';
 import DiffLines from './DiffLines.jsx';
 import { CheckIcon } from './Icon.jsx';
 
-const APPLY = 'inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-sm font-semibold text-on-primary shadow-raise '
-  + 'transition duration-fast ease hover:brightness-110 disabled:cursor-not-allowed disabled:bg-ink/10 disabled:text-muted disabled:shadow-none disabled:hover:brightness-100';
-const CANCEL = 'rounded-full border border-line px-4 py-1.5 text-sm font-medium text-muted transition-colors duration-fast ease '
-  + 'hover:border-edge hover:text-ink disabled:opacity-50';
+const APPLY = 'btn btn-primary';
+const CANCEL = 'btn btn-quiet text-muted hover:text-ink font-medium';
 
 // The header change shown the way the chat's document cards show theirs
 // (see ProposalSourceDiff.jsx): the line it replaces, then the line that

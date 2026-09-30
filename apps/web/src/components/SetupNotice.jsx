@@ -55,7 +55,7 @@ export default function SetupNotice({ onOpenSettings }) {
       <button
         type="button"
         onClick={onOpenSettings}
-        className="rounded-full bg-primary px-4 py-1.5 text-sm font-semibold text-on-primary transition-colors duration-fast ease hover:bg-primary/90"
+        className="btn btn-primary"
       >
         Open Settings
       </button>

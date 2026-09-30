@@ -4,8 +4,7 @@ import ResumeCoverage from './ResumeCoverage.jsx';
 import TailoredPicks from './TailoredPicks.jsx';
 import { DocumentIcon } from './Icon.jsx';
 
-const BUTTON = 'inline-flex items-center gap-1.5 self-start rounded-full bg-primary px-4 py-1.5 text-sm font-semibold text-on-primary '
-  + 'transition duration-fast ease hover:brightness-110';
+const BUTTON = 'btn btn-primary self-start';
 
 // The fact check leads, then coverage, then which entries the plan picked:
 // the person should know what to fix and how well it matches before they see

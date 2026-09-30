@@ -1,10 +1,8 @@
 import { shortStamp } from '../lib/time.js';
 import { CheckIcon, WarningIcon } from './Icon.jsx';
 
-const APPLY = 'inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-sm font-semibold text-on-primary shadow-raise '
-  + 'transition duration-fast ease hover:brightness-110 disabled:cursor-not-allowed disabled:bg-ink/10 disabled:text-muted disabled:shadow-none disabled:hover:brightness-100';
-const DISCARD = 'rounded-full border border-line px-4 py-1.5 text-sm font-medium text-muted transition-colors duration-fast ease '
-  + 'hover:border-edge hover:text-ink disabled:opacity-50';
+const APPLY = 'btn btn-primary';
+const DISCARD = 'btn btn-quiet text-muted hover:text-ink font-medium';
 
 // The foot of a proposal card: the two buttons while it waits, or what
 // became of it. Apply is saffron because it is the one thing on the card

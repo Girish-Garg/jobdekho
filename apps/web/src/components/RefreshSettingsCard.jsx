@@ -48,7 +48,7 @@ export default function RefreshSettingsCard() {
           type="button"
           onClick={start}
           disabled={running}
-          className="rounded-full bg-primary px-4 py-1.5 text-sm font-semibold text-on-primary transition-opacity duration-fast ease hover:opacity-90 disabled:cursor-default disabled:opacity-60"
+          className="btn btn-primary"
         >
           Refresh now
         </button>

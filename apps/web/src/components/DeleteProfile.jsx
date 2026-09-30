@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { deleteProfile } from '../api.js';
 
-const QUIET = 'rounded-full border border-line px-4 py-1.5 text-sm text-muted transition-colors duration-fast ease hover:border-edge hover:text-ink';
+const QUIET = 'btn btn-quiet font-normal text-muted hover:text-ink';
 
 // Deleting throws away the stored resume text as well as the fields, and
 // there is no undo, so the button arms instead of firing. It sits apart at

@@ -5,8 +5,8 @@
 const primaryTone = (value, selected) =>
   selected ? 'border-primary bg-primary text-on-primary font-semibold' : 'border-line bg-panel text-ink/80 hover:border-primary/40 hover:text-ink';
 
-// tone lets the Level row carry the same ramp the cards do, so the control and
-// the data cannot drift apart.
+// tone lets the Fit row wear its grades, the same letters the cards carry, so
+// the control and the data cannot drift apart.
 export default function PillGroup({ options, selected, onPick, tone = primaryTone }) {
   return (
     <div className="flex flex-wrap gap-1.5">

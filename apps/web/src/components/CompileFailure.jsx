@@ -1,3 +1,4 @@
+import LinkButton from './LinkButton.jsx';
 import GuardProblems from './GuardProblems.jsx';
 import { CodeIcon, WarningIcon } from './Icon.jsx';
 
@@ -14,8 +15,7 @@ const TITLE = {
   failed: 'The PDF could not be built',
 };
 
-const PRIMARY = 'inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-sm font-semibold text-on-primary transition duration-fast ease hover:brightness-110';
-const QUIET = 'inline-flex items-center gap-1.5 rounded-full border border-line px-4 py-1.5 text-sm font-medium text-ink transition-colors duration-fast ease hover:border-edge';
+const QUIET = 'btn btn-quiet font-medium';
 
 export default function CompileFailure({ failure, onOpenSource, onRetry }) {
   const kind = TITLE[failure.kind] ? failure.kind : 'failed';
@@ -40,7 +40,7 @@ export default function CompileFailure({ failure, onOpenSource, onRetry }) {
       <p className="text-sm leading-relaxed text-ink/85">{failure.message}</p>
       <div className="flex flex-wrap items-center gap-2 pt-1">
         {kind === 'not_found' && (
-          <a href="https://miktex.org/download" target="_blank" rel="noreferrer" className={PRIMARY}>Get MiKTeX</a>
+          <LinkButton href="https://miktex.org/download">Get MiKTeX</LinkButton>
         )}
         {fixable ? sourceButton : <button type="button" onClick={onRetry} className={QUIET}>Try again</button>}
       </div>

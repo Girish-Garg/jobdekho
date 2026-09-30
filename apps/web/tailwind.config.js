@@ -1,5 +1,6 @@
-/** Warm ink on paper, one ember accent, in two themes. The values live in
- *  src/index.css as channel triplets; this file only gives them names. */
+/** Graphite and ink, one saffron accent, green and red for states, in two
+ *  themes. The values live in src/index.css as channel triplets; this file
+ *  only gives them names. */
 const withAlpha = (name) => `rgb(var(--${name}) / <alpha-value>)`;
 
 export default {
@@ -24,22 +25,12 @@ export default {
         select: withAlpha('select'),
         primary: withAlpha('primary'),
         'on-primary': withAlpha('on-primary'),
-        accent: withAlpha('accent'),
-        'on-accent': withAlpha('on-accent'),
         applied: withAlpha('applied'),
         grade: {
           a: withAlpha('grade-a'),
           b: withAlpha('grade-b'),
           c: withAlpha('grade-c'),
           d: withAlpha('grade-d'),
-        },
-        level: {
-          internship: withAlpha('level-internship'),
-          entry: withAlpha('level-entry'),
-          mid: withAlpha('level-mid'),
-          senior: withAlpha('level-senior'),
-          staff: withAlpha('level-staff'),
-          executive: withAlpha('level-executive'),
         },
       },
       // A tool read for hours at a time, so the body step is 14 and the jumps
@@ -66,6 +57,9 @@ export default {
       },
       transitionTimingFunction: {
         ease: 'var(--ease)',
+        // The class ease-out: the theme's own arrival curve, in place of
+        // Tailwind's stock one.
+        out: 'var(--ease-out)',
       },
     },
   },

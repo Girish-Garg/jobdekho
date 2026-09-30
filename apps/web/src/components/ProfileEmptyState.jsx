@@ -20,7 +20,7 @@ export default function ProfileEmptyState({ onStart }) {
       <button
         type="button"
         onClick={onStart}
-        className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-on-primary transition-colors duration-fast ease-ease hover:bg-primary/90"
+        className="btn btn-primary px-5 py-2"
       >
         Start writing it
       </button>

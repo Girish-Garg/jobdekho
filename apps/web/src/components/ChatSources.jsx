@@ -24,10 +24,10 @@ export default function ChatSources({ sources }) {
               target="_blank"
               rel="noreferrer"
               title={url}
-              className="group inline-flex max-w-[15rem] items-center gap-1.5 rounded-full border border-line bg-panel py-1 pl-2.5 pr-2 text-xs text-ink transition-colors duration-fast ease hover:border-accent/50 hover:text-accent"
+              className="group inline-flex max-w-[15rem] items-center gap-1.5 rounded-full border border-line bg-panel py-1 pl-2.5 pr-2 text-xs text-ink transition-colors duration-fast ease hover:border-edge hover:bg-select/60"
             >
               <span className="truncate">{site(url)}</span>
-              <ExternalLinkIcon size={11} className="text-muted transition-colors duration-fast ease group-hover:text-accent" />
+              <ExternalLinkIcon size={11} className="text-muted transition-colors duration-fast ease group-hover:text-ink" />
             </a>
           </li>
         ))}

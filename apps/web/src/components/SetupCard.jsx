@@ -21,7 +21,7 @@ const URL_PATTERN = /(https?:\/\/[^\s"]*[^\s".,;:)'])/;
 
 function Linked({ text }) {
   return String(text).split(URL_PATTERN).map((part, i) => (i % 2
-    ? <a key={i} href={part} target="_blank" rel="noreferrer" className="font-medium text-accent underline underline-offset-2">{part}</a>
+    ? <a key={i} href={part} target="_blank" rel="noreferrer" className="font-medium text-ink underline decoration-edge underline-offset-2 transition-colors duration-fast ease hover:decoration-ink">{part}</a>
     : <Fragment key={i}>{part}</Fragment>));
 }
 
@@ -72,7 +72,7 @@ export default function SetupCard() {
         type="button"
         disabled={checking}
         onClick={refresh}
-        className="mt-5 rounded-full border border-line px-4 py-1.5 text-sm text-ink transition hover:border-ink disabled:opacity-60"
+        className="btn btn-quiet mt-5 font-normal"
       >
         {checking ? 'Checking...' : 'Check again'}
       </button>

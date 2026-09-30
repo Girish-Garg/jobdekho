@@ -140,12 +140,12 @@ describe('PostingCard legitimacy warning', () => {
 });
 
 describe('PostingCard level label', () => {
-  // The label carries its own rung colour, so the left edge never has to be
-  // decoded. It stays plain text: a filled badge on every card would shout.
-  it('tints the label with its level rather than filling a badge', () => {
+  // Levels are told apart by their word, not a hue: a colour per rung put six
+  // more hues on the page. A hairline chip, never a filled badge, which would shout.
+  it('draws the level as a neutral hairline chip rather than a filled badge', () => {
     render(<PostingCard posting={{ ...base, level: 'executive' }} onOpen={() => {}} />);
     const label = screen.getByText('Executive');
-    expect(label.className).toContain('text-level-executive');
+    expect(label.className).toContain('border-line');
     expect(label.className).not.toContain('bg-');
   });
 
@@ -188,17 +188,21 @@ describe('PostingCard work mode', () => {
   });
 });
 
+// The card is an article with the open button stretched over it, so the
+// card-level state lives on the article, not on that button.
+const cardOf = () => screen.getByRole('article');
+
 describe('PostingCard selection', () => {
   it('carries its id as data-row-id for keyboard scroll and focus lookups', () => {
     render(<PostingCard posting={base} onOpen={() => {}} />);
-    expect(screen.getByRole('button', { name: /Frontend Intern/ })).toHaveAttribute('data-row-id', 'p1');
+    expect(cardOf()).toHaveAttribute('data-row-id', 'p1');
   });
 
   it('paints the selection background when selected, the panel surface otherwise', () => {
     const { rerender } = render(<PostingCard posting={base} onOpen={() => {}} />);
-    expect(screen.getByRole('button', { name: /Frontend Intern/ }).className).toContain('bg-panel');
+    expect(cardOf().className).toContain('bg-panel');
     rerender(<PostingCard posting={base} selected onOpen={() => {}} />);
-    expect(screen.getByRole('button', { name: /Frontend Intern/ }).className).toContain('bg-select');
+    expect(cardOf().className).toContain('bg-select');
   });
 });
 
@@ -207,5 +211,37 @@ describe('isNewToday', () => {
     expect(isNewToday('2026-06-28T06:00:00Z', now)).toBe(true);
     expect(isNewToday('2026-06-26T06:00:00Z', now)).toBe(false);
     expect(isNewToday(null, now)).toBe(false);
+  });
+});
+
+// A card used to be one button with nothing to do on it but open. The quick
+// actions sit above the stretched open button, so they act on their own.
+describe('PostingCard quick actions', () => {
+  it('saves from the card without opening the job', () => {
+    const onOpen = vi.fn();
+    const onStatus = vi.fn();
+    render(<PostingCard posting={base} onOpen={onOpen} onStatus={onStatus} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    expect(onStatus).toHaveBeenCalledWith('p1', 'saved');
+    expect(onOpen).not.toHaveBeenCalled();
+  });
+
+  it('still opens the job from the card itself', () => {
+    const onOpen = vi.fn();
+    render(<PostingCard posting={base} onOpen={onOpen} onStatus={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: /Frontend Intern, Acme/ }));
+    expect(onOpen).toHaveBeenCalledWith(base, expect.any(HTMLElement));
+  });
+
+  it('offers the undo in place of the actions right after a dismiss', () => {
+    const onUndo = vi.fn();
+    render(<PostingCard posting={base} flashUndo onOpen={() => {}} onStatus={() => {}} onUndo={onUndo} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    expect(onUndo).toHaveBeenCalled();
+  });
+
+  it('shows no actions where no status handler is given', () => {
+    render(<PostingCard posting={base} onOpen={() => {}} />);
+    expect(screen.queryByRole('button', { name: 'Save' })).toBeNull();
   });
 });

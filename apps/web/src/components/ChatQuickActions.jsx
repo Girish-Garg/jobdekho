@@ -17,7 +17,7 @@ export default function ChatQuickActions({ results, busy, onRun }) {
           type="button"
           disabled={busy || results === undefined}
           onClick={() => onRun(kind)}
-          className="group inline-flex items-center gap-1.5 rounded-full border border-line bg-paper px-2.5 py-1.5 text-xs font-semibold text-ink transition-colors duration-fast ease hover:border-primary/40 hover:bg-primary/5 hover:text-primary disabled:opacity-50"
+          className="btn btn-quiet btn-sm group bg-paper px-2.5 py-1.5"
         >
           <ChatActionIcon kind={kind} size={13} className="text-primary" />
           {saved.has(kind) ? ACTION_KINDS[kind].again : ACTION_KINDS[kind].label}

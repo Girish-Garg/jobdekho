@@ -1,53 +1,45 @@
 /* The ground under every page. A flat fill read as a void behind the cards,
-   worst at night, where it was a sheet of near black. Three quiet layers give
-   it a surface without competing with anything on it: a dot grid, like paper
-   ruled for notes, a warm saffron light from the top and a cool teal one from
-   the far corner, and a fine grain over all of it. Everything is drawn in
-   the theme's own tokens, so the texture follows the theme.
+   worst at night, where it was a sheet of near black. So a little light falls
+   from the top: a faint saffron glow, and under it the same ordered dither
+   the hovers use (lib/ditherWorklet.js), densest at the top and breaking up
+   into scattered dots as it falls away. Everything is drawn in the theme's
+   own tokens, so it follows the theme.
 
    It sits on the shell, which never scrolls, so the page slides over a still
-   ground rather than dragging the grid along with it. */
-:root {
-  --dot: rgb(var(--ink) / 0.075);
-  --glow-warm: rgb(var(--primary) / 0.1);
-  --glow-cool: rgb(var(--accent) / 0.07);
-  --grain-opacity: 0.16;
-}
-
-/* The eye reads a step of light on a near black ground as far louder than
-   the same step of shade on cream, so the dark values sit at about half the
-   light ones to look as quiet. */
-[data-theme='dark'] {
-  --dot: rgb(var(--ink) / 0.04);
-  --glow-warm: rgb(var(--primary) / 0.06);
-  --glow-cool: rgb(var(--accent) / 0.05);
-  --grain-opacity: 0.07;
-}
-
+   ground rather than dragging the dots along with it. */
 .app-canvas {
+  --glow: rgb(var(--primary) / 0.07);
+  --dot: rgb(var(--ink) / 0.05);
+  --dither-color: rgb(var(--ink) / 0.13);
+  --dither-y: -160px;
+  --dither-r: 1100px;
+  --dither-strength: 0.42;
+  --dither-pitch: 5;
+  --dither-dot: 1;
   position: relative;
   isolation: isolate;
   background-color: rgb(var(--paper));
+  /* Without the Paint API this plain grid of dots is the texture instead. */
   background-image:
-    radial-gradient(64rem 28rem at 88% -8%, var(--glow-warm), transparent 70%),
-    radial-gradient(52rem 30rem at -4% 108%, var(--glow-cool), transparent 70%),
+    radial-gradient(70rem 26rem at 50% -10%, var(--glow), transparent 70%),
     radial-gradient(var(--dot) 1px, transparent 1.5px);
-  background-size: auto, auto, 22px 22px;
-  background-position: 0 0, 0 0, 11px 11px;
+  background-size: auto, 22px 22px;
 }
 
-/* The grain is its own layer so it can take an opacity of its own and never
-   catch a click. A dark grain on the light ground, a light one on the dark. */
-.app-canvas::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  opacity: var(--grain-opacity);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+@supports (background-image: paint(dither)) {
+  .app-canvas {
+    background-image:
+      radial-gradient(70rem 26rem at 50% -10%, var(--glow), transparent 70%),
+      paint(dither);
+    background-size: auto, auto;
+  }
 }
 
-[data-theme='dark'] .app-canvas::before {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+/* The eye reads a step of light on a near black ground as far louder than
+   the same step of shade on white, so the dark values sit lower to look as
+   quiet. */
+[data-theme='dark'] .app-canvas {
+  --glow: rgb(var(--primary) / 0.05);
+  --dot: rgb(var(--ink) / 0.035);
+  --dither-color: rgb(var(--ink) / 0.07);
 }

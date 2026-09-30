@@ -20,7 +20,7 @@ export default function RecommendedNotice({ onOpenProfile, fitFiltered = false }
       <button
         type="button"
         onClick={onOpenProfile}
-        className="rounded-full bg-primary px-4 py-1.5 text-sm font-semibold text-on-primary transition-colors duration-fast ease hover:bg-primary/90"
+        className="btn btn-primary"
       >
         Set up your profile
       </button>
