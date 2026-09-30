@@ -4,8 +4,9 @@ import { SparkleIcon } from './Icon.jsx';
 // "Add with AI": opens the chat with the start of the request already in
 // the box ("Add a project: "), for the person to finish in their own words.
 // The chat answers with a card to apply (see ProposalCard.jsx), so nothing
-// is added until they press Apply there. Saffron with the chat's sparkle,
-// since this is now the quick way in; the hand-typed Add beside it stays.
+// is added until they press Apply there. A quiet button with the chat's
+// sparkle in saffron: one tinted button per section put seven saffron blocks
+// on the Profile page, and the sparkle alone says which one asks the AI.
 // `where` names the section for a screen reader, since every card has one.
 export default function AskAiControl({ prompt = '', where, label = 'Add with AI' }) {
   return (
@@ -14,9 +15,9 @@ export default function AskAiControl({ prompt = '', where, label = 'Add with AI'
       onClick={() => startChatDraft(prompt)}
       aria-label={where ? `${label}: ${where}` : label}
       title={`Opens the chat with "${prompt.trim()}" to finish`}
-      className="btn btn-tint btn-sm shrink-0 px-3 py-1.5"
+      className="btn btn-quiet btn-sm shrink-0 px-3 py-1.5"
     >
-      <SparkleIcon size={12} />
+      <SparkleIcon size={12} className="text-primary" />
       {label}
     </button>
   );

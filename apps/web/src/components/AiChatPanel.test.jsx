@@ -175,7 +175,7 @@ describe('AiChatPanel, the redesigned panel', () => {
     getProviders.mockResolvedValue([CLAUDE, AGY]);
     getProviderPreference.mockResolvedValue({ provider: 'agy' });
     setup();
-    expect(await screen.findByText('Antigravity on this computer')).toBeInTheDocument();
+    expect(await screen.findByText('Antigravity on this PC')).toBeInTheDocument();
   });
 
   it('sends a suggested question on click, and shows it as the person\'s own words', async () => {

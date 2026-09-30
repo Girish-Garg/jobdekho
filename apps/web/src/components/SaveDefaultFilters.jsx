@@ -9,7 +9,7 @@ export default function SaveDefaultFilters({ filters }) {
       <p className="text-xs leading-relaxed text-muted">
         Open JobDekho with these filters every time.
       </p>
-      <SaveBar onSave={() => mergeSave(toSavedFilters(filters))} label="Save as my default" />
+      <SaveBar onSave={() => mergeSave(toSavedFilters(filters))} label="Save as my default" weight="quiet" />
     </div>
   );
 }

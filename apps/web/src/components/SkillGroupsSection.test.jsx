@@ -33,7 +33,7 @@ describe('SkillGroupsSection', () => {
     const onChange = vi.fn();
     const groups = [{ id: '1', name: 'Languages', items: [] }];
     render(<SkillGroupsSection groups={groups} onChange={onChange} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Remove' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Remove group' }));
     expect(onChange).toHaveBeenCalledWith([]);
   });
 });

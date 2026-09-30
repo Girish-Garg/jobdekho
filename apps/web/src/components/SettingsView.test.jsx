@@ -128,15 +128,15 @@ describe('SettingsView with Ollama', () => {
   it('offers its installed models once it is picked, the first picked until one is saved', async () => {
     picked();
     await mount();
-    const group = await screen.findByRole('radiogroup', { name: 'Ollama model' });
-    expect(within(group).getByRole('radio', { name: 'llama3.2:3b, 2.0 GB' })).toHaveAttribute('aria-checked', 'true');
-    expect(within(group).getByRole('radio', { name: 'qwen3:8b, 5.2 GB' })).toHaveAttribute('aria-checked', 'false');
+    const picker = await screen.findByRole('combobox', { name: 'Ollama model' });
+    expect(picker).toHaveValue('llama3.2:3b');
+    expect(within(picker).getAllByRole('option').map((o) => o.textContent)).toEqual(['llama3.2:3b, 2.0 GB', 'qwen3:8b, 5.2 GB']);
   });
 
   it('shows the saved model once it loads', async () => {
     getProviderPreference.mockResolvedValueOnce({ provider: 'ollama', models: { ollama: 'qwen3:8b' } });
     await mount();
-    await waitFor(() => expect(screen.getByRole('radio', { name: 'qwen3:8b, 5.2 GB' })).toHaveAttribute('aria-checked', 'true'));
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Ollama model' })).toHaveValue('qwen3:8b'));
     expect(screen.getByRole('radio', { name: 'Ollama' })).toHaveAttribute('aria-checked', 'true');
   });
 
@@ -144,9 +144,9 @@ describe('SettingsView with Ollama', () => {
   it('saves a model as soon as it is picked, and says so', async () => {
     picked();
     await mount();
-    await act(async () => fireEvent.click(await screen.findByRole('radio', { name: 'qwen3:8b, 5.2 GB' })));
+    await act(async () => fireEvent.change(await screen.findByRole('combobox', { name: 'Ollama model' }), { target: { value: 'qwen3:8b' } }));
     expect(putProviderPreference).toHaveBeenCalledWith({ models: { ollama: 'qwen3:8b' } });
-    expect(screen.getByRole('radio', { name: 'qwen3:8b, 5.2 GB' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('combobox', { name: 'Ollama model' })).toHaveValue('qwen3:8b');
     expect(screen.getByText('Saved')).toBeInTheDocument();
   });
 
@@ -154,8 +154,8 @@ describe('SettingsView with Ollama', () => {
     picked();
     putProviderPreference.mockRejectedValueOnce(new Error('Ollama has no model called "qwen3:8b" on this computer.'));
     await mount();
-    await act(async () => fireEvent.click(await screen.findByRole('radio', { name: 'qwen3:8b, 5.2 GB' })));
-    expect(screen.getByRole('radio', { name: 'llama3.2:3b, 2.0 GB' })).toHaveAttribute('aria-checked', 'true');
+    await act(async () => fireEvent.change(await screen.findByRole('combobox', { name: 'Ollama model' }), { target: { value: 'qwen3:8b' } }));
+    expect(screen.getByRole('combobox', { name: 'Ollama model' })).toHaveValue('llama3.2:3b');
     expect(screen.getByText('Not saved')).toBeInTheDocument();
   });
 
@@ -164,7 +164,7 @@ describe('SettingsView with Ollama', () => {
     getProviders.mockResolvedValue([...CLIS, { ...OLLAMA, runs: false, models: [], error: 'Ollama has no models yet: run "ollama pull llama3.2" in a terminal, then check again.' }]);
     await mount();
     await waitFor(() => expect(screen.getByRole('radio', { name: 'Ollama' })).toHaveAccessibleDescription(/no models yet/));
-    expect(screen.queryByRole('radiogroup', { name: 'Ollama model' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: 'Ollama model' })).not.toBeInTheDocument();
   });
 
   // Truthful either way: the tag once its probe found it can search, and
@@ -185,7 +185,7 @@ describe('SettingsView with Ollama', () => {
 
 describe('SettingsView model picker', () => {
   beforeEach(() => getProviders.mockResolvedValue([...CLIS, OLLAMA]));
-  const pickers = () => screen.queryAllByRole('radiogroup', { name: / model$/ });
+  const pickers = () => screen.queryAllByRole('combobox', { name: / model$/ });
 
   it('shows none for "Whichever is available", saying each CLI uses its own', async () => {
     await mount();
@@ -197,21 +197,20 @@ describe('SettingsView model picker', () => {
   it('shows Claude Code\'s picker alone when it is picked, and none for Ollama', async () => {
     getProviderPreference.mockResolvedValueOnce({ provider: 'claude', models: { claude: 'haiku', ollama: 'qwen3:8b' } });
     await mount();
-    const group = await screen.findByRole('radiogroup', { name: 'Claude Code model' });
-    expect(within(group).getByRole('radio', { name: 'Haiku' })).toHaveAttribute('aria-checked', 'true');
+    expect(await screen.findByRole('combobox', { name: 'Claude Code model' })).toHaveValue('haiku');
     expect(pickers()).toHaveLength(1);
-    expect(screen.queryByRole('radiogroup', { name: 'Ollama model' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: 'Ollama model' })).not.toBeInTheDocument();
     expect(screen.queryByText(/Each CLI then answers/)).not.toBeInTheDocument();
   });
 
   it('moves the picker with the pick, and saves a CLI\'s model under its own id', async () => {
     await mount();
     await act(async () => fireEvent.click(await screen.findByRole('radio', { name: 'Claude Code' })));
-    const group = await screen.findByRole('radiogroup', { name: 'Claude Code model' });
-    await act(async () => fireEvent.click(within(group).getByRole('radio', { name: 'Opus' })));
+    const picker = await screen.findByRole('combobox', { name: 'Claude Code model' });
+    await act(async () => fireEvent.change(picker, { target: { value: 'opus' } }));
     expect(putProviderPreference).toHaveBeenLastCalledWith({ models: { claude: 'opus' } });
     await act(async () => fireEvent.click(screen.getByRole('radio', { name: 'Ollama' })));
-    expect(screen.queryByRole('radiogroup', { name: 'Claude Code model' })).not.toBeInTheDocument();
-    expect(screen.getByRole('radiogroup', { name: 'Ollama model' })).toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: 'Claude Code model' })).not.toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Ollama model' })).toBeInTheDocument();
   });
 });

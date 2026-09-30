@@ -24,43 +24,44 @@ const AGY = {
   models: [{ id: 'default', label: 'Default' }, { id: 'gemini-3.8-flash-low', label: 'Gemini 3.8 Flash (Low)' }],
 };
 
+const picker = (name) => screen.getByRole('combobox', { name });
+const optionNames = () => screen.getAllByRole('option').map((o) => o.textContent);
+
+// One dropdown rather than a pill per model (Antigravity alone lists
+// eighteen): each model by its short name and, for a local one, its size.
 describe('ModelChoice', () => {
-  it('offers each installed model by name and size, in a group named for the provider', () => {
+  it('offers each installed model by name and size, in a list named for the provider', () => {
     render(<ModelChoice provider={OLLAMA} saved={null} onChange={() => {}} />);
-    expect(screen.getByRole('radiogroup', { name: 'Ollama model' })).toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: 'llama3.2:3b, 2.0 GB' })).toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: 'hf.co/someone/Tiny-Model-GGUF:Q4_K_M, 6.5 GB' })).toBeInTheDocument();
+    expect(picker('Ollama model')).toBeInTheDocument();
+    expect(optionNames()).toEqual(['llama3.2:3b, 2.0 GB', 'Tiny-Model-GGUF:Q4_K_M, 6.5 GB']);
   });
 
-  // A long registry path is cut to its last part on the pill, whole in the tooltip.
-  it('shows the last part of a long name, and the whole name on hover', () => {
-    render(<ModelChoice provider={OLLAMA} saved={null} onChange={() => {}} />);
-    const pill = screen.getByRole('radio', { name: /Tiny-Model/ });
-    expect(pill).toHaveTextContent('Tiny-Model-GGUF:Q4_K_M');
-    expect(pill).not.toHaveTextContent('hf.co');
-    expect(pill).toHaveAttribute('title', 'hf.co/someone/Tiny-Model-GGUF:Q4_K_M');
-  });
-
-  it('marks the saved model picked', () => {
+  // A long registry path is cut to its last part, whole in the tooltip.
+  it('shows the last part of a long name, and the whole id on hover', () => {
     render(<ModelChoice provider={OLLAMA} saved="hf.co/someone/Tiny-Model-GGUF:Q4_K_M" onChange={() => {}} />);
-    expect(screen.getByRole('radio', { name: /Tiny-Model/ })).toHaveAttribute('aria-checked', 'true');
-    expect(screen.getByRole('radio', { name: /llama3\.2/ })).toHaveAttribute('aria-checked', 'false');
+    expect(optionNames()[1]).not.toContain('hf.co');
+    expect(picker('Ollama model')).toHaveAttribute('title', 'hf.co/someone/Tiny-Model-GGUF:Q4_K_M');
+  });
+
+  it('shows the saved model picked', () => {
+    render(<ModelChoice provider={OLLAMA} saved="hf.co/someone/Tiny-Model-GGUF:Q4_K_M" onChange={() => {}} />);
+    expect(picker('Ollama model')).toHaveValue('hf.co/someone/Tiny-Model-GGUF:Q4_K_M');
   });
 
   // What the server will use: its first model when none is saved, or when
   // the saved one has been removed since.
-  it('marks the first model picked when none is saved, or the saved one is gone', () => {
+  it('shows the first model picked when none is saved, or the saved one is gone', () => {
     const { unmount } = render(<ModelChoice provider={OLLAMA} saved={null} onChange={() => {}} />);
-    expect(screen.getByRole('radio', { name: /llama3\.2/ })).toHaveAttribute('aria-checked', 'true');
+    expect(picker('Ollama model')).toHaveValue('llama3.2:3b');
     unmount();
     render(<ModelChoice provider={OLLAMA} saved="deleted:7b" onChange={() => {}} />);
-    expect(screen.getByRole('radio', { name: /llama3\.2/ })).toHaveAttribute('aria-checked', 'true');
+    expect(picker('Ollama model')).toHaveValue('llama3.2:3b');
   });
 
   it('reports the picked model by its full id', () => {
     const onChange = vi.fn();
     render(<ModelChoice provider={OLLAMA} saved={null} onChange={onChange} />);
-    fireEvent.click(screen.getByRole('radio', { name: /Tiny-Model/ }));
+    fireEvent.change(picker('Ollama model'), { target: { value: 'hf.co/someone/Tiny-Model-GGUF:Q4_K_M' } });
     expect(onChange).toHaveBeenCalledWith('hf.co/someone/Tiny-Model-GGUF:Q4_K_M');
   });
 
@@ -68,36 +69,34 @@ describe('ModelChoice', () => {
     const { container } = render(<ModelChoice provider={{ ...OLLAMA, runs: false, models: [] }} saved={null} onChange={() => {}} />);
     expect(container).toBeEmptyDOMElement();
     render(<ModelChoice provider={{ id: 'ollama', label: 'Ollama' }} saved={null} onChange={() => {}} />);
-    expect(screen.queryByRole('radiogroup')).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
   });
 
   it('names a model without a known size alone', () => {
     render(<ModelChoice provider={{ ...OLLAMA, models: [{ id: 'mystery:1b', label: 'mystery:1b', size: null }] }} saved={null} onChange={() => {}} />);
-    expect(screen.getByRole('radio', { name: 'mystery:1b' })).toBeInTheDocument();
+    expect(optionNames()).toEqual(['mystery:1b']);
   });
 
   it('says a local model keeps what is asked on this computer', () => {
     render(<ModelChoice provider={OLLAMA} saved={null} onChange={() => {}} />);
-    expect(screen.getByText(/Runs on this computer, so what you ask never leaves it\./)).toBeInTheDocument();
+    expect(screen.getByText(/Runs on this computer, so what you ask never leaves it./)).toBeInTheDocument();
   });
 });
 
 describe('ModelChoice for a CLI', () => {
-  it('offers Claude Code\'s aliases with Default first and picked until one is saved', () => {
+  it("offers Claude Code's aliases with Default first and picked until one is saved", () => {
     render(<ModelChoice provider={CLAUDE} saved={undefined} onChange={() => {}} />);
-    const radios = screen.getAllByRole('radio');
-    expect(radios.map((r) => r.getAttribute('aria-label'))).toEqual(['Default', 'Fable', 'Opus', 'Sonnet', 'Haiku']);
-    expect(screen.getByRole('radio', { name: 'Default' })).toHaveAttribute('aria-checked', 'true');
+    expect(optionNames()).toEqual(['Default', 'Fable', 'Opus', 'Sonnet', 'Haiku']);
+    expect(picker('Claude Code model')).toHaveValue('default');
     expect(screen.getByText('Default leaves the choice to Claude Code. The pick is used whenever Claude Code answers.')).toBeInTheDocument();
   });
 
-  it('shows Antigravity\'s models by name, with the id it knows each by on hover, and reports the id', () => {
+  it("shows Antigravity's models by name, with the id it knows each by on hover, and reports the id", () => {
     const onChange = vi.fn();
     render(<ModelChoice provider={AGY} saved="gemini-3.8-flash-low" onChange={onChange} />);
-    const pill = screen.getByRole('radio', { name: 'Gemini 3.8 Flash (Low)' });
-    expect(pill).toHaveAttribute('aria-checked', 'true');
-    expect(pill).toHaveAttribute('title', 'gemini-3.8-flash-low');
-    fireEvent.click(screen.getByRole('radio', { name: 'Default' }));
+    expect(picker('Antigravity model')).toHaveValue('gemini-3.8-flash-low');
+    expect(picker('Antigravity model')).toHaveAttribute('title', 'gemini-3.8-flash-low');
+    fireEvent.change(picker('Antigravity model'), { target: { value: 'default' } });
     expect(onChange).toHaveBeenCalledWith('default');
   });
 });

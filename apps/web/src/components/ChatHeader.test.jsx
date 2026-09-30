@@ -15,7 +15,7 @@ describe('ChatHeader', () => {
   it('names the panel and the CLI that will answer', () => {
     setup();
     expect(screen.getByRole('heading', { name: 'Ask AI' })).toBeInTheDocument();
-    expect(screen.getByText('Claude Code on this computer')).toBeInTheDocument();
+    expect(screen.getByText('Claude Code on this PC')).toBeInTheDocument();
   });
 
   it('says when it is still looking for a CLI, and when there is none', () => {

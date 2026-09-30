@@ -7,7 +7,8 @@ import { useId } from 'react';
 // the current step in words, and the screen reader hears the same words
 // rather than "4 of 11". The fill covers what the filter lets through: from
 // the thumb to the right for a floor (`fill="end"`), from the left up to it
-// for a ceiling.
+// for a ceiling. At "Any" nothing is held back, and a whole track filled
+// read as maxed out, so the track stays plain until a limit is set.
 export default function StepSlider({ label, steps, value, onChange, ends, fill = 'start' }) {
   const id = useId();
   const found = steps.findIndex(([v]) => v === value);
@@ -15,13 +16,13 @@ export default function StepSlider({ label, steps, value, onChange, ends, fill =
   const last = steps.length - 1;
   const [, words] = steps[index];
   const fromEnd = fill === 'end';
-  const covered = ((fromEnd ? last - index : index) / last) * 100;
+  const covered = value === '' ? 0 : ((fromEnd ? last - index : index) / last) * 100;
 
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-baseline justify-between gap-3">
         <label htmlFor={id} className="text-xs font-semibold text-muted">{label}</label>
-        <span className="tnum truncate text-sm font-semibold text-ink">{words}</span>
+        <span className={`tnum truncate text-sm font-semibold ${value === '' ? 'text-muted' : 'text-ink'}`}>{words}</span>
       </div>
       <input
         id={id}

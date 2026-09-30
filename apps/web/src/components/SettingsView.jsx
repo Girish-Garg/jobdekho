@@ -1,94 +1,60 @@
-import { useProviderSetting } from '../lib/useProviderSetting.js';
-import { webSentence } from '../lib/providerStatus.js';
+import { useCurrentSection } from '../lib/useCurrentSection.js';
 import ThemeChoice from './ThemeChoice.jsx';
 import EffectsChoice from './EffectsChoice.jsx';
-import ProviderChoice from './ProviderChoice.jsx';
-import ModelChoice from './ModelChoice.jsx';
 import SettingsCard from './SettingsCard.jsx';
+import SettingsAiCard from './SettingsAiCard.jsx';
 import SetupCard from './SetupCard.jsx';
 import RefreshSettingsCard from './RefreshSettingsCard.jsx';
 import AdzunaCard from './AdzunaCard.jsx';
-import { CheckIcon, FolderIcon, GlobeIcon, PaletteIcon, ShieldCheckIcon, SparkleIcon } from './Icon.jsx';
+import YourDataCard from './YourDataCard.jsx';
+import ProfileIndex from './ProfileIndex.jsx';
+import { PaletteIcon } from './Icon.jsx';
 
-const SAVED = {
-  saving: <span className="text-xs text-muted">Saving...</span>,
-  saved: <span className="inline-flex items-center gap-1 text-xs font-semibold text-applied"><CheckIcon size={12} /> Saved</span>,
-  error: <span className="text-xs font-semibold text-ember">Not saved</span>,
-};
+// The page's sections, in order, for the index beside them.
+const SECTIONS = [
+  { id: 'settings-setup', label: 'Setup check' },
+  { id: 'settings-ai', label: 'AI CLI' },
+  { id: 'settings-postings', label: 'Postings' },
+  { id: 'settings-adzuna', label: 'Adzuna' },
+  { id: 'settings-appearance', label: 'Appearance' },
+  { id: 'settings-data', label: 'Your data' },
+];
+const IDS = SECTIONS.map((s) => s.id);
 
 // Every setting saves as it is picked, so there is no Save button to find.
+// Laid out like the Profile: an index of the sections in a rail that stays
+// put, the one being read marked, and the cards in one column beside it. Two
+// columns of cards of every height made a page that had to be scanned end to
+// end to find anything. The Postings page's width, so moving between the two
+// does not change where the page's edges are.
 export default function SettingsView() {
-  const { provider, models, providers, saved, pick, pickModel } = useProviderSetting();
-  // One model picker, for the AI picked; with none picked each answers with
-  // its own saved model, so there is no one list to offer.
-  const picked = providers.find((p) => p.id === provider);
+  const [current, jumpTo] = useCurrentSection(IDS);
 
   return (
     <section className="px-4 pb-12 pt-8">
-      {/* The Postings page's width, so moving between the two does not
-          change where the page's edges are. Wide, the setup check and the AI
-          lead one column, and the smaller cards stack in the other. */}
       <div className="mx-auto w-full max-w-[84rem]">
         <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink">Settings</h1>
         <p className="mt-0.5 text-sm text-muted">Saved on this computer as you pick.</p>
 
-        <div className="mt-6 grid grid-cols-1 items-start gap-5 min-[1100px]:grid-cols-2">
-          <div className="flex flex-col gap-5">
-            <SetupCard />
-            <SettingsCard
-              icon={<SparkleIcon size={18} />}
-              title="AI CLI"
-              hint="The AI command-line tool that does JobDekho's AI work, on your own subscription or your own computer. Pick which one it asks first."
-              note={<span aria-live="polite" className="shrink-0 pt-1">{SAVED[saved] ?? null}</span>}
-            >
-              <ProviderChoice providers={providers} pref={provider} onChange={pick} />
-              {picked && <ModelChoice provider={picked} saved={models[picked.id]} onChange={(id) => pickModel(picked.id, id)} />}
-              {provider === 'auto' && providers.length > 0 && (
-                <p className="mt-4 text-xs text-muted">Each CLI then answers with its own saved model, or its default.</p>
-              )}
-              {providers.length > 0 && (
-                <p className="mt-4 flex items-start gap-2 text-sm text-muted">
-                  <GlobeIcon size={14} className="mt-[3px] shrink-0 text-muted" />
-                  {webSentence(providers)}
-                </p>
-              )}
-            </SettingsCard>
-          </div>
-
-          <div className="flex flex-col gap-5">
-            <RefreshSettingsCard />
-            <AdzunaCard />
-            <SettingsCard icon={<PaletteIcon size={18} />} title="Appearance" hint="How JobDekho looks on this computer.">
-              <ThemeChoice />
-              <EffectsChoice />
-            </SettingsCard>
-
-            <SettingsCard icon={<ShieldCheckIcon size={18} />} title="Your data" hint="There is no account and nothing is hosted.">
-              <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <Fact icon={<FolderIcon size={15} />} title="Kept on this computer">
-                  Your profile, documents, chats and saved jobs are files in JobDekho&apos;s data folder.
-                </Fact>
-                <Fact icon={<SparkleIcon size={15} />} title="Sent only when you ask">
-                  A question goes to the AI you picked: Claude Code sends it to Anthropic, Antigravity to Google, and
-                  Ollama keeps it on this computer. A web search sends the question alone.
-                </Fact>
-              </ul>
-            </SettingsCard>
+        <div className="mt-6 grid grid-cols-1 items-start gap-6 min-[1100px]:grid-cols-[15rem_minmax(0,1fr)]">
+          <aside className="sticky top-4 hidden rounded-2xl border border-line bg-panel p-2 min-[1100px]:block">
+            <ProfileIndex rows={SECTIONS} current={current} onJump={jumpTo} />
+          </aside>
+          <div className="flex min-w-0 flex-col gap-5">
+            <div id="settings-setup" className="scroll-mt-4"><SetupCard /></div>
+            <div id="settings-ai" className="scroll-mt-4"><SettingsAiCard /></div>
+            <div id="settings-postings" className="scroll-mt-4"><RefreshSettingsCard /></div>
+            <div id="settings-adzuna" className="scroll-mt-4"><AdzunaCard /></div>
+            <div id="settings-appearance" className="scroll-mt-4">
+              <SettingsCard icon={<PaletteIcon size={18} />} title="Appearance" hint="How JobDekho looks on this computer.">
+                <ThemeChoice />
+                <EffectsChoice />
+              </SettingsCard>
+            </div>
+            <div id="settings-data" className="scroll-mt-4"><YourDataCard /></div>
           </div>
         </div>
       </div>
     </section>
-  );
-}
-
-function Fact({ icon, title, children }) {
-  return (
-    <li className="flex gap-3 rounded-xl border border-line bg-paper/60 p-3.5">
-      <span className="mt-0.5 shrink-0 text-muted">{icon}</span>
-      <span className="text-sm">
-        <span className="block font-semibold text-ink">{title}</span>
-        <span className="text-muted">{children}</span>
-      </span>
-    </li>
   );
 }

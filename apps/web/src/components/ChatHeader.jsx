@@ -5,7 +5,9 @@ import { CloseIcon, HistoryIcon, PinIcon, PinOffIcon, PlusIcon } from './Icon.js
 // it on their own subscription, so it is named rather than left as "AI".
 // The dot is its state: found, still looking, or nothing that can answer.
 function status(providers, answerer) {
-  if (answerer) return { text: `${answerer.label} on this computer`, dot: 'bg-applied' };
+  // "on this PC" rather than "on this computer": the panel's header is narrow,
+  // and the longer words were cut off after the CLI's name.
+  if (answerer) return { text: `${answerer.label} on this PC`, dot: 'bg-applied' };
   if (!Array.isArray(providers)) return { text: 'Looking for an AI CLI on this computer...', dot: 'bg-muted breathe' };
   return { text: 'No AI CLI found on this computer', dot: 'bg-ember' };
 }

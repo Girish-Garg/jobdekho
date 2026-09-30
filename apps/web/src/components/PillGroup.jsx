@@ -1,9 +1,9 @@
 // Pill row shared by the single-select Status filter and the multi-select Level
 // filter; the caller decides whether a pick toggles or replaces.
-// Saffron, the colour of what you act with, rather than solid ink, which
-// read as a heavier black block than anything else on the page.
+// The pick in a saffron tint, the same the active filter triggers wear: a
+// solid saffron pill per group was the loudest thing in every menu.
 const primaryTone = (value, selected) =>
-  selected ? 'border-primary bg-primary text-on-primary font-semibold' : 'border-line bg-panel text-ink/80 hover:border-primary/40 hover:text-ink';
+  selected ? 'border-primary/40 bg-primary/10 text-primary font-semibold' : 'border-line bg-panel text-ink/80 hover:border-edge hover:text-ink';
 
 export default function PillGroup({ options, selected, onPick }) {
   return (

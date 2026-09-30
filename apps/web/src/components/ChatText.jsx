@@ -9,7 +9,7 @@ function Spans({ spans }) {
     : <Fragment key={i}>{span.text}</Fragment>));
 }
 
-const LIST = 'flex flex-col gap-1 pl-5 marker:text-primary';
+const LIST = 'flex flex-col gap-1 pl-5 marker:text-muted';
 
 export default function ChatText({ text, className = '' }) {
   return (

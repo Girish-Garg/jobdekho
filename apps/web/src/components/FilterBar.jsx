@@ -57,7 +57,7 @@ export default function FilterBar({ filters, setFilters, trailing }) {
           onChange={(next) => patch('excludedSources', next)}
         />
         <div className="ml-auto flex items-center gap-2">
-          <Dropdown label="More filters" icon={SlidersIcon} count={extra} align="right" width="w-[24rem]">
+          <Dropdown label="More filters" icon={SlidersIcon} count={extra} align="right" width="w-[26rem]">
             <MoreFilters filters={filters} setFilters={setFilters} />
           </Dropdown>
           {trailing}

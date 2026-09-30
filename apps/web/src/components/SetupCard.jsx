@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, useState } from 'react';
 import { useSetup } from '../lib/useSetup.js';
 import SettingsCard from './SettingsCard.jsx';
 import { CheckIcon, WarningIcon } from './Icon.jsx';
@@ -54,8 +54,14 @@ function Summary({ checks }) {
 // "Check again" re-probes the AIs, the same refresh InstallHint's own
 // "Check again" asks for; LaTeX, the profile and the postings are read
 // fresh on every load anyway. Placed in Settings (see SettingsView.jsx).
+// With nothing to do it folds to one line, since a column of seven "Ready"
+// rows was the longest thing on the page and said one thing; anything that
+// needs doing keeps the list open.
 export default function SetupCard() {
   const { checks, checking, refresh } = useSetup();
+  const [shown, setShown] = useState(false);
+  const allSet = Boolean(checks) && !checks.some((c) => c.state === 'missing');
+  const listed = checks && (!allSet || shown);
   return (
     <SettingsCard
       icon={<CheckIcon size={18} />}
@@ -67,15 +73,20 @@ export default function SetupCard() {
       {checks === null && (
         <p role="alert" className="text-sm text-ember">Could not run the setup check. Check again once the server is back.</p>
       )}
-      {checks && <ul className="divide-y divide-line">{checks.map((c) => <Row key={c.id} check={c} />)}</ul>}
-      <button
-        type="button"
-        disabled={checking}
-        onClick={refresh}
-        className="btn btn-quiet mt-5 font-normal"
-      >
-        {checking ? 'Checking...' : 'Check again'}
-      </button>
+      {allSet && (
+        <p className="text-sm text-muted">All {checks.length} checks passed on this computer.</p>
+      )}
+      {listed && <ul className="mt-4 divide-y divide-line first:mt-0">{checks.map((c) => <Row key={c.id} check={c} />)}</ul>}
+      <div className="mt-5 flex flex-wrap gap-2">
+        <button type="button" disabled={checking} onClick={refresh} className="btn btn-quiet font-normal">
+          {checking ? 'Checking...' : 'Check again'}
+        </button>
+        {allSet && (
+          <button type="button" aria-expanded={shown} onClick={() => setShown(!shown)} className="btn btn-ghost font-normal">
+            {shown ? 'Hide details' : 'Show details'}
+          </button>
+        )}
+      </div>
     </SettingsCard>
   );
 }

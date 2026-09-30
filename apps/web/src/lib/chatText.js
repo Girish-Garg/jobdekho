@@ -59,10 +59,17 @@ function joinLine(blocks, open, raw) {
   return paragraph;
 }
 
+// A posting's id is how the chat names a job to the server, never something
+// to read; the server takes ids out of new answers (see its chat/
+// reply-ids.js), and this takes them out of answers saved before it did:
+// "id 7218f734fa01cd5a, Full Stack Developer" with its dash or colon. Only
+// an "id" then sixteen hex characters, so no other text is touched.
+const OLD_ID = /\bid\s*[:#]?\s*[0-9a-f]{16}\b\s*(?:[\u2013\u2014:-]\s*)?/gi;
+
 export function chatBlocks(text) {
   const blocks = [];
   let open = null;
-  for (const raw of String(text ?? '').replace(/\r\n?/g, '\n').split('\n')) {
+  for (const raw of String(text ?? '').replace(OLD_ID, '').replace(/\r\n?/g, '\n').split('\n')) {
     open = raw.trim() ? joinLine(blocks, open, raw.trimEnd()) : null;
   }
   return blocks.map((block) => (block.type === 'p'

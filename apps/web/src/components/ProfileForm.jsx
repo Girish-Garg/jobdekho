@@ -13,15 +13,21 @@ const HINT = 'What Best fit on Postings scores against. Skills from the groups a
 // path rather than a fallback. The save is the sticky bar the page shows
 // whenever anything is unsaved (see ProfileSaveBar.jsx), so the whole record,
 // entries included, still goes up in one write.
+//
+// The card's whole width: skills are the longest list and wrap into fewer
+// rows across it, and the titles and the places sit side by side on a wide
+// screen, where one narrow column left half the card empty.
 export default function ProfileForm({ profile, onChange }) {
   const set = (key) => (value) => onChange({ ...profile, [key]: value });
 
   return (
     <ProfileSection id={sectionId('fit')} title="Best fit" icon={TargetIcon} hint={HINT}>
-      <div className="flex max-w-3xl flex-col gap-4">
+      <div className="flex flex-col gap-4">
         <TagInput plain label="Skills" values={profile.skills} onChange={set('skills')} />
-        <TagInput plain label="Target titles" values={profile.titles} onChange={set('titles')} />
-        <TagInput plain label="Locations" values={profile.locations} onChange={set('locations')} />
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <TagInput plain label="Target titles" values={profile.titles} onChange={set('titles')} />
+          <TagInput plain label="Locations" values={profile.locations} onChange={set('locations')} />
+        </div>
         <div className="grid max-w-md grid-cols-2 gap-x-6 gap-y-3">
           <Labelled label="Years of experience">
             <input

@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { notifyError } from '../lib/toast.js';
 
-// Primary-action save button with transient confirmation, in saffron, the
-// colour the app gives the thing you act with.
-export default function SaveBar({ onSave, label: idleLabel = 'Save changes' }) {
+// A save button with transient confirmation: in saffron, the colour the app
+// gives the thing you act with, or quiet (`weight="quiet"`) where saving is
+// not the point of the surface it sits on, like the filters' default.
+export default function SaveBar({ onSave, label: idleLabel = 'Save changes', weight = 'primary' }) {
   const [state, setState] = useState('idle');
 
   async function save() {
@@ -28,7 +29,7 @@ export default function SaveBar({ onSave, label: idleLabel = 'Save changes' }) {
       <button
         onClick={save}
         disabled={state === 'saving'}
-        className="btn btn-primary px-5 py-2"
+        className={weight === 'quiet' ? 'btn btn-quiet btn-sm' : 'btn btn-primary px-5 py-2'}
       >
         {label}
       </button>

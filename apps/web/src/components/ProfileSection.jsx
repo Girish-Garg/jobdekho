@@ -32,9 +32,9 @@ export default function ProfileSection({ id, title, count, hint, action, icon: I
 }
 
 // At the far end of the heading's line: adding by hand is something every
-// section offers, so it looks the same in each. Quiet beside the saffron
-// "Add with AI" (see AskAiControl.jsx), which is the quicker way in now;
-// this one opens an empty entry to type into.
+// section offers, so it looks the same in each. The same weight as "Add
+// with AI" beside it (see AskAiControl.jsx), told apart by its saffron
+// sparkle; this one opens an empty entry to type into.
 export function AddControl({ label, onClick }) {
   return (
     <button
