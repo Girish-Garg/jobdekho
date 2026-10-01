@@ -94,7 +94,7 @@ describe('PostingsView server-side filters', () => {
   it('keeps the fit floor in the request when the sort changes to newest', async () => {
     render(<Harness filters={{ ...EMPTY, minFit: '50' }} />);
     await waitFor(() => expect(getPostings).toHaveBeenCalled());
-    fireEvent.click(screen.getByRole('button', { name: /^Sort:/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^Sort/ }));
     fireEvent.click(screen.getByRole('menuitemcheckbox', { name: /^Newest posted/ }));
     await waitFor(() =>
       expect(getPostings).toHaveBeenLastCalledWith(
@@ -271,7 +271,7 @@ describe('PostingsView rows and view mode', () => {
 describe('PostingsView best-fit ranking', () => {
   const NAMES = { company: 'Company A-Z', newest: 'Newest posted' };
   const pickSort = (value) => {
-    fireEvent.click(screen.getByRole('button', { name: /^Sort:/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^Sort/ }));
     fireEvent.click(screen.getByRole('menuitemcheckbox', { name: new RegExp(`^${NAMES[value]}`) }));
   };
 
@@ -294,7 +294,7 @@ describe('PostingsView best-fit ranking', () => {
     const onOpenProfile = vi.fn();
     render(<Harness filters={EMPTY} onOpenProfile={onOpenProfile} />);
 
-    expect(await screen.findByText(/needs a profile/i)).toBeInTheDocument();
+    expect(await screen.findByText(/needs? a profile/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Set up your profile' }));
     expect(onOpenProfile).toHaveBeenCalled();
   });
@@ -304,10 +304,10 @@ describe('PostingsView best-fit ranking', () => {
   it('drops the notice when the user leaves the best-fit order', async () => {
     getPostings.mockResolvedValue([row()]);
     render(<Harness filters={EMPTY} onOpenProfile={() => {}} />);
-    expect(await screen.findByText(/needs a profile/i)).toBeInTheDocument();
+    expect(await screen.findByText(/needs? a profile/i)).toBeInTheDocument();
 
     pickSort('newest');
-    await waitFor(() => expect(screen.queryByText(/needs a profile/i)).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByText(/needs? a profile/i)).not.toBeInTheDocument());
   });
 
   // The server ignores minFit when it has no profile to score against, so a
@@ -316,10 +316,10 @@ describe('PostingsView best-fit ranking', () => {
   it('keeps the notice under a non-match sort while a fit floor is set', async () => {
     getPostings.mockResolvedValue([row()]);
     render(<Harness filters={{ ...EMPTY, minFit: '30' }} onOpenProfile={() => {}} />);
-    expect(await screen.findByText(/needs a profile/i)).toBeInTheDocument();
+    expect(await screen.findByText(/needs? a profile/i)).toBeInTheDocument();
 
     pickSort('newest');
-    expect(await screen.findByText(/needs a profile/i)).toBeInTheDocument();
+    expect(await screen.findByText(/needs? a profile/i)).toBeInTheDocument();
     expect(screen.getByText(/fit filter/i)).toBeInTheDocument();
   });
 
@@ -327,11 +327,11 @@ describe('PostingsView best-fit ranking', () => {
     getPostings.mockResolvedValue([row({ fit: 58 })]);
     render(<Harness filters={{ ...EMPTY, minFit: '30' }} onOpenProfile={() => {}} />);
     expect(await screen.findByText('Engineer')).toBeInTheDocument();
-    expect(screen.queryByText(/needs a profile/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/needs? a profile/i)).not.toBeInTheDocument();
 
     pickSort('newest');
     expect(await screen.findByText('Engineer')).toBeInTheDocument();
-    expect(screen.queryByText(/needs a profile/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/needs? a profile/i)).not.toBeInTheDocument();
   });
 
   // rows are empty while the first page is in flight, so the banner has
@@ -343,10 +343,10 @@ describe('PostingsView best-fit ranking', () => {
     render(<Harness filters={{ ...EMPTY, minFit: '30' }} onOpenProfile={() => {}} />);
 
     expect(screen.getByTestId('feed-skeleton')).toBeInTheDocument();
-    expect(screen.queryByText(/needs a profile/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/needs? a profile/i)).not.toBeInTheDocument();
 
     await act(async () => deliver([row()]));
-    expect(await screen.findByText(/needs a profile/i)).toBeInTheDocument();
+    expect(await screen.findByText(/needs? a profile/i)).toBeInTheDocument();
   });
 
   // An empty page cannot say whether the server ranked, and the no-matches
@@ -357,7 +357,7 @@ describe('PostingsView best-fit ranking', () => {
     render(<Harness filters={{ ...EMPTY, minFit: '45' }} onOpenProfile={() => {}} />);
 
     expect(await screen.findByText(/Nothing matches/)).toBeInTheDocument();
-    expect(screen.queryByText(/needs a profile/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/needs? a profile/i)).not.toBeInTheDocument();
   });
 
   it('shows the server reasons in the overlay, not on the row', async () => {

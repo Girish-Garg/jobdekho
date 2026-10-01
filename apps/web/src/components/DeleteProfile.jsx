@@ -28,7 +28,7 @@ export default function DeleteProfile({ onDeleted }) {
       <div>
         <p className="text-sm font-semibold text-ember">Delete profile</p>
         <p className="text-sm text-muted">
-          {arming ? 'Removes the profile and the stored resume text. Best fit goes back to newest first.' : 'Removes everything on this page. There is no undo.'}
+          {arming ? 'Removes the profile and the stored resume text. Postings go back to newest first.' : 'Removes everything on this page. There is no undo.'}
         </p>
         {failed && <p className="text-sm text-ember">Could not delete.</p>}
       </div>

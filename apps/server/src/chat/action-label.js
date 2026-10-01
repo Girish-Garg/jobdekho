@@ -13,7 +13,7 @@ const fitWord = (floor) => {
   const grade = gradeFor(Number(floor))
   return grade === 'A' ? 'grade A' : `grade ${grade} or better`
 }
-const SORT_WORD = { newest: 'newest first', oldest: 'oldest first', added: 'most recently added', company: 'company name', match: 'best match' }
+const SORT_WORD = { newest: 'newest first', oldest: 'oldest first', added: 'most recently added', company: 'company name', match: 'recommended order' }
 const plural = (n, word) => `${n} ${word}${n === '1' ? '' : 's'}`
 
 // '0' is a value (fresher roles), not the absence of one, so it is spelled out.

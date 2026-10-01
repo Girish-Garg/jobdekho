@@ -53,7 +53,7 @@ export default function ProfileView() {
     <section className="mx-auto max-w-[1400px] px-6 pb-10 pt-6 sm:px-8">
       <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink">Profile</h1>
       <p className="mt-0.5 max-w-2xl text-sm text-muted">
-        Your full career record. New resumes start from it, the chat can add to it for you, and Best fit on Postings scores against the fields at the end.
+        Your full career record. New resumes start from it, the chat can add to it for you, and the recommendations on Postings score against the fields at the end.
       </p>
 
       {profile === undefined ? (

@@ -5,7 +5,7 @@ import ProfileEmptyState from './ProfileEmptyState.jsx';
 describe('ProfileEmptyState', () => {
   it('explains what the profile is for, not just that it is missing', () => {
     render(<ProfileEmptyState onStart={() => {}} />);
-    expect(screen.getByText(/Best fit on Postings ranks jobs by/i)).toBeInTheDocument();
+    expect(screen.getByText(/the recommendations on Postings rank jobs by/i)).toBeInTheDocument();
     expect(screen.getByText(/upload your resume/i)).toBeInTheDocument();
   });
 

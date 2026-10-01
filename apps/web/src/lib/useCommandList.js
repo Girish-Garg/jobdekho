@@ -30,9 +30,9 @@ export function buildCommands({ view, setView, filters, setFilters, setSort, onO
   }
 
   if (view === 'postings') {
-    // Best fit is the order under every sort, so it is not one of them; it is
-    // what clearing the sort goes back to.
-    for (const [value, label] of [...SORTS, [DEFAULT_SORT, 'Best fit only']]) {
+    // The recommended order is under every sort, so it is not one of them;
+    // it is what clearing the sort goes back to.
+    for (const [value, label] of [...SORTS, [DEFAULT_SORT, 'Recommended order']]) {
       commands.push({
         id: `sort-${value}`,
         label: `Sort: ${label}`,

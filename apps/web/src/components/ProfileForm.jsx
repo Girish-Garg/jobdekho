@@ -6,7 +6,7 @@ import Select from './Select.jsx';
 import TagInput from './TagInput.jsx';
 import { TargetIcon } from './Icon.jsx';
 
-const HINT = 'What Best fit on Postings scores against. Skills from the groups above fold in here when you save.';
+const HINT = 'What the recommendations on Postings score against. Skills from the groups above fold in here when you save.';
 
 // Every field the extractor fills is editable here: extraction gets things
 // wrong, and the profile drives the ranking, so hand edits are the primary

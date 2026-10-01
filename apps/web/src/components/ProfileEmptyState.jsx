@@ -13,7 +13,7 @@ export default function ProfileEmptyState({ onStart }) {
       <p className="text-sm leading-relaxed text-muted">
         Your profile is your full career record: experience, projects, education, skills, certifications and
         achievements, each holding as many entries as you need. The skills, target titles, experience and degree
-        in it are what Best fit on Postings ranks jobs by, and new resumes on the Resume page start from it. The
+        in it are what the recommendations on Postings rank jobs by, and new resumes on the Resume page start from it. The
         quickest start is to upload your resume and let the AI on this computer fill it in, or to tell the chat
         about a job or a project and apply what it offers.
       </p>

@@ -5,7 +5,7 @@ import RecommendedNotice from './RecommendedNotice.jsx';
 describe('RecommendedNotice', () => {
   it('says the list is really newest-first, not a broken ranking', () => {
     render(<RecommendedNotice onOpenProfile={() => {}} />);
-    expect(screen.getByText(/needs a profile/i)).toBeInTheDocument();
+    expect(screen.getByText(/needs? a profile/i)).toBeInTheDocument();
     expect(screen.getByText(/newest postings/i)).toBeInTheDocument();
   });
 
@@ -14,7 +14,7 @@ describe('RecommendedNotice', () => {
   // claim, which would be wrong under any other sort.
   it('names the dead fit filter when a floor is set', () => {
     render(<RecommendedNotice fitFiltered onOpenProfile={() => {}} />);
-    expect(screen.getByText(/needs a profile/i)).toBeInTheDocument();
+    expect(screen.getByText(/needs? a profile/i)).toBeInTheDocument();
     expect(screen.getByText(/fit filter/i)).toBeInTheDocument();
     expect(screen.queryByText(/newest postings/i)).not.toBeInTheDocument();
   });

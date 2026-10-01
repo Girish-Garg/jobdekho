@@ -4,10 +4,11 @@ import { PANEL, Caret } from './Dropdown.jsx';
 import { CheckIcon, SortIcon } from './Icon.jsx';
 
 // A menu in the filters' own style rather than the browser's select, which
-// drew a system list under a control that matched nothing around it. Best fit
-// is not an item: it always comes first (see lib/sorts.js), so the menu says
-// that once and offers the orders that arrange each grade. Picking the order
-// already picked puts it back to fit alone.
+// drew a system list under a control that matched nothing around it. The
+// feed is the recommendations, best first, whatever is picked here (see
+// lib/sorts.js), so that order goes unnamed: the trigger reads Sort until an
+// order is picked, then that order, and the menu only offers how each grade
+// is arranged. Picking the order already picked puts it back to none.
 export default function SortSelect({ sort, setSort }) {
   const { open, setOpen, ref } = usePopover();
   const label = sortLabel(sort);
@@ -24,19 +25,18 @@ export default function SortSelect({ sort, setSort }) {
         onClick={() => setOpen(!open)}
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label={label ? `Sort: Best fit, then ${label}` : 'Sort: Best fit'}
+        aria-label={label ? `Sort: ${label}` : 'Sort'}
         className={`dither flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm ${
           open ? 'border-edge bg-select text-ink' : 'border-line bg-panel text-ink hover:border-edge'
         }`}
       >
         <SortIcon size={14} className="text-muted" />
-        <span className={label ? 'text-muted' : 'text-ink'}>{label ? 'Best fit, then' : 'Best fit'}</span>
-        {label && <span className="font-semibold">{label}</span>}
+        <span className={label ? 'font-semibold' : undefined}>{label ?? 'Sort'}</span>
         <Caret open={open} />
       </button>
       {open && (
         <div role="menu" aria-label="Sort" className={`${PANEL} right-0 w-64 p-1.5`}>
-          <p className="px-3 pb-1.5 pt-1 text-xs text-muted">Best fit always leads. Within each grade:</p>
+          <p className="px-3 pb-1.5 pt-1 text-xs text-muted">Inside each grade:</p>
           {SORTS.map(([value, name, hint]) => {
             const on = value === sort;
             return (

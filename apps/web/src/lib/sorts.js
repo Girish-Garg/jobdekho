@@ -1,7 +1,8 @@
-// The orders a person can pick. Best fit is not one of them: it is the order
-// under all of them. The feed always runs grade band first, A before B before
-// C, and one of these only arranges the jobs inside each band (see the
-// store's posting-order.js). 'match' is what no pick at all sends: fit alone.
+// The orders a person can pick. The recommended order is not one of them: it
+// is the order under all of them. The feed always runs grade band first, A
+// before B before C, and one of these only arranges the jobs inside each band
+// (see the store's posting-order.js). 'match' is what no pick at all sends:
+// the recommendations alone.
 export const DEFAULT_SORT = 'match';
 
 export const SORTS = [
