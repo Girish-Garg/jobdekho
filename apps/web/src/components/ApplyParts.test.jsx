@@ -2,8 +2,8 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import ApplyTextCatcher from './ApplyTextCatcher.jsx';
 import ApplyPicker from './ApplyPicker.jsx';
-import ApplyChecklist from './ApplyChecklist.jsx';
-import ApplyBanner from './ApplyBanner.jsx';
+import ApplyTimeline from './ApplyTimeline.jsx';
+import ApplyControlStrip from './ApplyControlStrip.jsx';
 import { ApplyChooser, ApplyPageDialog } from './ApplyPrompts.jsx';
 
 describe('ApplyTextCatcher', () => {
@@ -70,47 +70,78 @@ describe('ApplyPicker', () => {
   });
 });
 
-describe('ApplyChecklist', () => {
-  const rows = [
-    { fid: 'f1', label: 'First Name', status: 'filled', preview: 'Demo', required: true, rect: {} },
-    { fid: 'f2', label: 'Gender', status: 'you', note: 'About you personally: yours to answer or skip.', preview: '', rect: {} },
-    { fid: 'f3', label: 'Phone', status: 'failed', preview: '', rect: {} },
-  ];
+describe('ApplyTimeline', () => {
+  const view = {
+    url: 'https://jobs.lever.co/acme/1/apply', title: 'Acme - Engineer',
+    rows: [
+      { fid: 'f1', label: 'First Name', status: 'filled', preview: 'Demo', required: true, rect: {} },
+      { fid: 'f2', label: 'Why Acme?', status: 'you', note: 'Needs your answer.', askable: true, rect: {} },
+      { fid: 'f3', label: 'Phone', status: 'failed', preview: '', rect: {} },
+      { fid: 'f4', label: 'Password', status: 'you', note: 'Passwords are yours to type.', askable: false, rect: {} },
+    ],
+  };
 
-  it('says what was filled and what is left, in words as well as colour', () => {
-    render(<ApplyChecklist rows={rows} />);
-    expect(screen.getByText('1 filled')).toBeInTheDocument();
-    expect(screen.getByText('2 left for you')).toBeInTheDocument();
-    expect(screen.getByText('Needs you')).toBeInTheDocument();
-    expect(screen.getByText('Try it yourself')).toBeInTheDocument();
-    expect(screen.getByText('Demo')).toBeInTheDocument();
+  it('says what was filled, what did not take, and what needs the person', () => {
+    render(<ApplyTimeline view={view} onHover={() => {}} onPick={() => {}} />);
+    expect(screen.getByText(/Opened/)).toHaveTextContent('Opened jobs.lever.co');
+    expect(screen.getByText('Filled 1 from your profile')).toBeInTheDocument();
+    expect(screen.getByText('One did not take: try it yourself')).toBeInTheDocument();
+    expect(screen.getByText('2 need you')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Why Acme\? I can draft/ })).not.toHaveAttribute('aria-disabled');
   });
 
-  it('picks a row\'s outline out on hover', () => {
+  // A password is the person's alone: said, never offered to the AI.
+  it('starts a reply for a question the AI can help with, and only picks out the rest', () => {
+    const onPick = vi.fn();
     const onHover = vi.fn();
-    render(<ApplyChecklist rows={rows} onHover={onHover} />);
-    fireEvent.mouseEnter(screen.getByText('Gender').closest('li'));
-    expect(onHover).toHaveBeenCalledWith('f2');
+    render(<ApplyTimeline view={view} onHover={onHover} onPick={onPick} />);
+    fireEvent.click(screen.getByRole('button', { name: /Why Acme\?/ }));
+    expect(onPick).toHaveBeenCalledWith(expect.objectContaining({ fid: 'f2' }));
+    const password = screen.getByRole('button', { name: /Password yours to do/ });
+    expect(password).toHaveAttribute('aria-disabled', 'true');
+    fireEvent.click(password);
+    expect(onPick).toHaveBeenCalledTimes(1);
+    fireEvent.mouseEnter(password);
+    expect(onHover).toHaveBeenCalledWith('f4');
   });
 });
 
-describe('ApplyBanner', () => {
-  it('asks for a press after a wall, and never offers to submit', () => {
-    const onFill = vi.fn();
-    render(<ApplyBanner view={{ state: 'yours', reason: 'sign-in', message: 'This site wants you to sign in.' }} onFill={onFill} />);
+describe('ApplyControlStrip', () => {
+  const strip = (view, onAction = vi.fn()) => {
+    render(<ApplyControlStrip view={{ url: 'https://internshala.com/job/1', rows: [], ...view }} onAction={onAction} />);
+    return onAction;
+  };
+
+  it('offers the normal window and Continue filling at a sign-in, and never a submit', () => {
+    const onAction = strip({ state: 'yours', reason: 'sign-in', message: 'This site wants you to sign in.' });
+    expect(screen.getByRole('status')).toHaveTextContent('internshala.com wants you to sign in');
     fireEvent.click(screen.getByRole('button', { name: 'Continue filling' }));
-    expect(onFill).toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: /Sign in in a normal window/ }));
+    expect(onAction.mock.calls.map(([id]) => id)).toEqual(['fill', 'window']);
     expect(screen.queryByRole('button', { name: /submit/i })).not.toBeInTheDocument();
   });
 
+  it('sends Google\'s refusal to the normal window', () => {
+    const onAction = strip({ state: 'yours', reason: 'google-blocked', message: 'Google does not sign anyone in...' });
+    fireEvent.click(screen.getByRole('button', { name: /Sign in in a normal window/ }));
+    expect(onAction).toHaveBeenCalledWith('window');
+  });
+
+  it('shows how far the fill has got, with Take control', () => {
+    const rows = [{ status: 'filled' }, { status: 'you' }, { status: 'kept' }, { status: 'skipped' }];
+    const onAction = strip({ state: 'filling', reason: null, message: '', rows });
+    expect(screen.getByRole('status')).toHaveTextContent('JobDekho is filling · 2 of 3');
+    fireEvent.click(screen.getByRole('button', { name: 'Take control' }));
+    expect(onAction).toHaveBeenCalledWith('takeover');
+  });
+
   it('ends on "Review and submit it yourself", and offers Mark as applied once the site confirms', () => {
-    const onApplied = vi.fn();
-    const { rerender } = render(<ApplyBanner view={{ state: 'review', reason: 'review', message: 'JobDekho has not pressed Submit and never will.' }} />);
-    expect(screen.getByRole('status')).toHaveTextContent('Review and submit it yourself. JobDekho has not pressed Submit and never will.');
-    rerender(<ApplyBanner view={{ state: 'review', reason: 'submitted', message: 'If it went through, mark this job as applied.' }} onApplied={onApplied} />);
-    expect(screen.getByRole('status')).toHaveTextContent('Looks submitted. If it went through, mark this job as applied.');
+    strip({ state: 'review', reason: 'review', message: 'JobDekho has not pressed Submit and never will.' });
+    expect(screen.getByRole('status')).toHaveTextContent('Review and submit it yourselfJobDekho has not pressed Submit and never will.');
+    const onAction = vi.fn();
+    render(<ApplyControlStrip view={{ url: '', rows: [], state: 'review', reason: 'submitted', message: 'If it went through, mark this job as applied.' }} onAction={onAction} />);
     fireEvent.click(screen.getByRole('button', { name: 'Mark as applied' }));
-    expect(onApplied).toHaveBeenCalled();
+    expect(onAction).toHaveBeenCalledWith('applied');
   });
 });
 

@@ -1,3 +1,5 @@
+import { elapsedText } from '../lib/aiSteps.js';
+import { useNow } from '../lib/useNow.js';
 import ChatBubble from './ChatBubble.jsx';
 import ChatText from './ChatText.jsx';
 import { CheckIcon, CloseIcon } from './Icon.jsx';
@@ -27,6 +29,22 @@ export default function ApplyChatMessage({ message }) {
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+// A message being answered: thinking, then writing, with the words as they
+// arrive and a clock, the way the main chat shows its own (ChatPending.jsx).
+export function ApplyPending({ pending }) {
+  const now = useNow(true);
+  return (
+    <div aria-busy="true" className="flex flex-col gap-2">
+      <p className="flex items-center gap-2 text-xs text-muted">
+        <span aria-hidden="true" className="breathe h-1.5 w-1.5 rounded-full bg-primary" />
+        {pending.text ? 'Writing' : 'Thinking'}
+        <span className="tnum">{elapsedText(now - pending.startedAt)}</span>
+      </p>
+      {pending.text && <ChatText text={pending.text} className="writing" />}
     </div>
   );
 }

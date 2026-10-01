@@ -4,6 +4,7 @@ import { viewOf, pushView } from '../apply/session-view.js'
 import { moveTo } from '../apply/session-state.js'
 import { fillPage } from '../apply/session-fill.js'
 import { removeProfileDir } from '../apply/profile-dir.js'
+import { signInWindowOpen, closeSignInWindow } from '../apply/sign-in-window.js'
 
 const NO_SESSION = 'That application is not open any more.'
 
@@ -30,6 +31,9 @@ export function sessionRoutes(app, registry, deps) {
     const posting = await app.dashboard.getPosting(userId, String(request.body?.postingId ?? ''))
     if (!posting) return reply.code(404).send({ error: 'That posting is not there any more.' })
     if (!offersApply(posting)) return reply.code(400).send({ error: 'This posting has no web address for Apply assist to open.' })
+    // The normal window on the same profile closes first, the way its own
+    // close button would (see apply/sign-in-window.js).
+    if (signInWindowOpen()) await closeSignInWindow()
     try {
       const opened = await registry.open({ posting, userId, profile: await app.dashboard.getProfile(userId) })
       if (opened.conflict) {

@@ -11,7 +11,8 @@ const BY_STATE = {
 }
 
 const BY_REASON = {
-  'sign-in': 'This site wants you to sign in. JobDekho never types passwords: sign in in the window, then press Continue filling.',
+  'sign-in': 'This site wants you to sign in. JobDekho never types passwords: sign in in the window, then press Continue filling. To sign in with Google, use a normal window.',
+  'google-blocked': 'Google does not sign anyone in from a browser that software drives. Open a normal window, sign in to the site there (Google works), and close it: Apply assist carries on signed in.',
   account: 'This site wants a new account. Making it is yours to do: JobDekho never creates accounts or picks passwords. Once you are in, press Continue filling.',
   code: 'The site sent you a code. Enter it in the window yourself, then press Continue filling.',
   'human-check': 'The site is checking that you are human. JobDekho does not answer these: work through it in the window, or open the posting in your own browser.',

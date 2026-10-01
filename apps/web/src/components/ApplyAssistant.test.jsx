@@ -1,26 +1,36 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import { renderHook } from '@testing-library/react';
-import ApplyChat from './ApplyChat.jsx';
+import ApplyAssistant from './ApplyAssistant.jsx';
 import { useApplyChat } from '../lib/useApplyChat.js';
 import * as api from '../api/apply.js';
 
-vi.mock('../api/apply.js', () => ({ askApply: vi.fn(), stopApplyAsk: vi.fn(async () => ({ stopped: true })) }));
+vi.mock('../api/apply.js', () => ({
+  askApply: vi.fn(), stopApplyAsk: vi.fn(async () => ({ stopped: true })),
+  getApplyCopy: vi.fn(async () => ({ rows: [], coverLetter: '', hasResume: false })), APPLY_RESUME_URL: '/r', applyFileUrl: () => '/f',
+}));
 
-const view = (over = {}) => ({ state: 'review', rows: [], ...over });
+const view = (over = {}) => ({ state: 'review', rows: [], url: 'https://jobs.lever.co/acme/1', title: 'Acme', ...over });
 const chat = (over = {}) => ({ messages: [], pending: null, ask: vi.fn(), stop: vi.fn(), ...over });
 
 beforeEach(() => vi.clearAllMocks());
 
-describe('ApplyChat', () => {
-  // A question it cannot answer alone is put to the person, not guessed.
-  it('says first which questions on the page need the person, and offers to draft from the resume', () => {
+const assistant = (props) => render(<ApplyAssistant view={view()} chat={chat()} onHover={() => {}} onTakeOver={() => {}} copy={{ open: false, close: () => {}, postingId: 'p1' }} {...props} />);
+
+describe('ApplyAssistant', () => {
+  it('counts the page, and drafts from the resume in one press', () => {
     const c = chat();
-    render(<ApplyChat view={view({ rows: [{ label: 'Notice period', status: 'you' }, { label: 'Email', status: 'filled' }, { label: 'Why Acme?', status: 'you' }] })} chat={c} />);
-    expect(screen.getByText(/2 questions here need you/)).toBeInTheDocument();
-    expect(screen.getByText(/Notice period, Why Acme\?/)).toBeInTheDocument();
+    assistant({ view: view({ rows: [{ fid: 'f1', label: 'Notice period', status: 'you', askable: true }, { fid: 'f2', label: 'Email', status: 'filled' }] }), chat: c });
+    expect(screen.getByRole('complementary', { name: 'Assistant' })).toHaveTextContent('1 answered · 1 need you');
     fireEvent.click(screen.getByRole('button', { name: 'Draft from my resume' }));
     expect(c.ask).toHaveBeenCalledWith(expect.stringMatching(/^Draft answers/));
+  });
+
+  // A question that needs the person starts their reply in the box.
+  it('starts a reply for a question it can help with', () => {
+    assistant({ view: view({ rows: [{ fid: 'f1', label: 'Notice period', status: 'you', askable: true, note: 'JobDekho does not know this one.' }] }) });
+    fireEvent.click(screen.getByRole('button', { name: /Notice period tell me/ }));
+    expect(screen.getByPlaceholderText('Tell it what to put...')).toHaveValue('For "Notice period": ');
   });
 
   it('shows what the AI set under its answer, a refusal plainly', () => {
@@ -28,23 +38,23 @@ describe('ApplyChat', () => {
       { role: 'you', text: 'Put 30 days, and my Aadhaar' },
       { role: 'ai', text: 'Set the notice period. Your Aadhaar is yours to type.', filled: [{ label: 'Notice period', result: 'filled' }, { label: 'Gender', result: 'refused' }] },
     ];
-    render(<ApplyChat view={view()} chat={chat({ messages })} />);
+    assistant({ chat: chat({ messages }) });
     expect(screen.getByText('Put 30 days, and my Aadhaar')).toBeInTheDocument();
     expect(screen.getByRole('list', { name: 'What it set' })).toHaveTextContent('Notice period: set');
     expect(screen.getByRole('list', { name: 'What it set' })).toHaveTextContent('Gender: yours to answer');
   });
 
-  // The wheel stays the person's: Stop while it thinks, Take over while it fills.
+  // The wheel stays the person's: Stop while it thinks, Take control while it fills.
   it('stops a message being answered, and hands the wheel back while JobDekho fills', () => {
     const c = chat({ pending: { text: 'Set the not', provider: 'claude', startedAt: Date.now() } });
-    const { unmount } = render(<ApplyChat view={view()} chat={c} />);
+    const { unmount } = assistant({ chat: c });
     expect(screen.getByText('Set the not')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Stop' }));
     expect(c.stop).toHaveBeenCalled();
     unmount();
     const onTakeOver = vi.fn();
-    render(<ApplyChat view={view({ state: 'filling' })} chat={chat()} onTakeOver={onTakeOver} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Take over' }));
+    assistant({ view: view({ state: 'filling' }), onTakeOver });
+    fireEvent.click(screen.getByRole('button', { name: 'Take control' }));
     expect(onTakeOver).toHaveBeenCalled();
   });
 });

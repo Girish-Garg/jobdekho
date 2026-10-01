@@ -28,3 +28,11 @@ export function takeDraft(draft) {
   taken = draft.id;
   return true;
 }
+
+// A draft for one box alone, with no broadcast: Apply assist's chat starts its
+// own box with 'For "Notice period": ' this way. Numbered from the same count,
+// so takeDraft takes it once, like any other.
+export function localDraft(text) {
+  nextId += 1;
+  return { id: nextId, text: String(text ?? '') };
+}

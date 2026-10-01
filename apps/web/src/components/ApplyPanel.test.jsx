@@ -82,18 +82,25 @@ describe('ApplyPanel', () => {
     return connectApply.mock.calls[0][0];
   }
 
-  it('opens the session, joins its socket with the token, and shows the page and its checklist', async () => {
+  it('opens the session, joins its socket with the token, and shows the page in a browser frame beside the assistant', async () => {
     const link = await openPanel();
     expect(api.openApply).toHaveBeenCalledWith('p1');
     expect(link).toMatchObject({ url: 'ws://test/s1', token: 'tok' });
-    expect(screen.getByText('jobs.lever.co')).toBeInTheDocument();
-    expect(screen.getByText(/Your turn/)).toBeInTheDocument();
-    // The AI to ask comes first; the checklist is a tab away.
-    expect(screen.getByRole('region', { name: 'Ask AI about this form' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('tab', { name: 'On this page' }));
-    expect(screen.getByText('Full name')).toBeInTheDocument();
+    expect(screen.getByTitle(VIEW.url)).toHaveTextContent('jobs.lever.co');
+    expect(screen.getByRole('status')).toHaveTextContent(/Your turn/);
+    // What happened on the page, beside it: here, the name it filled.
+    expect(screen.getByRole('complementary', { name: 'Assistant' })).toHaveTextContent('Filled 1 from your profile');
     fireEvent.click(screen.getByRole('button', { name: 'Fill this page' }));
     expect(api.fillApply).toHaveBeenCalledWith('s1');
+  });
+
+  // Back, forward and reload are the person's presses, sent like any other.
+  it('sends back, forward and reload from the address bar', async () => {
+    await openPanel();
+    const { send } = connectApply.mock.results[0].value;
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Reload' }));
+    expect(send.mock.calls.map(([msg]) => msg)).toEqual([{ t: 'nav', go: 'back' }, { t: 'nav', go: 'reload' }]);
   });
 
   it('follows the view the socket sends, up to the final review', async () => {
@@ -113,7 +120,7 @@ describe('ApplyPanel', () => {
 
   it('keeps the details to copy one press away, and closes the browser on Close', async () => {
     await openPanel();
-    fireEvent.click(screen.getByRole('tab', { name: 'Copy your details' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Copy your details' }));
     await waitFor(() => expect(screen.getByText('demo@example.com')).toBeInTheDocument());
     expect(screen.getByText('Dear Hiring Team,')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Demo Candidate Resume.pdf' })).toHaveAttribute('href', '/f/s1/resume');
@@ -131,7 +138,7 @@ describe('ApplyPanel', () => {
     render(<StrictMode><ApplyAssistButton posting={POSTING} /></StrictMode>);
     await waitFor(() => expect(screen.getByRole('button', { name: 'Apply assist' })).toBeEnabled());
     fireEvent.click(screen.getByRole('button', { name: 'Apply assist' }));
-    await waitFor(() => expect(screen.getByRole('region', { name: 'Ask AI about this form' })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Fill this page' })).toBeInTheDocument());
     expect(api.openApply).toHaveBeenCalledTimes(2);
     expect(connectApply).toHaveBeenCalledTimes(1);
     expect(connectApply.mock.calls[0][0]).toMatchObject({ url: 'ws://test/s1', token: 'tok' });

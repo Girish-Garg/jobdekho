@@ -5,6 +5,7 @@ import { sessionRoutes } from './apply-sessions.js'
 import { socketRoute } from './apply-socket.js'
 import { copyRoutes } from './apply-copy.js'
 import { askRoutes } from './apply-ask.js'
+import { signInRoutes } from './apply-sign-in.js'
 
 // Apply assist: a posting's application opened in the person's own Chrome or
 // Edge, streamed into JobDekho, filled from their profile and handed back to
@@ -21,6 +22,7 @@ export async function applyRoutes(app) {
   socketRoute(app, registry)
   copyRoutes(app, registry)
   askRoutes(app, registry)
+  signInRoutes(app, registry, deps)
   // A server shutting down takes its Apply browser with it.
   app.addHook('onClose', async () => registry.closeAll())
 }

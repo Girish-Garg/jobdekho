@@ -18,6 +18,7 @@ export async function onSocketMessage(s, msg) {
     pushView(s)
   }
   if (s.state !== 'yours' && s.state !== 'review') return
+  if (msg.t === 'nav') return navigate(s, msg.go)
   if (msg.t === 'down' && msg.button === 'left' && await openPicker(s, msg)) return
   if (msg.t === 'up' && s.swallowUp) {
     s.swallowUp = false
@@ -25,6 +26,20 @@ export async function onSocketMessage(s, msg) {
   }
   await relay({ cdp: s.active.cdp, world: s.world, mode: s.mode }, msg)
   if (msg.t === 'up' || msg.t === 'key' || msg.t === 'text') scheduleScan(s)
+}
+
+// Back, forward and reload from the panel's address bar: presses of the
+// person's like any other, so they take the wheel first (above). The new page
+// is read the way any navigation is (see session-scan.js).
+const NAV = {
+  back: (page) => page.goBack({ timeout: 15000 }),
+  forward: (page) => page.goForward({ timeout: 15000 }),
+  reload: (page) => page.reload({ timeout: 15000 }),
+}
+
+async function navigate(s, go) {
+  const act = NAV[go]
+  if (act && s.active?.page) await act(s.active.page).catch(() => null)
 }
 
 // A press on a native select, date or list control: its popup would never

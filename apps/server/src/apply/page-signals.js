@@ -16,7 +16,21 @@ const CLOSED_WORDS = /\b(no longer (accepting applications|available|open)|appli
 const DONE_WORDS = /\b(thank you for (applying|your application)|application (has been )?(submitted|received)|we('ve| have) received your application)\b/i
 const REGISTER = /\b(create (an )?account|register|sign ?up|confirm (your )?password)\b/i
 
+// Google will not sign anyone in from a browser software drives, and says so
+// on its own page ("This browser or app may not be secure"). The way through
+// is a normal window on the same profile (see sign-in-window.js).
+const GOOGLE_REFUSAL = /this browser or app may not be secure|couldn.t sign you in/i
+
+function googleRefused(page) {
+  try {
+    return new URL(page.url).hostname === 'accounts.google.com' && GOOGLE_REFUSAL.test(page.text)
+  } catch {
+    return false
+  }
+}
+
 function wallOf(page, verdicts) {
+  if (googleRefused(page)) return 'google-blocked'
   const shown = (i) => page.fields[i].visible
   const kinds = verdicts.map((v, i) => (shown(i) && v.kind === 'personal' ? v.category : null))
   const challenge = page.frames.some((f) => CHALLENGE_FRAMES.test(f.src) && (f.w > 80 || /captcha-delivery/i.test(f.src)))

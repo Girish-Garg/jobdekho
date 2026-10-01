@@ -58,6 +58,21 @@ export function stopApplyAsk(id) {
   return post(`${session(id)}/ask/stop`);
 }
 
+// The normal window to sign in from (see the server's apply/sign-in-window.js):
+// opening it ends the application's browser and answers { open, url }; the
+// state says whether it is still open; closing asks it to close.
+export function openSignInWindow(id) {
+  return post(`${session(id)}/sign-in-window`);
+}
+
+export function signInWindowState() {
+  return req('/api/apply/sign-in-window');
+}
+
+export function closeSignInWindow() {
+  return req('/api/apply/sign-in-window', { method: 'DELETE' });
+}
+
 // Signs Apply assist's browser out of every site it kept a sign-in for. 409
 // while an application is open in it.
 export function clearApplySignIns() {
