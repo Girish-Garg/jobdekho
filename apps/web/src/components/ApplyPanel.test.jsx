@@ -22,6 +22,8 @@ vi.mock('../api/apply.js', () => ({
   applyFileUrl: (id, kind) => `/f/${id}/${kind}`,
   applySocketUrl: (id) => `ws://test/${id}`,
 }));
+// Switched off in the app (see lib/features.js); on here, where it is tested.
+vi.mock('../lib/features.js', () => ({ APPLY_ASSIST: true }));
 vi.mock('../lib/applySocket.js', () => ({ connectApply: vi.fn(() => ({ send: vi.fn(), close: vi.fn() })) }));
 
 const POSTING = { id: 'p1', source: 'lever:cred', title: 'SRE', company: 'CRED', url: 'https://jobs.lever.co/cred/abc', status: null };

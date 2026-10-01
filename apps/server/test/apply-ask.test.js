@@ -115,7 +115,7 @@ describe('the ask route', () => {
   })
 
   async function makeApp(session) {
-    const app = buildApp({ config: { sessionSecret: 'test-secret', devUserId: 'u1' }, dashboardStore: { getResumeText: vi.fn(async () => null) } })
+    const app = buildApp({ config: { sessionSecret: 'test-secret', devUserId: 'u1', applyAssist: true }, dashboardStore: { getResumeText: vi.fn(async () => null) } })
     app.decorate('applyDeps', { findBrowser: () => null, windowMode: () => 'offscreen' })
     app.decorate('applyRegistry', { closeAll: async () => {}, get: (id) => (id === 's1' ? session : null) })
     await app.ready()

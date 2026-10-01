@@ -64,7 +64,7 @@ describe('GET /api/setup', () => {
     const { app, dashboard, latexLocate } = await makeApp({ runs: [{ id: 'r', startedAt: new Date().toISOString() }] })
     const res = await app.inject({ method: 'GET', url: '/api/setup' })
     expect(res.statusCode).toBe(200)
-    expect(stateOf(res)).toEqual({ ai: 'ok', latex: 'ok', profile: 'ok', postings: 'ok', web: 'ok', ollama: 'ok', apply: 'ok' })
+    expect(stateOf(res)).toEqual({ ai: 'ok', latex: 'ok', profile: 'ok', postings: 'ok', web: 'ok', ollama: 'ok' })
     const byId = Object.fromEntries(res.json().checks.map((c) => [c.id, c]))
     expect(byId.ai.detail).toMatch(/^Claude Code and Ollama run here/)
     expect(byId.web.detail).toMatch(/^Claude Code and Ollama can search the web/)
@@ -76,7 +76,7 @@ describe('GET /api/setup', () => {
   it('reports what is missing on a fresh machine, with the optional ones never missing', async () => {
     const { app } = await makeApp({ cli: nothingInstalled(), latexPath: null, profile: null, sources: [], browser: null })
     const res = await app.inject({ method: 'GET', url: '/api/setup' })
-    expect(stateOf(res)).toEqual({ ai: 'missing', latex: 'missing', profile: 'missing', postings: 'missing', web: 'optional', ollama: 'optional', apply: 'optional' })
+    expect(stateOf(res)).toEqual({ ai: 'missing', latex: 'missing', profile: 'missing', postings: 'missing', web: 'optional', ollama: 'optional' })
     for (const check of res.json().checks) {
       expect(Object.keys(check).sort()).toEqual(['detail', 'fix', 'id', 'label', 'state'])
       expect(typeof check.fix).toBe('string')

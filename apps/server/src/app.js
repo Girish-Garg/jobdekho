@@ -44,6 +44,8 @@ export function buildApp({ config, dashboardStore, distDir = DEFAULT_DIST, logge
   app.register(jwt, { secret: config.sessionSecret })
   app.decorate('requireAuth', requireAuth)
   app.decorate('devUser', devUser(config))
+  // Off unless asked for (see config.js): no Apply assist route exists then.
+  app.decorate('applyAssist', Boolean(config.applyAssist))
   if (dashboardStore) app.decorate('dashboard', dashboardStore)
   app.register(authRoutes)
   app.register(apiRoutes)

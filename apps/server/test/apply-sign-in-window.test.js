@@ -62,7 +62,7 @@ describe('the sign-in window routes', () => {
     const close = vi.fn(async () => true)
     const child = fakeChild()
     const launchPlain = vi.fn(() => child)
-    const app = buildApp({ config: { sessionSecret: 'test-secret', devUserId: 'u1' }, dashboardStore: {} })
+    const app = buildApp({ config: { sessionSecret: 'test-secret', devUserId: 'u1', applyAssist: true }, dashboardStore: {} })
     app.decorate('applyDeps', { findBrowser: () => ({ name: 'Google Chrome', path: 'chrome.exe' }), windowMode: () => 'offscreen', keptProfile: () => 'C:/kept', launchPlain })
     app.decorate('applyRegistry', { closeAll: async () => {}, get: (id) => (id === 's1' ? session : null), close })
     await app.ready()

@@ -70,5 +70,5 @@ export async function apiRoutes(app) {
   await app.register(scrapeRoutes)
   await app.register(adzunaRoutes)
   await app.register(logoRoutes)
-  await app.register(applyRoutes)
+  if (app.applyAssist) await app.register(applyRoutes)
 }

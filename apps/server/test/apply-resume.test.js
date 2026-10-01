@@ -4,7 +4,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { buildApp } from '@jobdekho/server/app.js'
 
-const config = { sessionSecret: 'test-secret', devUserId: 'u1' }
+// Apply assist is off unless asked for (see config.js); these tests ask.
+const config = { sessionSecret: 'test-secret', devUserId: 'u1', applyAssist: true }
 const ON_BOARD = { id: 'b1', source: 'instahyre', title: 'SDE - 2 (Full Stack)', company: 'Writesonic', url: 'https://www.instahyre.com/job-1' }
 
 const apps = []

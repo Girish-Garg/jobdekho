@@ -17,5 +17,12 @@ export function loadConfig(env = process.env) {
     // clone started without a .env otherwise answered every request with 401.
     // Forced to null in production, so a deployed box never runs as it.
     devUserId: production ? null : env.DEV_AUTH_USER_ID || 'local',
+    // Apply assist, the sandboxed browser that fills applications, is
+    // switched off (2026-10-01): a browser software drives is refused by
+    // Google's sign-in and is plain for sites to detect, and the owner found
+    // it unreliable. The code and its tests stay for when it is taken up
+    // again; JOBDEKHO_APPLY_ASSIST=1 here and VITE_APPLY_ASSIST=1 for the
+    // web app (apps/web/src/lib/features.js) bring it back.
+    applyAssist: env.JOBDEKHO_APPLY_ASSIST === '1',
   }
 }

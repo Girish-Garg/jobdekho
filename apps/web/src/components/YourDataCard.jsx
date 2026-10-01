@@ -1,5 +1,6 @@
 import SettingsCard from './SettingsCard.jsx';
 import ApplySignIns from './ApplySignIns.jsx';
+import { APPLY_ASSIST } from '../lib/features.js';
 import { FolderIcon, ShieldCheckIcon, SparkleIcon } from './Icon.jsx';
 
 // Where a person's data lives and what leaves the computer, said plainly,
@@ -15,7 +16,7 @@ export default function YourDataCard() {
           A question goes to the AI you picked: Claude Code sends it to Anthropic, Antigravity to Google, and
           Ollama keeps it on this computer. A web search sends the question alone.
         </Fact>
-        <ApplySignIns />
+        {APPLY_ASSIST && <ApplySignIns />}
       </ul>
     </SettingsCard>
   );

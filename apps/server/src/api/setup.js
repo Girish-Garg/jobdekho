@@ -27,6 +27,6 @@ export async function setupRoutes(app) {
       app.dashboard.getProfile(request.user.sub),
       app.dashboard.listSources(),
     ])
-    return { checks: setupChecks({ rows, latexPath: locate(), profile, sources, runs: store().runs.all(), browser: browser() }) }
+    return { checks: setupChecks({ rows, latexPath: locate(), profile, sources, runs: store().runs.all(), browser: app.applyAssist ? browser() : undefined }) }
   })
 }

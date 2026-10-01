@@ -2,7 +2,8 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 import { request as httpRequest } from 'node:http'
 import { buildApp } from '@jobdekho/server/app.js'
 
-const config = { sessionSecret: 'test-secret', devUserId: 'u1' }
+// Apply assist is off unless asked for (see config.js); these tests ask.
+const config = { sessionSecret: 'test-secret', devUserId: 'u1', applyAssist: true }
 const POSTING = { id: 'p1', source: 'lever:cred', externalId: 'abc', title: 'SRE', company: 'CRED', url: 'https://jobs.lever.co/cred/abc' }
 const BOARD = { ...POSTING, id: 'p2', source: 'linkedin', url: 'https://in.linkedin.com/jobs/view/1' }
 const PROFILE = { basics: { name: 'Demo Candidate', email: 'demo@example.com', phone: '+91 90000 00000', location: 'Pune, India', links: {} } }

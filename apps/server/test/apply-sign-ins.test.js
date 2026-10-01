@@ -6,7 +6,8 @@ import { buildApp } from '@jobdekho/server/app.js'
 import { keptProfileDir, PROFILE_PREFIX } from '@jobdekho/server/apply/profile-dir.js'
 import { ORPHAN } from '@jobdekho/server/apply/browser-reap.js'
 
-const config = { sessionSecret: 'test-secret', devUserId: 'u1' }
+// Apply assist is off unless asked for (see config.js); these tests ask.
+const config = { sessionSecret: 'test-secret', devUserId: 'u1', applyAssist: true }
 const dirs = []
 const apps = []
 afterEach(async () => {
