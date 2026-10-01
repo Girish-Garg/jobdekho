@@ -1,12 +1,22 @@
-import { mkdtempSync, readdirSync, rmSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readdirSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-// Every Apply session gets a fresh browser profile of its own, under the
-// system temp folder and nowhere else, and loses it when the session ends:
-// no cookie, sign-in or form state outlives one application. The prefix is
-// also how a browser left over from a crashed run is recognised and ended.
+// Apply assist's browser keeps its sign-ins between applications, in one
+// profile in JobDekho's own data folder (keptProfileDir), the way a person's
+// own browser does: applying on Internshala or LinkedIn meant signing in
+// again for every application, and a fresh sign-in each time is also what
+// sets off a site's own security checks. Settings clears it. Without a data
+// folder (tests) a session gets a throwaway profile under the system temp
+// folder instead, gone when the session ends. The prefix is how a browser
+// left over from a crashed run is recognised and ended, whichever it used.
 export const PROFILE_PREFIX = 'jobdekho-apply-'
+
+export function keptProfileDir(dataDir) {
+  const dir = join(dataDir, 'apply-browser', `${PROFILE_PREFIX}kept`)
+  mkdirSync(dir, { recursive: true })
+  return dir
+}
 
 // mkdtemp makes the folder owner-only where the system has modes, and its
 // random suffix means two sessions can never share one.

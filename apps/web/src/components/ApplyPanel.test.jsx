@@ -16,7 +16,8 @@ vi.mock('../api/apply.js', () => ({
   takeOverApply: vi.fn(async () => ({})),
   showApplyWindow: vi.fn(async () => ({})),
   getApplyCopy: vi.fn(async () => ({ rows: [{ label: 'Email', value: 'demo@example.com' }], coverLetter: 'Dear Hiring Team,', hasResume: true })),
-  getApplyElsewhere: vi.fn(async () => null),
+  askApply: vi.fn(),
+  stopApplyAsk: vi.fn(async () => ({ stopped: true })),
   APPLY_RESUME_URL: '/api/apply/resume',
   applyFileUrl: (id, kind) => `/f/${id}/${kind}`,
   applySocketUrl: (id) => `ws://test/${id}`,
@@ -41,32 +42,16 @@ beforeEach(() => {
 describe('ApplyAssistButton', () => {
   const ON_BOARD = { ...POSTING, id: 'b1', source: 'linkedin', url: 'https://in.linkedin.com/jobs/view/1' };
 
-  // A board applied to signed in does not allow a tool in the account, so
-  // the button lays the details out to paste there, needing no browser.
-  it('lays the details and the resume out to paste on a board applied to signed in', async () => {
-    api.getApplyBrowser.mockResolvedValue({ browser: null });
+  // One application the person picked, on a board too: they sign in and
+  // submit themselves, and the panel says once what the board's terms say.
+  it('opens a job-board posting in Apply assist like any other, with the board\'s note', async () => {
+    const note = "LinkedIn's terms do not allow tools in your account.";
+    api.openApply.mockResolvedValueOnce({ session: { ...VIEW, postingId: 'b1', board: note }, token: 'tok' });
     render(<ApplyAssistButton posting={ON_BOARD} />);
-    const button = screen.getByRole('button', { name: 'Apply assist' });
-    expect(button).not.toBeDisabled();
-    expect(button).toHaveAttribute('title', expect.stringMatching(/paste into LinkedIn/));
-    fireEvent.click(button);
-    const dialog = await screen.findByRole('dialog', { name: /Apply on LinkedIn/ });
-    expect(dialog).toHaveTextContent('Apply on LinkedIn, with your details ready');
-    expect(await screen.findByText('demo@example.com')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Open on LinkedIn/ })).toHaveAttribute('href', ON_BOARD.url);
-    expect(screen.getByRole('link', { name: 'Your resume (PDF)' })).toHaveAttribute('href', '/api/apply/resume');
-    expect(api.openApply).not.toHaveBeenCalled();
-  });
-
-  it('offers to fill the same job on the company\'s own careers page instead', async () => {
-    const own = { id: 'c1', title: 'SRE', company: 'CRED', source: 'lever:cred', url: 'https://jobs.lever.co/cred/1' };
-    api.getApplyElsewhere.mockResolvedValueOnce(own);
-    api.openApply.mockReturnValue(new Promise(() => {}));
-    render(<ApplyAssistButton posting={ON_BOARD} />);
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Apply assist' })).toBeEnabled());
     fireEvent.click(screen.getByRole('button', { name: 'Apply assist' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Apply assist there' }));
-    await waitFor(() => expect(api.openApply).toHaveBeenCalledWith('c1'));
-    expect(screen.queryByRole('dialog', { name: /Apply on LinkedIn/ })).not.toBeInTheDocument();
+    await waitFor(() => expect(api.openApply).toHaveBeenCalledWith('b1'));
+    expect(await screen.findByText(note)).toBeInTheDocument();
   });
 
   it('is not there for a posting with no link', () => {
@@ -103,6 +88,9 @@ describe('ApplyPanel', () => {
     expect(link).toMatchObject({ url: 'ws://test/s1', token: 'tok' });
     expect(screen.getByText('jobs.lever.co')).toBeInTheDocument();
     expect(screen.getByText(/Your turn/)).toBeInTheDocument();
+    // The AI to ask comes first; the checklist is a tab away.
+    expect(screen.getByRole('region', { name: 'Ask AI about this form' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('tab', { name: 'On this page' }));
     expect(screen.getByText('Full name')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Fill this page' }));
     expect(api.fillApply).toHaveBeenCalledWith('s1');
@@ -143,7 +131,7 @@ describe('ApplyPanel', () => {
     render(<StrictMode><ApplyAssistButton posting={POSTING} /></StrictMode>);
     await waitFor(() => expect(screen.getByRole('button', { name: 'Apply assist' })).toBeEnabled());
     fireEvent.click(screen.getByRole('button', { name: 'Apply assist' }));
-    await waitFor(() => expect(screen.getByText('Full name')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole('region', { name: 'Ask AI about this form' })).toBeInTheDocument());
     expect(api.openApply).toHaveBeenCalledTimes(2);
     expect(connectApply).toHaveBeenCalledTimes(1);
     expect(connectApply.mock.calls[0][0]).toMatchObject({ url: 'ws://test/s1', token: 'tok' });

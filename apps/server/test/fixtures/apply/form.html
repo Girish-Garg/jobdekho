@@ -39,7 +39,7 @@
   }
   function App() {
     const [s, set] = React.useState({ firstName: '', lastName: '', email: '', phoneCountry: '', phone: '', city: '', linkedin: '',
-      residence: '', company: '', resume: '', cover: '', sample: '', gender: '', notice: '', why: '', consent: false })
+      residence: '', company: '', resume: '', cover: '', sample: '', gender: '', notice: '', why: '', consent: false, relocate: '' })
     const put = (k) => (e) => set((o) => ({ ...o, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }))
     const file = (k) => (e) => set((o) => ({ ...o, [k]: e.target.files[0] ? e.target.files[0].name : '' }))
     React.useEffect(() => { document.getElementById('state').textContent = JSON.stringify(s) })
@@ -78,6 +78,9 @@
       h('label', { htmlFor: 'why' }, 'Why do you want to work at Acme?*'),
       h('textarea', { id: 'why', required: true, rows: 3, value: s.why, onChange: put('why') }),
       h('label', null, h('input', { id: 'consent', type: 'checkbox', checked: s.consent, onChange: put('consent') }), ' I agree to the privacy policy'),
+      h('fieldset', null, h('legend', null, 'Willing to relocate?'),
+        h('label', null, h('input', { id: 'relocate-yes', type: 'radio', name: 'relocate', value: 'yes', checked: s.relocate === 'yes', onChange: put('relocate') }), ' Yes'),
+        h('label', null, h('input', { id: 'relocate-no', type: 'radio', name: 'relocate', value: 'no', checked: s.relocate === 'no', onChange: put('relocate') }), ' No')),
       h('p', null, h('button', { id: 'submit', type: 'submit', onClick: () => { window.__submitClicks += 1 } }, 'Submit application')))
   }
   ReactDOM.createRoot(document.getElementById('root')).render(h(App))</script>

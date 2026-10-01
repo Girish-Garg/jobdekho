@@ -1,7 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { profileValues } from '../apply/profile-values.js'
 import { phoneFor } from '../apply/phone-format.js'
-import { sameJobElsewhere } from '../apply/same-job.js'
 
 // The copy panel: everything Apply assist would have filled, for the person
 // to paste into a form in their own browser. It is the way through whenever
@@ -34,15 +33,8 @@ export function copyRoutes(app, registry) {
     return { rows: copyRows(values), coverLetter: saved?.result?.letter ?? '', hasResume }
   })
 
-  // For a job on a board applied to signed in: the same job from the company's
-  // own careers page, where Apply assist can fill it, or null (see
-  // apply/same-job.js).
-  app.get('/api/apply/elsewhere/:postingId', auth, async (request) => {
-    const userId = request.user.sub
-    const posting = await app.dashboard.getPosting(userId, request.params.postingId)
-    return { posting: posting ? await sameJobElsewhere(app.dashboard, userId, posting) : null }
-  })
-
+  // The resume PDF the person uploaded, to attach to a form by hand when no
+  // application is open to have made one (see the copy panel).
   app.get('/api/apply/resume', auth, async (request, reply) => {
     const path = app.dashboard.originalResumePath?.(request.user.sub)
     if (!path) return reply.code(404).send({ error: 'There is no resume PDF yet. Upload one on the Profile page.' })

@@ -12,7 +12,7 @@ import { SUBMIT_BUTTON, AUTH_BUTTON } from './sensitive-patterns.js'
 // before a single field, on SmartRecruiters).
 const CHALLENGE_FRAMES = /(recaptcha\/api2\/bframe|hcaptcha\.com\/.*frame=challenge|challenges\.cloudflare\.com|captcha-delivery\.com|arkoselabs|funcaptcha|geetest|perimeterx)/i
 const CHALLENGE_WORDS = /\b(verify you are (a )?human|are you a robot|i'?m not a robot|press (&|and) hold|complete the (security )?check|checking your browser)\b/i
-const CLOSED_WORDS = /\b(no longer (accepting applications|available|open)|position (has been )?filled|job (is )?(closed|not found)|page not found|page you (requested|are looking for) (was not found|doesn'?t exist))\b/i
+const CLOSED_WORDS = /\b(no longer (accepting applications|available|open)|applications? (are|is) (now )?closed|position (has been )?filled|job (is )?(closed|not found)|page not found|page you (requested|are looking for) (was not found|doesn'?t exist))\b/i
 const DONE_WORDS = /\b(thank you for (applying|your application)|application (has been )?(submitted|received)|we('ve| have) received your application)\b/i
 const REGISTER = /\b(create (an )?account|register|sign ?up|confirm (your )?password)\b/i
 

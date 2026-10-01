@@ -1,6 +1,6 @@
 import { guard } from './action-guard.js'
 import { setText } from './set-text.js'
-import { setSelect, setCombobox } from './set-choice.js'
+import { setSelect, setCombobox, setToggle } from './set-choice.js'
 import { setFile } from './set-file.js'
 import { sleep } from './cdp-call.js'
 
@@ -12,6 +12,8 @@ const ACTS = {
   select: (ctx, step) => setSelect(ctx, step.fid, step.value, step.exact),
   combobox: (ctx, step) => setCombobox(ctx, step.fid, step.value),
   file: (ctx, step) => setFile(ctx, step.fid, step.path, step.name),
+  // Only for an answer the person asked for in the chat (see ask-fields.js).
+  toggle: (ctx, step) => setToggle(ctx, step.fid),
 }
 
 // Runs a plan one field at a time, stopping the moment the wheel leaves

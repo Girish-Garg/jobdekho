@@ -1,4 +1,4 @@
-import { NOTES } from './sensitive-patterns.js'
+import { NOTES, NEVER_ASKED } from './sensitive-patterns.js'
 
 // The checklist beside the live view: one row per question a person would
 // recognise, in page order, saying what JobDekho did and what is left.
@@ -51,6 +51,8 @@ export function checklistRows({ fields, verdicts, results = new Map() }) {
       status,
       note: note ?? null,
       required: field.required,
+      // Whether the AI beside the form may help with it (see ask-fields.js).
+      askable: !(personal && NEVER_ASKED.has(verdict.category)),
       // Nothing personal is echoed back, even to the person's own screen.
       preview: personal || grouped ? '' : field.preview,
       rect: field.rect,

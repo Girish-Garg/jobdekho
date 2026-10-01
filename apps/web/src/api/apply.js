@@ -1,4 +1,5 @@
 import { req } from './request.js';
+import { streamedChatPost } from '../lib/chatStream.js';
 
 // Apply assist's REST side (the server's api/apply-sessions.js and
 // api/apply-copy.js). The live view itself travels over the session's socket
@@ -43,14 +44,25 @@ export function getApplyCopy(postingId) {
   return req(`/api/apply/copy/${encodeURIComponent(postingId)}`);
 }
 
-// { posting }: the same job from the company's own careers page, where Apply
-// assist can fill it, for one on a board applied to signed in; or null.
-export function getApplyElsewhere(postingId) {
-  return req(`/api/apply/elsewhere/${encodeURIComponent(postingId)}`).then((d) => d.posting ?? null);
-}
-
 // The resume PDF the person uploaded, to attach to a form by hand.
 export const APPLY_RESUME_URL = '/api/apply/resume';
+
+// A message to the AI beside the form: resolves with { reply, filled: [{
+// label, result }] }, its words streaming to onEvent as they are written
+// (see lib/chatStream.js). One at a time; stopApplyAsk ends it.
+export function askApply(id, message, onEvent) {
+  return streamedChatPost(`${session(id)}/ask`, { message }, onEvent);
+}
+
+export function stopApplyAsk(id) {
+  return post(`${session(id)}/ask/stop`);
+}
+
+// Signs Apply assist's browser out of every site it kept a sign-in for. 409
+// while an application is open in it.
+export function clearApplySignIns() {
+  return req('/api/apply/sign-ins', { method: 'DELETE' });
+}
 
 export const applyFileUrl = (id, kind) => `${session(id)}/files/${kind}`;
 

@@ -99,6 +99,14 @@ describe('checklistRows', () => {
     expect(rows.map((r) => r.rect.y)).toEqual([...rows.map((r) => r.rect.y)].sort((a, b) => a - b))
   })
 
+  // The AI beside the form helps with Gender when told; a password never.
+  it('says which questions the AI beside the form may help with', () => {
+    expect(byLabel.Gender.askable).toBe(true)
+    expect(byLabel['Why us?'].askable).toBe(true)
+    const login = checklistRows({ fields: [{ ...FORM[0], fid: 'p1', type: 'password', label: 'Password' }], verdicts: [{ kind: 'personal', category: 'password' }] })
+    expect(login[0]).toMatchObject({ label: 'Password', askable: false })
+  })
+
   it('shows a radio group as one question, done once any option is picked', () => {
     const group = rows.filter((r) => r.label === 'Authorised to work in India?')
     expect(group).toHaveLength(1)

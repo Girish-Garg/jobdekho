@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { pageSignals } from '@jobdekho/server/apply/page-signals.js'
 import { classify } from '@jobdekho/server/apply/field-classify.js'
-import { applyUrlFor, offersApply, clickThrough } from '@jobdekho/server/apply/apply-url.js'
+import { applyUrlFor, offersApply, clickThrough, boardNote } from '@jobdekho/server/apply/apply-url.js'
 import { questionsUrl, readQuestions, withQuestions } from '@jobdekho/server/apply/greenhouse-questions.js'
 import { sentenceFor } from '@jobdekho/server/apply/handover-copy.js'
 
@@ -31,6 +31,8 @@ describe('pageSignals', () => {
 
   it('sees a closed posting, a confirmation, and the submit button of the last step', () => {
     expect(signals(page({ text: 'Page not found The page you requested was not found' })).closed).toBe(true)
+    // Internshala's own words, seen on a live posting.
+    expect(signals(page({ text: 'Full Stack Developer Applications are closed for this job' })).closed).toBe(true)
     expect(signals(page({ text: 'Thank you for applying! We have received your application.' })).submitted).toBe(true)
     const last = page({ fields: [field({ label: 'Email' })], buttons: [{ text: 'Submit application', rect: { x: 1, y: 2, w: 3, h: 4 } }, { text: 'Sign in' }] })
     expect(signals(last).submit).toEqual({ x: 1, y: 2, w: 3, h: 4 })
@@ -50,17 +52,24 @@ describe('applyUrlFor', () => {
     expect(applyUrlFor(posting('workday:nvidia', 'https://nvidia.wd5.myworkdayjobs.com/x/job/1'))).toBe('https://nvidia.wd5.myworkdayjobs.com/x/job/1')
   })
 
-  it('offers nothing for a board applied to signed in, or for a link that is not a web page', () => {
+  it('offers every posting with a web address, boards included, and nothing else', () => {
     for (const source of ['linkedin', 'internshala', 'unstop', 'instahyre', 'naukri', 'wellfound', 'indeed']) {
-      expect(offersApply(posting(source, 'https://example.com/job'))).toBe(false)
-      expect(applyUrlFor(posting(source, 'https://example.com/job'))).toBeNull()
+      expect(offersApply(posting(source, 'https://example.com/job'))).toBe(true)
     }
     expect(applyUrlFor(posting('lever:x', 'javascript:alert(1)'))).toBeNull()
+    expect(offersApply(posting('linkedin', ''))).toBe(false)
+  })
+
+  // The board's terms are said once, plainly; LinkedIn's account risk too.
+  it('says what a board applied on signed in says about tools, and nothing elsewhere', () => {
+    expect(boardNote(posting('internshala', 'https://internshala.com/job/1'))).toMatch(/^Internshala's terms do not allow tools in your account/)
+    expect(boardNote(posting('linkedin', 'https://in.linkedin.com/jobs/view/1'))).toMatch(/LinkedIn restricts accounts it catches automating/)
+    expect(boardNote(posting('lever:x', 'https://jobs.lever.co/x/1'))).toBeNull()
   })
 
   // An aggregator's page links on to the company's form, which fills like any.
-  it('opens an aggregator where it points, for the person to click through', () => {
-    for (const source of ['adzuna', 'remoteok', 'remotive', 'arbeitnow']) {
+  it('opens a board or an aggregator where it points, for the person to click through', () => {
+    for (const source of ['adzuna', 'remoteok', 'remotive', 'arbeitnow', 'internshala', 'linkedin']) {
       expect(applyUrlFor(posting(source, 'https://example.com/job'))).toBe('https://example.com/job')
       expect(clickThrough(posting(source, 'https://example.com/job'))).toBe(true)
     }

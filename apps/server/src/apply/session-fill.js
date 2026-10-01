@@ -20,7 +20,7 @@ export function settle(s, signals = {}) {
   pushView(s)
 }
 
-const contextOf = (s) => ({ cdp: s.active.cdp, world: s.world, ats: s.ats, canAct: () => canFill(s) })
+export const contextOf = (s) => ({ cdp: s.active.cdp, world: s.world, ats: s.ats, canAct: () => canFill(s) })
 
 // Fills the page in front of the person, once, as a press of theirs (opening
 // Apply assist is the first press; "Fill this page" is every later one).

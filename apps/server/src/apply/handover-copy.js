@@ -16,7 +16,7 @@ const BY_REASON = {
   code: 'The site sent you a code. Enter it in the window yourself, then press Continue filling.',
   'human-check': 'The site is checking that you are human. JobDekho does not answer these: work through it in the window, or open the posting in your own browser.',
   closed: 'It no longer takes applications, or its page could not be found.',
-  'click-through': 'This is the job board\'s page for the job, not the application. Press its Apply button in the window, and once the company\'s own form is open, press Fill this page.',
+  'click-through': 'This is the job\'s page, not the application form. Press Apply in the window, and sign in if the site asks; once the form is open, press Fill this page.',
   'check-page': 'This page is filled as far as JobDekho can go. Check it and answer what is left, then press the site\'s own Next. On the next page, press Fill this page.',
   'took-over': 'JobDekho has stopped filling. Press Fill this page when you want it back.',
   review: 'JobDekho has not pressed Submit and never will.',

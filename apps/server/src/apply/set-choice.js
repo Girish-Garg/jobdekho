@@ -1,6 +1,11 @@
 import { send, sleep } from './cdp-call.js'
 import { focusField } from './page/fill-text.js'
-import { chooseOption, optionsFor, comboShows } from './page/fill-choice.js'
+import { chooseOption, optionsFor, comboShows, checkToggle } from './page/fill-choice.js'
+
+// A radio button or checkbox ticked, as the AI beside the form was asked to.
+export async function setToggle({ world }, fid) {
+  return (await world.call(checkToggle, [fid])) ? 'filled' : 'failed'
+}
 
 // A native select: the option whose text is the answer, or nothing.
 export async function setSelect({ world }, fid, value, exact = false) {

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { keyMessage } from './applyKeys.js';
 import { toPage, toView } from './applyPoint.js';
-import { offersApply, appliesOnBoard, boardOf } from './applyOffer.js';
+import { offersApply } from './applyOffer.js';
 import { connectApply } from './applySocket.js';
 import { sameView } from './applyFrames.js';
 
@@ -45,21 +45,12 @@ describe('toPage and toView', () => {
 });
 
 describe('offersApply', () => {
-  it('is offered on company sites, ATS boards and aggregators, never inside a board applied to signed in', () => {
+  it('is offered on every posting with a web address, job boards included', () => {
     expect(offersApply({ source: 'greenhouse:groww', url: 'https://job-boards.greenhouse.io/groww/jobs/1' })).toBe(true);
-    expect(offersApply({ source: 'amazon', url: 'https://amazon.jobs/x' })).toBe(true);
-    expect(offersApply({ source: 'arbeitnow', url: 'https://www.arbeitnow.com/jobs/x' })).toBe(true);
-    expect(offersApply({ source: 'linkedin', url: 'https://in.linkedin.com/jobs/view/1' })).toBe(false);
-    expect(offersApply({ source: 'internshala', url: 'https://internshala.com/job/1' })).toBe(false);
+    expect(offersApply({ source: 'linkedin', url: 'https://in.linkedin.com/jobs/view/1' })).toBe(true);
+    expect(offersApply({ source: 'internshala', url: 'https://internshala.com/job/1' })).toBe(true);
     expect(offersApply({ source: 'lever:x', url: '' })).toBe(false);
-  });
-
-  // Those get the details laid out to paste, named for the board.
-  it('names the board a posting is applied on signed in', () => {
-    expect(appliesOnBoard({ source: 'internshala', url: 'https://internshala.com/job/1' })).toBe(true);
-    expect(boardOf({ source: 'instahyre', url: 'https://www.instahyre.com/job-1' })).toBe('Instahyre');
-    expect(appliesOnBoard({ source: 'greenhouse:groww', url: 'https://job-boards.greenhouse.io/groww/jobs/1' })).toBe(false);
-    expect(appliesOnBoard({ source: 'linkedin', url: '' })).toBe(false);
+    expect(offersApply({ source: 'lever:x', url: 'javascript:alert(1)' })).toBe(false);
   });
 });
 

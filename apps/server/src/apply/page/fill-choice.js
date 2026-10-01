@@ -61,3 +61,14 @@ export function comboShows(fid, text) {
   }
   return false
 }
+
+// Ticks a radio button or checkbox, the way a click on it would, which is what
+// a page's own script listens for. Only ever on: a person who asked for one
+// option of a set gets that one, and nothing is unticked for them. Null when
+// the control is gone or is not a toggle.
+export function checkToggle(fid) {
+  const el = globalThis.__jd?.byFid.get(fid)
+  if (!el || (el.type !== 'radio' && el.type !== 'checkbox')) return null
+  if (!el.checked) el.click()
+  return el.checked
+}

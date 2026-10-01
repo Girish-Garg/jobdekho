@@ -24,7 +24,7 @@ afterEach(async () => {
 
 async function makeApp({ registry, found = { name: 'Microsoft Edge', path: 'x' } } = {}) {
   const dashboard = {
-    getPosting: vi.fn(async (_u, id) => ({ p1: POSTING, p2: BOARD })[id] ?? null),
+    getPosting: vi.fn(async (_u, id) => ({ p1: POSTING, p2: BOARD, p3: { ...POSTING, id: 'p3', url: '' } })[id] ?? null),
     getProfile: vi.fn(async () => PROFILE),
     getAiResult: vi.fn(async () => ({ result: { letter: 'Dear Hiring Team at CRED,' } })),
   }
@@ -39,12 +39,12 @@ async function makeApp({ registry, found = { name: 'Microsoft Edge', path: 'x' }
 const post = (app, url, body) => app.inject({ method: 'POST', url, payload: body })
 
 describe('Apply assist routes', () => {
-  it('says which browser it would use, and never offers job boards', async () => {
+  it('says which browser it would use, and refuses only a posting with no web address', async () => {
     const app = await makeApp({ registry: { open: vi.fn() } })
     expect((await app.inject({ url: '/api/apply/browser' })).json()).toEqual({ browser: { name: 'Microsoft Edge' }, canPopOut: true })
-    const res = await post(app, '/api/apply/sessions', { postingId: 'p2' })
+    const res = await post(app, '/api/apply/sessions', { postingId: 'p3' })
     expect(res.statusCode).toBe(400)
-    expect(res.json().error).toMatch(/job board you are signed in to/)
+    expect(res.json().error).toMatch(/no web address/)
     expect((await post(app, '/api/apply/sessions', { postingId: 'nope' })).statusCode).toBe(404)
   })
 

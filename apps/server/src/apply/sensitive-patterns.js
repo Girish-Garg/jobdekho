@@ -20,6 +20,13 @@ export const PERSONAL = [
 // file input that mentions a privacy policy is still the resume.
 export const CHOICE_ONLY = new Set(['consent'])
 
+// Of those, the ones the AI beside the form never sets or even sees, whatever
+// the person says to it: secrets, money and identity numbers stay out of every
+// prompt and are typed in the window. The rest (pay, notice, consent, self-
+// identification, the facts JobDekho does not hold) it sets only with what the
+// person told it, never a guess (see ask-fields.js).
+export const NEVER_ASKED = new Set(['password', 'code', 'captcha', 'payment', 'identity'])
+
 // Buttons JobDekho never presses, named so the page can be read for what
 // step it is on: a submit on the page makes it the final review.
 export const SUBMIT_BUTTON = /\b(submit|apply|send (my )?application|finish|complete (my )?application|review and submit)\b/i

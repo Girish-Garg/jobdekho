@@ -8,15 +8,22 @@ import ApplyLiveView from './ApplyLiveView.jsx';
 import ApplyChecklist from './ApplyChecklist.jsx';
 import ApplyCopyPanel from './ApplyCopyPanel.jsx';
 import ApplyOpening from './ApplyOpening.jsx';
+import ApplyChat from './ApplyChat.jsx';
+import { useApplyChat } from '../lib/useApplyChat.js';
 import { ApplyChooser, ApplyPageDialog } from './ApplyPrompts.jsx';
 
 // Apply assist: the application open in a browser of its own, streamed here,
 // filled from the profile, and handed to the person to review and submit.
 // Over the whole app, since the form needs the room; Escape is kept inside,
-// where it belongs to the page, so it never closes the posting behind.
+// where it belongs to the page, so it never closes the posting behind. Beside
+// it, the AI to ask about the form first (ApplyChat.jsx), then the checklist
+// and the details to copy.
+const TABS = [['chat', 'Ask AI'], ['checklist', 'On this page'], ['copy', 'Copy your details']];
+
 export default function ApplyPanel({ posting, onClose, onApplied }) {
   const apply = useApplySession(posting);
-  const [tab, setTab] = useState('checklist');
+  const [tab, setTab] = useState('chat');
+  const chat = useApplyChat(apply.view?.id);
   const [hover, setHover] = useState(null);
   const view = apply.view;
   const act = (call) => () => apply.sessionId() && call(apply.sessionId()).catch(() => {});
@@ -38,7 +45,8 @@ export default function ApplyPanel({ posting, onClose, onApplied }) {
           <>
             <ApplyToolbar view={view} onTakeOver={act(takeOverApply)} onPopOut={(shown) => apply.sessionId() && showApplyWindow(apply.sessionId(), shown).catch(() => {})} onOwnBrowser={ownBrowser} onClose={close} />
             <ApplyBanner view={view} onFill={act(fillApply)} onApplied={() => onApplied?.(posting.id)} />
-            <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,1fr)_340px]">
+            {view.board && <p className="-mt-1 px-1 text-xs text-muted">{view.board}</p>}
+            <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,1fr)_380px]">
               <div className="relative min-h-0 overflow-y-auto">
                 <ApplyLiveView apply={apply} view={view} hover={hover} />
                 <div className="absolute inset-x-4 top-4 z-30 flex flex-col gap-2">
@@ -47,16 +55,16 @@ export default function ApplyPanel({ posting, onClose, onApplied }) {
                 </div>
               </div>
               <aside className="flex min-h-0 flex-col gap-2 border-t border-line pt-2 lg:border-l lg:border-t-0 lg:pl-3 lg:pt-0">
-                <div role="tablist" className="flex gap-1">
-                  {[['checklist', 'On this page'], ['copy', 'Copy your details']].map(([id, word]) => (
+                <div role="tablist" className="flex flex-wrap gap-1">
+                  {TABS.map(([id, word]) => (
                     <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)} className={`btn btn-sm ${tab === id ? 'btn-tint' : 'btn-ghost'}`}>
                       {word}
                     </button>
                   ))}
                 </div>
-                {tab === 'checklist'
-                  ? <ApplyChecklist rows={view.rows} onHover={setHover} />
-                  : <ApplyCopyPanel postingId={posting.id} sessionId={view.id} files={view.files} />}
+                {tab === 'chat' && <ApplyChat view={view} chat={chat} onTakeOver={act(takeOverApply)} />}
+                {tab === 'checklist' && <ApplyChecklist rows={view.rows} onHover={setHover} />}
+                {tab === 'copy' && <ApplyCopyPanel postingId={posting.id} sessionId={view.id} files={view.files} />}
               </aside>
             </div>
           </>

@@ -3,6 +3,7 @@ import { canPopOut, placeWindow } from '../apply/window-mode.js'
 import { viewOf, pushView } from '../apply/session-view.js'
 import { moveTo } from '../apply/session-state.js'
 import { fillPage } from '../apply/session-fill.js'
+import { removeProfileDir } from '../apply/profile-dir.js'
 
 const NO_SESSION = 'That application is not open any more.'
 
@@ -28,7 +29,7 @@ export function sessionRoutes(app, registry, deps) {
     const userId = request.user.sub
     const posting = await app.dashboard.getPosting(userId, String(request.body?.postingId ?? ''))
     if (!posting) return reply.code(404).send({ error: 'That posting is not there any more.' })
-    if (!offersApply(posting)) return reply.code(400).send({ error: 'Apply assist does not fill applications inside a job board you are signed in to: open the posting there, with your details laid out to paste.' })
+    if (!offersApply(posting)) return reply.code(400).send({ error: 'This posting has no web address for Apply assist to open.' })
     try {
       const opened = await registry.open({ posting, userId, profile: await app.dashboard.getProfile(userId) })
       if (opened.conflict) {
@@ -50,6 +51,16 @@ export function sessionRoutes(app, registry, deps) {
 
   app.delete('/api/apply/sessions/:id', auth, async (request, reply) => {
     await registry.close(request.params.id)
+    return reply.code(204).send()
+  })
+
+  // Signs Apply assist's browser out of every site, by removing the profile
+  // it keeps its sign-ins in (see apply/profile-dir.js); not while an
+  // application is open in it.
+  app.delete('/api/apply/sign-ins', auth, async (request, reply) => {
+    if (registry.current()) return reply.code(409).send({ error: 'Close the open application first.' })
+    const dir = deps.keptProfile?.()
+    if (dir) removeProfileDir(dir)
     return reply.code(204).send()
   })
 

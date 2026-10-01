@@ -27,7 +27,7 @@ function newSession({ posting, userId, url, mode, browserName, values }) {
     state: 'starting', reason: null, pageUrl: url, title: '', rows: [], submit: null,
     sockets: new Set(), frame: null, seq: 0, dropped: 0, size: { w: 1280, h: 860 },
     results: new Map(), pages: new Map(), timers: {}, shown: false,
-    picker: null, chooser: null, dialog: null, fileInfo: null, closing: false,
+    picker: null, chooser: null, dialog: null, fileInfo: null, closing: false, chat: [], asking: null,
   }
 }
 
@@ -37,19 +37,23 @@ export async function openSession(deps, { posting, userId, profile }) {
   const browser = deps.findBrowser()
   if (!browser) throw new ApplyError('no-browser', 'Apply assist needs Google Chrome or Microsoft Edge on this computer.')
   const url = applyUrlFor(posting)
-  if (!url) throw new ApplyError('not-offered', 'Apply assist does not fill applications inside a job board you are signed in to: open the posting there, with your details laid out to paste.')
+  if (!url) throw new ApplyError('not-offered', 'This posting has no web address for Apply assist to open.')
   const s = newSession({ posting, userId, url, mode: deps.windowMode(), browserName: browser.name, values: profileValues(profile) })
-  s.profileDir = makeProfileDir()
+  // The files made for this application have a folder of their own, gone with
+  // the session; the browser keeps its sign-ins in the kept profile when
+  // there is one (see profile-dir.js).
+  s.workDir = makeProfileDir()
+  s.profileDir = deps.keptProfile?.() ?? s.workDir
   const hooks = { port: deps.port, onNavigated }
   try {
-    s.files = deps.prepareFiles({ posting, userId, person: s.values.fullName, dir: join(s.profileDir, 'files') }).catch(() => ({}))
+    s.files = deps.prepareFiles({ posting, userId, person: s.values.fullName, dir: join(s.workDir, 'files') }).catch(() => ({}))
     s.questions = Promise.resolve(deps.questions(posting)).catch(() => null)
     s.browser = await deps.launch({ executable: browser.path, mode: s.mode, profileDir: s.profileDir })
     await activate(s, s.browser.page, s.browser.cdp, hooks)
     followPopups(s, hooks)
   } catch (err) {
     await s.browser?.context.close().catch(() => {})
-    removeProfileDir(s.profileDir)
+    removeProfileDir(s.workDir)
     throw err
   }
   return s

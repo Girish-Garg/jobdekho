@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeAll, afterAll, afterEach } from 'vitest'
 import { createServer } from 'node:http'
 import { createRequire } from 'node:module'
 import { readFileSync, existsSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs'
@@ -11,6 +11,8 @@ import { launchBrowser } from '@jobdekho/server/apply/browser-launch.js'
 import { countBrowsers } from '@jobdekho/server/apply/browser-reap.js'
 import { createRegistry } from '@jobdekho/server/apply/session-registry.js'
 import { onSocketMessage } from '@jobdekho/server/apply/session-input.js'
+import { askOnPage } from '@jobdekho/server/apply/ask-run.js'
+import { CLAUDE } from '@jobdekho/server/ai/providers.js'
 
 // The whole loop against this computer's own Chrome or Edge and two local
 // pages: open, stream, fill, relay, pick, attach, hand over, close. Skipped
@@ -134,6 +136,34 @@ describe.skipIf(!browser)('Apply assist in a real browser', () => {
     await registry.close(s.id)
     expect(await countBrowsers(profileDir)).toBe(0)
     expect(existsSync(profileDir)).toBe(false)
+  }, 60000)
+
+  // The AI beside the form, with a stand-in for the CLI that answers the way
+  // a model would: by the ids on the page's own list. The page is the judge.
+  it('sets the answers the AI beside the form gives, a radio button too, and never presses Submit', async () => {
+    const { session: s } = await registry.open({ posting: { id: 'p3', source: 'acme', url: `${base}/form.html`, title: 'Engineer', company: 'Acme' }, userId: 'u1', profile: PROFILE })
+    expect(await waitFor(() => s.state === 'review')).toBe(true)
+    const run = vi.fn(async ({ input }) => {
+      const page = input.split('<<<PAGE\n')[1].split('\nPAGE>>>')[0].split('\n').map((line) => JSON.parse(line))
+      const id = (words) => page.find((q) => q.question.startsWith(words))?.id
+      const fill = [
+        { field: id('Notice period'), value: '30 days' },
+        { field: id('Why do you want'), value: 'I build products like Acme does.' },
+        { field: id('Willing to relocate'), value: 'Yes' },
+      ]
+      return { stdout: JSON.stringify({ type: 'result', result: JSON.stringify({ reply: 'Set all three.', fill }) }), stderr: '', code: 0 }
+    })
+    const message = 'Say 30 days notice, yes to relocating, and write why I want this job'
+    const seams = { run, locate: () => 'claude', scratch: (work) => work(pdfDir) }
+    const out = await askOnPage(s, { message, resumeText: 'Engineer at Startup Co.', select: async () => CLAUDE, seams })
+    expect(out.reply).toBe('Set all three.')
+    expect(out.filled.map((f) => f.result)).toEqual(['filled', 'filled', 'filled'])
+    const state = await pageState(s)
+    expect(state).toMatchObject({ notice: '30', why: 'I build products like Acme does.', relocate: 'yes', consent: false })
+    expect(state.submitted).toBe(false)
+    expect(state.clicks).toBe(0)
+    expect(s.chat.map((t) => t.who)).toEqual(['you', 'ai'])
+    await registry.close(s.id)
   }, 60000)
 
   it('hands a sign-in wall to the person without touching it', async () => {

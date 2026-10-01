@@ -1,5 +1,6 @@
 import { sentenceFor } from './handover-copy.js'
 import { canPopOut } from './window-mode.js'
+import { boardNote } from './apply-url.js'
 
 // What the panel is told about a session, over REST and over its socket, and
 // the one place frames are sent. A socket that has fallen behind is skipped,
@@ -14,6 +15,9 @@ export function viewOf(s) {
     state: s.state,
     reason: s.reason,
     message: sentenceFor(s.state, s.reason),
+    // What a board applied on signed in says about tools, for the panel to
+    // show once beside the live view; null anywhere else.
+    board: boardNote(s.posting),
     url: s.pageUrl,
     title: s.title,
     rows: s.rows,

@@ -5,6 +5,7 @@ import { getProfile, getResumeText, upsertProfile, deleteProfile } from '@jobdek
 import { getPosting } from '@jobdekho/store/posting-lookup.js'
 import { getAiResult, setAiResult, listAiResults } from '@jobdekho/store/ai-results.js'
 import { getProviderPref, upsertProviderPref } from '@jobdekho/store/ai-provider-pref.js'
+import { join } from 'node:path'
 import { saveOriginal, deleteOriginal, findOriginal } from '../resume/original.js'
 
 export function createDashboardStore(db) {
@@ -32,5 +33,7 @@ export function createDashboardStore(db) {
     saveOriginalResume: (userId, bytes) => saveOriginal(db, userId, bytes),
     deleteOriginalResume: (userId) => deleteOriginal(db, userId),
     originalResumePath: (userId) => findOriginal(db, userId),
+    // Where Apply assist's browser keeps its sign-ins (see apply/profile-dir.js).
+    applyBrowserDir: () => join(db.dir, 'apply-browser'),
   }
 }

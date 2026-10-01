@@ -2,6 +2,7 @@ import { findBrowser } from './browser-find.js'
 import { windowModeFor } from './window-mode.js'
 import { launchBrowser } from './browser-launch.js'
 import { reapOrphans } from './browser-reap.js'
+import { keptProfileDir } from './profile-dir.js'
 import { prepareFiles } from './apply-files.js'
 import { greenhouseQuestions } from './greenhouse-questions.js'
 import { documentStore } from '../documents/store.js'
@@ -23,6 +24,11 @@ export function applyDeps(app) {
     windowMode: () => windowModeFor(),
     launch: (options) => launchBrowser(options),
     reap: () => reapOrphans(),
+    // The profile the browser keeps its sign-ins in, between applications.
+    keptProfile: () => {
+      const dir = app.dashboard?.applyBrowserDir?.()
+      return dir ? keptProfileDir(dir) : null
+    },
     // JobDekho's own port, which the Apply browser is kept away from.
     port: loadConfig().port,
     prepareFiles: ({ posting, userId, person, dir }) => prepareFiles({
