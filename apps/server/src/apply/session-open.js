@@ -5,7 +5,7 @@ import { atsOf } from './ats-hints.js'
 import { profileValues } from './profile-values.js'
 import { makeProfileDir, removeProfileDir } from './profile-dir.js'
 import { activate } from './session-attach.js'
-import { onNavigated } from './session-scan.js'
+import { onNavigated, scanPage } from './session-scan.js'
 import { fillPage, settle } from './session-fill.js'
 import { pushView } from './session-view.js'
 import { sleep } from './cdp-call.js'
@@ -87,7 +87,10 @@ export async function startApplying(s) {
   await s.active.page.goto(s.url, { waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => {})
   await sleep(1200)
   if (s.closing || s.state !== 'starting') return
-  if (clickThrough(s.posting)) return settle(s, { wall: 'click-through' })
+  if (clickThrough(s.posting)) {
+    const signals = await scanPage(s).catch(() => ({}))
+    return settle(s, signals.closed ? signals : { wall: 'click-through' })
+  }
   try {
     await fillPage(s)
   } catch {
