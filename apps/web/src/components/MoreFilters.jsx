@@ -29,7 +29,9 @@ function Section({ title, children }) {
 // with Reset once any is set and the save control at the foot. Pay and
 // experience are ladders of a dozen steps, which a slider walks far better
 // than a dropdown; the length and the degree are four or five choices, which
-// fit on one line as pills and show all of them at once.
+// fit on one line as pills and show all of them at once. Two columns on a
+// wide window, so the whole panel fits on one screen; one column on a narrow
+// one, where the panel scrolls (see Dropdown.jsx).
 export default function MoreFilters({ filters, setFilters }) {
   const set = (key) => (value) => setFilters({ ...filters, [key]: value });
   const touched = Object.keys(CLEARED).some((key) => Boolean(filters[key]));
@@ -44,20 +46,24 @@ export default function MoreFilters({ filters, setFilters }) {
           </button>
         )}
       </div>
-      <Section title="Pay and experience">
-        <StepSlider label="Pay, at least" steps={STIPEND_RANGES} value={filters.minStipend ?? ''} onChange={set('minStipend')} ends={['Any', TOP_PAY]} fill="end" />
-        <StepSlider label="Experience asked, at most" steps={EXPERIENCE_RANGES} value={filters.maxExp ?? ''} onChange={set('maxExp')} ends={['Fresher', 'Any']} />
-      </Section>
-      <Section title="Internships">
-        <FieldGroup label="Length, at most" name="Internship length, at most">
-          <PillGroup options={DURATION_PILLS} selected={[filters.maxMonths ?? '']} onPick={set('maxMonths')} />
-        </FieldGroup>
-      </Section>
-      <Section title="Education">
-        <FieldGroup label="Your highest degree" hint="Hides jobs that ask for more">
-          <PillGroup options={DEGREE_OPTIONS} selected={[filters.maxDegree ?? '']} onPick={set('maxDegree')} />
-        </FieldGroup>
-      </Section>
+      <div className="grid grid-cols-1 items-start gap-x-6 gap-y-4 md:grid-cols-2">
+        <Section title="Pay and experience">
+          <StepSlider label="Pay, at least" steps={STIPEND_RANGES} value={filters.minStipend ?? ''} onChange={set('minStipend')} ends={['Any', TOP_PAY]} fill="end" />
+          <StepSlider label="Experience asked, at most" steps={EXPERIENCE_RANGES} value={filters.maxExp ?? ''} onChange={set('maxExp')} ends={['Fresher', 'Any']} />
+        </Section>
+        <div className="flex flex-col gap-4">
+          <Section title="Internships">
+            <FieldGroup label="Length, at most" name="Internship length, at most">
+              <PillGroup options={DURATION_PILLS} selected={[filters.maxMonths ?? '']} onPick={set('maxMonths')} />
+            </FieldGroup>
+          </Section>
+          <Section title="Education">
+            <FieldGroup label="Your highest degree" hint="Hides jobs that ask for more">
+              <PillGroup options={DEGREE_OPTIONS} selected={[filters.maxDegree ?? '']} onPick={set('maxDegree')} />
+            </FieldGroup>
+          </Section>
+        </div>
+      </div>
       {/* The feed drops postings that stopped appearing on their board, so
           without this the drop has no visible cause and no way back. */}
       <Section title="Postings">

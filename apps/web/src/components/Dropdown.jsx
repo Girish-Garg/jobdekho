@@ -1,4 +1,5 @@
 import { usePopover } from '../lib/usePopover.js';
+import { useFitBelow } from '../lib/useFitBelow.js';
 import { ChevronDownIcon } from './Icon.jsx';
 
 // Shared by every trigger in the bar, including the source picker, so the row
@@ -10,8 +11,12 @@ export const TRIGGER =
   'dither flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm outline-none';
 
 // The panel every trigger opens, so the filters, the source list and More
-// filters read as one family of surfaces.
-export const PANEL = 'pop-in absolute top-full z-30 mt-2 rounded-2xl border border-line bg-overlay shadow-pop';
+// filters read as one family of surfaces. Never taller than the window under
+// the bar: on a short screen it scrolls inside itself, where it used to run
+// off the bottom with no way to reach what was there. The class is a rough
+// cap; a Dropdown measures the room it really has (see useFitBelow.js).
+export const PANEL = 'pop-in absolute top-full z-30 mt-2 max-h-[calc(100dvh-8rem)] overflow-y-auto overscroll-contain '
+  + 'rounded-2xl border border-line bg-overlay shadow-pop';
 
 // Three readable states, not two: a saffron trigger means it is holding a
 // value, a tinted one means it is only open, and the quiet default means
@@ -58,6 +63,7 @@ export function TriggerFace({ icon: Icon, label, count = 0, open }) {
 // saying how they combine, since "pick one" and "pick any" look the same.
 export default function Dropdown({ label, title = '', icon, count = 0, width = 'w-72', align = 'left', className = '', children }) {
   const { open, setOpen, ref } = usePopover();
+  const [panel, maxHeight] = useFitBelow(open);
 
   return (
     <div ref={ref} className={`relative ${className}`}>
@@ -71,7 +77,7 @@ export default function Dropdown({ label, title = '', icon, count = 0, width = '
         <TriggerFace icon={icon} label={label} count={count} open={open} />
       </button>
       {open && (
-        <div className={`${PANEL} p-3 ${align === 'right' ? 'right-0' : 'left-0'} ${width}`}>
+        <div ref={panel} style={maxHeight ? { maxHeight } : undefined} className={`${PANEL} p-3 ${align === 'right' ? 'right-0' : 'left-0'} ${width}`}>
           {title && <p className="mb-2.5 text-xs text-muted">{title}</p>}
           {children}
         </div>
