@@ -46,6 +46,7 @@ const FILTER_KEYS = {
   status: (v) => oneOf(v, STATUS_VALUES),
   includeStale: (v) => (typeof v === 'boolean' ? v : undefined),
   excludedSources: (v) => (Array.isArray(v) ? v.filter((s) => typeof s === 'string' && s.trim()).slice(0, 20) : undefined),
+  companies: (v) => (Array.isArray(v) ? v.filter((s) => typeof s === 'string' && s.trim()).map((s) => s.trim()).slice(0, 20) : undefined),
 }
 
 function cleanFilterPatch(raw) {

@@ -129,10 +129,17 @@ describe('EMPTY_FILTERS', () => {
       maxExp: '',
       maxMonths: '',
       q: '',
+      companies: [],
       status: '',
       includeStale: false,
       minFit: '',
     });
+  });
+
+  // A look at a few employers, like the keyword: saved, every company
+  // scraped later would be missing from the feed.
+  it('never saves the picked companies as a default', () => {
+    expect(toSavedFilters({ ...EMPTY_FILTERS, companies: ['Razorpay'] })).not.toHaveProperty('companies');
   });
 });
 

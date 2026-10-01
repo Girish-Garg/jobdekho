@@ -1,8 +1,24 @@
-import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
 import PostingsHeader from './PostingsHeader.jsx';
 
 describe('PostingsHeader', () => {
+  // One company picked makes the feed its page, with the way back beside it.
+  it('titles the feed with the one company picked, and goes back to every company', () => {
+    const onAllCompanies = vi.fn();
+    render(<PostingsHeader shown={12} fresh={0} company="Razorpay" onAllCompanies={onAllCompanies} />);
+    expect(screen.getByRole('heading', { name: 'Razorpay' })).toBeInTheDocument();
+    expect(screen.getByText('12 postings')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'All companies' }));
+    expect(onAllCompanies).toHaveBeenCalled();
+  });
+
+  it('is Postings, with no way back, when no single company is picked', () => {
+    render(<PostingsHeader shown={12} fresh={0} />);
+    expect(screen.getByRole('heading', { name: 'Postings' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'All companies' })).not.toBeInTheDocument();
+  });
+
   // The counts are the whole match's, from the server, not the loaded page.
   it('says how many of the matching postings are loaded, and how many are new today', () => {
     render(<PostingsHeader shown={100} total={1234} fresh={37} />);

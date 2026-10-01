@@ -32,12 +32,14 @@ export function toSavedFilters(filters) {
   };
 }
 
-// The keyword, the status, the stale toggle and the fit floor are per-session
-// rather than persisted, so the blank bar is the blank saved filter plus those
-// four. minFit stays unsaved on purpose: it depends on the profile at query
-// time, and the server ignores it with no profile to score against, so a
-// floor saved here could promise a cut that silently never lands.
-export const EMPTY_FILTERS = { ...toFilterState(), q: '', status: '', includeStale: false, minFit: '' };
+// The keyword, the companies, the status, the stale toggle and the fit floor
+// are per-session rather than persisted, so the blank bar is the blank saved
+// filter plus those five. minFit stays unsaved on purpose: it depends on the
+// profile at query time, and the server ignores it with no profile to score
+// against, so a floor saved here could promise a cut that silently never
+// lands. The companies are a look at a few employers, like the keyword; saved
+// as a default, every company scraped later would be missing from the feed.
+export const EMPTY_FILTERS = { ...toFilterState(), q: '', companies: [], status: '', includeStale: false, minFit: '' };
 
 // "Save as my default" only ever sends this bar's own fields, so the merge
 // keeps that write from resetting every field the bar does not carry.

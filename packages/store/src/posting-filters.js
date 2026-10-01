@@ -1,5 +1,6 @@
 import { filter } from '@jobdekho/core/filter.js'
 import { expandQuery } from '@jobdekho/core/families.js'
+import { companyKey } from '@jobdekho/core/company-key.js'
 import { toIso } from './timestamp.js'
 
 const DEFAULT_LIMIT = 500
@@ -48,6 +49,14 @@ export function searchMatcher(q) {
   }
 }
 
+// Picked by name and matched by key: the same employer arrives as "PHONEPE
+// LIMITED" from one source and "Phonepe" from another (see core's
+// company-key.js), and picking it should bring the jobs from both.
+export function companyMatcher(names) {
+  const keys = new Set((names ?? []).map(companyKey).filter(Boolean))
+  return keys.size ? (row) => keys.has(companyKey(row.company)) : null
+}
+
 // The rules the feed shares with the alerts (levels, degree, work mode,
 // sources, the pay and tenure floors) are core's filter(), the same function
 // the scraper runs, so browsing and notifying cannot disagree about what a
@@ -59,6 +68,7 @@ export function searchMatcher(q) {
 export function postingPredicate(opts, statusOf, now = Date.now()) {
   const cutoff = toIso(now - STALE_AFTER_DAYS * DAY_MS)
   const matchesSearch = opts.q ? searchMatcher(opts.q) : null
+  const matchesCompany = companyMatcher(opts.companies)
   return (row) => {
     if (opts.status !== undefined && statusOf(row.id) !== opts.status) return false
     if (!opts.sources?.length && opts.source && row.source !== opts.source) return false
@@ -69,6 +79,7 @@ export function postingPredicate(opts, statusOf, now = Date.now()) {
     if (closed && opts.status === undefined && !opts.includeStale) return false
     if (!closed && !opts.includeStale && !isFresh(row, cutoff)) return false
     if (matchesSearch && !matchesSearch(row)) return false
+    if (matchesCompany && !matchesCompany(row)) return false
     return filter(row, opts)
   }
 }

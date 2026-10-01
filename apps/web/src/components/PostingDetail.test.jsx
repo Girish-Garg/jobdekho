@@ -28,6 +28,21 @@ beforeEach(() => {
 });
 afterEach(() => stop());
 
+describe('PostingDetail and the company', () => {
+  it('leads from the company name to all of its jobs, as the posting spells it', () => {
+    const onCompany = vi.fn();
+    render(<PostingDetail posting={{ ...posting, company: 'PHONEPE LIMITED' }} onClose={() => {}} onStatus={() => {}} onCompany={onCompany} />);
+    fireEvent.click(screen.getByRole('button', { name: 'All jobs at PHONEPE LIMITED' }));
+    expect(onCompany).toHaveBeenCalledWith('PHONEPE LIMITED');
+  });
+
+  it('names the company plainly where there is no feed to narrow', () => {
+    setup();
+    expect(screen.queryByRole('button', { name: 'All jobs at Acme' })).not.toBeInTheDocument();
+    expect(screen.getByText('Acme')).toBeInTheDocument();
+  });
+});
+
 describe('PostingDetail and AI', () => {
   // The mocks above fail the test if anything here reaches the server for AI.
   it('runs no AI of its own: no results, no refine box, only hand-offs to the chat', () => {

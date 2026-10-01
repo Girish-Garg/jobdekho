@@ -34,6 +34,15 @@ describe('validateActions', () => {
     expect(validateActions([{ type: 'filters', patch: { minStipend: '12345' } }])).toEqual([])
   })
 
+  // "Show me only Razorpay and Swiggy" is the company filter, by name; the
+  // feed matches each name by its key, so the spelling need not be exact.
+  it('takes the companies to show only, and the empty list as every company', () => {
+    const [only] = validateActions([{ type: 'filters', patch: { companies: [' Razorpay ', 'Swiggy', 3, ''] } }])
+    expect(only).toEqual({ type: 'filters', patch: { companies: ['Razorpay', 'Swiggy'] }, label: 'Show only Razorpay, Swiggy' })
+    const [every] = validateActions([{ type: 'filters', patch: { companies: [] } }])
+    expect(every.label).toBe('Show every company')
+  })
+
   it('drops a key that is not one of EMPTY_FILTERS\' own', () => {
     const [action] = validateActions([{ type: 'filters', patch: { levels: ['mid'], notAKey: 'x' } }])
     expect(action.patch).toEqual({ levels: ['mid'] })

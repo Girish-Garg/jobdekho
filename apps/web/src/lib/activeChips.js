@@ -23,9 +23,13 @@ export function activeChips(filters = {}) {
   const levels = filters.levels || [];
   const workModes = filters.workModes || [];
   const excluded = filters.excludedSources || [];
+  const companies = filters.companies || [];
   const chips = [];
 
   if (filters.q) chips.push(chip('q', `Search: ${filters.q}`, { q: '' }, 'search'));
+  for (const name of companies) {
+    chips.push(chip(`company-${name}`, name, { companies: without(companies, name) }));
+  }
 
   if (filters.minFit) {
     chips.push(chip('minFit', fitFloorLabel(filters.minFit), { minFit: '' }));

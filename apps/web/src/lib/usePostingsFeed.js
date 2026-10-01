@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getPostingsPage, setStatus } from '../api.js';
 import { useDebounced } from './useDebounced.js';
 import { onRefreshed } from './postingsRefreshedSignal.js';
+import { feedQuery } from './feedQuery.js';
 
 // Pulled a page at a time. The feed runs to a few thousand rows, and the old
 // single 500-row read made everything past the cut unreachable.
@@ -20,20 +21,12 @@ export function usePostingsFeed(filters, sort = 'match') {
   const [reloads, setReloads] = useState(0);
   useEffect(() => onRefreshed(() => setReloads((n) => n + 1)), []);
 
-  // Depend on the individual fields, not the filters object: a new object
-  // identity every render would refetch on every keystroke elsewhere.
-  const { status, maxDegree, minStipend, includeStale, minFit } = filters;
   // The search waits for a pause in typing (see useDebounced.js).
   const q = useDebounced(filters.q ?? '');
-  const maxExperienceYears = filters.maxExp;
-  const maxDurationMonths = filters.maxMonths;
-  const levels = (filters.levels || []).join(',');
-  const workModes = (filters.workModes || []).join(',');
-  const excludedSources = (filters.excludedSources || []).join(',');
-  const query = {
-    q, excludedSources, status, levels, workModes, maxDegree,
-    minStipend, maxExperienceYears, maxDurationMonths, sort, includeStale, minFit,
-  };
+  const query = { ...feedQuery(filters, q), sort };
+  // Depend on what the query says, not the filters object: a new object
+  // identity every render would refetch on every keystroke elsewhere.
+  const asked = JSON.stringify(query);
 
   useEffect(() => {
     let alive = true;
@@ -50,10 +43,7 @@ export function usePostingsFeed(filters, sort = 'match') {
     return () => {
       alive = false;
     };
-  }, [
-    q, excludedSources, status, levels, workModes, maxDegree,
-    minStipend, maxExperienceYears, maxDurationMonths, sort, includeStale, minFit, reloads,
-  ]);
+  }, [asked, reloads]);
 
   async function loadMore() {
     const next = await getPostingsPage({ ...query, limit: PAGE, offset: rows.length }).then((d) => d.postings).catch(() => []);

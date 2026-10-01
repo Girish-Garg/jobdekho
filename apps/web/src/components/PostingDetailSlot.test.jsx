@@ -7,6 +7,16 @@ const posting = { id: 'p1', title: 'Engineer', company: 'Acme', status: null };
 const noop = () => {};
 
 describe('PostingDetailSlot below the wide breakpoint', () => {
+  // The dialog would cover the company's jobs, so it gets out of the way.
+  it('closes on the way to a company\'s jobs', () => {
+    const onCompany = vi.fn();
+    const onClose = vi.fn();
+    render(<PostingDetailSlot isWide={false} opened={posting} onClose={onClose} onStatus={noop} onCompany={onCompany} />);
+    fireEvent.click(screen.getByRole('button', { name: 'All jobs at Acme' }));
+    expect(onCompany).toHaveBeenCalledWith('Acme');
+    expect(onClose).toHaveBeenCalled();
+  });
+
   it('renders the dialog when something is open', () => {
     render(<PostingDetailSlot isWide={false} opened={posting} onClose={noop} onStatus={noop} />);
     expect(screen.getByRole('dialog')).toBeInTheDocument();

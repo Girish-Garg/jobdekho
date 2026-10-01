@@ -1,4 +1,4 @@
-import { parseLevels, parseWorkModes, parseMaxDegree, parseMinFit, parseSources } from '../api/postings.js'
+import { parseLevels, parseWorkModes, parseMaxDegree, parseMinFit, parseSources, parseCompanyList } from '../api/feed-options.js'
 
 // Turns the feed's own filter-bar state (see apps/web/src/lib/savedFilters.js
 // EMPTY_FILTERS) into the opts listPostingsForUser already knows how to read,
@@ -19,6 +19,7 @@ export function toListOpts(filters, sort, profile) {
     profile,
     minFit: parseMinFit(f.minFit),
     excludedSources: parseSources((f.excludedSources || []).join(',')),
+    companies: parseCompanyList(f.companies),
     levels: parseLevels((f.levels || []).join(',')),
     workModes: parseWorkModes((f.workModes || []).join(',')),
     maxDegree: parseMaxDegree(f.maxDegree),

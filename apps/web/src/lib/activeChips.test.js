@@ -15,6 +15,14 @@ describe('activeChips', () => {
     expect(labels({ ...EMPTY_FILTERS, levels: ['senior', 'internship'] })).toEqual(['Senior', 'Internship']);
   });
 
+  // Each removes only itself, so taking one company away keeps the others.
+  it('emits one chip per picked company, named as it was picked', () => {
+    const chips = activeChips({ ...EMPTY_FILTERS, companies: ['Razorpay', 'PHONEPE LIMITED'] });
+    expect(chips.map((c) => c.label)).toEqual(['Razorpay', 'PHONEPE LIMITED']);
+    expect(chips[0].patch).toEqual({ companies: ['PHONEPE LIMITED'] });
+    expect(chips[0].remove).toBe('Remove Razorpay filter');
+  });
+
   it('emits one chip per picked work mode', () => {
     expect(labels({ ...EMPTY_FILTERS, workModes: ['remote', 'hybrid'] })).toEqual(['Remote', 'Hybrid']);
   });

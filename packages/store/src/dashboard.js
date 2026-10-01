@@ -18,18 +18,18 @@ export function applyStatusFilter(rows, status) {
 // or one city's listing would undercount its siblings; and the minFit floor
 // has to see every score or the page it leaves behind comes up short for no
 // reason the user can see. Only group leads are scored: the others are gated
-// out regardless of score, so scoring them would be work thrown away.
-export async function listPostingsForUser(store, userId, opts = {}) {
+// out regardless of score, so scoring them would be work thrown away. All
+// but the order and the page is feedMatches, which the company menu counts
+// too (see companies.js).
+export function feedMatches(store, userId, opts = {}) {
   const statuses = store.statuses.get(userId) ?? {}
   const statusOf = (id) => statuses[id] ?? null
-  const { limit, offset } = clampPage(opts)
   // Every order is scored when the profile can rank, not only Best fit: the
   // fit floor and the grade on each card mean the same under Newest, and
   // scoring only for Best fit made the floor silently do nothing under any
   // other order. An empty profile scores every row alike, so Best fit falls
   // back to newest first then.
   const ranks = canRank(opts.profile)
-  const sort = opts.sort === 'match' && !ranks ? 'newest' : opts.sort
   const matching = store.corpus.rows().filter(postingPredicate(opts, statusOf))
   const windowed = withGroupWindows(matching)
   const leads = opts.group === false ? windowed : windowed.filter((row) => row.groupRank === 1)
@@ -37,7 +37,13 @@ export async function listPostingsForUser(store, userId, opts = {}) {
   // The floor only means anything against a real score. Unranked, every row
   // "scores" zero, so applying it would empty the feed rather than filter it.
   const minFit = ranks ? toNumber(opts.minFit) : null
-  const gated = minFit ? scored.filter((row) => row.matchScore >= minFit) : scored
+  return { rows: minFit ? scored.filter((row) => row.matchScore >= minFit) : scored, ranks, statusOf }
+}
+
+export async function listPostingsForUser(store, userId, opts = {}) {
+  const { limit, offset } = clampPage(opts)
+  const { rows: gated, ranks, statusOf } = feedMatches(store, userId, opts)
+  const sort = opts.sort === 'match' && !ranks ? 'newest' : opts.sort
   const page = gated.sort(orderFor(sort, { ranked: ranks })).slice(offset, offset + limit)
   const postings = applyStatusFilter(page.map((row) => {
     const seen = { ...row, status: statusOf(row.id) }

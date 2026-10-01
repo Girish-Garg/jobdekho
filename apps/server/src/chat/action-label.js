@@ -33,6 +33,7 @@ function fragments(patch) {
   if ('maxMonths' in patch) out.push(patch.maxMonths ? `under ${plural(patch.maxMonths, 'month')}` : 'any duration')
   if ('status' in patch) out.push(patch.status ? `status ${STATUS_WORD[patch.status]}` : 'all statuses')
   if ('includeStale' in patch) out.push(patch.includeStale ? 'include stale postings' : 'hide stale postings')
+  if ('companies' in patch) out.push(patch.companies.length ? `only ${patch.companies.join(', ')}` : 'every company')
   if ('excludedSources' in patch) out.push(patch.excludedSources.length ? `hide ${patch.excludedSources.join(', ')}` : 'show all sources')
   if ('q' in patch) out.push(patch.q ? `search "${patch.q}"` : 'clear the search')
   return out

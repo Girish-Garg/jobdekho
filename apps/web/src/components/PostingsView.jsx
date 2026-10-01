@@ -37,6 +37,7 @@ export default function PostingsView({
         <FeedTop
           filters={filters} setFilters={setFilters} sort={sort} setSort={setSort} viewMode={viewMode} setViewMode={setViewMode}
           shown={rows.length} total={total} fresh={newToday} onOpenSettings={onOpenSettings}
+          companyLogo={rows.find((row) => row.logoUrl)?.id ?? null}
         />
         {unranked && (
           <div className="pb-4">
@@ -73,6 +74,7 @@ export default function PostingsView({
         onClose={selection.closePane}
         onDismiss={selection.dismissPane}
         onStatus={(id, value) => { pane.patchOutside(id, value); triage.setStatus(id, value); }}
+        onCompany={(name) => setFilters({ ...filters, companies: [name] })}
       />
     </section>
   );

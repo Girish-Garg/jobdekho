@@ -13,6 +13,7 @@ function makeFakeStore() {
     listPostingsForUser: vi.fn().mockResolvedValue([]),
     setPostingStatus: vi.fn().mockResolvedValue(undefined),
     listSources: vi.fn().mockResolvedValue([{ name: 'internshala', count: 878 }]),
+    listCompanyCounts: vi.fn().mockResolvedValue([{ name: 'Razorpay', count: 12, picked: [] }]),
     getProfile: vi.fn().mockResolvedValue({ skills: ['react'], years: 2, degree: 'bachelors' }),
     getResumeText: vi.fn().mockResolvedValue(null),
     upsertProfile: vi.fn().mockResolvedValue({}),
@@ -36,7 +37,7 @@ async function signedCookie(app) {
 // The no-options request now defaults to the ranked sort, so it carries the
 // profile the fake store serves and an unset fit floor.
 const NO_OPTS = {
-  source: undefined, sources: undefined, excludedSources: undefined,
+  source: undefined, sources: undefined, excludedSources: undefined, companies: undefined,
   q: undefined, status: undefined, sort: 'match',
   profile: { skills: ['react'], years: 2, degree: 'bachelors' }, minFit: undefined,
   levels: undefined, workModes: undefined, maxDegree: undefined,
@@ -50,6 +51,30 @@ async function optsFor(store, url) {
   await app.inject({ method: 'GET', url, headers: { cookie } })
   return store.listPostingsForUser.mock.calls.at(-1)[1]
 }
+
+// Picked by name, any number of them; the store matches each by its key.
+describe('the company filter', () => {
+  it('passes the picked names through, a comma inside one arriving as a space', async () => {
+    const opts = await optsFor(makeFakeStore(), '/api/postings?companies=Razorpay,Acme%20%20Inc.')
+    expect(opts.companies).toEqual(['Razorpay', 'Acme  Inc.'])
+  })
+
+  it('lists the companies under the same query the feed reads, picks included', async () => {
+    const store = makeFakeStore()
+    const app = makeApp(store)
+    const cookie = await signedCookie(app)
+    const res = await app.inject({ method: 'GET', url: '/api/companies?levels=entry&companies=Razorpay&status=new', headers: { cookie } })
+    expect(res.json()).toEqual({ companies: [{ name: 'Razorpay', count: 12, picked: [] }] })
+    const [user, opts] = store.listCompanyCounts.mock.calls[0]
+    expect(user).toBe('u1')
+    expect(opts).toMatchObject({ levels: ['entry'], companies: ['Razorpay'], status: null, profile: { skills: ['react'] } })
+  })
+
+  it('answers no one without a session', async () => {
+    const app = makeApp(makeFakeStore()); await app.ready()
+    expect((await app.inject({ method: 'GET', url: '/api/companies' })).statusCode).toBe(401)
+  })
+})
 
 describe('GET /api/postings', () => {
   it('returns 401 without cookie', async () => {

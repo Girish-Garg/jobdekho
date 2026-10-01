@@ -4,6 +4,7 @@ import { activeChips } from '../lib/activeChips.js';
 import Dropdown from './Dropdown.jsx';
 import PillGroup from './PillGroup.jsx';
 import SourceSelect from './SourceSelect.jsx';
+import CompanySelect from './CompanySelect.jsx';
 import MoreFilters from './MoreFilters.jsx';
 import ActiveChips from './ActiveChips.jsx';
 import { BookmarkIcon, BriefcaseIcon, MapPinIcon, SlidersIcon } from './Icon.jsx';
@@ -51,6 +52,7 @@ export default function FilterBar({ filters, setFilters, trailing }) {
             onPick={(v) => toggle('workModes', v)}
           />
         </Dropdown>
+        <CompanySelect filters={filters} onChange={(next) => patch('companies', next)} />
         <SourceSelect
           options={sources}
           excluded={filters.excludedSources}
