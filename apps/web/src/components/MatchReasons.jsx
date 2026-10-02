@@ -32,7 +32,7 @@ export default function MatchReasons({ fit, reasons, grade, breakdown, why, gate
           <p className="text-xs font-semibold text-muted">How you fit</p>
           {Number.isInteger(fit) && <p className="tnum mt-1 font-display text-3xl font-extrabold leading-none text-ink">{shown}</p>}
         </div>
-        {grade && <Chip className={`px-2.5 py-1 text-xs font-bold ${tone.soft} ${tone.text}`}>Grade {grade}</Chip>}
+        {grade && <Chip className={`px-2.5 py-1 font-bold ${tone.soft} ${tone.text}`}>Grade {grade}</Chip>}
       </div>
       {why ? <FitWhy why={why} gates={gates} /> : reasons?.length > 0 && (
         <ul className="mt-3 flex flex-col gap-1 text-sm text-ink/85">
