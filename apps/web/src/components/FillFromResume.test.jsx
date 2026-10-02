@@ -136,9 +136,16 @@ describe('FillFromResume with a CLI ready', () => {
     render(<FillFromResume profile={EDITED} onFilled={onFilled} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Fill in from resume' }));
     expect(extractProfile).not.toHaveBeenCalled();
-    expect(screen.getByText(/skills, titles, locations, years and degree/)).toBeInTheDocument();
-    expect(screen.getByText(/corrected by hand.*overwritten/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Overwrite and fill in' }));
+    expect(screen.getByText(/skills, target titles, locations, years and degree are replaced/)).toBeInTheDocument();
+    expect(screen.getByText(/corrected by hand\. Everything else comes to you to review first/)).toBeInTheDocument();
+    // The resume card is as narrow as the rail: the choices stack at its
+    // width in the shared button style instead of overflowing one line.
+    const go = screen.getByRole('button', { name: 'Overwrite and fill in' });
+    const keep = screen.getByRole('button', { name: 'Keep my edits' });
+    expect(go).toHaveClass('btn', 'btn-tint', 'w-full');
+    expect(keep).toHaveClass('btn', 'btn-quiet', 'w-full');
+    expect(go.parentElement).toHaveClass('flex-col');
+    fireEvent.click(go);
     await waitFor(() => expect(onFilled).toHaveBeenCalledWith(FILLED));
   });
 
