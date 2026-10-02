@@ -37,7 +37,7 @@ export default function ApplyCopyPanel({ postingId, sessionId, files }) {
           since it is what nearly every form asks to attach. */}
       {!sessionId && copy.hasResume && (
         <div className="flex flex-wrap gap-2">
-          <a href={APPLY_RESUME_URL} className="btn btn-quiet btn-sm" download>Your resume (PDF)</a>
+          <Button as="a" size="sm" href={APPLY_RESUME_URL} download>Your resume (PDF)</Button>
         </div>
       )}
       <ul className="flex flex-col gap-1">
@@ -59,8 +59,8 @@ export default function ApplyCopyPanel({ postingId, sessionId, files }) {
       )}
       {sessionId && (files?.resume || files?.cover) && (
         <div className="flex flex-wrap gap-2">
-          {files.resume && <a href={applyFileUrl(sessionId, 'resume')} className="btn btn-quiet btn-sm" download>{files.resume}</a>}
-          {files.cover && <a href={applyFileUrl(sessionId, 'cover')} className="btn btn-quiet btn-sm" download>{files.cover}</a>}
+          {files.resume && <Button as="a" size="sm" href={applyFileUrl(sessionId, 'resume')} download>{files.resume}</Button>}
+          {files.cover && <Button as="a" size="sm" href={applyFileUrl(sessionId, 'cover')} download>{files.cover}</Button>}
         </div>
       )}
     </section>

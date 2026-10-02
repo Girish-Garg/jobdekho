@@ -6,7 +6,6 @@ import Button from './ui/Button.jsx';
 import Card from './ui/Card.jsx';
 import Chip from './ui/Chip.jsx';
 import CountBadge from './ui/CountBadge.jsx';
-import { TOOL } from './DocumentToolButton.jsx';
 import { DocumentIcon, HistoryIcon, PenIcon, SparkleIcon, UserIcon } from './Icon.jsx';
 
 // Who wrote each kept version: the template's first draft, a chat change

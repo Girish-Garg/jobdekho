@@ -1,5 +1,6 @@
 import { useId, useRef, useState } from 'react';
 import { uploadResume } from '../api.js';
+import Button from './ui/Button.jsx';
 import Card from './ui/Card.jsx';
 import { DocumentIcon, UploadIcon } from './Icon.jsx';
 
@@ -54,10 +55,10 @@ export default function ResumeUpload({ resumeName, onUploaded, children }) {
             <span className="block text-xs text-muted">{busy ? 'Pulling the text out of the PDF' : 'PDF on file'}</span>
           </span>
           {!busy && (
-            <label htmlFor={inputId} title="Replace the resume" className="btn btn-quiet btn-sm shrink-0 px-3 py-1.5 font-medium">
+            <Button as="label" size="sm" htmlFor={inputId} title="Replace the resume" className="shrink-0 py-1.5 font-medium">
               <UploadIcon size={12} />
               Replace
-            </label>
+            </Button>
           )}
         </div>
       ) : (

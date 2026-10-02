@@ -39,6 +39,22 @@ describe('Button', () => {
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
+  it('dresses a label or a link in the same weight, without a button type', () => {
+    render(
+      <>
+        <Button as="label" size="sm" htmlFor="file">Replace</Button>
+        <Button as="a" href="/api/apply/resume" download>Your resume (PDF)</Button>
+      </>,
+    );
+    const label = screen.getByText('Replace');
+    expect(label.tagName).toBe('LABEL');
+    expect(label).toHaveClass('btn', 'btn-quiet', 'btn-sm');
+    expect(label).not.toHaveAttribute('type');
+    const link = screen.getByRole('link', { name: 'Your resume (PDF)' });
+    expect(link).toHaveClass('btn', 'btn-quiet');
+    expect(link).not.toHaveAttribute('type');
+  });
+
   it('can still submit a form when asked to, and hands its ref through', () => {
     const ref = createRef();
     render(<Button ref={ref} type="submit">Send</Button>);
