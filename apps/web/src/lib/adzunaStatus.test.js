@@ -12,7 +12,7 @@ describe('keyStatus', () => {
 
   it('names the key by its last four and says where it came from', () => {
     expect(keyStatus(view()).text).toBe('Key ending 1a2b, from Settings');
-    expect(keyStatus(view({ from: 'environment', keyEnd: '9z9z' })).text).toBe('Key ending 9z9z, from the environment (.env)');
+    expect(keyStatus(view({ from: 'environment', keyEnd: '9z9z' })).text).toBe('Key ending 9z9z, from ADZUNA_APP_ID and ADZUNA_APP_KEY');
   });
 
   it('does without the last four when the server sent none', () => {

@@ -10,9 +10,11 @@ import { getAdzunaKey, saveAdzunaKey, removeAdzunaKey, checkAdzunaKey } from '..
 // sits in the page no longer than it takes to send; the app id stays, being
 // an identifier the server shows anyway. "Check key" tries the typed pair
 // when the key field has something in it, otherwise the key already in use.
+// The variables a key falls back on are named as in adzunaStatus.js, so this
+// note and the status line above it agree.
 const SAVED = 'Saved. Every refresh now includes Adzuna.';
 const REMOVED = 'Removed from Settings.';
-const REMOVED_ENV = 'Removed from Settings. The key in the environment (.env) is used instead.';
+const REMOVED_ENV = 'Removed from Settings. The key from ADZUNA_APP_ID and ADZUNA_APP_KEY is used instead.';
 
 export function useAdzunaKey() {
   const [view, setView] = useState(undefined);

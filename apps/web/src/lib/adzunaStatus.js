@@ -4,7 +4,11 @@ import { shortStamp } from './time.js';
 // refresh, from what the server answers (see api/adzuna.js). The server
 // never sends the key, only its last four characters, so these never could
 // show more.
-const FROM = { settings: 'Settings', environment: 'the environment (.env)' };
+//
+// A key from the environment is named by its two variables, not by .env:
+// only a clone of the repo reads a .env, while the `jobdekho` command takes
+// the same two variables from the shell.
+const FROM = { settings: 'Settings', environment: 'ADZUNA_APP_ID and ADZUNA_APP_KEY' };
 
 // `view` is undefined while loading and null when it could not be read.
 export function keyStatus(view) {

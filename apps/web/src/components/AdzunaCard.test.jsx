@@ -69,7 +69,7 @@ describe('AdzunaCard', () => {
   it('says so when the key comes from the environment, with nothing in Settings to remove', async () => {
     getAdzunaKey.mockResolvedValue({ ...SAVED, from: 'environment', keyEnd: '9z9z' });
     await mount();
-    expect(screen.getByText('Key ending 9z9z, from the environment (.env)')).toBeInTheDocument();
+    expect(screen.getByText('Key ending 9z9z, from ADZUNA_APP_ID and ADZUNA_APP_KEY')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Remove' })).not.toBeInTheDocument();
   });
 
@@ -137,8 +137,8 @@ describe('AdzunaCard', () => {
     removeAdzunaKey.mockResolvedValue({ ...SAVED, from: 'environment', appId: 'envid', keyEnd: '9z9z' });
     await mount();
     fireEvent.click(button('Remove'));
-    await waitFor(() => expect(screen.getByText(/The key in the environment \(.env\) is used instead/)).toBeInTheDocument());
-    expect(screen.getByText('Key ending 9z9z, from the environment (.env)')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText(/The key from ADZUNA_APP_ID and ADZUNA_APP_KEY is used instead/)).toBeInTheDocument());
+    expect(screen.getByText('Key ending 9z9z, from ADZUNA_APP_ID and ADZUNA_APP_KEY')).toBeInTheDocument();
   });
 
   it('shows how Adzuna did in the last refresh', async () => {
