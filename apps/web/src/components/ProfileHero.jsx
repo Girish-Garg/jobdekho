@@ -17,7 +17,7 @@ export default function ProfileHero({ basics, profile, onChange }) {
   const [editing, setEditing] = useState(!basics.name);
 
   return (
-    <section id={sectionId('basics')} aria-label="Basics" className="scroll-mt-4 rounded-2xl border border-line bg-panel p-5 sm:p-6">
+    <section id={sectionId('basics')} aria-label="Basics" className="scroll-mt-14 min-[1100px]:scroll-mt-4 rounded-2xl border border-line bg-panel p-5 sm:p-6">
       <div className="flex flex-wrap items-start gap-5">
         <span aria-hidden="true" className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-primary/15 font-display text-xl font-extrabold text-primary">
           {basics.name ? initials(basics.name) : '?'}
