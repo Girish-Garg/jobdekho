@@ -1,5 +1,5 @@
 {
-  "name": "@jobdekho/sources", "version": "0.0.0", "type": "module",
+  "name": "@jobdekho/sources", "license": "MIT", "version": "0.0.0", "type": "module",
   "exports": { "./*": "./src/*" },
   "dependencies": { "cheerio": "^1.0.0" }
 }

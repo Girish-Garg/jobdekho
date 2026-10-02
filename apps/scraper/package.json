@@ -1,5 +1,5 @@
 {
-  "name": "@jobdekho/scraper", "version": "0.0.0", "type": "module",
+  "name": "@jobdekho/scraper", "license": "MIT", "version": "0.0.0", "type": "module",
   "exports": { "./*": "./src/*" },
   "dependencies": {
     "@jobdekho/core": "*", "@jobdekho/store": "*",
