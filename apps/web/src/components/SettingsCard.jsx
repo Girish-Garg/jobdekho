@@ -1,3 +1,5 @@
+import Card from './ui/Card.jsx';
+
 // One group of settings: an icon chip (neutral, like the Profile's; saffron
 // is kept for what you act with), the title and what it controls, an
 // optional note on the right (the AI CLI's "Saved"), and the controls below.
@@ -6,7 +8,7 @@
 // soft light follows the pointer across it (see motion.css and dither.css).
 export default function SettingsCard({ icon, title, hint, note = null, children }) {
   return (
-    <section data-reveal aria-label={title} className="dither-spot dither-soft rounded-2xl border border-line bg-panel p-5 shadow-raise hover:border-edge sm:p-6">
+    <Card as="section" variant="panel" data-reveal aria-label={title} className="dither-spot dither-soft shadow-raise hover:border-edge sm:p-6">
       <div className="mb-5 flex items-start gap-3.5">
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-select text-ink ring-1 ring-inset ring-line">{icon}</span>
         <div className="min-w-0 flex-1">
@@ -16,6 +18,6 @@ export default function SettingsCard({ icon, title, hint, note = null, children 
         {note}
       </div>
       {children}
-    </section>
+    </Card>
   );
 }

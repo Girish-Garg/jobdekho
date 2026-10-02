@@ -1,3 +1,4 @@
+import Card from './ui/Card.jsx';
 import SettingsCard from './SettingsCard.jsx';
 import ApplySignIns from './ApplySignIns.jsx';
 import { APPLY_ASSIST } from '../lib/features.js';
@@ -24,12 +25,12 @@ export default function YourDataCard() {
 
 function Fact({ icon, title, children }) {
   return (
-    <li className="flex gap-3 rounded-xl border border-line bg-paper/60 p-3.5">
+    <Card as="li" variant="inset" className="flex gap-3">
       <span className="mt-0.5 shrink-0 text-muted">{icon}</span>
       <span className="text-sm">
         <span className="block font-semibold text-ink">{title}</span>
         <span className="text-muted">{children}</span>
       </span>
-    </li>
+    </Card>
   );
 }

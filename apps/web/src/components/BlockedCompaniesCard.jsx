@@ -1,3 +1,4 @@
+import Button from './ui/Button.jsx';
 import { useBlockedCompanies } from '../lib/useBlockedCompanies.js';
 import { shortDay } from '../lib/time.js';
 import SettingsCard from './SettingsCard.jsx';
@@ -33,15 +34,16 @@ export default function BlockedCompaniesCard() {
                 <span className="block truncate font-semibold text-ink">{entry.name}</span>
                 <span className="tnum text-muted">{detail(entry)}</span>
               </span>
-              <button
-                type="button"
+              <Button
+                variant="quiet"
+                size="sm"
                 onClick={() => unblock(entry.key)}
                 disabled={busy === entry.key}
                 aria-label={`Unblock ${entry.name}`}
-                className="btn btn-quiet btn-sm shrink-0"
+                className="shrink-0"
               >
                 {busy === entry.key ? 'Unblocking...' : 'Unblock'}
-              </button>
+              </Button>
             </li>
           ))}
         </ul>

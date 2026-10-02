@@ -1,4 +1,6 @@
 import { Fragment } from 'react';
+import Card from './ui/Card.jsx';
+import Button from './ui/Button.jsx';
 
 // Claude Code and Antigravity take both policies (Antigravity searches
 // through an agent of its own, see the server's ai/agy-agent.js). Ollama
@@ -22,7 +24,7 @@ export default function InstallHint({ intro, policies, providers, checking, onRe
   const unfit = providers.filter((p) => !serves(p, policies));
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-line bg-panel p-4">
+    <Card className="flex flex-col gap-3 rounded-lg p-4">
       <p className="text-sm text-ink">{intro}</p>
       {providers.length === 0 && (
         <p role="alert" className="text-sm text-ember">
@@ -50,15 +52,10 @@ export default function InstallHint({ intro, policies, providers, checking, onRe
         </p>
       ))}
       <div>
-        <button
-          type="button"
-          disabled={checking}
-          onClick={onRecheck}
-          className="btn btn-quiet font-normal"
-        >
+        <Button variant="quiet" className="font-normal" disabled={checking} onClick={onRecheck}>
           {checking ? 'Checking...' : 'Check again'}
-        </button>
+        </Button>
       </div>
-    </div>
+    </Card>
   );
 }

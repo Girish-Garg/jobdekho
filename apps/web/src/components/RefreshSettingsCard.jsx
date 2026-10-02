@@ -1,3 +1,4 @@
+import Button from './ui/Button.jsx';
 import { useScrape } from '../lib/useScrape.js';
 import { useRefreshSetting } from '../lib/useRefreshSetting.js';
 import { refreshStatus } from '../lib/refreshStatus.js';
@@ -46,14 +47,9 @@ export default function RefreshSettingsCard() {
       <RefreshLastRun lastRun={scrape?.lastRun ?? null} />
       <SourceHealthNote health={scrape?.health ?? null} />
       <div className="mt-4 flex flex-wrap items-center gap-3">
-        <button
-          type="button"
-          onClick={start}
-          disabled={running}
-          className="btn btn-primary"
-        >
+        <Button variant="primary" onClick={start} disabled={running}>
           Refresh now
-        </button>
+        </Button>
         {/* Always mounted, since a live region added with its words already
             in it is often not read out. Idle, the last run above says it. */}
         <span aria-live="polite" title={status.title} className={`tnum text-sm ${TONE[status.tone]}`}>

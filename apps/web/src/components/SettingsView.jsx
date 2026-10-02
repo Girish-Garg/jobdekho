@@ -10,6 +10,8 @@ import AdzunaCard from './AdzunaCard.jsx';
 import YourDataCard from './YourDataCard.jsx';
 import ProfileIndex from './ProfileIndex.jsx';
 import { PaletteIcon } from './Icon.jsx';
+import PageTitle from './ui/PageTitle.jsx';
+import Card from './ui/Card.jsx';
 
 // The page's sections, in order, for the index beside them.
 const SECTIONS = [
@@ -35,13 +37,13 @@ export default function SettingsView() {
   return (
     <section className="px-4 pb-12 pt-8">
       <div className="mx-auto w-full max-w-[84rem]">
-        <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink">Settings</h1>
+        <PageTitle>Settings</PageTitle>
         <p className="mt-0.5 text-sm text-muted">Saved on this computer as you pick.</p>
 
         <div className="mt-6 grid grid-cols-1 items-start gap-6 min-[1100px]:grid-cols-[15rem_minmax(0,1fr)]">
-          <aside className="sticky top-4 hidden rounded-2xl border border-line bg-panel p-2 min-[1100px]:block">
+          <Card as="aside" variant="rail" className="sticky top-4 hidden min-[1100px]:block">
             <ProfileIndex rows={SECTIONS} current={current} onJump={jumpTo} />
-          </aside>
+          </Card>
           <div className="flex min-w-0 flex-col gap-5">
             <div id="settings-setup" className="scroll-mt-4"><SetupCard /></div>
             <div id="settings-ai" className="scroll-mt-4"><SettingsAiCard /></div>

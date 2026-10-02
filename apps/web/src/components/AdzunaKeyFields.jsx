@@ -1,5 +1,6 @@
 import { useId, useState } from 'react';
-import { BOX, Labelled } from './ProfileField.jsx';
+import TextInput from './ui/TextInput.jsx';
+import { Labelled } from './ProfileField.jsx';
 
 // The two things Adzuna's developer page hands out: the app id, a plain
 // field since it is an identifier the card shows anyway, and the key, a
@@ -15,16 +16,16 @@ export default function AdzunaKeyFields({ appId, appKey, keyEnd, onAppId, onAppK
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
       <Labelled label="App id">
-        <input {...plain} className={BOX} value={appId} placeholder="Paste the app id" onChange={(e) => onAppId(e.target.value)} />
+        <TextInput {...plain} value={appId} placeholder="Paste the app id" onChange={(e) => onAppId(e.target.value)} />
       </Labelled>
       <div className="flex flex-col gap-1">
         <label htmlFor={keyId} className="text-sm text-muted">App key</label>
         <div className="flex gap-2">
-          <input
+          <TextInput
             {...plain}
             id={keyId}
             type={shown ? 'text' : 'password'}
-            className={`${BOX} min-w-0 flex-1`}
+            className="min-w-0 flex-1"
             value={appKey}
             placeholder={keyEnd ? `Saved key ends ${keyEnd}` : 'Paste the key'}
             onChange={(e) => onAppKey(e.target.value)}

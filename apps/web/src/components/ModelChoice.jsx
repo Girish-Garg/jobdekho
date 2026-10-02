@@ -1,4 +1,5 @@
 import { useId } from 'react';
+import Card from './ui/Card.jsx';
 import { modelSize, shortModelName } from '../lib/modelSize.js';
 import { modelHint } from '../lib/modelHint.js';
 import Select from './Select.jsx';
@@ -23,7 +24,7 @@ export default function ModelChoice({ provider, saved, onChange }) {
   const current = models.find((m) => m.id === saved) ?? models[0];
 
   return (
-    <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-paper/60 px-4 py-3">
+    <Card variant="inset" className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl px-4 py-3">
       <div className="min-w-0 flex-1">
         <label htmlFor={id} className="block text-sm font-semibold text-ink">{provider.label} model</label>
         <p className="mt-0.5 text-xs text-muted">{modelHint(provider, current)}</p>
@@ -44,6 +45,6 @@ export default function ModelChoice({ provider, saved, onChange }) {
           );
         })}
       </Select>
-    </div>
+    </Card>
   );
 }

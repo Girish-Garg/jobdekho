@@ -1,3 +1,4 @@
+import Button from './ui/Button.jsx';
 import { useAdzunaKey } from '../lib/useAdzunaKey.js';
 import { keyStatus, lastRunStatus } from '../lib/adzunaStatus.js';
 import SettingsCard from './SettingsCard.jsx';
@@ -6,7 +7,6 @@ import { CheckIcon, SearchIcon } from './Icon.jsx';
 
 const TONE = { ok: 'text-applied', error: 'text-ember', muted: 'text-muted' };
 const LINK = 'link';
-const OUTLINE = 'btn btn-quiet font-normal';
 
 // The person's own free Adzuna key, so Adzuna joins every refresh without
 // anyone editing .env (see the server's api/adzuna.js). What it says about
@@ -50,16 +50,12 @@ export default function AdzunaCard() {
       >
         <AdzunaKeyFields appId={appId} appKey={appKey} keyEnd={view?.keyEnd} onAppId={setAppId} onAppKey={setAppKey} />
         <div className="mt-4 flex flex-wrap items-center gap-3">
-          <button
-            type="submit"
-            disabled={!typed || Boolean(busy)}
-            className="btn btn-primary"
-          >
+          <Button variant="primary" type="submit" disabled={!typed || Boolean(busy)}>
             {busy === 'save' ? 'Saving...' : 'Save'}
-          </button>
-          <button type="button" onClick={check} disabled={Boolean(busy) || !(appKey.trim() || view?.configured)} className={OUTLINE}>
+          </Button>
+          <Button variant="quiet" className="font-normal" onClick={check} disabled={Boolean(busy) || !(appKey.trim() || view?.configured)}>
             {busy === 'check' ? 'Checking...' : 'Check key'}
-          </button>
+          </Button>
           {view?.from === 'settings' && (
             <button type="button" onClick={remove} disabled={Boolean(busy)} className="text-sm font-medium text-ember hover:underline disabled:opacity-60">
               Remove

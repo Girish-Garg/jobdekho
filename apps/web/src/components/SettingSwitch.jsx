@@ -1,4 +1,5 @@
 import { useId } from 'react';
+import Switch from './ui/Switch.jsx';
 
 // One on/off setting: its name, a line on what it does, anything more the
 // caller adds below that (a status), and the switch. Saving is the caller's
@@ -13,25 +14,14 @@ export default function SettingSwitch({ label, hint, on, disabled, onChange, chi
         <span id={hintId} className="text-muted">{hint}</span>
         {children}
       </div>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={on}
+      <Switch
+        on={on}
+        onChange={onChange}
+        disabled={disabled}
         aria-labelledby={labelId}
         aria-describedby={hintId}
-        disabled={disabled}
-        onClick={() => onChange(!on)}
-        className={`relative mt-0.5 h-6 w-11 shrink-0 rounded-full border transition-colors duration-fast ease disabled:opacity-60 ${
-          on ? 'border-primary bg-primary' : 'border-edge bg-select'
-        }`}
-      >
-        <span
-          aria-hidden="true"
-          className={`absolute left-px top-px h-5 w-5 rounded-full shadow-raise transition-transform duration-fast ease ${
-            on ? 'translate-x-5 bg-on-primary' : 'bg-panel'
-          }`}
-        />
-      </button>
+        className="mt-0.5 shrink-0"
+      />
     </div>
   );
 }

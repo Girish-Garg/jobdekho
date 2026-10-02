@@ -1,3 +1,4 @@
+import Card from './ui/Card.jsx';
 import { shortStamp } from '../lib/time.js';
 import { sourceLabel } from '../lib/sourceName.js';
 
@@ -17,7 +18,7 @@ export default function RefreshLastRun({ lastRun }) {
   const more = failed.length - NAMED;
 
   return (
-    <div className="mt-4 rounded-xl border border-line bg-paper/60 p-3.5 text-sm">
+    <Card variant="inset" className="mt-4 text-sm">
       <p className="text-ink">
         <span className="font-semibold">Last refreshed {shortStamp(at)}</span>
         <span className="tnum text-muted">{`: ${fresh} new from ${sources} sources`}</span>
@@ -35,6 +36,6 @@ export default function RefreshLastRun({ lastRun }) {
         </p>
       )}
       {skipped.map((s) => <p key={s.name} className="tnum mt-1 text-muted">{s.note}</p>)}
-    </div>
+    </Card>
   );
 }
