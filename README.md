@@ -14,46 +14,45 @@ It is for one person hunting a job in India, anywhere from a first internship
 to a senior role, who wants a ranked feed instead of scrolling job boards by
 hand.
 
-## Requirements
+## Quick start
 
-- Node 22 or newer. `.nvmrc` still says 20, but `unpdf`, which reads the text
-  out of an uploaded resume, declares Node 22 or newer.
-- npm. This is an npm workspaces monorepo (`packages/*`, `apps/*`).
-- An AI to answer with, for the AI features: Claude Code, Antigravity, or
-  Ollama (see [Choosing an AI](#choosing-an-ai)). The feed, the ranking, the
-  filters and the documents all work without one.
-- LaTeX, to turn documents into PDFs: [MiKTeX](https://miktex.org/download)
-  on Windows, [TeX Live](https://tug.org/texlive) on macOS or Linux. Without
-  it, documents still work as LaTeX source you can edit and download as a
-  `.tex` file; only the PDF waits on it. JobDekho looks for `pdflatex` on the
-  PATH it was started with.
-- Optional: [Ollama](https://ollama.com), to run the AI on this computer.
-
-Everything else the app needs (Fastify, React, vitest, and so on) comes in
-with `npm install`.
-
-## Setup and first run
+With [Node.js](https://nodejs.org) 22 or newer installed, run:
 
 ```
-npm install
-npm run build
-npm start
+npx jobdekho@latest
 ```
 
-Then open http://localhost:3000.
+That is all. It downloads JobDekho, starts it on this computer and opens it
+in your browser. Keep that window open while you use it: JobDekho runs, and
+refreshes postings once a day, only while it is open. Ctrl+C stops it. Run
+the same command next time; it fetches the newest version, and your data
+stays where it was.
 
-No `.env` is needed: every setting has a working default (see
-[Configuration](#configuration)). To change one, copy `.env.example` to
-`.env` (`copy .env.example .env` in the Windows command prompt) and edit it.
+From there to a ranked feed: install an AI (see
+[Choosing an AI](#choosing-an-ai)), fill in your profile (upload a resume and
+press "Fill in from resume"), and press **Refresh now** in Settings, under
+Postings. The setup check below says what is still missing.
 
-`npm run build` builds the web app once (`apps/web`, via Vite). `npm start`
-runs the Fastify server, which serves both the API and that build from one
-origin, port 3000 by default. If you skip the build, the server still starts
-and the API still works, it just has no page to serve: it logs that it found
-no build and skips static serving. Rebuild and restart after any change to
-the web app. The server maps each built file to its own route at startup, so
-a rebuild without a restart leaves the old routes in place and the browser
-asks for files that no longer exist, which shows up as a blank page.
+Options, for when the defaults do not suit (for example
+`npx jobdekho@latest --port 5000`):
+
+| Option | What it does |
+| --- | --- |
+| `--port <number>` | The port to serve on. Default 4747, or the next free one. |
+| `--data <folder>` | Keep your data in this folder instead of the default below. |
+| `--no-open` | Leave the browser closed; open the address it prints yourself. |
+| `--version`, `--help` | Print the version, or the options. |
+
+Your data stays on your computer, in your user data folder:
+
+- Windows: `%APPDATA%\JobDekho`
+- macOS: `~/Library/Application Support/JobDekho`
+- Linux: `~/.local/share/jobdekho` (or `$XDG_DATA_HOME/jobdekho`)
+
+The command serves this computer alone (`127.0.0.1`), and it ignores any
+`.env` in the folder you run it from, which belongs to some other project.
+The other settings under [Configuration](#configuration) can be set in your
+shell before running it.
 
 ### The setup check
 
@@ -76,9 +75,50 @@ started with. While something required is missing, the Postings page shows a
 short notice naming it, with a button to Settings; it can be dismissed for
 the session.
 
-The fewest steps from a fresh install to a ranked feed: install one AI, fill
-in your profile (upload a resume and press "Fill in from resume"), and
-refresh postings.
+## Requirements
+
+- Node 22 or newer. `.nvmrc` still says 20, but `unpdf`, which reads the text
+  out of an uploaded resume, declares Node 22 or newer.
+- An AI to answer with, for the AI features: Claude Code, Antigravity, or
+  Ollama (see [Choosing an AI](#choosing-an-ai)). The feed, the ranking, the
+  filters and the documents all work without one.
+- LaTeX, to turn documents into PDFs: [MiKTeX](https://miktex.org/download)
+  on Windows, [TeX Live](https://tug.org/texlive) on macOS or Linux. Without
+  it, documents still work as LaTeX source you can edit and download as a
+  `.tex` file; only the PDF waits on it. JobDekho looks for `pdflatex` on the
+  PATH it was started with.
+- Optional: [Ollama](https://ollama.com), to run the AI on this computer.
+
+Everything else comes with JobDekho itself.
+
+## Running from source
+
+To work on JobDekho, or to run a version that is not published yet. The repo
+is an npm workspaces monorepo (`packages/*`, `apps/*`).
+
+```
+git clone https://github.com/Girish-Garg/jobdekho.git
+cd jobdekho
+npm install
+npm run build
+npm start
+```
+
+Then open http://localhost:3000. Run this way, your data goes in `data/`
+inside the repo.
+
+No `.env` is needed: every setting has a working default (see
+[Configuration](#configuration)). To change one, copy `.env.example` to
+`.env` (`copy .env.example .env` in the Windows command prompt) and edit it.
+
+`npm run build` builds the web app once (`apps/web`, via Vite). `npm start`
+runs the Fastify server, which serves both the API and that build from one
+origin, port 3000 by default. If you skip the build, the server still starts
+and the API still works, it just has no page to serve: it logs that it found
+no build and skips static serving. Rebuild and restart after any change to
+the web app. The server maps each built file to its own route at startup, so
+a rebuild without a restart leaves the old routes in place and the browser
+asks for files that no longer exist, which shows up as a blank page.
 
 ## Choosing an AI
 
@@ -389,12 +429,14 @@ folder that is deleted again once the call finishes.
 
 ## Configuration
 
-Each has a working default. To change one, set it in `.env` at the repo
-root (copy `.env.example`).
+Each has a working default. Running from source, set one in `.env` at the
+repo root (copy `.env.example`). The `npx` command reads no `.env` and
+decides `HOST`, `PORT` and `NODE_ENV` itself; set any of the others in your
+shell before running it.
 
 | Variable | Default | What it does |
 | --- | --- | --- |
-| `JOBDEKHO_DATA_DIR` | `data` | Where the corpus and your own files are kept, relative to the working directory. |
+| `JOBDEKHO_DATA_DIR` | `data` | Where the corpus and your own files are kept, relative to the working directory. The `npx` command uses your user data folder unless this or `--data` names another. |
 | `PORT` | `3000` | Port the server listens on. |
 | `HOST` | `127.0.0.1` | Address the server listens on. This computer only; anything that can reach the port can read your data. |
 | `NODE_ENV` | `development` | Leave it unset on your own computer. `production` is for a deployed server: it requires `SESSION_SECRET` and turns off the local identity below. |
@@ -405,8 +447,9 @@ root (copy `.env.example`).
 
 ## Data folder
 
-Everything lives under `JOBDEKHO_DATA_DIR` (`./data` by default), created on
-first use. Two kinds of file live there, and they are never mixed:
+Everything lives in one folder, created on first use: your user data folder
+for `npx jobdekho` (see [Quick start](#quick-start)) or the one `--data`
+names, and `JOBDEKHO_DATA_DIR` (`./data` by default) when running from source. Two kinds of file live there, and they are never mixed:
 
 | File | What it is | Safe to delete? |
 | --- | --- | --- |
@@ -427,6 +470,12 @@ first use. Two kinds of file live there, and they are never mixed:
 ## Troubleshooting
 
 Start with Settings > Setup check: it names what is missing and what to do.
+
+**`npx jobdekho` says it needs Node.js 22.** Install the current version from
+https://nodejs.org, open a new terminal, and run it again.
+
+**"Port ... is already in use".** Leave `--port` out and the command takes
+the next free port from 4747 itself, or name another one.
 
 **The page loads but shows nothing, and the API answers 401.** `NODE_ENV` is
 set to `production`, which turns off the local identity. Remove it from
@@ -504,6 +553,26 @@ Conventions, enforced by review rather than a linter:
 
 Adding a new job source is covered in
 [docs/adding-sources.md](docs/adding-sources.md).
+
+### Publishing to npm
+
+```
+npm run pack:npm
+```
+
+builds the web app and stages the npm package `jobdekho` in `dist/npm`: the
+folders the command runs, each where it sits in the repo, with every
+`@jobdekho/...` import rewritten to a relative path, and a package.json that
+lists every library they import. It stops if an import would not resolve once
+installed. `npm run pack:npm -- --tgz` also packs
+`dist/jobdekho-<version>.tgz`, which `npx ./dist/jobdekho-<version>.tgz` runs
+the way a user would.
+
+A release is `npm version patch` (or `minor`), which bumps the version,
+commits and tags it, then `npm run pack:npm` and `npm publish dist/npm`, and
+`git push --follow-tags`. To let testers try a version first, publish it
+with `--tag next` (they run `npx jobdekho@next`), then move it to everyone
+with `npm dist-tag add jobdekho@<version> latest`.
 
 ## License
 

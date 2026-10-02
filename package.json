@@ -1,5 +1,7 @@
 {
   "name": "jobdekho",
+  "version": "0.1.0",
+  "author": "Girish Garg",
   "license": "MIT",
   "private": true,
   "type": "module",
@@ -13,6 +15,7 @@
     "test": "vitest run",
     "scrape": "node apps/scraper/src/index.js",
     "build": "npm -w @jobdekho/web run build",
+    "pack:npm": "node scripts/npm-package/stage.js",
     "resume:check": "node apps/server/src/resume/check-templates.js"
   },
   "devDependencies": {
