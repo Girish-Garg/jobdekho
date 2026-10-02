@@ -1,0 +1,85 @@
+/* Icon buttons and switches, kept with the buttons (buttons.css) for the
+   same reason: one place to change them, in the components layer so a
+   utility on the element still wins. components/ui/IconButton.jsx and
+   components/ui/Switch.jsx apply them.
+
+   An icon button is round and muted until pointed at. Three sizes: xs for
+   a close inside a chip or a toast, sm for a row's tools, md for a pane's
+   own controls. outline sets it on a hairline for a control that has to be
+   found on a busy surface; danger turns it red for a removal. */
+@layer components {
+  .icon-btn {
+    @apply grid shrink-0 place-items-center rounded-full text-muted transition-colors duration-fast ease-ease;
+  }
+
+  .icon-btn:hover:not(:disabled) {
+    @apply bg-select text-ink;
+  }
+
+  .icon-btn-xs {
+    @apply h-5 w-5;
+  }
+
+  .icon-btn-sm {
+    @apply h-7 w-7;
+  }
+
+  .icon-btn-md {
+    @apply h-8 w-8;
+  }
+
+  .icon-btn-square {
+    @apply rounded-lg;
+  }
+
+  .icon-btn-outline {
+    @apply border border-line bg-panel;
+  }
+
+  .icon-btn-outline:hover:not(:disabled) {
+    @apply border-edge bg-panel;
+  }
+
+  .icon-btn-danger:hover:not(:disabled) {
+    @apply bg-ember/10 text-ember;
+  }
+
+  .icon-btn-outline.icon-btn-danger:hover:not(:disabled) {
+    @apply border-ember/40 bg-panel;
+  }
+
+  .icon-btn:disabled {
+    @apply cursor-default opacity-50;
+  }
+
+  /* The state is read off aria-checked, so the look cannot disagree with
+     what a screen reader is told. sm sits inside a field the height of an
+     input (the profile's "Still going"). */
+  .switch {
+    @apply relative h-6 w-11 shrink-0 rounded-full border border-edge bg-select transition-colors duration-fast ease-ease disabled:opacity-60;
+  }
+
+  .switch[aria-checked='true'] {
+    @apply border-primary bg-primary;
+  }
+
+  .switch-knob {
+    @apply absolute left-px top-px h-5 w-5 rounded-full bg-panel shadow-raise transition-transform duration-fast ease-ease;
+  }
+
+  .switch[aria-checked='true'] .switch-knob {
+    @apply translate-x-5 bg-on-primary;
+  }
+
+  .switch-sm {
+    @apply h-[18px] w-8;
+  }
+
+  .switch-sm .switch-knob {
+    @apply h-3.5 w-3.5;
+  }
+
+  .switch-sm[aria-checked='true'] .switch-knob {
+    @apply translate-x-[14px];
+  }
+}

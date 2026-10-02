@@ -1,0 +1,48 @@
+/* The small marks set beside things: chips, counts, the eyebrow over a
+   card, and a page's title. Component classes for the reason the buttons
+   are (buttons.css). components/ui/Chip.jsx, CountBadge.jsx, Eyebrow.jsx
+   and PageTitle.jsx apply them.
+
+   A chip names a property of something (Internship, New, a link's kind);
+   tones: quiet for a plain fact, primary for something the person should
+   notice, applied for done, line for a chip that stands on a hairline. */
+@layer components {
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold;
+  }
+
+  .chip-quiet {
+    @apply bg-select text-muted;
+  }
+
+  .chip-primary {
+    @apply bg-primary/10 text-primary;
+  }
+
+  .chip-applied {
+    @apply bg-applied/15 text-applied;
+  }
+
+  .chip-line {
+    @apply border border-line bg-panel text-ink;
+  }
+
+  /* How many there are, beside a name. solid is the one on a filter
+     trigger, which has to read against the trigger's own saffron wash. */
+  .count {
+    @apply rounded-full bg-select px-1.5 text-[11px] font-semibold text-muted;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .count-solid {
+    @apply grid h-[18px] min-w-[18px] place-items-center bg-primary px-1 text-[10px] font-bold text-on-primary;
+  }
+
+  .eyebrow {
+    @apply text-[10px] font-bold uppercase tracking-[0.14em] text-muted;
+  }
+
+  .page-title {
+    @apply font-display text-2xl font-extrabold tracking-tight text-ink;
+  }
+}

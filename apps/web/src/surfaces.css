@@ -1,0 +1,35 @@
+/* The app's surfaces, as component classes for the reason the buttons are
+   (buttons.css): one place to change a card's corner or padding, and a
+   utility on the element still wins, so a card that needs more room says
+   so with sm:p-6 and no !important. components/ui/Card.jsx applies them.
+
+   panel  a section of a page: a Profile section, a Settings group.
+   inset  a well inside a panel, a step down onto the ground colour.
+   pop    anything floating over the page: a menu, a dialog, a popover.
+   list   rows edge to edge, so the card clips them at its corners.
+   rail   the sticky index beside a long page. */
+@layer components {
+  .card {
+    @apply border border-line;
+  }
+
+  .card-panel {
+    @apply rounded-2xl bg-panel p-5;
+  }
+
+  .card-inset {
+    @apply rounded-xl bg-paper/60 p-3.5;
+  }
+
+  .card-pop {
+    @apply rounded-2xl bg-overlay shadow-pop;
+  }
+
+  .card-list {
+    @apply overflow-hidden rounded-xl bg-panel;
+  }
+
+  .card-rail {
+    @apply rounded-2xl bg-panel p-2;
+  }
+}

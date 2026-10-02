@@ -1,0 +1,14 @@
+/* Text boxes, as component classes for the reason the buttons are
+   (buttons.css). A field reads as a box on the panel and lights saffron
+   while it is being typed in; a search field is the rounder one that sits
+   in a menu or a bar, with room on its left for the glass.
+   components/ui/TextInput.jsx, TextArea.jsx and SearchField.jsx apply them. */
+@layer components {
+  .field {
+    @apply rounded-lg border border-line bg-panel px-3 py-2 text-sm text-ink outline-none transition duration-fast ease-ease hover:border-edge focus:border-primary/60 focus:ring-2 focus:ring-primary/15;
+  }
+
+  .field-search {
+    @apply w-full rounded-full border border-line bg-panel py-1.5 pl-8 pr-3 text-sm outline-none transition-colors duration-fast ease-ease focus:border-primary/60 focus:ring-2 focus:ring-primary/15 focus-visible:outline-none;
+  }
+}

@@ -1,6 +1,8 @@
-/* The app's buttons, in four weights: primary (saffron, the one thing to do
+/* The app's buttons, in five weights: primary (saffron, the one thing to do
    on a surface), tint (a saffron wash, for the ways into AI), quiet (a
-   hairline, for everything else) and ghost (text only, for dense rows).
+   hairline, for everything else), ghost (text only, for dense rows) and
+   danger (red, for a confirm that cannot be undone). components/ui/Button.jsx
+   applies them; icon buttons and switches live in controls.css.
    Each used to be spelled out in utilities at every call site, and forty
    slightly different buttons read as a cheap app.
 
@@ -69,6 +71,17 @@
 
   .btn-ghost:hover:not(:disabled) {
     color: rgb(var(--ink));
+  }
+
+  /* Red, for the one press that cannot be taken back (delete, forget,
+     block), and only ever on the confirm that follows a quieter first ask. */
+  .btn-danger {
+    background-color: rgb(var(--ember));
+    color: rgb(var(--paper));
+  }
+
+  .btn-danger:hover:not(:disabled) {
+    opacity: 0.9;
   }
 
   /* A press gives a little, which is feedback before anything else answers. */
