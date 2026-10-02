@@ -17,6 +17,6 @@ function planReply(previous) {
   return JSON.stringify({ sections, keywords: previous?.keywords ?? { used: [], missing: [] } })
 }
 
-export function buildResumeTailorRefinePrompt(posting, profile, previous, instruction) {
-  return buildResumeTailorPrompt(posting, profile) + buildRefineSection(planReply(previous), instruction)
+export function buildResumeTailorRefinePrompt(posting, profile, previous, instruction, memory = []) {
+  return buildResumeTailorPrompt(posting, profile, memory) + buildRefineSection(planReply(previous), instruction)
 }

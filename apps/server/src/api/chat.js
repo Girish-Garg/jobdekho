@@ -4,6 +4,7 @@ import { chatStore } from '../chat/store.js'
 import { documentStore } from '../documents/store.js'
 import { assemblePageContext } from '../chat/page-context.js'
 import { runChatTurn } from '../chat/run.js'
+import { chatMemory, settleMemory } from '../chat/memory-turn.js'
 import { beginQuestion, noteEvent, endQuestion, questionState, stopSignal, stopQuestion } from '../chat/in-flight.js'
 import { chatConversationRoutes } from './chat-conversations.js'
 
@@ -55,6 +56,9 @@ export async function chatRoutes(app) {
     const context = await assemblePageContext({
       dashboard: app.dashboard, documents, detect: app.ai.detect, userId, body: request.body ?? {}, question: message,
     })
+    // What the person asked the chat to remember, on every page, unless they
+    // switched memory off (see chat/memory-turn.js).
+    context.memory = await chatMemory(store, userId)
     const { turns: history } = await getCurrentConversation(store, userId)
     // Taken now, so the answer is saved to the conversation it was asked in
     // even if the person files that one away before it lands.
@@ -66,7 +70,10 @@ export async function chatRoutes(app) {
       try {
         const watch = (event) => { noteEvent(userId, event); emit(event) }
         const signal = stopSignal(userId)
-        const turn = { ...(await runChatTurn({ message, context, history, select: app.ai.select, emit: watch, signal, ...cli })), conversationId }
+        const asked = await runChatTurn({ message, context, history, select: app.ai.select, emit: watch, signal, ...cli })
+        // Saved now only when the message itself said "remember"; the rest
+        // wait under the answer for the person's Save.
+        const turn = { ...asked, memory: await settleMemory(store, userId, message, asked.memory), conversationId }
         await appendChatTurn(store, userId, turn)
         endQuestion(userId)
         return turn

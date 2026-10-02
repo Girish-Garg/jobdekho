@@ -25,12 +25,15 @@ function known(tools) {
 
 // The part of a provider that turns a policy into arguments. `base` is the
 // one-shot mode, `byPolicy` what each honoured policy adds to it; a policy
-// missing from the table is one this CLI cannot honour.
-export function underPolicies({ base, byPolicy }) {
+// missing from the table is one this CLI cannot honour. `env`, for a CLI
+// that needs variables of its own, is set on every call whatever the policy
+// (see over-process.js).
+export function underPolicies({ base, byPolicy, env = null }) {
   const honours = (tools) => byPolicy[known(tools)] !== undefined
   return {
     policies: TOOL_POLICIES.filter(honours),
     supports: honours,
     promptArgs: (tools) => (honours(tools) ? [...base, ...byPolicy[tools]] : null),
+    ...(env ? { env } : {}),
   }
 }

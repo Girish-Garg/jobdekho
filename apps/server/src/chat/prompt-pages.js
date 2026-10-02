@@ -1,6 +1,7 @@
 import { historyBlock } from './prompt-history.js'
 import { profileView } from './profile-view.js'
 import { PROFILE_RULES, DOCUMENT_RULES, PROPOSAL_REPLY } from './prompt-proposal-rules.js'
+import { memoryPrompt } from './memory-prompt.js'
 
 // The prompts for the pages other than the feed (the feed's own is in
 // prompt.js). Each call still runs with no tools at all (see run.js): the
@@ -63,5 +64,5 @@ function settingsPrompt({ context }) {
 const BUILDERS = { profile: profilePrompt, resume: resumePrompt, settings: settingsPrompt }
 
 export function buildPagePrompt({ message, context, history }) {
-  return `${BUILDERS[context.page]({ context })}${historyBlock(history)}Question: ${message}\n`
+  return `${BUILDERS[context.page]({ context })}${memoryPrompt(context.memory)}${historyBlock(history)}Question: ${message}\n`
 }

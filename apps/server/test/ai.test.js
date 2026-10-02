@@ -160,6 +160,7 @@ describe('callProvider', () => {
     expect(run).toHaveBeenCalledWith({
       file: '/usr/local/bin/claude', args: CLAUDE.promptArgs('none'),
       input: 'resume "here"; rm -rf /', timeoutMs: 120000, cwd: '/scratch',
+      env: { CLAUDE_CODE_DISABLE_AUTO_MEMORY: '1' },
     })
   })
 

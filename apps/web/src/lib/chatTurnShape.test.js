@@ -8,8 +8,14 @@ describe('turnShape', () => {
     const turn = turnShape({ ...BASE, answer: 'Two roles here.', refs: [{ id: 'p1' }], actions: [{ type: 'sort', value: 'newest' }] });
     expect(turn).toEqual({
       question: 'Is Acme hiring?', answer: 'Two roles here.', refs: [{ id: 'p1' }], actions: [{ type: 'sort', value: 'newest' }],
-      provider: 'claude', createdAt: BASE.createdAt, web: null, webError: null, proposals: [],
+      provider: 'claude', createdAt: BASE.createdAt, web: null, webError: null, proposals: [], memory: [],
     });
+  });
+
+  it('keeps what a turn offered to remember, and nothing unreadable among it', () => {
+    const saved = { status: 'saved', id: 'm1', text: 'Keep my resume to one page', scope: 'resume', quote: 'keep my resume to one page' };
+    expect(turnShape({ ...BASE, answer: 'x', memory: [saved, null, { text: '' }, 'stray'] }).memory).toEqual([saved]);
+    expect(turnShape({ ...BASE, answer: 'x', memory: 'nope' }).memory).toEqual([]);
   });
 
   it('keeps both answers of a turn that also searched the web', () => {

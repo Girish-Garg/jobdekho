@@ -26,7 +26,9 @@ import { appendToFiled } from './chat-archive.js'
 // presses Apply or Discard (see chat-proposals.js and apps/server/src/chat/
 // proposals.js), and `conversationId`, the conversation it was asked in. A
 // turn saved before those existed has none of them, which reads as a turn
-// that offered nothing.
+// that offered nothing. `memory` is what it offered to remember, each one
+// 'suggested' or 'saved' as it stood when the answer came (see apps/server/
+// src/chat/memory-turn.js); none on a turn from before memory.
 export { MAX_TURNS }
 
 export async function getCurrentConversation(store, userId) {

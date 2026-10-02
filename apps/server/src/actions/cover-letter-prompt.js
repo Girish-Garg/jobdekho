@@ -1,3 +1,5 @@
+import { memoryNote } from './memory-note.js'
+
 // The job description was scraped from a job board, so it gets the same
 // untrusted fence the fake check uses. The resume is the person's own
 // document, sent because a letter tied to real facts needs it, and gets a
@@ -33,6 +35,9 @@ const MAX_RESUME = 8000
 // row carries other things (status, fit, ghost signals) with no place here.
 const FIELDS = [['title', 'title'], ['company', 'company'], ['location', 'location']]
 
+// `context.memory` is the person's saved preferences for letters (see
+// memory-note.js), which follow the resume, outside both fences, so a refine
+// (cover-letter-refine-prompt.js) carries them too.
 export function buildCoverLetterPrompt(posting, context) {
   // A description, title or resume that contained its own closing marker
   // could end the fence early and put its own words outside it, so neither
@@ -43,5 +48,5 @@ export function buildCoverLetterPrompt(posting, context) {
     .slice(0, MAX_DESCRIPTION).split(CLOSE_JOB).join('')
   const resume = String(context.resumeText || '').slice(0, MAX_RESUME).split(CLOSE_RESUME).join('')
   const job = `${lines.join('\n')}\n\ndescription:\n${description}`
-  return `${INSTRUCTION}${OPEN_JOB}\n${job}\n${CLOSE_JOB}\n\n${OPEN_RESUME}\n${resume}\n${CLOSE_RESUME}\n`
+  return `${INSTRUCTION}${OPEN_JOB}\n${job}\n${CLOSE_JOB}\n\n${OPEN_RESUME}\n${resume}\n${CLOSE_RESUME}\n${memoryNote(context.memory)}`
 }

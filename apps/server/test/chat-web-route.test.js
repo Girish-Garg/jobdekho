@@ -23,9 +23,14 @@ function fakeDashboard() {
   }
 }
 
+// The chat route also reads the person's memory, empty here.
 function fakeChatStore(turns = []) {
   const data = { u1: { turns } }
-  return { chatHistory: { get: (userId) => data[userId] ?? null, set: (userId, record) => { data[userId] = record } } }
+  const memory = {}
+  return {
+    chatHistory: { get: (userId) => data[userId] ?? null, set: (userId, record) => { data[userId] = record } },
+    memory: { get: (userId) => memory[userId] ?? null, set: (userId, record) => { memory[userId] = record } },
+  }
 }
 
 const envelope = (obj) => JSON.stringify({ type: 'result', result: typeof obj === 'string' ? obj : JSON.stringify(obj) })

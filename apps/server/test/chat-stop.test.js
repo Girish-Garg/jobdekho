@@ -12,9 +12,14 @@ const dashboard = () => ({
   setAiResult: vi.fn(), listAiResults: vi.fn().mockResolvedValue([]), getProviderPref: vi.fn().mockResolvedValue(null), upsertProviderPref: vi.fn(),
 })
 
+// The chat route also reads the person's memory, empty here.
 const chatStore = () => {
   const data = {}
-  return { chatHistory: { get: (id) => data[id] ?? null, set: (id, record) => { data[id] = record } } }
+  const memory = {}
+  return {
+    chatHistory: { get: (id) => data[id] ?? null, set: (id, record) => { data[id] = record } },
+    memory: { get: (id) => memory[id] ?? null, set: (id, record) => { memory[id] = record } },
+  }
 }
 
 const delta = (text) => JSON.stringify({ type: 'stream_event', event: { type: 'content_block_delta', delta: { type: 'text_delta', text } } })

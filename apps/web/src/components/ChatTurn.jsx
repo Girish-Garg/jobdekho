@@ -8,11 +8,13 @@ import ChatRefs from './ChatRefs.jsx';
 import ChatActions from './ChatActions.jsx';
 import ChatWebCard from './ChatWebCard.jsx';
 import ProposalCard from './ProposalCard.jsx';
+import MemoryChips from './MemoryChips.jsx';
 import { WarningIcon } from './Icon.jsx';
 
 // One question and its answer. The answer from JobDekho's own data comes
 // first, then the changes it offers as cards to apply (the answer says what
-// they are, so they sit right under it), then the jobs it named and any
+// they are, so they sit right under it), then what it offered to remember
+// from the question (see MemoryChips.jsx), then the jobs it named and any
 // offer to change the feed, since reading on about one of them is the
 // likelier next step. What the web added is a card of its own after all of that, marked as
 // the web's, because it was written from a different, public, set of facts.
@@ -27,6 +29,7 @@ export default function ChatTurn({ turn: saved, providers, onApply, onOpenRef })
       <ChatAssistant name={providerLabel(providers, turn.provider)} when={relativeDay(turn.createdAt)}>
         {turn.answer && <ChatText text={turn.answer} />}
         {turn.proposals.map((proposal) => <ProposalCard key={proposal.id} proposal={proposal} />)}
+        {turn.memory.length > 0 && <MemoryChips items={turn.memory} />}
         {turn.refs.length > 0 && <ChatRefs refs={turn.refs} onOpen={onOpenRef} />}
         {turn.actions.length > 0 && <ChatActions actions={turn.actions} onApply={onApply} />}
         {turn.web && <ChatWebCard web={turn.web} />}

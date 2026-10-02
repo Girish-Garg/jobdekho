@@ -2,6 +2,7 @@ import { fencedFeed } from './prompt-postings.js'
 import { profileBlock } from './prompt-profile.js'
 import { historyBlock } from './prompt-history.js'
 import { buildPagePrompt } from './prompt-pages.js'
+import { memoryPrompt } from './memory-prompt.js'
 import { GRADE_BANDS } from '@jobdekho/core/grade.js'
 
 // The Fit floors as the model may offer them, from the bands themselves, so a
@@ -35,5 +36,5 @@ A "block" action, {"type":"block","companies":["..."]}, hides every job from tho
 // (see prompt-pages.js), built from what that page's context holds.
 export function buildChatPrompt({ message, context, history }) {
   if (context.page && context.page !== 'postings') return buildPagePrompt({ message, context, history })
-  return `${INSTRUCTION}${historyBlock(history)}${profileBlock(context.profile)}${fencedFeed(context)}Question: ${message}\n`
+  return `${INSTRUCTION}${memoryPrompt(context.memory)}${historyBlock(history)}${profileBlock(context.profile)}${fencedFeed(context)}Question: ${message}\n`
 }

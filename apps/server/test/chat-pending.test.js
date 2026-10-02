@@ -13,9 +13,14 @@ const dashboard = () => ({
   setAiResult: vi.fn(), listAiResults: vi.fn().mockResolvedValue([]), getProviderPref: vi.fn().mockResolvedValue(null), upsertProviderPref: vi.fn(),
 })
 
+// The chat route also reads the person's memory, empty here.
 const chatStore = () => {
   const data = {}
-  return { chatHistory: { get: (id) => data[id] ?? null, set: (id, record) => { data[id] = record } } }
+  const memory = {}
+  return {
+    chatHistory: { get: (id) => data[id] ?? null, set: (id, record) => { data[id] = record } },
+    memory: { get: (id) => memory[id] ?? null, set: (id, record) => { memory[id] = record } },
+  }
 }
 
 // A CLI that answers only when the test lets it, so the question can be

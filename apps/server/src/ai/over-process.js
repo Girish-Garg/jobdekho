@@ -12,14 +12,17 @@ import { textFeed } from './text-feed.js'
 // With `onText`, the output is also read as it arrives, through the
 // provider's own reading of a line (see text-feed.js), for an answer shown
 // while it is written; the reply that counts is still the one read at the
-// end. `signal` stops the CLI where it is (see spawn.js).
+// end. `signal` stops the CLI where it is (see spawn.js). A CLI with
+// variables of its own (Claude Code's, see claude.js) gets them on top of
+// the server's environment.
 export async function overProcess({ file, args, provider, prompt, tools, timeoutMs, run, scratch, signal = null, onText = null }) {
   const staged = provider.stage ? { files: provider.stage(tools), collect: provider.collect } : {}
   const live = onText && provider.textOf ? { onStdout: textFeed(provider.textOf, onText) } : {}
   const stop = signal ? { signal } : {}
+  const env = provider.env ? { env: provider.env } : {}
   let result
   try {
-    result = await scratch((cwd) => run({ file, args, input: provider.encodeInput(prompt), timeoutMs, cwd, ...stop, ...live, ...staged }))
+    result = await scratch((cwd) => run({ file, args, input: provider.encodeInput(prompt), timeoutMs, cwd, ...stop, ...live, ...staged, ...env }))
   } catch (err) {
     throw notRun(err, provider, timeoutMs)
   }

@@ -33,10 +33,14 @@ function fakeDashboard({ postings = [ROW], profile = null, open = null } = {}) {
 
 // The same small in-memory shape packages/store/src/user-file.js gives a
 // real file: get/set keyed by user id. Good enough for the chat route, which
-// only ever touches store.chatHistory.
+// only ever touches store.chatHistory and store.memory, empty here.
 function fakeChatStore(seed = {}) {
   const data = { ...seed }
-  return { chatHistory: { get: (userId) => data[userId] ?? null, set: (userId, record) => { data[userId] = record } } }
+  const memory = {}
+  return {
+    chatHistory: { get: (userId) => data[userId] ?? null, set: (userId, record) => { data[userId] = record } },
+    memory: { get: (userId) => memory[userId] ?? null, set: (userId, record) => { memory[userId] = record } },
+  }
 }
 
 const NO_CLI = { locate: () => null, run: vi.fn(async () => { throw new Error('a test spawned a CLI') }) }

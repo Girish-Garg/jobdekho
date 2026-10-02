@@ -12,7 +12,8 @@ import { proposalsOf } from './proposalShape.js';
 // than the web text shown twice.
 //
 // `proposals` are the changes the turn offered as cards (see proposalShape.js);
-// a turn saved before those existed offers none.
+// a turn saved before those existed offers none. `memory` is what it offered
+// to remember, each as it stood when the answer came (see MemoryChips.jsx).
 function cleanSources(sources) {
   if (!Array.isArray(sources)) return [];
   return [...new Set(sources.filter((url) => typeof url === 'string' && url))];
@@ -37,5 +38,6 @@ export function turnShape(turn = {}) {
     web: webPart(turn),
     webError: typeof turn.webError === 'string' && turn.webError ? turn.webError : null,
     proposals: proposalsOf(turn),
+    memory: Array.isArray(turn.memory) ? turn.memory.filter((m) => m && typeof m.text === 'string' && m.text) : [],
   };
 }

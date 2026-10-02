@@ -12,6 +12,8 @@ vi.mock('../api.js', () => ({
   deleteProfile: vi.fn(async () => null),
   getProviders: vi.fn(async () => [CLAUDE]),
   extractProfile: vi.fn(async () => ({ ...PROFILE, skills: ['node'] })),
+  // What the AI knows sits at the foot of the record (see MemorySection.jsx).
+  getMemory: vi.fn(async () => ({ enabled: true, items: [], archived: 0 })),
 }));
 
 import {
@@ -370,7 +372,7 @@ describe('ProfileView index at wide widths', () => {
     render(<ProfileView />);
     const rail = await screen.findByRole('complementary', { name: 'Record index' });
     const index = within(rail).getByRole('navigation', { name: 'Sections' });
-    const lines = ['Basics', 'Experience 0', 'Projects 0', 'Education 0', 'Certifications 0', 'Achievements 0', 'Skills 0', 'Best fit'];
+    const lines = ['Basics', 'Experience 0', 'Projects 0', 'Education 0', 'Certifications 0', 'Achievements 0', 'Skills 0', 'Best fit', 'What the AI knows'];
     expect(within(index).getAllByRole('link')).toHaveLength(lines.length);
     for (const name of lines) expect(within(index).getByRole('link', { name })).toBeInTheDocument();
     // Not a hole where the record would be: every line has its section on the page.

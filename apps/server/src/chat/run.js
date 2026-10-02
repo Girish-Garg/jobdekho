@@ -6,6 +6,7 @@ import { buildChatPrompt } from './prompt.js'
 import { parseChatReply } from './parse.js'
 import { answerFromWeb } from './web-answer.js'
 import { replyStream } from './reply-stream.js'
+import { memorySuggestions } from './memory-suggest.js'
 
 // This call carries the career record (see prompt-profile.js and
 // prompt-pages.js), so like cover-letter.js and resume-tailor.js it runs
@@ -20,13 +21,15 @@ const LONG_REPLY_MS = 5 * 60 * 1000
 // One turn of the conversation, from prompt to the record the store keeps
 // (see packages/store/src/chat-history.js):
 //
-//   { id, page, question, answer, actions, refs, proposals, provider, createdAt, web?, webError? }
+//   { id, page, question, answer, actions, refs, proposals, memory, provider, createdAt, web?, webError? }
 //
 // Fails the way every other AI action here does: an absent or signed-out
 // CLI as the ProviderError callProvider raised, or a reply parse() cannot
 // read as 'unreadable'. Proposals are validated here and stored pending;
 // nothing they describe happens until the person applies one (see
-// apply-proposal.js).
+// apply-proposal.js). `memory` is what the model offered to remember that
+// traces back to the question (see memory-suggest.js), empty when memory is
+// off; the route decides which of it is saved (see memory-turn.js).
 //
 // When the answer needs the web, the record-reading call says so and a
 // second call searches with the question alone (see web-prompt.js). Its
@@ -51,6 +54,7 @@ export async function runChatTurn({ message, context, history, select, emit, sig
   const { reply, actions, refs, proposals, web } = parsed
   const turn = {
     id: randomUUID(), page: context.page ?? 'postings', question: message, answer: reply, actions, refs, proposals, provider: provider.id,
+    memory: context.memory ? memorySuggestions(text, { message, items: context.memory.items }) : [],
   }
   const open = context.page === undefined || context.page === 'postings' ? context.open : null
   const searched = web ? await searchFor({ message, history, open, select, emit, signal, seams }) : {}

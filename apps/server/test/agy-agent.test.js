@@ -115,10 +115,11 @@ describe('an Antigravity call end to end', () => {
   })
 
   // Claude Code has nothing to stage, so its run call is what it always was.
+  // Claude Code's one extra is a variable, its auto memory off (see claude.js).
   it('stages nothing for Claude Code', async () => {
     const run = vi.fn(async () => ({ stdout: JSON.stringify({ type: 'result', result: 'ok' }), stderr: '', code: 0 }))
     await callProvider({ provider: CLAUDE, prompt: 'x', tools: 'web', locate: HERE, run, scratch })
-    expect(Object.keys(run.mock.calls[0][0]).sort()).toEqual(['args', 'cwd', 'file', 'input', 'timeoutMs'])
+    expect(Object.keys(run.mock.calls[0][0]).sort()).toEqual(['args', 'cwd', 'env', 'file', 'input', 'timeoutMs'])
   })
 
   it('asks the other CLI when Antigravity answered in a way it could not vouch for', async () => {

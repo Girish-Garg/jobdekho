@@ -39,6 +39,9 @@ export const FILES = {
   // The person's resumes and cover letters as LaTeX sources they own, each
   // with its recent versions. See documents.js.
   documents: 'documents.json',
+  // What the chat remembers of the person's lasting preferences, each line
+  // saved by their own click or their own "remember". See memory.js.
+  memory: 'memory.json',
   // Whether the running server refreshes postings on its own once a day.
   // See apps/server/src/scrape/prefs.js.
   scrapeSettings: 'scrape-settings.json',
@@ -82,6 +85,7 @@ export function openStore(dir) {
     chatHistory: userFile(at('chatHistory')),
     chatArchive: userFile(at('chatArchive')),
     documents: userFile(at('documents')),
+    memory: userFile(at('memory')),
     scrapeSettings: userFile(at('scrapeSettings')),
     blockedCompanies: userFile(at('blockedCompanies')),
     adzuna: userFile(at('adzuna')),

@@ -19,8 +19,9 @@ export const resumeTailor = {
   tools: 'none',
   timeoutMs: 3 * 60 * 1000,
   context: ['profileEntries'],
-  buildPrompt: (posting, context) => buildResumeTailorPrompt(posting, context.profileEntries),
+  memoryScope: 'resume',
+  buildPrompt: (posting, context) => buildResumeTailorPrompt(posting, context.profileEntries, context.memory),
   buildRefinePrompt: (posting, context, previous, instruction) =>
-    buildResumeTailorRefinePrompt(posting, context.profileEntries, previous, instruction),
+    buildResumeTailorRefinePrompt(posting, context.profileEntries, previous, instruction, context.memory),
   parse: (raw, { posting, context }) => parseResumeTailor(raw, { posting, context: { profile: context.profileEntries } }),
 }

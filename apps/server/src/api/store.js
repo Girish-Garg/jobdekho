@@ -6,6 +6,7 @@ import { getPosting } from '@jobdekho/store/posting-lookup.js'
 import { getAiResult, setAiResult, listAiResults } from '@jobdekho/store/ai-results.js'
 import { getProviderPref, upsertProviderPref } from '@jobdekho/store/ai-provider-pref.js'
 import { listBlockedCompanies, blockCompany, unblockCompany } from '@jobdekho/store/blocked-companies.js'
+import { listMemory } from '@jobdekho/store/memory.js'
 import { join } from 'node:path'
 import { saveOriginal, deleteOriginal, findOriginal } from '../resume/original.js'
 
@@ -35,6 +36,9 @@ export function createDashboardStore(db) {
     listAiResults: (userId, postingId) => listAiResults(db, userId, postingId),
     getProviderPref: (userId) => getProviderPref(db, userId),
     upsertProviderPref: (userId, p) => upsertProviderPref(db, userId, p),
+    // What the chat remembers of the person, read by the resume tailoring
+    // and the cover letter (see actions/memory-note.js).
+    getMemory: (userId) => listMemory(db, userId),
     // The uploaded resume file itself, which Apply assist attaches when no
     // LaTeX-made PDF exists (see resume/original.js).
     saveOriginalResume: (userId, bytes) => saveOriginal(db, userId, bytes),

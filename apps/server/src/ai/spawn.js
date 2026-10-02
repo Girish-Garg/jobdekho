@@ -23,9 +23,10 @@ const EXIT_WAIT_MS = 5000
 //
 // `cwd` is the working directory the CLI sees. Callers hand in an empty
 // directory made for the call, so a tool that slipped past the policy would
-// find nothing to read there and no project settings to pick up.
-function start(file, args, cwd) {
-  const options = { cwd, windowsHide: true }
+// find nothing to read there and no project settings to pick up. `env` adds
+// variables to the server's own for this one process.
+function start(file, args, cwd, env) {
+  const options = { cwd, windowsHide: true, ...(env ? { env: { ...process.env, ...env } } : {}) }
   if (!needsShell(file)) return spawn(file, args, options)
   return spawn([`"${file}"`, ...args.map(quoted)].join(' '), { ...options, shell: true })
 }
@@ -37,13 +38,13 @@ function start(file, args, cwd) {
 // since those are the cases no exit code describes. `onStdout` sees the
 // output as it arrives, for an answer shown while it is written; it is read
 // as UTF-8 text, so a character split across two chunks stays whole.
-export function runCli({ file, args, input, timeoutMs, cwd, signal = null, onStdout = null }) {
+export function runCli({ file, args, input, timeoutMs, cwd, signal = null, onStdout = null, env = null }) {
   return new Promise((resolve, reject) => {
     if (signal?.aborted) {
       reject(Object.assign(new Error(`${file} was stopped before it started`), { code: 'EABORTED' }))
       return
     }
-    const child = start(file, args, cwd)
+    const child = start(file, args, cwd, env)
     let stdout = ''
     let stderr = ''
     let settled = false

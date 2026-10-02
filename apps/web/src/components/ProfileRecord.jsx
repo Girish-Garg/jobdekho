@@ -6,6 +6,7 @@ import ProfileSaveBar from './ProfileSaveBar.jsx';
 import ProfileEmptyState from './ProfileEmptyState.jsx';
 import DeleteProfile from './DeleteProfile.jsx';
 import ChangedNotice from './ChangedNotice.jsx';
+import MemorySection from './MemorySection.jsx';
 import { notify } from '../lib/toast.js';
 
 // The record itself, top to bottom: whatever the resume proposed and still
@@ -46,6 +47,7 @@ export default function ProfileRecord({ state, applied = null, onDeleted }) {
       <ProfileHero basics={profile.basics} profile={profile} onChange={(basics) => setProfile({ ...profile, basics })} />
       <CareerSections profile={profile} onChange={setProfile} />
       <ProfileForm profile={profile} onChange={setProfile} />
+      <MemorySection />
       <ProfileSaveBar dirty={dirty} fresh={!exists} onSave={saveAndSay} onDiscard={discard} />
       {exists && <DeleteProfile onDeleted={onDeleted} />}
     </div>

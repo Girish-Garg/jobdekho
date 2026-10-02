@@ -11,6 +11,7 @@ export const coverLetter = {
   tools: 'none',
   timeoutMs: 120000,
   context: ['resumeText'],
+  memoryScope: 'letters',
   buildPrompt: (posting, context) => buildCoverLetterPrompt(posting, context),
   buildRefinePrompt: (posting, context, previous, instruction) => buildCoverLetterRefinePrompt(posting, context, previous, instruction),
   parse: parseCoverLetter,

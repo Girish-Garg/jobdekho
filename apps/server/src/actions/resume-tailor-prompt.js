@@ -1,4 +1,5 @@
 import { describeSections } from './resume-tailor-entries.js'
+import { memoryNote } from './memory-note.js'
 
 // The prompt holds the person's whole career record, which is why this
 // action runs with no tools at all (see resume-tailor.js): the posting
@@ -50,7 +51,9 @@ export function jdText(posting) {
   return [posting.title, description, (posting.tags || []).join(', ')].filter(Boolean).join('\n')
 }
 
-export function buildResumeTailorPrompt(posting, profile) {
+// `memory` is the person's saved preferences for resumes (see memory-note.js),
+// which follow the record, outside both fences.
+export function buildResumeTailorPrompt(posting, profile, memory = []) {
   // The title, company and tags are scraped too, so they are cleaned of
   // markers the same way as the description.
   const lines = FIELDS.filter(([, key]) => posting[key]).map(([name, key]) => `${name}: ${fenced(posting[key], 300)}`)
@@ -58,5 +61,5 @@ export function buildResumeTailorPrompt(posting, profile) {
   const description = fenced(posting.descriptionText || posting.descriptionSnippet, MAX_DESCRIPTION)
   const record = fenced(describeSections(profile), MAX_RECORD)
   return `${INSTRUCTION}${OPEN_POSTING}\n${lines.join('\n')}${tags}\n\ndescription:\n${description}\n${CLOSE_POSTING}\n\n`
-    + `${OPEN_RECORD}\n${record}\n${CLOSE_RECORD}\n`
+    + `${OPEN_RECORD}\n${record}\n${CLOSE_RECORD}\n${memoryNote(memory)}`
 }

@@ -2,6 +2,7 @@ import { answer } from '../ai/ndjson.js'
 import { ACTIONS } from '../actions/index.js'
 import { loadContext } from '../actions/context.js'
 import { runAction } from '../actions/run.js'
+import { actionMemory } from '../actions/memory-note.js'
 
 // The AI actions on one posting. Every action shares these two routes; what
 // differs between them lives in apps/server/src/actions.
@@ -37,6 +38,7 @@ export async function postingAiRoutes(app) {
     if (!posting) return reply.code(404).send({ error: 'no such posting' })
     const { context, error } = await loadContext(app.dashboard, userId, action.context)
     if (error) return reply.code(400).send({ error })
+    context.memory = await actionMemory(app.dashboard, userId, action.memoryScope)
     const instruction = String(request.body?.instruction || '').trim()
     const previous = instruction ? (await app.dashboard.getAiResult(userId, id, kind))?.result ?? null : null
     return answer(request, reply, async (emit) => {

@@ -7,6 +7,7 @@ import { postingAiRoutes } from './posting-ai.js'
 import { resumeRoutes } from './resume.js'
 import { chatRoutes } from './chat.js'
 import { chatProposalRoutes } from './chat-proposals.js'
+import { memoryRoutes } from './memory.js'
 import { documentRoutes } from './documents.js'
 import { documentEditRoutes } from './document-edits.js'
 import { documentProfileRoutes } from './document-profile.js'
@@ -63,6 +64,7 @@ export async function apiRoutes(app) {
   await app.register(resumeRoutes)
   await app.register(chatRoutes)
   await app.register(chatProposalRoutes)
+  await app.register(memoryRoutes)
   await app.register(documentRoutes)
   await app.register(documentEditRoutes)
   await app.register(documentProfileRoutes)

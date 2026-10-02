@@ -8,12 +8,13 @@ describe('profileIndex', () => {
     expect(sectionId('experience')).toBe('profile-experience');
   });
 
-  it('lists basics, every entry section in render order, skills and the ranking fields', () => {
+  it('lists basics, every entry section in render order, skills, the ranking fields and what the AI knows', () => {
     const rows = indexRows(EMPTY_PROFILE);
     expect(rows.map((row) => row.label)).toEqual([
-      'Basics', ...ENTRY_SECTIONS.map((meta) => meta.label), 'Skills', 'Best fit',
+      'Basics', ...ENTRY_SECTIONS.map((meta) => meta.label), 'Skills', 'Best fit', 'What the AI knows',
     ]);
     expect(rows.every((row) => row.id.startsWith('profile-'))).toBe(true);
+    expect(rows.at(-1)).toEqual({ id: 'profile-memory', label: 'What the AI knows' });
   });
 
   it('counts entries and skill groups, and gives the two single forms no count', () => {

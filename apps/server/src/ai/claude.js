@@ -16,6 +16,12 @@ export const CLAUDE_ARGS = {
     none: ['--tools', ''],
     web: ['--tools', 'WebSearch,WebFetch', '--allowedTools', 'WebSearch,WebFetch'],
   },
+  // Claude Code keeps notes of its own between sessions ("auto memory") and
+  // reads them into every session, so a job chat could pick up the person's
+  // notes from their coding work. --safe-mode already leaves them out; the
+  // variable the docs name for it (code.claude.com/docs/en/memory) says so
+  // again, and wins over a 0 the person may have set to force it on.
+  env: { CLAUDE_CODE_DISABLE_AUTO_MEMORY: '1' },
 }
 
 // The same call printing as it writes, for an answer shown before it is

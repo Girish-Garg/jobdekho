@@ -12,6 +12,9 @@ import { resumeTailor } from './resume-tailor.js'
 //   context      names from context.js the route must load first, e.g.
 //                ['resumeText']; the route answers 400 with that entry's
 //                sentence when the person has not supplied it yet
+//   memoryScope  optional, 'resume' or 'letters': the saved preferences the
+//                route adds to the context as `memory`, that scope's and
+//                everywhere's (see memory-note.js); none without one
 //   buildPrompt  (posting, context) -> the prompt; the posting is the feed
 //                row plus descriptionText, status, legitimacy and ghostSignals
 //   buildRefinePrompt  (posting, context, previous, instruction) -> the
