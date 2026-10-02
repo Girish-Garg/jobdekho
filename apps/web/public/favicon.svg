@@ -1,18 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <!-- JobDekho's mark: J and D hanging from one headline bar, the way
-       Devanagari letters hang from their shirorekha, J in white and D in the
-       app's saffron. Drawn as strokes, not type, since a favicon cannot load
-       the site's fonts. The dark tile suits light and dark tab bars alike. -->
-  <style>
-    .tile { fill: rgb(22 24 29); }
-    .white { fill: rgb(255 248 236); }
-    .saffron { fill: rgb(255 159 28); }
-    .j { fill: none; stroke: rgb(255 248 236); stroke-width: 7; stroke-linecap: round; }
-    .d { fill: none; stroke: rgb(255 159 28); stroke-width: 7; stroke-linecap: square; stroke-linejoin: miter; }
-  </style>
-  <rect class="tile" width="64" height="64" rx="14" />
-  <rect class="white" x="6" y="12" width="28" height="7" />
-  <rect class="saffron" x="34" y="12" width="24" height="7" />
-  <path class="j" d="M22 19v18c0 7-3 10-9 10" />
-  <path class="d" d="M38.5 19v30h2.5c8.5 0 13-5.5 13-15s-4.5-15-13-15" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- JobDekho's mark: a bold J and D, the J in cream for Job and the D in
+       the app's saffron for Dekho, split the way the wordmark splits them.
+       Drawn on a 32 grid with every straight edge on a whole pixel at 16px,
+       so the tab icon stays sharp and the D keeps its counter open; a
+       favicon cannot load the site's fonts in any case. The graphite tile
+       carries the letters on light and dark tab bars alike. -->
+  <rect width="32" height="32" rx="7" fill="rgb(22 24 29)" />
+  <path fill="rgb(255 248 236)" d="M8 4h4v18c0 4-2 6-6 6H4v-4h2c1.5 0 2-.5 2-2z" />
+  <path fill="rgb(255 159 28)" fill-rule="evenodd" d="M16 4h5c5 0 7 5 7 12s-2 12-7 12h-5zm4 4v16h1c2.5 0 3-3 3-8s-.5-8-3-8z" />
 </svg>
