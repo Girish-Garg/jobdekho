@@ -3,6 +3,7 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { openStore } from '@jobdekho/store/open.js'
+import { blockCompany } from '@jobdekho/store/blocked-companies.js'
 import { runScrape } from '../src/scrape.js'
 import { readScrapeConfig } from '../src/config.js'
 
@@ -149,5 +150,76 @@ describe('runScrape across runs', () => {
     const out = await runScrape({ db, config, http: noHttp, checkHttp, retryDelayMs: 0, adapters: [board('internshala', [])], now: () => Date.now() + 6 * 86400000 })
     expect(out).toMatchObject({ closed: 1, checked: 1 })
     expect(db.corpus.rows()).toHaveLength(0)
+  })
+})
+
+// A company the person blocked in Settings, read from the store by the run
+// itself, as `npm run scrape` does (see index.js): no argument says so.
+describe('runScrape and blocked companies', () => {
+  const quiet = { retryDelayMs: 0, checkHttp: noHttp, env: {} }
+  const at = (id, company) => ({ ...job(id), company })
+
+  // The real adapters, built from the config the way every refresh builds
+  // them, against an http that answers every board from memory. Acme
+  // Foundation's board is known only by its slug, as many are.
+  const companies = { providers: [{ provider: 'greenhouse', slug: 'acmefoundation' }, { provider: 'greenhouse', slug: 'beta' }] }
+  const boardsAsked = () => {
+    const asked = []
+    const http = async (url) => {
+      asked.push(url)
+      const jobs = [{ id: asked.length, title: 'Software Intern', location: { name: 'Remote' }, absolute_url: `https://x/${asked.length}` }]
+      return { status: 200, headers: new Headers(), json: async () => ({ jobs }) }
+    }
+    return { asked, http }
+  }
+  const BOARD = (slug) => `https://boards-api.greenhouse.io/v1/boards/${slug}/jobs?content=true`
+
+  it('never reads a blocked company\'s own careers page when told to stop, and still reads the rest', async () => {
+    const db = openStore(dir)
+    blockCompany(db, 'local', { name: 'Acme Foundation', stopFetching: true })
+    const { asked, http } = boardsAsked()
+    const out = await runScrape({ db, userId: 'local', config: { ...config, companies }, http, ...quiet })
+    expect(asked).toEqual([BOARD('beta')])
+    expect(out.results.map((r) => r.name)).toEqual(['greenhouse:beta'])
+    expect(db.corpus.rows().map((r) => r.company)).toEqual(['Beta'])
+  })
+
+  // Without "stop fetching" its page is read with the rest, and its jobs are
+  // dropped there like a job board's.
+  it('reads a blocked company\'s careers page when not told to stop, keeping none of its jobs', async () => {
+    const db = openStore(dir)
+    blockCompany(db, 'local', { name: 'Acme Foundation', stopFetching: false })
+    const { asked, http } = boardsAsked()
+    const out = await runScrape({ db, userId: 'local', config: { ...config, companies }, http, ...quiet })
+    expect([...asked].sort()).toEqual([BOARD('acmefoundation'), BOARD('beta')])
+    expect(db.corpus.rows().map((r) => r.company)).toEqual(['Beta'])
+    expect(out.blocked).toBe(1)
+  })
+
+  it('drops a blocked company\'s postings from a job board, under any spelling, and keeps the rest', async () => {
+    const db = openStore(dir)
+    blockCompany(db, 'local', { name: 'Fake Corp' })
+    const out = await runScrape({ db, userId: 'local', config, http: noHttp, adapters: [board('internshala', [at('1', 'FAKE CORP PVT LTD'), at('2', 'Real Co')])], ...quiet })
+    expect(db.corpus.rows().map((r) => r.company)).toEqual(['Real Co'])
+    expect(out).toMatchObject({ fresh: 1, total: 1, blocked: 1 })
+  })
+
+  // What is already stored stays, for the feed to hide, and is still counted
+  // as listed rather than closed, so unblocking brings it back as it was.
+  it('leaves a blocked company\'s stored postings where they are', async () => {
+    const db = openStore(dir)
+    const listing = board('internshala', [at('1', 'Fake Corp'), at('2', 'Real Co')])
+    await runScrape({ db, userId: 'local', config, http: noHttp, adapters: [listing], ...quiet })
+    blockCompany(db, 'local', { name: 'Fake Corp' })
+    await runScrape({ db, userId: 'local', config, http: noHttp, adapters: [{ ...listing, complete: true }], ...quiet })
+    await runScrape({ db, userId: 'local', config, http: noHttp, adapters: [{ ...listing, complete: true }], ...quiet })
+    expect(db.corpus.rows().map((r) => [r.company, r.closedAt ?? null])).toEqual([['Fake Corp', null], ['Real Co', null]])
+  })
+
+  it('blocks nothing for a run with no user to ask', async () => {
+    const db = openStore(dir)
+    blockCompany(db, 'local', { name: 'Fake Corp' })
+    await runScrape({ db, config, http: noHttp, adapters: [board('internshala', [at('1', 'Fake Corp')])], ...quiet })
+    expect(db.corpus.rows()).toHaveLength(1)
   })
 })

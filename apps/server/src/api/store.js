@@ -5,6 +5,7 @@ import { getProfile, getResumeText, upsertProfile, deleteProfile } from '@jobdek
 import { getPosting } from '@jobdekho/store/posting-lookup.js'
 import { getAiResult, setAiResult, listAiResults } from '@jobdekho/store/ai-results.js'
 import { getProviderPref, upsertProviderPref } from '@jobdekho/store/ai-provider-pref.js'
+import { listBlockedCompanies, blockCompany, unblockCompany } from '@jobdekho/store/blocked-companies.js'
 import { join } from 'node:path'
 import { saveOriginal, deleteOriginal, findOriginal } from '../resume/original.js'
 
@@ -17,6 +18,11 @@ export function createDashboardStore(db) {
     listSources: () => listSources(db),
     listCompanies: () => listCompanies(db),
     listCompanyCounts: (userId, opts) => listCompanyCounts(db, userId, opts),
+    // The companies the person never wants to see (see the store's
+    // blocked-companies.js), which the feed and the company menu leave out.
+    listBlockedCompanies: (userId) => listBlockedCompanies(db, userId),
+    blockCompany: (userId, input) => blockCompany(db, userId, input),
+    unblockCompany: (userId, key) => unblockCompany(db, userId, key),
     getProfile: (userId) => getProfile(db, userId),
     // Read on its own so the raw resume never rides along on a profile read.
     getResumeText: (userId) => getResumeText(db, userId),

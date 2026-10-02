@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { validateActions } from '@jobdekho/server/chat/actions.js'
+import { parseChatReply } from '@jobdekho/server/chat/parse.js'
 
 describe('validateActions', () => {
   it('drops anything that is not an array of actions', () => {
@@ -89,5 +90,47 @@ describe('validateActions', () => {
     const [action] = validateActions([{ type: 'filters', patch: { includeStale: true, minFit: '' } }])
     expect(action.patch).toEqual({ includeStale: true, minFit: '' })
     expect(action.label).toBe('Show any fit, include stale postings')
+  })
+})
+
+// "Block xyz" is a button that blocks exactly the companies its label names.
+describe('validateActions: block', () => {
+  it('takes the companies to block, trimmed, and names each in its label', () => {
+    expect(validateActions([{ type: 'block', companies: [' Acme Foundation '] }])).toEqual([
+      { type: 'block', companies: ['Acme Foundation'], label: 'Block Acme Foundation' },
+    ])
+    expect(validateActions([{ type: 'block', companies: ['Acme', 'Beta'] }])[0].label).toBe('Block Acme and Beta')
+    expect(validateActions([{ type: 'block', companies: ['Acme', 'Beta', 'Gamma'] }])[0].label).toBe('Block Acme, Beta and Gamma')
+  })
+
+  // Two spellings of one company are one block, and a name with nothing to
+  // know a company by blocks nothing, so the label never names either.
+  it('drops what is not a name, and counts a company once however it is spelled', () => {
+    const [action] = validateActions([{ type: 'block', companies: ['PHONEPE LIMITED', 'PhonePe', 7, '', '  ', '...', null, 'Acme'] }])
+    expect(action).toEqual({ type: 'block', companies: ['PHONEPE LIMITED', 'Acme'], label: 'Block PHONEPE LIMITED and Acme' })
+  })
+
+  // A company no posting carries yet still blocks by its key.
+  it('keeps a company the feed has never shown', () => {
+    expect(validateActions([{ type: 'block', companies: ['Nowhere Yet Pvt Ltd'] }])[0].companies).toEqual(['Nowhere Yet Pvt Ltd'])
+  })
+
+  it('blocks at most ten in one go', () => {
+    const names = Array.from({ length: 14 }, (_, i) => `Company ${String.fromCharCode(65 + i)}`)
+    const [action] = validateActions([{ type: 'block', companies: names }])
+    expect(action.companies).toEqual(names.slice(0, 10))
+  })
+
+  it('offers nothing when no company survives', () => {
+    expect(validateActions([{ type: 'block', companies: [] }])).toEqual([])
+    expect(validateActions([{ type: 'block', companies: 'Acme' }])).toEqual([])
+    expect(validateActions([{ type: 'block' }])).toEqual([])
+  })
+
+  // The block action belongs to the feed, as filters and sorts do.
+  it('is dropped from an answer on any other page', () => {
+    const raw = JSON.stringify({ reply: 'Done.', actions: [{ type: 'block', companies: ['Acme'] }] })
+    expect(parseChatReply(raw, { page: 'postings' }).actions).toHaveLength(1)
+    expect(parseChatReply(raw, { page: 'resume' }).actions).toEqual([])
   })
 })

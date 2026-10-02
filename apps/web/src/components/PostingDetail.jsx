@@ -24,7 +24,7 @@ export { TITLE_ID } from '../lib/postingTitle.js';
 // The header and the footer sit outside the middle's scroll, so the job's
 // name and the apply step never scroll away in the pane; in the dialog, which
 // scrolls as a whole, the footer is sticky instead (see PostingFooter.jsx).
-export default function PostingDetail({ posting, onClose, onStatus, onAsked, onCompany }) {
+export default function PostingDetail({ posting, onClose, onStatus, onAsked, onCompany, onBlock }) {
   // A doubtful posting keeps its rank and its badge; what moves is the
   // control. Where the card already warns, the person is asking "is this
   // real?", so it sits with the evidence.
@@ -33,7 +33,7 @@ export default function PostingDetail({ posting, onClose, onStatus, onAsked, onC
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <PostingPaneHeader posting={posting} onClose={onClose} onCompany={onCompany} />
+      <PostingPaneHeader posting={posting} onClose={onClose} onCompany={onCompany} onBlock={onBlock} />
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="flex flex-col gap-4 px-5 py-4">
           <PostingFacts posting={posting} />

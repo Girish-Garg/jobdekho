@@ -32,3 +32,10 @@ export function companyKey(name) {
   if (tokens.length) tokens.push(peel(tokens.pop()))
   return tokens.join(' ')
 }
+
+// The key run together, for a match that has to meet a slug as well: a board
+// known only by its slug ("WesternDigital", "grafanalabs") has no spaces left
+// to split it by. Blocking a company matches by this (see the store's
+// blocked-companies.js), so no spelling of a blocked employer slips through;
+// the company filter keeps the spaced key above.
+export const compactKey = (name) => companyKey(name).replaceAll(' ', '')

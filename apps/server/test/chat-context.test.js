@@ -154,6 +154,11 @@ describe('assembleChatContext', () => {
     expect(dashboard.listPostingsForUser).toHaveBeenCalledWith('u1', expect.objectContaining({ sort: 'newest', profile }))
   })
 
+  it('has nothing blocked with a dashboard that predates blocking', async () => {
+    const context = await assembleChatContext(fakeDashboard(), 'u1', { filters: {}, sort: 'match' })
+    expect(context.blocked).toEqual([])
+  })
+
   it('never lets the request body stand in for the store: filters, sort and an id only say where to look', async () => {
     const dashboard = fakeDashboard({ postings: [row(1)] })
     // A field like `postings` the way a tampered client might send is simply
@@ -161,5 +166,37 @@ describe('assembleChatContext', () => {
     const context = await assembleChatContext(dashboard, 'u1', { filters: {}, sort: 'match', postings: [row(99)] })
     expect(dashboard.listPostingsForUser).toHaveBeenCalledWith('u1', expect.objectContaining({ sort: 'match' }))
     expect(context.top.map((p) => p.id)).toEqual(['p1'])
+  })
+})
+
+// The store already leaves a blocked company out of every list read here;
+// what is left is to name the blocked ones, and to keep them out of the two
+// places a posting arrives by id or by name.
+describe('assembleChatContext and blocked companies', () => {
+  const withBlocked = (dashboard, entries) => Object.assign(dashboard, { listBlockedCompanies: vi.fn().mockResolvedValue(entries) })
+  const ACME = { key: 'acmefoundation', name: 'Acme Foundation' }
+
+  it('names the blocked companies, so an answer can say one is blocked', async () => {
+    const dashboard = withBlocked(fakeDashboard(), [ACME])
+    const context = await assembleChatContext(dashboard, 'u1', { filters: {}, sort: 'match' })
+    expect(dashboard.listBlockedCompanies).toHaveBeenCalledWith('u1')
+    expect(context.blocked).toEqual(['Acme Foundation'])
+  })
+
+  // Looked up, it could only come back empty, and read as "not hiring".
+  it('does not look up a blocked company the question names', async () => {
+    const dashboard = withBlocked(fakeDashboard({ companies: [RAZORPAY, 'Acme'] }), [{ key: 'razorpay', name: 'Razorpay' }])
+    const context = await assembleChatContext(dashboard, 'u1', { filters: {}, sort: 'match', question: 'Is Razorpay hiring? And Acme?' })
+    expect(context.named.map((n) => n.company)).toEqual(['Acme'])
+    expect(dashboard.listPostingsForUser).not.toHaveBeenCalledWith('u1', expect.objectContaining({ q: 'razorpay' }))
+  })
+
+  // A job the chat was scoped to before its company was blocked.
+  it('leaves out an open posting of a blocked company, and its saved answers', async () => {
+    const open = { id: 'p9', title: 'Engineer', company: 'ACME FOUNDATION PVT LTD', ghostSignals: [] }
+    const dashboard = withBlocked(fakeDashboard({ open }), [ACME])
+    const context = await assembleChatContext(dashboard, 'u1', { filters: {}, sort: 'match', openPostingId: 'p9' })
+    expect(context.open).toBeNull()
+    expect(dashboard.listAiResults).not.toHaveBeenCalled()
   })
 })

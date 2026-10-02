@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import PostingDetail, { TITLE_ID } from './PostingDetail.jsx';
 
-export default function PostingDialog({ posting, onClose, onStatus, onCompany }) {
+export default function PostingDialog({ posting, onClose, onStatus, onCompany, onBlock }) {
   const panelRef = useRef(null);
   // Read through a ref so a status change inside the dialog cannot re-run the
   // mount effect and yank focus back off the control the user just pressed.
@@ -34,7 +34,7 @@ export default function PostingDialog({ posting, onClose, onStatus, onCompany })
         tabIndex={-1}
         className="mx-auto w-full max-w-2xl overflow-hidden rounded-xl border border-line bg-panel shadow-pop outline-none"
       >
-        <PostingDetail posting={posting} onClose={onClose} onStatus={onStatus} onAsked={onClose} onCompany={onCompany} />
+        <PostingDetail posting={posting} onClose={onClose} onStatus={onStatus} onAsked={onClose} onCompany={onCompany} onBlock={onBlock} />
       </div>
     </div>
   );

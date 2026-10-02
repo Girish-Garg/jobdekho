@@ -13,8 +13,10 @@ export const ETAG_DAYS = 7
 // from the asking. `seen` gathers the ids of postings a source listed without
 // sending (the store moves their lastSeenAt on); `knownBy` counts them by
 // source, skipped as known or unchanged; `unchanged` names the sources that
-// said their listing had not changed. `memo` is the run's source-memo.js.
-export function createRunContext({ db, rules, memo, now = Date.now }) {
+// said their listing had not changed. `memo` is the run's source-memo.js;
+// `isBlocked` says whether a posting is from a company the person blocked
+// (see blocked.js).
+export function createRunContext({ db, rules, memo, now = Date.now, isBlocked = () => false }) {
   const seen = new Set()
   const knownBy = new Map()
   const unchanged = new Set()
@@ -34,8 +36,12 @@ export function createRunContext({ db, rules, memo, now = Date.now }) {
       return hit
     },
     // A card the relevance filter would drop is never stored, and would
-    // otherwise be fetched again on every run.
-    wanted: (source, raw) => filter(normalize(raw, source), rules),
+    // otherwise be fetched again on every run; nor is one from a blocked
+    // company, whose detail page is not worth a request either.
+    wanted(source, raw) {
+      const posting = normalize(raw, source)
+      return filter(posting, rules) && !isBlocked(posting)
+    },
     // The source's listing is the one it gave at `since` (a 304 answers for
     // the read its ETag came from). Every posting that read listed counts as
     // seen again. One missing then stays missing, so a complete source can

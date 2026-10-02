@@ -47,3 +47,11 @@ export function labelForFilters(patch) {
 export function labelForSort(value) {
   return `Sort by ${SORT_WORD[value] ?? value}`
 }
+
+// "Acme", "Acme and Beta", "Acme, Beta and Gamma": every company the click
+// blocks, by the name it will be blocked under.
+const listed = (names) => (names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`)
+
+export function labelForBlock(companies) {
+  return `Block ${listed(companies)}`
+}

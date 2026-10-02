@@ -3,6 +3,7 @@ import { WORK_MODES } from '@jobdekho/core/work-mode.js'
 import { SORTS } from '@jobdekho/store/posting-order.js'
 import { GRADE_BANDS } from '@jobdekho/core/grade.js'
 import { labelForFilters, labelForSort } from './action-label.js'
+import { validateBlock } from './block-action.js'
 
 // The known value for every ceiling the filter bar itself offers (see
 // apps/web/src/lib/ranges.js and taxonomy.js): duplicated here rather than
@@ -68,6 +69,7 @@ function validateOne(raw) {
     const value = oneOf(raw.value, SORTS)
     return value ? { type: 'sort', value, label: labelForSort(value) } : null
   }
+  if (raw?.type === 'block') return validateBlock(raw)
   return null
 }
 

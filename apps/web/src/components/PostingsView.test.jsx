@@ -22,9 +22,11 @@ vi.mock('../api.js', () => ({
   getPostingsPage: vi.fn(),
   getSources: vi.fn(async () => []),
   setStatus: vi.fn(async () => null),
+  getCareersPage: vi.fn(async () => true),
+  blockCompany: vi.fn(async (name, { stopFetching }) => ({ key: 'acme', name, blockedAt: '2026-10-02T10:00:00.000Z', stopFetching, careersPage: true })),
 }));
 
-import { getPostings, getPostingsPage, setStatus, getSetup } from '../api.js';
+import { getPostings, getPostingsPage, setStatus, getSetup, blockCompany } from '../api.js';
 import { announceRefreshed } from '../lib/postingsRefreshedSignal.js';
 
 // The feed reads a page with its counts; these tests speak in postings, so
@@ -687,6 +689,33 @@ describe('PostingsView wide two-pane layout', () => {
     render(<Harness filters={EMPTY} />);
     fireEvent.click(await screen.findByText('Alpha'));
     expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+});
+
+// Blocking a company from the job pane: it asks in place, blocks, puts the
+// pane away and reads the feed again without the company.
+describe('PostingsView and blocking a company', () => {
+  it('blocks the open job\'s company from the pane, closes the pane and reads the feed again', async () => {
+    mockWide(true);
+    getPostings.mockResolvedValue([row({ id: 'a', title: 'Alpha', descriptionSnippet: 'Ship it.' })]);
+    render(<Harness filters={EMPTY} />);
+    fireEvent.click(await screen.findByText('Alpha'));
+    fireEvent.click(await screen.findByRole('button', { name: 'Block company' }));
+    expect(await screen.findByRole('checkbox', { name: "Also stop fetching Acme's careers page" })).toBeChecked();
+    expect(getPostings).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Block' }));
+    await waitFor(() => expect(screen.queryByText('Ship it.')).not.toBeInTheDocument());
+    expect(blockCompany).toHaveBeenCalledWith('Acme', { stopFetching: true });
+    await waitFor(() => expect(getPostings).toHaveBeenCalledTimes(2));
+  });
+
+  // A company picked before it was blocked would leave the page titled with a
+  // company it can never show, so the pick is let go.
+  it('lets go of a picked company the feed says is blocked', async () => {
+    getPostingsPage.mockImplementationOnce(async () => ({ postings: [], total: 0, newToday: 0, blockedPicks: ['Acme'] }));
+    const setFilters = vi.fn();
+    render(<Harness filters={{ ...EMPTY, companies: ['Acme', 'Beta'] }} setFilters={setFilters} />);
+    await waitFor(() => expect(setFilters).toHaveBeenCalledWith({ ...EMPTY, companies: ['Beta'] }));
   });
 });
 

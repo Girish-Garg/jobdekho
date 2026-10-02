@@ -1,6 +1,6 @@
 import { filter } from '@jobdekho/core/filter.js'
 import { expandQuery } from '@jobdekho/core/families.js'
-import { companyKey } from '@jobdekho/core/company-key.js'
+import { companyKey, compactKey } from '@jobdekho/core/company-key.js'
 import { toIso } from './timestamp.js'
 
 const DEFAULT_LIMIT = 500
@@ -57,6 +57,13 @@ export function companyMatcher(names) {
   return keys.size ? (row) => keys.has(companyKey(row.company)) : null
 }
 
+// A company the person blocked (see blocked-companies.js) is gone from every
+// list the feed makes, whatever else is asked for, matched by the run-together
+// key a block is kept under.
+export function blockedMatcher(keys) {
+  return keys?.size ? (row) => keys.has(compactKey(row.company)) : null
+}
+
 // The rules the feed shares with the alerts (levels, degree, work mode,
 // sources, the pay and tenure floors) are core's filter(), the same function
 // the scraper runs, so browsing and notifying cannot disagree about what a
@@ -65,11 +72,14 @@ export function companyMatcher(names) {
 // paging, or a paged read would drop actioned rows that sit outside the first
 // page; a null status is "not yet actioned". `source` is the older
 // single-value param and yields to the `sources` multi-select when both come.
+// `blockedKeys` comes from the store, never the request (see dashboard.js).
 export function postingPredicate(opts, statusOf, now = Date.now()) {
   const cutoff = toIso(now - STALE_AFTER_DAYS * DAY_MS)
   const matchesSearch = opts.q ? searchMatcher(opts.q) : null
   const matchesCompany = companyMatcher(opts.companies)
+  const isBlocked = blockedMatcher(opts.blockedKeys)
   return (row) => {
+    if (isBlocked && isBlocked(row)) return false
     if (opts.status !== undefined && statusOf(row.id) !== opts.status) return false
     if (!opts.sources?.length && opts.source && row.source !== opts.source) return false
     // A closed posting (see corpus-closure.js) is only still stored because

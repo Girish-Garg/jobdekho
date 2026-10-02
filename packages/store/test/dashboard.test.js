@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { openStore, FILES } from '@jobdekho/store/open.js'
 import { listPostingsForUser, listSources, setPostingStatus, applyStatusFilter } from '@jobdekho/store/dashboard.js'
+import { blockCompany, unblockCompany } from '@jobdekho/store/blocked-companies.js'
 
 let dir
 beforeEach(() => { dir = mkdtempSync(join(tmpdir(), 'jobdekho-store-')) })
@@ -300,5 +301,46 @@ describe('grade band counts', () => {
     const store = seeded([row({ id: 'x' })])
     const out = await listPostingsForUser(store, 'me', { withCounts: true, sort: 'match', profile: {} })
     expect(out.bands).toBeUndefined()
+  })
+})
+
+// A blocked company never appears again: not on a page, not in the counts
+// beside it, not in a status list, whichever spelling its rows carry. Its
+// rows stay in the corpus, hidden, so unblocking brings them straight back.
+describe('blocked companies', () => {
+  const rows = () => [
+    row({ id: 'p1', company: 'PHONEPE LIMITED', firstSeenAt: ago(0) }),
+    row({ id: 'p2', company: 'PhonePe', firstSeenAt: ago(0) }),
+    row({ id: 'p3', company: 'PhonePeLimited' }),
+    row({ id: 'a1', company: 'Acme' }),
+  ]
+
+  it('leaves them out of every page and count, the person\'s own lists included', async () => {
+    const store = seeded(rows())
+    await setPostingStatus(store, 'me', 'p1', 'saved')
+    blockCompany(store, 'me', { name: 'Phonepe' })
+    const out = await listPostingsForUser(store, 'me', { sort: 'newest', withCounts: true })
+    expect(ids(out.postings)).toEqual(['a1'])
+    expect(out).toMatchObject({ total: 1, newToday: 0, blockedPicks: [] })
+    expect(await listPostingsForUser(store, 'me', { status: 'saved' })).toEqual([])
+    expect(store.corpus.rows()).toHaveLength(4)
+  })
+
+  it('is per person, and unblocking brings the rows straight back', async () => {
+    const store = seeded(rows())
+    blockCompany(store, 'me', { name: 'Phonepe' })
+    expect(await listPostingsForUser(store, 'someone-else', {})).toHaveLength(4)
+    unblockCompany(store, 'me', 'phonepe')
+    expect(await listPostingsForUser(store, 'me', {})).toHaveLength(4)
+  })
+
+  // A pick of a blocked company would leave the page titled with a company
+  // it never shows, so the page is told which picks those are.
+  it('names the picked companies that are blocked, in the spelling they were picked', async () => {
+    const store = seeded(rows())
+    blockCompany(store, 'me', { name: 'PhonePe Private Limited' })
+    const out = await listPostingsForUser(store, 'me', { withCounts: true, companies: ['PHONEPE LIMITED', 'Acme'] })
+    expect(ids(out.postings)).toEqual(['a1'])
+    expect(out.blockedPicks).toEqual(['PHONEPE LIMITED'])
   })
 })

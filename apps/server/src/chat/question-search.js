@@ -1,5 +1,6 @@
 import { isFresh, STALE_AFTER_DAYS } from '@jobdekho/store/posting-filters.js'
 import { toIso } from '@jobdekho/store/timestamp.js'
+import { compactKey } from '@jobdekho/core/company-key.js'
 import { companiesNamed, companyKey } from './company-key.js'
 import { compactPosting } from './postings-summary.js'
 
@@ -19,8 +20,11 @@ const DAY_MS = 24 * 60 * 60 * 1000
 // them turned "ten Razorpay postings, last seen in August" into "no Razorpay
 // postings", which is false. They come after the fresh ones, marked with the
 // day they were last seen, and counted apart.
-export async function postingsForNamedCompanies(dashboard, userId, question, profile, now = Date.now()) {
-  const named = companiesNamed(question, await dashboard.listCompanies())
+//
+// A company the person blocked (`blocked`, by the store's run-together key)
+// is not looked up: it would only ever come back empty, read as not hiring.
+export async function postingsForNamedCompanies(dashboard, userId, question, profile, now = Date.now(), blocked = new Set()) {
+  const named = companiesNamed(question, await dashboard.listCompanies()).filter(({ name }) => !blocked.has(compactKey(name)))
   const cutoff = toIso(now - STALE_AFTER_DAYS * DAY_MS)
   return Promise.all(named.map(async ({ key, name }) => {
     const rows = await dashboard.listPostingsForUser(userId, { q: key, sort: 'match', profile, includeStale: true, limit: 1000 })

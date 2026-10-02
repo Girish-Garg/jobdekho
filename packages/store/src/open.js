@@ -42,6 +42,9 @@ export const FILES = {
   // Whether the running server refreshes postings on its own once a day.
   // See apps/server/src/scrape/prefs.js.
   scrapeSettings: 'scrape-settings.json',
+  // The companies the person never wants to see again, and whether their own
+  // careers pages are still read. See blocked-companies.js.
+  blockedCompanies: 'blocked-companies.json',
   // The person's own Adzuna app id and key, pasted into Settings. A file of
   // its own because it is a secret: the others can be opened, shared or
   // attached to a bug report without handing it over. See adzuna-keys.js.
@@ -80,6 +83,7 @@ export function openStore(dir) {
     chatArchive: userFile(at('chatArchive')),
     documents: userFile(at('documents')),
     scrapeSettings: userFile(at('scrapeSettings')),
+    blockedCompanies: userFile(at('blockedCompanies')),
     adzuna: userFile(at('adzuna')),
     linkedinGuard: recordFile(at('linkedinGuard')),
     sourceMemo: recordFile(at('sourceMemo')),

@@ -46,12 +46,14 @@ export function linkCandidates(rows, skip, nowMs) {
 // through a gate of their own, and only where robots.txt allows.
 export const linkHttp = () => createHttp({ gate: createHostGate({ ruleFor: () => ({ inFlight: 1, gapMs: 3000 }) }) })
 
-export async function closureTurn({ db, results, items, seen, nowMs = Date.now(), http = linkHttp(), budget = LINK_BUDGET }) {
+// A posting from a company the person blocked (`isBlocked`, see blocked.js)
+// is hidden whether it is open or not, so its link is not worth a request.
+export async function closureTurn({ db, results, items, seen, nowMs = Date.now(), http = linkHttp(), budget = LINK_BUDGET, isBlocked = () => false }) {
   const rows = db.corpus.rows()
   const listed = listedIds(items)
   const sighted = new Set([...listed, ...seen])
   const missed = missedIds(results, rows, sighted)
-  const candidates = linkCandidates(rows, new Set([...sighted, ...missed]), nowMs)
+  const candidates = linkCandidates(rows.filter((row) => !isBlocked(row)), new Set([...sighted, ...missed]), nowMs)
   const links = candidates.length && budget > 0
     ? await checkLinks(candidates, { http, allowed: createRobotsCheck(http), budget })
     : { gone: [], live: [], checked: 0 }

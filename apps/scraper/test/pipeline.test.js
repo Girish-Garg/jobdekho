@@ -78,3 +78,23 @@ describe('runPipeline and closed postings', () => {
     expect(p.upsertPostings.mock.calls[0][1][0].closesAt).toBe('2026-10-09T23:59:59+05:30')
   })
 })
+
+// A blocked company's postings never reach the write, so they never re-enter
+// the corpus; the run says how many it left out. Only relevant ones count.
+describe('runPipeline and blocked companies', () => {
+  it('drops the postings of a blocked company before the write, and counts them', async () => {
+    const p = { getExistingIds: vi.fn(async () => new Set()), upsertPostings: vi.fn(async () => ({})), recordRun: vi.fn(async () => {}) }
+    const job = (id, company, title = 'Software Intern') => ({ source: 'board', raw: { externalId: id, title, company, url: `u${id}`, location: 'Remote' } })
+    const isBlocked = (posting) => posting.company === 'Fake Corp'
+    const raws = [job('1', 'Fake Corp'), job('2', 'Real Co'), job('3', 'Fake Corp', 'Chef')]
+    const out = await runPipeline({ items: raws, results: [] }, { db: {}, rules, runId: 'r', ports: p, isBlocked })
+    expect(p.upsertPostings.mock.calls[0][1].map((posting) => posting.company)).toEqual(['Real Co'])
+    expect(out).toMatchObject({ total: 1, fresh: 1, blocked: 1 })
+  })
+
+  it('blocks nothing when told of no block', async () => {
+    const p = { getExistingIds: vi.fn(async () => new Set()), upsertPostings: vi.fn(async () => ({})), recordRun: vi.fn(async () => {}) }
+    const out = await runPipeline({ items, results: [] }, { db: {}, rules, runId: 'r', ports: p })
+    expect(out.blocked).toBe(0)
+  })
+})

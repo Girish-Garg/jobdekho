@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getPostingsPage, setStatus } from '../api.js';
 import { useDebounced } from './useDebounced.js';
 import { onRefreshed } from './postingsRefreshedSignal.js';
+import { onBlocked } from './blockedSignal.js';
 import { feedQuery } from './feedQuery.js';
 
 // Pulled a page at a time. The feed runs to a few thousand rows, and the old
@@ -17,9 +18,11 @@ export function usePostingsFeed(filters, sort = 'match') {
   const [more, setMore] = useState(false);
   const [counts, setCounts] = useState({ total: 0, newToday: 0 });
   // A finished refresh (Settings' "Refresh now", see useScrape.js) reads the feed again,
-  // so new postings show without a reload of the page.
+  // so new postings show without a reload of the page; so does a company just
+  // blocked (see blockedSignal.js), whose jobs then leave it.
   const [reloads, setReloads] = useState(0);
   useEffect(() => onRefreshed(() => setReloads((n) => n + 1)), []);
+  useEffect(() => onBlocked(() => setReloads((n) => n + 1)), []);
 
   // The search waits for a pause in typing (see useDebounced.js).
   const q = useDebounced(filters.q ?? '');
@@ -36,7 +39,9 @@ export function usePostingsFeed(filters, sort = 'match') {
         if (!alive) return;
         setRows(data.postings);
         setMore(data.postings.length === PAGE);
-        setCounts({ total: data.total ?? data.postings.length, newToday: data.newToday ?? 0, bands: data.bands ?? null });
+        setCounts({
+          total: data.total ?? data.postings.length, newToday: data.newToday ?? 0, bands: data.bands ?? null, blockedPicks: data.blockedPicks ?? [],
+        });
       })
       .catch(() => alive && (setRows([]), setMore(false), setCounts({ total: 0, newToday: 0 })))
       .finally(() => alive && setLoading(false));
@@ -62,5 +67,10 @@ export function usePostingsFeed(filters, sort = 'match') {
   }
 
   // bands: how many of the whole feed fall in each grade, for the dividers.
-  return { rows, loading, more, loadMore, onStatus, total: counts.total, newToday: counts.newToday, bands: counts.bands ?? null };
+  // blockedPicks: the picked companies the person has blocked, which this
+  // feed will never show (see the store's blocked-companies.js).
+  return {
+    rows, loading, more, loadMore, onStatus,
+    total: counts.total, newToday: counts.newToday, bands: counts.bands ?? null, blockedPicks: counts.blockedPicks ?? [],
+  };
 }

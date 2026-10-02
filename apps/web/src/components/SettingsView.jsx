@@ -5,6 +5,7 @@ import SettingsCard from './SettingsCard.jsx';
 import SettingsAiCard from './SettingsAiCard.jsx';
 import SetupCard from './SetupCard.jsx';
 import RefreshSettingsCard from './RefreshSettingsCard.jsx';
+import BlockedCompaniesCard from './BlockedCompaniesCard.jsx';
 import AdzunaCard from './AdzunaCard.jsx';
 import YourDataCard from './YourDataCard.jsx';
 import ProfileIndex from './ProfileIndex.jsx';
@@ -15,6 +16,7 @@ const SECTIONS = [
   { id: 'settings-setup', label: 'Setup check' },
   { id: 'settings-ai', label: 'AI CLI' },
   { id: 'settings-postings', label: 'Postings' },
+  { id: 'settings-blocked', label: 'Blocked companies' },
   { id: 'settings-adzuna', label: 'Adzuna' },
   { id: 'settings-appearance', label: 'Appearance' },
   { id: 'settings-data', label: 'Your data' },
@@ -44,6 +46,7 @@ export default function SettingsView() {
             <div id="settings-setup" className="scroll-mt-4"><SetupCard /></div>
             <div id="settings-ai" className="scroll-mt-4"><SettingsAiCard /></div>
             <div id="settings-postings" className="scroll-mt-4"><RefreshSettingsCard /></div>
+            <div id="settings-blocked" className="scroll-mt-4"><BlockedCompaniesCard /></div>
             <div id="settings-adzuna" className="scroll-mt-4"><AdzunaCard /></div>
             <div id="settings-appearance" className="scroll-mt-4">
               <SettingsCard icon={<PaletteIcon size={18} />} title="Appearance" hint="How JobDekho looks on this computer.">

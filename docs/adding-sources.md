@@ -63,6 +63,12 @@ beside the board's own. Y Combinator companies carry their batch, `"tags": ["YC 
 feed shows those postings with a small YC chip. A Greenhouse, Lever or Ashby entry may also give
 `company` where the slug is not the name (`ashby:atomic-invest` is Atomic).
 
+The entry's `company`, or its slug without one, is also how a blocked company's own careers page
+is recognised: a company blocked with "stop fetching" has no adapter built for its entry at all
+(`apps/scraper/src/careers-source.js`), matched with the spaces dropped, so the slug
+`WesternDigital` is Western Digital's. A company site in `companies` is matched by its name the
+same way (`hdfcbank` is HDFC Bank). Boards belong to no company and are always read.
+
 **Y Combinator companies** are found by a maintainer-only script, never by a run:
 `node apps/scraper/scripts/yc/main.js --out yc-candidates.json`, and `--apply` to write what it
 found into this file. YC's terms of use forbid robots and scraping on ycombinator.com and its

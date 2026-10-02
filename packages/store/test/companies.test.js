@@ -2,7 +2,10 @@ import { describe, it, expect } from 'vitest'
 import { listCompanies, listCompanyCounts } from '../src/companies.js'
 import { companyMatcher } from '../src/posting-filters.js'
 
-const storeOf = (rows) => ({ corpus: { rows: () => rows }, statuses: new Map() })
+// `blocked` is blocked-companies.json's record by user, e.g. { u1: [{ key }] }.
+const storeOf = (rows, blocked = {}) => ({
+  corpus: { rows: () => rows }, statuses: new Map(), blockedCompanies: new Map(Object.entries(blocked)),
+})
 
 describe('listCompanies', () => {
   it('lists each company once, as it was scraped, and skips rows with none', () => {
@@ -61,5 +64,14 @@ describe('listCompanyCounts', () => {
       { name: 'Acme', count: 0, picked: ['Acme'] },
       { name: 'Nowhere Inc', count: 0, picked: ['Nowhere Inc'] },
     ])
+  })
+
+  // A blocked company is not in the menu at all, under any of its spellings,
+  // a slug's run-together one included; another person's block is theirs.
+  it('leaves out a company the person blocked, however it is spelled', () => {
+    const rows = [job('CRED'), job('cred'), job('Meesho'), job('WesternDigital'), job('Western Digital Corp')]
+    const blocked = { u1: [{ key: 'cred', name: 'CRED' }, { key: 'westerndigital', name: 'Western Digital' }] }
+    expect(listCompanyCounts(storeOf(rows, blocked), 'u1')).toEqual([{ name: 'Meesho', count: 1, picked: [] }])
+    expect(listCompanyCounts(storeOf(rows, blocked), 'u2').map((entry) => entry.name)).toContain('CRED')
   })
 })

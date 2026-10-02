@@ -11,6 +11,8 @@ import { startHealthTurn } from './health-turn.js'
 import { createRunContext } from './run-context.js'
 import { openMemo } from './source-memo.js'
 import { closureTurn, linkHttp } from './closure-turn.js'
+import { readBlocked } from './blocked.js'
+import { withoutCareersOf } from './careers-source.js'
 
 // A failure worth a second try (see retry.js) gets it after this pause.
 const RETRY_DELAY_MS = 2000
@@ -22,8 +24,11 @@ const RETRY_DELAY_MS = 2000
 // is the same scrape `npm run scrape` does rather than a second copy of it.
 //
 // `userId` is whose Adzuna key to look for in `db`, with ADZUNA_APP_ID and
-// ADZUNA_APP_KEY from `env` as the fallback (see sources.js), and whose
-// "Include LinkedIn" switch to obey (see linkedin-turn.js).
+// ADZUNA_APP_KEY from `env` as the fallback (see sources.js), whose
+// "Include LinkedIn" switch to obey (see linkedin-turn.js), and whose blocked
+// companies to keep out (see blocked.js): a blocked company's own careers
+// source is not built when the person stopped fetching it, and its postings
+// from anywhere else are dropped before the write.
 //
 // Around the fetch: sources resting after repeated failures are left out
 // (health-turn.js); what adapters may ask of the run and what the run learns
@@ -36,7 +41,8 @@ const RETRY_DELAY_MS = 2000
 // own, so no test ever reaches the network.
 export async function runScrape({
   db, userId = null, env = process.env, config = readScrapeConfig(),
-  adzunaKeys = resolveAdzunaKeys(db, userId, env), adapters = scrapeAdapters(config.companies, adzunaKeys),
+  adzunaKeys = resolveAdzunaKeys(db, userId, env), blocked = readBlocked(db, userId),
+  adapters = scrapeAdapters(withoutCareersOf(config.companies, blocked.stopped), adzunaKeys),
   http = createHttp({ gate: createHostGate() }), checkHttp = linkHttp(), retryDelayMs = RETRY_DELAY_MS,
   onProgress = () => {}, now = Date.now,
 }) {
@@ -45,7 +51,8 @@ export async function runScrape({
   const total = linkedin.adapters.length
   onProgress({ done: 0, total, current: null })
   const memo = openMemo(db, config.rules)
-  const run = createRunContext({ db, rules: config.rules, memo, now })
+  const { isBlocked } = blocked
+  const run = createRunContext({ db, rules: config.rules, memo, now, isBlocked })
   const ran = await runAdapters(linkedin.adapters, http, {
     context: { ...run.context, ...linkedin.context },
     delayMs: retryDelayMs,
@@ -53,8 +60,8 @@ export async function runScrape({
   })
   const marked = ran.results.map((r) => (run.unchanged.has(r.name) ? { ...r, unchanged: true } : r))
   const results = health.settle(linkedin.settle(marked))
-  const closure = await closureTurn({ db, results, items: ran.items, seen: run.seen, nowMs: now(), http: checkHttp })
-  const summary = await runPipeline({ items: ran.items, results, seen: [...run.seen], closure }, { db, rules: config.rules, runId: randomUUID(), now: now() })
+  const closure = await closureTurn({ db, results, items: ran.items, seen: run.seen, nowMs: now(), http: checkHttp, isBlocked })
+  const summary = await runPipeline({ items: ran.items, results, seen: [...run.seen], closure }, { db, rules: config.rules, runId: randomUUID(), now: now(), isBlocked })
   memo.commit(new Set(results.filter((r) => r.ok && !r.skipped).map((r) => r.name)), run.settle)
   health.record({ results, listedBy: (name) => run.knownBy.get(name) ?? 0, fresh: summary.freshPostings })
   return { ...summary, results }

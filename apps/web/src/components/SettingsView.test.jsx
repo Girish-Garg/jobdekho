@@ -31,6 +31,8 @@ vi.mock('../api.js', () => ({
   saveAdzunaKey: vi.fn(async () => null),
   removeAdzunaKey: vi.fn(async () => null),
   checkAdzunaKey: vi.fn(async () => ({ ok: true })),
+  getBlockedCompanies: vi.fn(async () => []),
+  unblockCompany: vi.fn(async () => null),
   getProviders: vi.fn(async () => [
     { id: 'claude', label: 'Claude Code', policies: ['none', 'web'], present: true, runs: true, version: '2.1.245', error: null },
     { id: 'agy', label: 'Antigravity', policies: ['none', 'web'], present: false, runs: false, version: null, error: null },
@@ -50,10 +52,10 @@ async function mount() {
 }
 
 describe('SettingsView structure', () => {
-  it('renders the cards in order: the setup check and the AI, then postings, appearance and data', async () => {
+  it('renders the cards in order: the setup check and the AI, then postings and the companies blocked from them, appearance and data', async () => {
     await mount();
     const headings = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent);
-    expect(headings).toEqual(['Setup check', 'AI CLI', 'Postings', 'Adzuna', 'Appearance', 'Your data']);
+    expect(headings).toEqual(['Setup check', 'AI CLI', 'Postings', 'Blocked companies', 'Adzuna', 'Appearance', 'Your data']);
   });
 
   it('puts the theme choice under Appearance', async () => {

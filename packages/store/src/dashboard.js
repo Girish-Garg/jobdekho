@@ -1,6 +1,7 @@
 import { postingPredicate, clampPage, toNumber } from './posting-filters.js'
 import { orderFor } from './posting-order.js'
-import { gradeFor } from '@jobdekho/core/grade.js'
+import { countsOf } from './posting-counts.js'
+import { blockedKeys, blockedAmong } from './blocked-companies.js'
 import { withGroupWindows } from './posting-groups.js'
 import { scoreRows, canRank } from './posting-score.js'
 import { fitContextFor } from './fit-inputs.js'
@@ -20,53 +21,41 @@ export function applyStatusFilter(rows, status) {
 // reason the user can see. Only group leads are scored: the others are gated
 // out regardless of score, so scoring them would be work thrown away. All
 // but the order and the page is feedMatches, which the company menu counts
-// too (see companies.js).
+// too (see companies.js). The companies the person blocked are left out
+// here, so no page, count or chat answer built on it ever holds one.
 export function feedMatches(store, userId, opts = {}) {
   const statuses = store.statuses.get(userId) ?? {}
   const statusOf = (id) => statuses[id] ?? null
+  const blocked = blockedKeys(store, userId)
   // Every order is scored when the profile can rank, not only Best fit: the
   // fit floor and the grade on each card mean the same under Newest, and
   // scoring only for Best fit made the floor silently do nothing under any
   // other order. An empty profile scores every row alike, so Best fit falls
   // back to newest first then.
   const ranks = canRank(opts.profile)
-  const matching = store.corpus.rows().filter(postingPredicate(opts, statusOf))
+  const matching = store.corpus.rows().filter(postingPredicate({ ...opts, blockedKeys: blocked }, statusOf))
   const windowed = withGroupWindows(matching)
   const leads = opts.group === false ? windowed : windowed.filter((row) => row.groupRank === 1)
   const scored = ranks ? scoreRows(leads, fitContextFor(store, opts.profile), store.corpus.rows()) : leads
   // The floor only means anything against a real score. Unranked, every row
   // "scores" zero, so applying it would empty the feed rather than filter it.
   const minFit = ranks ? toNumber(opts.minFit) : null
-  return { rows: minFit ? scored.filter((row) => row.matchScore >= minFit) : scored, ranks, statusOf }
+  return { rows: minFit ? scored.filter((row) => row.matchScore >= minFit) : scored, ranks, statusOf, blocked }
 }
 
+// With counts, also `blockedPicks`: the picked companies the person has
+// blocked, which this feed will never show (see blocked-companies.js).
 export async function listPostingsForUser(store, userId, opts = {}) {
   const { limit, offset } = clampPage(opts)
-  const { rows: gated, ranks, statusOf } = feedMatches(store, userId, opts)
+  const { rows: gated, ranks, statusOf, blocked } = feedMatches(store, userId, opts)
   const sort = opts.sort === 'match' && !ranks ? 'newest' : opts.sort
   const page = gated.sort(orderFor(sort, { ranked: ranks })).slice(offset, offset + limit)
   const postings = applyStatusFilter(page.map((row) => {
     const seen = { ...row, status: statusOf(row.id) }
     return toPosting(ranks ? withFit(seen) : withGhost(seen))
   }), opts.status)
-  return opts.withCounts ? { postings, ...countsOf(gated, ranks) } : postings
-}
-
-// The whole matching set's size and how many of it arrived in the last day,
-// for the feed's title line. Counting the loaded page instead said "100 new
-// today" whenever the first hundred rows happened to be new. Ranked, also how
-// many fall in each grade, for the band dividers in the list.
-const DAY_MS = 24 * 60 * 60 * 1000
-
-function countsOf(rows, ranked, now = Date.now()) {
-  const newToday = rows.filter((row) => now - Date.parse(row.firstSeenAt ?? '') < DAY_MS).length
-  if (!ranked) return { total: rows.length, newToday }
-  const bands = {}
-  for (const row of rows) {
-    const grade = gradeFor(row.matchScore)
-    bands[grade] = (bands[grade] ?? 0) + 1
-  }
-  return { total: rows.length, newToday, bands }
+  if (!opts.withCounts) return postings
+  return { postings, ...countsOf(gated, ranks), blockedPicks: blockedAmong(blocked, opts.companies) }
 }
 
 // groupRank and groupSourceCount are query scaffolding: one picked the row

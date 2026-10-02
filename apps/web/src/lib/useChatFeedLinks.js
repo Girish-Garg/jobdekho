@@ -1,14 +1,22 @@
 import { useEffect, useRef } from 'react';
 import { requestOpenPosting } from './openPostingSignal.js';
 import { chatFitFloor } from './chatFitFloor.js';
+import { blockCompanies } from './blockCompanies.js';
 
 // A kept conversation's Fit button applies today's floor for the letter it
 // showed (see chatFitFloor.js).
 const withTodaysFloor = ({ patch, label }) => ('minFit' in patch ? { ...patch, minFit: chatFitFloor(patch.minFit, label) } : patch);
 
-// What an answer can do to the feed: apply a filter or sort it offered, or
-// open a job it named. Both act on the feed, so on any other page they take
-// the person there first rather than change something they cannot see.
+// What an answer can do to the feed: apply a filter or sort it offered, block
+// the companies the person asked it to, or open a job it named. All of them
+// act on the feed, so on any other page they take the person there first
+// rather than change something they cannot see.
+//
+// A block from the chat stops fetching the companies' own careers pages too:
+// there is no box to tick on a button, and the person asked to be rid of
+// them, so a page whose every job would be thrown away is not read. Settings
+// says so beside each, and Unblock undoes all of it. A block that fails says
+// so in a notice of its own (see api/companies.js).
 //
 // A job named from another page is asked for once the feed is there to hear
 // it. The feed mounts in the same render that switches to it, and it starts
@@ -29,6 +37,7 @@ export function useChatFeedLinks({ onFeed, filters, apply }) {
   function onApply(action) {
     if (action.type === 'filters') apply.setFilters({ ...filters, ...withTodaysFloor(action) });
     else if (action.type === 'sort') apply.setSort(action.value);
+    else if (action.type === 'block') blockCompanies(action.companies, { stopFetching: true }).catch(() => {});
     if (!onFeed) apply.setView?.('postings');
   }
 

@@ -2,6 +2,7 @@
 // modules behind it are split by the part of the app they belong to, because
 // one file naming every endpoint had outgrown the limit.
 export * from './api/postings.js';
+export * from './api/companies.js';
 export * from './api/profile.js';
 export * from './api/ai.js';
 export * from './api/documents.js';

@@ -253,6 +253,16 @@ same listing spread across many boards) list what raised the doubt under
 "Worth a second look" when opened, and the AI's "Is it real?" check is one
 click from there.
 
+Where Dismiss puts away one job, **Block company**, beside the company's name
+in an opened posting, hides every job from that company for good, under any
+spelling of its name: in the feed, the company list and the chat, now and
+after every refresh. When JobDekho reads a careers page of the company's own,
+it asks whether to stop fetching that page as well (ticked to begin with); job
+boards are still read for every other company on them, and their postings
+from a blocked company are dropped. Asked to block a company, the chat offers
+a button that does the same, and stops fetching its careers page too.
+Settings > Blocked companies lists them, each with Unblock.
+
 ## Keyboard
 
 The feed is a list you triage, so it is quicker from the keyboard than the
@@ -464,6 +474,7 @@ names, and `JOBDEKHO_DATA_DIR` (`./data` by default) when running from source. T
 | `chat-history.json` | The current chat conversation. | Yes, if you do not need it. |
 | `chat-archive.json` | Earlier conversations, filed away when you started a new one. | Yes, if you do not need them. |
 | `scrape-settings.json` | Whether the running server refreshes postings on its own once a day, and whether refreshes read LinkedIn. | Yes; it falls back to the defaults (the daily refresh on, LinkedIn off). |
+| `blocked-companies.json` | The companies you blocked, when, and whether their own careers pages are still read. | Yes, if you want every one of them back. |
 | `resume-selection.json` | Which template and entries the older resume builder renders. | No. |
 | `resumes/` | Compiled PDFs, cached by their source. | Yes, they are rebuilt when needed. |
 

@@ -62,6 +62,24 @@ describe('closureTurn', () => {
     expect(out.listed).toEqual([makeId('greenhouse:x', '1')])
   })
 
+  // A blocked company's postings are hidden whether open or not, so their
+  // links are not worth a request to its site.
+  it('checks no link of a blocked company\'s posting', async () => {
+    const rows = [row('internshala', '1', { lastSeenAt: daysAgo(5), company: 'Fake Corp' }), row('internshala', '2', { lastSeenAt: daysAgo(5), company: 'Real Co' })]
+    const asked = []
+    const http = async (url) => {
+      asked.push(url)
+      if (url.endsWith('/robots.txt')) return { status: 404, text: async () => '' }
+      return { status: 404, headers: new Headers(), text: async () => '' }
+    }
+    const out = await closureTurn({
+      db: { corpus: { rows: () => rows } }, results: [], items: [], seen: new Set(), nowMs: NOW, http,
+      isBlocked: (posting) => posting.company === 'Fake Corp',
+    })
+    expect(out.gone).toEqual([makeId('internshala', '2')])
+    expect(asked.filter((url) => url.includes('/jobs/'))).toEqual(['https://example.com/jobs/2'])
+  })
+
   it('checks no link when the budget is spent', async () => {
     const db = { corpus: { rows: () => [row('internshala', '77777', { lastSeenAt: daysAgo(5) })] } }
     const out = await closureTurn({ db, results: [], items: [], seen: new Set(), nowMs: NOW, http: async () => { throw new Error('no network in tests') }, budget: 0 })

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { clampPage, toNumber, isFresh, searchMatcher, postingPredicate, STALE_AFTER_DAYS } from '@jobdekho/store/posting-filters.js'
+import { clampPage, toNumber, isFresh, searchMatcher, postingPredicate, blockedMatcher, STALE_AFTER_DAYS } from '@jobdekho/store/posting-filters.js'
 
 const matchesSearch = (row, q) => searchMatcher(q)(row)
 import { orderFor, groupOrder, SORTS } from '@jobdekho/store/posting-order.js'
@@ -68,6 +68,31 @@ describe('postingPredicate', () => {
     expect(postingPredicate({ status: 'saved' }, statusOf, now)(closed)).toBe(true)
     expect(postingPredicate({ status: 'applied' }, statusOf, now)(closed)).toBe(false)
     expect(postingPredicate({ includeStale: true }, statusOf, now)(closed)).toBe(true)
+  })
+
+  // A blocked company is out whatever else is asked: picked by name, saved,
+  // searched for, stale ones included.
+  it('leaves out a blocked company under every spelling, whatever the other options', () => {
+    const job = (company) => ({ id: company, source: 's', company, title: 'Engineer', tags: [], descriptionSnippet: '', lastSeenAt: null })
+    const opts = { blockedKeys: new Set(['phonepe', 'westerndigital']) }
+    const saved = () => 'saved'
+    for (const company of ['PHONEPE LIMITED', 'PhonePe', 'PhonePeLimited', 'WesternDigital', 'Western Digital Corp']) {
+      expect(postingPredicate(opts, saved)(job(company)), company).toBe(false)
+      expect(postingPredicate({ ...opts, companies: [company], status: 'saved', includeStale: true, q: 'engineer' }, saved)(job(company))).toBe(false)
+    }
+    expect(postingPredicate(opts, saved)(job('Razorpay'))).toBe(true)
+  })
+})
+
+describe('blockedMatcher', () => {
+  it('matches by the run-together key, and is no filter at all with nothing blocked', () => {
+    const matches = blockedMatcher(new Set(['grafanalabs']))
+    expect(matches({ company: 'Grafana Labs' })).toBe(true)
+    expect(matches({ company: 'grafanalabs' })).toBe(true)
+    expect(matches({ company: 'Grafana' })).toBe(false)
+    expect(matches({})).toBe(false)
+    expect(blockedMatcher(new Set())).toBeNull()
+    expect(blockedMatcher(undefined)).toBeNull()
   })
 })
 

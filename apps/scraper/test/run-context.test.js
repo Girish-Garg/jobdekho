@@ -27,6 +27,19 @@ describe('createRunContext', () => {
     expect(run.knownBy.get('a')).toBe(1)
   })
 
+  // LinkedIn and the list-then-describe platforms ask before fetching a
+  // job's own page: one from a blocked company would only be dropped.
+  it('calls a card from a blocked company unwanted, so its page is never fetched', () => {
+    const db = fakeDb()
+    const rules = { includeKeywords: ['software'], excludeKeywords: [], locations: [] }
+    const isBlocked = (posting) => posting.company === 'Fake Corp'
+    const run = createRunContext({ db, rules, memo: openMemo(db, rules), now: () => NOW, isBlocked })
+    const card = (company, title = 'Software Engineer') => ({ externalId: '1', title, company, url: 'u', location: 'Pune' })
+    expect(run.context.wanted('linkedin', card('Fake Corp'))).toBe(false)
+    expect(run.context.wanted('linkedin', card('Real Co'))).toBe(true)
+    expect(run.context.wanted('linkedin', card('Real Co', 'Chef'))).toBe(false)
+  })
+
   // A 304 answers for the read the ETag came from: what that read listed is
   // seen again; what it had already stopped listing stays missing.
   it('on an unchanged board, sees again what its last full read listed, and nothing it had missed', () => {

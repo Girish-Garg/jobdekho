@@ -22,9 +22,13 @@ const withDeadline = (posting, raw) => (posting && raw?.closesAt ? { ...posting,
 // the write moves their lastSeenAt on (see the store's corpus-merge.js).
 // `closure` is what closure-turn.js found out about postings that are gone:
 // the write closes them, and a posting whose link was found live is seen.
-export async function runPipeline({ items, results, seen = [], closure = {} }, { db, rules, runId, ports = DEFAULT_PORTS, now = Date.now() }) {
+// A posting from a company the person blocked (`isBlocked`, see blocked.js)
+// is dropped like an irrelevant one, so a block keeps it out of the corpus
+// for good; `blocked` counts them for the run's summary.
+export async function runPipeline({ items, results, seen = [], closure = {} }, { db, rules, runId, ports = DEFAULT_PORTS, now = Date.now(), isBlocked = () => false }) {
   const normalized = items.map(({ source, raw }) => withDeadline(normalize(raw, source), raw))
-  const relevant = normalized.filter((p) => filter(p, rules))
+  const kept = normalized.filter((p) => filter(p, rules))
+  const relevant = kept.filter((p) => !isBlocked(p))
   const recent = relevant.filter((p) => !postedTooLongAgo(p, now))
   const existing = await ports.getExistingIds(db, recent.map((p) => p.id))
   const { all, fresh } = dedupe(recent, existing)
@@ -32,5 +36,6 @@ export async function runPipeline({ items, results, seen = [], closure = {} }, {
   const { removed = 0, closed = 0 } = (await ports.upsertPostings(db, all, now, seenIds, closure)) ?? {}
   const checked = closure.checked ?? 0
   await ports.recordRun(db, { id: runId, sourceResults: results, newCount: fresh.length, closed, checked })
-  return { total: all.length, fresh: fresh.length, freshPostings: fresh, tooOld: relevant.length - recent.length, removed, closed, checked }
+  const blocked = kept.length - relevant.length
+  return { total: all.length, fresh: fresh.length, freshPostings: fresh, tooOld: relevant.length - recent.length, blocked, removed, closed, checked }
 }

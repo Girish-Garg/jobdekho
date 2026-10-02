@@ -1,7 +1,8 @@
 // The server reads the companies comma-separated, so a comma inside a name
 // ("Acme, Inc.") would split it in two. As a space it changes nothing: the
-// server matches a name by a key that ignores punctuation.
-const companyList = (names = []) => names.map((name) => name.replaceAll(',', ' ')).join(',');
+// server matches a name by a key that ignores punctuation. It trims each one.
+export const companyParam = (name) => name.replaceAll(',', ' ').trim();
+const companyList = (names = []) => names.map(companyParam).join(',');
 
 // The filter bar's state as the query the server reads (see its
 // api/feed-options.js), the same for the feed and for the company menu that

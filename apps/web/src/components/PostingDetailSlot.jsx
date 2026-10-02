@@ -15,15 +15,16 @@ import PostingDialog from './PostingDialog.jsx';
 // without pulling focus back to the row, since the person has just pressed
 // somewhere else. Below the wide breakpoint there is no room to float beside
 // anything, and the dialog takes over; it closes on the way to a company's
-// jobs, which it would otherwise cover.
-export default function PostingDetailSlot({ isWide, opened, onClose, onDismiss = onClose, onStatus, onCompany }) {
+// jobs, which it would otherwise cover. `onBlock` blocks the job's company
+// (see BlockCompanyConfirm.jsx) and puts the pane or the dialog away itself.
+export default function PostingDetailSlot({ isWide, opened, onClose, onDismiss = onClose, onStatus, onCompany, onBlock }) {
   const paneRef = useRef(null);
   useOutsideDismiss(paneRef, onDismiss, Boolean(opened && isWide));
 
   if (!opened) return null;
   if (!isWide) {
     const toCompany = onCompany && ((name) => { onCompany(name); onClose(); });
-    return <PostingDialog posting={opened} onClose={onClose} onStatus={onStatus} onCompany={toCompany} />;
+    return <PostingDialog posting={opened} onClose={onClose} onStatus={onStatus} onCompany={toCompany} onBlock={onBlock} />;
   }
 
   const pane = (
@@ -33,7 +34,7 @@ export default function PostingDetailSlot({ isWide, opened, onClose, onDismiss =
       className="slide-in-right absolute bottom-3 right-3 top-3 z-30 flex w-[460px] max-w-[calc(100%-1.5rem)] flex-col overflow-hidden rounded-2xl border border-line bg-panel shadow-pop"
     >
       <div key={opened.id} className="rise flex min-h-0 flex-1 flex-col">
-        <PostingDetail posting={opened} onClose={onClose} onStatus={onStatus} onCompany={onCompany} />
+        <PostingDetail posting={opened} onClose={onClose} onStatus={onStatus} onCompany={onCompany} onBlock={onBlock} />
       </div>
     </aside>
   );

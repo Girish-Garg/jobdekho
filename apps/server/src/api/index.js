@@ -1,4 +1,5 @@
 import { postingsRoutes } from './postings.js'
+import { blockedCompanyRoutes } from './blocked-companies.js'
 import { filtersRoutes } from './filters.js'
 import { aiProviderRoutes } from './ai-provider.js'
 import { profileRoutes } from './profile.js'
@@ -54,6 +55,7 @@ export async function apiRoutes(app) {
   app.decorate('ai', { detect, select: selector(app, detect) })
 
   await app.register(postingsRoutes)
+  await app.register(blockedCompanyRoutes)
   await app.register(filtersRoutes)
   await app.register(aiProviderRoutes)
   await app.register(profileRoutes)

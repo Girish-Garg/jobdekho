@@ -104,4 +104,22 @@ describe('buildChatPrompt', () => {
     expect(prompt).toContain('"refs":["id","id"]')
     expect(prompt).toContain('never put an id there that is not in the data')
   })
+
+  // "Block xyz" is the person's call, never the model's; finding companies
+  // by name is a search, not a block.
+  it('offers a block only when asked for one, and points a search for companies at the filters', () => {
+    const prompt = buildChatPrompt({ message: 'block acme', context: { postingCount: 0, sort: 'match', top: [], open: null, profile: null }, history: [] })
+    expect(prompt).toContain('{"type":"block","companies":["..."]}')
+    expect(prompt).toContain('Offer it only when the person asks to block a company')
+    expect(prompt).toContain('never on your own initiative, not even for a posting that looks fake')
+    expect(prompt).toContain('"companies with foundation in the name", offer a "filters" action instead')
+    expect(prompt).toContain('do not say or imply that you already changed or blocked anything')
+  })
+
+  it('fences the companies already blocked, so an answer can say so', () => {
+    const prompt = buildChatPrompt({ message: 'q', context: { postingCount: 0, sort: 'match', top: [], open: null, profile: null, blocked: ['Acme Foundation'] }, history: [] })
+    expect(prompt).toContain('"blockedCompanies":["Acme Foundation"]')
+    expect(prompt).toContain('say that it is blocked and that Settings can unblock it')
+    expect(fencedFeed({ postingCount: 0, top: [] })).toContain('"blockedCompanies":[]')
+  })
 })

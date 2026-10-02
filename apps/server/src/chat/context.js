@@ -1,4 +1,5 @@
 import { SORTS } from '@jobdekho/store/posting-order.js'
+import { compactKey } from '@jobdekho/core/company-key.js'
 import { toListOpts } from './filter-opts.js'
 import { compactPosting, trimOpenPosting } from './postings-summary.js'
 import { summarizeProfile } from './profile-summary.js'
@@ -22,11 +23,20 @@ const TOP_N = 25
 // one open in the pane; its saved AI answers ride along (results-summary.js).
 // `question` is read for the companies it names, whose openings come from
 // the whole corpus rather than the screen (see question-search.js).
+//
+// The companies the person blocked go by name, so an answer can say one is
+// blocked rather than that it has none. Their postings are already gone from
+// every list read here (see the store's dashboard.js), and one the chat is
+// still scoped to from before the block is left out too. A dashboard without
+// blocking (only seen in tests) has nothing blocked.
 export async function assembleChatContext(dashboard, userId, { filters, sort, openPostingId, question = '', now } = {}) {
   const knownSort = SORTS.includes(sort) ? sort : 'match'
   const profile = await dashboard.getProfile(userId)
+  const blocked = typeof dashboard.listBlockedCompanies === 'function' ? await dashboard.listBlockedCompanies(userId) : []
+  const keys = new Set(blocked.map((entry) => entry.key))
   const matching = await dashboard.listPostingsForUser(userId, toListOpts(filters, knownSort, profile))
-  const open = openPostingId ? await dashboard.getPosting(userId, openPostingId) : null
+  const scoped = openPostingId ? await dashboard.getPosting(userId, openPostingId) : null
+  const open = scoped && !keys.has(compactKey(scoped.company)) ? scoped : null
   const saved = open ? await dashboard.listAiResults(userId, open.id) : []
   return {
     postingCount: matching.length,
@@ -35,6 +45,7 @@ export async function assembleChatContext(dashboard, userId, { filters, sort, op
     open: trimOpenPosting(open),
     openResults: summarizeResults(saved),
     profile: summarizeProfile(profile),
-    named: await postingsForNamedCompanies(dashboard, userId, question, profile, now),
+    named: await postingsForNamedCompanies(dashboard, userId, question, profile, now, keys),
+    blocked: blocked.map((entry) => entry.name),
   }
 }

@@ -3,6 +3,8 @@ import { useMediaQuery } from '../lib/useMediaQuery.js';
 import { useTriage } from '../lib/useTriage.js';
 import { useOpenPosting } from '../lib/useOpenPosting.js';
 import { usePostingSelection } from '../lib/usePostingSelection.js';
+import { useBlockedPicks } from '../lib/useBlockedPicks.js';
+import { blockCompanies } from '../lib/blockCompanies.js';
 import { rankingNotice } from '../lib/rankingNotice.js';
 import FeedTop from './FeedTop.jsx';
 import FeedBody from './FeedBody.jsx';
@@ -19,14 +21,22 @@ const WIDE_QUERY = '(min-width: 1100px)';
 export default function PostingsView({
   filters, setFilters, sort = 'match', setSort, viewMode = 'list', setViewMode, onOpenProfile, onOpenSettings,
 }) {
-  const { rows, loading, more, loadMore, onStatus, total, newToday, bands } = usePostingsFeed(filters, sort);
+  const { rows, loading, more, loadMore, onStatus, total, newToday, bands, blockedPicks } = usePostingsFeed(filters, sort);
   const triage = useTriage(rows, onStatus);
   const isWide = useMediaQuery(WIDE_QUERY);
   const pane = useOpenPosting(rows);
   const { fitFiltered, unranked } = rankingNotice(filters, sort, rows);
+  useBlockedPicks(blockedPicks, filters, setFilters);
 
   const selection = usePostingSelection(rows, pane, triage);
   const { selectedId, setSelectedId, openFromClick } = selection;
+
+  // A blocked company's jobs are about to leave the feed, this one with them,
+  // so the pane goes once the block is kept (see blockCompanies.js).
+  async function onBlock(name, opts) {
+    await blockCompanies([name], opts);
+    selection.dismissPane();
+  }
 
   // The feed keeps the Profile page's width, centred, rather than running
   // edge to edge: full-width rows and cards spread a title, its company and
@@ -75,6 +85,7 @@ export default function PostingsView({
         onDismiss={selection.dismissPane}
         onStatus={(id, value) => { pane.patchOutside(id, value); triage.setStatus(id, value); }}
         onCompany={(name) => setFilters({ ...filters, companies: [name] })}
+        onBlock={onBlock}
       />
     </section>
   );
