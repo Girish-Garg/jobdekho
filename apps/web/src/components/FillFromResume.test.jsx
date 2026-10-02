@@ -99,6 +99,12 @@ describe('FillFromResume with a CLI ready', () => {
     expect(getProviders).toHaveBeenCalledWith({ refresh: false });
   });
 
+  it('button uses shared btn classes for styling', async () => {
+    render(<FillFromResume profile={EMPTY} onFilled={() => {}} />);
+    const btn = await screen.findByRole('button', { name: 'Fill in from resume' });
+    expect(btn).toHaveClass('btn', 'btn-tint');
+  });
+
   it('runs straight away on an empty profile and hands the saved profile up', async () => {
     const onFilled = vi.fn();
     render(<FillFromResume profile={EMPTY} onFilled={onFilled} />);
