@@ -192,7 +192,8 @@ describe('the profile check', () => {
 describe('the postings check', () => {
   const NOW = Date.parse('2026-09-30T12:00:00Z')
   const run = (startedAt) => ({ id: startedAt, startedAt, sourceResults: [], newCount: 0 })
-  const FIX = 'Press "Refresh now" in Settings, under Postings, or run "npm run scrape" in a terminal.'
+  // The button alone: `npm run scrape` is there only in a clone of the repo.
+  const FIX = 'Press "Refresh now" in Settings, under Postings.'
 
   it('is missing when nothing was ever scraped', () => {
     expect(postingsCheck({ sources: [], runs: [], now: NOW })).toEqual({
@@ -239,5 +240,13 @@ describe('setupChecks', () => {
       profile: { skills: ['sql'] }, sources: [{ name: 'a', count: 3 }], runs: [],
     })
     expect(checks.every((c) => c.state === 'ok' && c.fix === null)).toBe(true)
+  })
+
+  // A first run learns what to do from these sentences, and `npx jobdekho`
+  // has no npm scripts and reads no .env, so none may send anyone to either.
+  it('sends no one to an npm script or a .env, which only a clone of the repo has', () => {
+    for (const rows of [NOTHING, [absent(CLAUDE_ROW), stuckAgy, stoppedOllama]]) {
+      for (const { detail, fix } of setupChecks({ rows })) expect(`${detail} ${fix}`).not.toMatch(/\bnpm\b|\.env\b/)
+    }
   })
 })

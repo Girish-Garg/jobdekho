@@ -4,9 +4,12 @@
 // history, one record per run (store/runs.js), read here only for when the
 // last one finished.
 //
-// The fix names both ways to refresh, since either is true on any install:
-// Settings' own "Refresh now" and the scrape script it stands for.
-const FIX = 'Press "Refresh now" in Settings, under Postings, or run "npm run scrape" in a terminal.'
+// The fix names Settings' own "Refresh now" alone: it runs the scrape that
+// `npm run scrape` runs, into the store this server reads, however JobDekho
+// was started. The script exists only in a clone of the repo, and fills the
+// store `npm start` reads there, not the one the `jobdekho` command keeps
+// (see cli/data-home.js).
+const FIX = 'Press "Refresh now" in Settings, under Postings.'
 const DAY_MS = 24 * 60 * 60 * 1000
 
 // "today", "yesterday", "3 days ago": a first-run check wants to know
