@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Card from './ui/Card.jsx';
 import TagInput from './TagInput.jsx';
 import EntryHeader from './EntryHeader.jsx';
 import EntryFields from './EntryFields.jsx';
@@ -25,7 +26,7 @@ export default function EntryCard({ entry, meta, startOpen, isFirst, isLast, onC
   return (
     <details className="group" open={open} onToggle={(event) => setOpen(event.currentTarget.open)}>
       <EntryHeader entry={entry} meta={meta} links={links} />
-      <div className="mb-4 flex flex-col gap-4 rounded-xl border border-line bg-paper/60 p-4">
+      <Card variant="inset" className="mb-4 flex flex-col gap-4 p-4">
         <EntryFields entry={entry} meta={meta} onChange={onChange} />
         <BulletLines lines={entry.bullets} onChange={(bullets) => onChange({ ...entry, bullets })} />
         {(meta.tech !== false || tech.length > 0) && (
@@ -41,7 +42,7 @@ export default function EntryCard({ entry, meta, startOpen, isFirst, isLast, onC
           onDuplicate={onDuplicate}
           onRemove={onRemove}
         />
-      </div>
+      </Card>
     </details>
   );
 }

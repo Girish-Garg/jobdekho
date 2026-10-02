@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import Button from './ui/Button.jsx';
+import Card from './ui/Card.jsx';
 
-const QUIET = 'btn btn-quiet font-normal text-muted hover:text-ink';
+const MUTED = 'font-normal text-muted hover:text-ink';
 
 // "Forget everything" arms instead of firing, the way deleting the profile
 // does (see DeleteProfile.jsx): there is no undo, and it takes the replaced
@@ -12,7 +14,7 @@ export default function MemoryForget({ busy, onForget }) {
   if (!arming) {
     return (
       <div className="flex justify-end">
-        <button type="button" onClick={() => setArming(true)} className="btn btn-ghost btn-sm">Forget everything</button>
+        <Button variant="ghost" size="sm" onClick={() => setArming(true)}>Forget everything</Button>
       </div>
     );
   }
@@ -23,19 +25,12 @@ export default function MemoryForget({ busy, onForget }) {
   }
 
   return (
-    <div role="group" aria-label="Forget everything" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-ember/25 bg-ember/5 px-4 py-3">
+    <Card variant="inset" role="group" aria-label="Forget everything" className="flex flex-wrap items-center justify-between gap-3 border-ember/25 bg-ember/5 px-4 py-3">
       <p className="text-sm text-ember">Everything the AI knows about you goes, and there is no undo.</p>
       <div className="flex items-center gap-2">
-        <button type="button" onClick={() => setArming(false)} className={QUIET}>Keep it</button>
-        <button
-          type="button"
-          disabled={busy}
-          onClick={confirm}
-          className="rounded-full bg-ember px-4 py-1.5 text-sm font-semibold text-paper transition-opacity duration-fast ease hover:opacity-90 disabled:opacity-60"
-        >
-          Forget it all
-        </button>
+        <Button onClick={() => setArming(false)} className={MUTED}>Keep it</Button>
+        <Button variant="danger" disabled={busy} onClick={confirm} className="disabled:opacity-60">Forget it all</Button>
       </div>
-    </div>
+    </Card>
   );
 }

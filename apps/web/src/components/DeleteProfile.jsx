@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { deleteProfile } from '../api.js';
+import Button from './ui/Button.jsx';
+import Card from './ui/Card.jsx';
 
-const QUIET = 'btn btn-quiet font-normal text-muted hover:text-ink';
+const MUTED = 'font-normal text-muted hover:text-ink';
 
 // Deleting throws away the stored resume text as well as the fields, and
 // there is no undo, so the button arms instead of firing. It sits apart at
@@ -24,7 +26,7 @@ export default function DeleteProfile({ onDeleted }) {
   }
 
   return (
-    <section aria-label="Delete profile" className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-ember/25 bg-ember/5 px-5 py-4">
+    <Card as="section" aria-label="Delete profile" className="flex flex-wrap items-center justify-between gap-3 border-ember/25 bg-ember/5 py-4">
       <div>
         <p className="text-sm font-semibold text-ember">Delete profile</p>
         <p className="text-sm text-muted">
@@ -34,18 +36,12 @@ export default function DeleteProfile({ onDeleted }) {
       </div>
       {arming ? (
         <div className="flex items-center gap-2">
-          <button type="button" onClick={() => setArming(false)} className={QUIET}>Keep it</button>
-          <button
-            type="button"
-            onClick={confirm}
-            className="rounded-full bg-ember px-4 py-1.5 text-sm font-semibold text-paper transition-opacity duration-fast ease hover:opacity-90"
-          >
-            Delete it
-          </button>
+          <Button onClick={() => setArming(false)} className={MUTED}>Keep it</Button>
+          <Button variant="danger" onClick={confirm}>Delete it</Button>
         </div>
       ) : (
-        <button type="button" onClick={() => setArming(true)} className={QUIET}>Delete profile</button>
+        <Button onClick={() => setArming(true)} className={MUTED}>Delete profile</Button>
       )}
-    </section>
+    </Card>
   );
 }

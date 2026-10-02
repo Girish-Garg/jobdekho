@@ -1,4 +1,5 @@
 import ProfileIndex from './ProfileIndex.jsx';
+import Card from './ui/Card.jsx';
 
 // The left rail at wide widths: the index of the record, then the resume
 // card. The name moved to the hero card at the top of the record, where it
@@ -8,9 +9,9 @@ import ProfileIndex from './ProfileIndex.jsx';
 export default function ProfileRail({ rows, current, onJump, children }) {
   return (
     <aside aria-label="Record index" className="sticky top-6 flex flex-col gap-5 self-start">
-      <div className="rounded-2xl border border-line bg-panel p-2">
+      <Card variant="rail">
         <ProfileIndex rows={rows} current={current} onJump={onJump} />
-      </div>
+      </Card>
       {children}
     </aside>
   );

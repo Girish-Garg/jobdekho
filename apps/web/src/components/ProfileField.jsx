@@ -1,5 +1,7 @@
-// The one input style the record uses: a panel-coloured well on the paper
-// page, so a field reads as a field without a caption shouting at it.
+import TextInput from './ui/TextInput.jsx';
+
+// The `.field` look (fields.css) as a class string, for the controls that
+// still spell their inputs out by hand. TextInput is how a field is made.
 export const BOX = 'rounded-lg border border-line bg-panel px-3 py-2 text-sm text-ink outline-none transition duration-fast ease-ease hover:border-edge focus:border-primary/60 focus:ring-2 focus:ring-primary/15';
 
 // A plain caption, as a real <label>, above whatever control it names.
@@ -17,9 +19,9 @@ export function Labelled({ label, children }) {
 export function TextField({ label, value, onChange, placeholder, readOnly = false, inputRef }) {
   return (
     <Labelled label={label}>
-      <input
+      <TextInput
         ref={inputRef}
-        className={`${BOX} read-only:text-muted`}
+        className="read-only:text-muted"
         value={value}
         placeholder={placeholder}
         readOnly={readOnly}

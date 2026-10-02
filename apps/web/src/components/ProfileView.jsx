@@ -10,6 +10,7 @@ import ProfileRail from './ProfileRail.jsx';
 import ProfileIndex from './ProfileIndex.jsx';
 import ProfileRecord from './ProfileRecord.jsx';
 import ProfileLoadFailed from './ProfileLoadFailed.jsx';
+import PageTitle from './ui/PageTitle.jsx';
 
 // Below this there is no room for an index beside a 760px record, so the
 // index becomes a strip that sticks under the topbar; the same threshold
@@ -51,7 +52,7 @@ export default function ProfileView() {
 
   return (
     <section className="mx-auto max-w-[1400px] px-6 pb-10 pt-6 sm:px-8">
-      <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink">Profile</h1>
+      <PageTitle>Profile</PageTitle>
       <p className="mt-0.5 max-w-2xl text-sm text-muted">
         Your full career record. New resumes start from it, the chat can add to it for you, and the recommendations on Postings score against the fields at the end.
       </p>

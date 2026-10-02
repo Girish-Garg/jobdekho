@@ -7,6 +7,7 @@ import { fillSummary } from '../lib/fillSummary.js';
 import InstallHint from './InstallHint.jsx';
 import OverwriteConfirm from './OverwriteConfirm.jsx';
 import AiError from './AiError.jsx';
+import Button from './ui/Button.jsx';
 import { SparkleIcon } from './Icon.jsx';
 
 const INTRO = 'Filling in from the resume asks an AI CLI installed on this computer, on your own subscription or a local model.';
@@ -72,15 +73,15 @@ export default function FillFromResume({ profile, onFilled }) {
       <div className="flex flex-col gap-2">
         {/* The card's one call to action, the width of the card, in the
             shared button style so it moves like every other button. */}
-        <button
-          type="button"
+        <Button
+          variant="tint"
           disabled={step === 'busy'}
           onClick={() => (hasFields(profile) ? setStep('confirm') : run())}
-          className="btn btn-tint px-4 py-2 text-sm w-full gap-2"
+          className="w-full gap-2 py-2"
         >
           <SparkleIcon size={14} />
           {step === 'busy' ? 'Filling in...' : 'Fill in from resume'}
-        </button>
+        </Button>
         <span aria-live="polite" className="text-xs text-muted empty:hidden">
           {step === 'busy' ? progress : step === 'done' ? summary : ''}
         </span>

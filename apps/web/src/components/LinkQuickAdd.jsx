@@ -1,3 +1,4 @@
+import Button from './ui/Button.jsx';
 import LinkKindIcon from './LinkKindIcon.jsx';
 import { PlusIcon } from './Icon.jsx';
 import { LINK_KIND_NAMES } from '../lib/linkKind.js';
@@ -10,10 +11,10 @@ import { LINK_KIND_NAMES } from '../lib/linkKind.js';
 export default function LinkQuickAdd({ kinds = [], present, onAdd, firstRef, addLabel }) {
   if (addLabel) {
     return (
-      <button ref={firstRef} type="button" onClick={() => onAdd('other')} className="btn btn-quiet btn-sm self-start">
+      <Button ref={firstRef} size="sm" onClick={() => onAdd('other')} className="self-start">
         <PlusIcon size={10} />
         {addLabel}
-      </button>
+      </Button>
     );
   }
   const has = new Set(present);
@@ -22,18 +23,18 @@ export default function LinkQuickAdd({ kinds = [], present, onAdd, firstRef, add
   return (
     <div className="flex flex-wrap gap-1.5">
       {order.map((kind, i) => (
-        <button
+        <Button
           key={kind}
           ref={i === 0 ? firstRef : undefined}
-          type="button"
+          size="sm"
           aria-label={`Add ${LINK_KIND_NAMES[kind]} link`}
           onClick={() => onAdd(kind)}
-          className={`btn btn-quiet btn-sm gap-1 px-2.5 ${has.has(kind) && kind !== 'other' ? 'text-muted' : ''}`}
+          className={`gap-1 px-2.5 ${has.has(kind) && kind !== 'other' ? 'text-muted' : ''}`}
         >
           <PlusIcon size={9} />
           <LinkKindIcon kind={kind} size={11} className="text-muted" />
           {LINK_KIND_NAMES[kind]}
-        </button>
+        </Button>
       ))}
     </div>
   );

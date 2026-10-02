@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { ENTRY_SECTIONS } from '../lib/profileSections.js';
 import { PROPOSAL_KEYS } from '../lib/mergeProposals.js';
+import Button from './ui/Button.jsx';
+import Card from './ui/Card.jsx';
 
 // Skill groups are the one proposal that is not an entry; they land in the
 // section the page calls Skills.
@@ -41,7 +43,7 @@ export default function ExtractedEntriesReview({ proposed, onAdd, onDismiss }) {
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-md border border-edge bg-panel p-4 shadow-raise">
+    <Card className="flex flex-col gap-3 rounded-md border-edge p-4 shadow-raise">
       <h3 className="font-display text-lg font-bold tracking-tight text-ink">From the resume</h3>
       <p className="text-sm text-muted">
         Found {flat.length} {flat.length === 1 ? 'entry' : 'entries'} in the resume. Keep the ones that belong on the record;
@@ -63,14 +65,14 @@ export default function ExtractedEntriesReview({ proposed, onAdd, onDismiss }) {
         })}
       </ul>
       <div className="flex items-center gap-4">
-        <button
-          type="button"
+        <Button
+          variant="primary"
           onClick={addSelected}
           disabled={picked.size === 0}
-          className="rounded-full bg-ink px-4 py-1.5 text-sm font-medium text-paper transition-opacity duration-fast ease-ease hover:opacity-90 disabled:opacity-60"
+          className="bg-ink font-medium text-paper hover:opacity-90 disabled:opacity-60"
         >
           Add selected
-        </button>
+        </Button>
         <button
           type="button"
           onClick={onDismiss}
@@ -79,6 +81,6 @@ export default function ExtractedEntriesReview({ proposed, onAdd, onDismiss }) {
           Dismiss
         </button>
       </div>
-    </div>
+    </Card>
   );
 }

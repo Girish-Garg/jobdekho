@@ -1,3 +1,4 @@
+import Chip from './ui/Chip.jsx';
 import LinkKindIcon from './LinkKindIcon.jsx';
 import { linkName } from '../lib/linkKind.js';
 
@@ -15,14 +16,10 @@ export default function LinkChips({ links }) {
   return (
     <span className="hidden shrink-0 items-center gap-1.5 sm:flex">
       {filled.slice(0, SHOWN).map((link, i) => (
-        <span
-          key={`${link.url}:${i}`}
-          title={link.url}
-          className="inline-flex max-w-[8.5rem] items-center gap-1 rounded-full border border-line bg-panel px-2 py-0.5 text-xs font-medium text-ink"
-        >
+        <Chip key={`${link.url}:${i}`} tone="line" title={link.url} className="max-w-[8.5rem] font-medium">
           <LinkKindIcon kind={link.kind} size={11} className="text-muted" />
           <span className="truncate">{linkName(link)}</span>
-        </span>
+        </Chip>
       ))}
       {more > 0 && (
         <span className="tnum text-xs font-medium text-muted">

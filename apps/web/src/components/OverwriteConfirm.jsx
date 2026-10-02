@@ -1,3 +1,6 @@
+import Button from './ui/Button.jsx';
+import Card from './ui/Card.jsx';
+
 // Stands in for the fill-in button once the profile already holds something,
 // because there is no telling a hand-corrected field from an extracted one.
 // "Keep my edits" is the way out, so the safe choice is also the named one.
@@ -6,18 +9,18 @@
 // go-ahead keeps the tint of the button that asked.
 export default function OverwriteConfirm({ onConfirm, onCancel }) {
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-line bg-panel p-4">
+    <Card className="flex flex-col gap-3 rounded-lg p-4">
       <p className="text-sm text-ink">
         This replaces your skills, titles, locations, years and degree. Everything else is offered for review.
       </p>
       <div className="flex flex-col gap-2">
-        <button type="button" onClick={onConfirm} className="btn btn-tint w-full px-4 py-2 text-sm">
+        <Button variant="tint" onClick={onConfirm} className="w-full py-2">
           Overwrite and fill in
-        </button>
-        <button type="button" onClick={onCancel} className="btn btn-quiet w-full px-4 py-2 text-sm font-normal">
+        </Button>
+        <Button onClick={onCancel} className="w-full py-2 font-normal">
           Keep my edits
-        </button>
+        </Button>
       </div>
-    </div>
+    </Card>
   );
 }

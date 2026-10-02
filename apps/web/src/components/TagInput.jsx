@@ -1,4 +1,5 @@
 import { useId, useRef, useState } from 'react';
+import Chip from './ui/Chip.jsx';
 import { CloseIcon } from './Icon.jsx';
 
 // Comma/enter to add, click to remove. Stores a string[]. The filter bar and
@@ -33,19 +34,21 @@ export default function TagInput({ label, values, onChange, plain = false }) {
       <label htmlFor={id} className={plain ? 'text-sm text-muted' : 'font-mono text-[11px] uppercase tracking-[0.2em] text-muted'}>{label}</label>
       <div
         onMouseDown={focusBox}
-        className={`flex cursor-text flex-wrap gap-1.5 rounded-lg border border-line p-2 transition duration-fast ease-ease focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/15 ${plain ? 'bg-panel' : 'bg-paper'}`}
+        className={`field flex cursor-text flex-wrap gap-1.5 p-2 focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/15 ${plain ? '' : 'bg-paper'}`}
       >
         {values.map((v) => (
-          <button
+          <Chip
+            as="button"
             key={v}
             type="button"
+            tone="line"
             onClick={() => onChange(values.filter((x) => x !== v))}
             aria-label={`Remove ${v}`}
-            className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-line bg-select px-2.5 py-1 text-xs font-medium text-ink transition-colors duration-fast ease hover:border-ember/40 hover:bg-ember/10 hover:text-ember"
+            className="cursor-pointer bg-select px-2.5 py-1 font-medium transition-colors duration-fast hover:border-ember/40 hover:bg-ember/10 hover:text-ember"
           >
             {v}
             <CloseIcon size={10} />
-          </button>
+          </Chip>
         ))}
         <input
           id={id}

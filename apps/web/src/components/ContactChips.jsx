@@ -1,7 +1,6 @@
+import Chip from './ui/Chip.jsx';
 import { MailIcon, PhoneIcon, MapPinIcon, LinkIcon } from './Icon.jsx';
 import { iconFor } from './LinkKindIcon.jsx';
-
-const CHIP = 'inline-flex max-w-full items-center gap-1.5 rounded-full border border-line bg-paper/60 px-2.5 py-1 text-xs text-ink';
 
 // A link shows as its site and path, not its scheme, which is noise here.
 const short = (url) => String(url).replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '');
@@ -25,10 +24,10 @@ export default function ContactChips({ basics }) {
   return (
     <ul aria-label="Contact" className="mt-3 flex flex-wrap gap-1.5">
       {items.map(([Icon, text], i) => (
-        <li key={`${text}:${i}`} className={CHIP}>
+        <Chip as="li" key={`${text}:${i}`} tone="line" className="max-w-full bg-paper/60 px-2.5 py-1 font-normal">
           <Icon size={12} className="text-muted" />
           <span className="truncate">{text}</span>
-        </li>
+        </Chip>
       ))}
     </ul>
   );

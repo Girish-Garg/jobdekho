@@ -1,5 +1,7 @@
 import { ArrowDownIcon, ArrowUpIcon, CopyIcon, PinIcon, TrashIcon } from './Icon.jsx';
 
+// Plain text actions rather than Buttons: no padding or border, and Pinned and
+// Remove colour their own hover, which a Button weight's hover would override.
 const TEXT_BTN = 'inline-flex items-center gap-1 text-sm text-muted transition-colors duration-fast ease-ease hover:text-ink disabled:opacity-30 disabled:hover:text-muted';
 
 // What acts on the entry as a whole, under a hairline: pin it and move it

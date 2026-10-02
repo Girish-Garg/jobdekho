@@ -1,9 +1,11 @@
 import { makeGroup } from '../lib/newEntry.js';
 import { sectionId } from '../lib/profileIndex.js';
 import ProfileSection, { AddControl } from './ProfileSection.jsx';
-import { BOX, Labelled } from './ProfileField.jsx';
+import { Labelled } from './ProfileField.jsx';
 import TagInput from './TagInput.jsx';
 import AskAiControl from './AskAiControl.jsx';
+import IconButton from './ui/IconButton.jsx';
+import TextInput from './ui/TextInput.jsx';
 import { TagIcon, TrashIcon } from './Icon.jsx';
 
 const HINT = 'Group your skills the way a resume would: Languages, Frameworks, Tools. Feeds the Skills field under Best fit too.';
@@ -37,8 +39,7 @@ export default function SkillGroupsSection({ groups, onChange }) {
             <div key={group.id} className="flex flex-col gap-3 py-3 sm:flex-row sm:items-start sm:gap-6">
               <div className="sm:w-48 sm:shrink-0">
                 <Labelled label="Group name">
-                  <input
-                    className={BOX}
+                  <TextInput
                     placeholder="e.g. Languages"
                     value={group.name}
                     onChange={(event) => update(i, { ...group, name: event.target.value })}
@@ -51,15 +52,17 @@ export default function SkillGroupsSection({ groups, onChange }) {
               {/* The same round bin as deleting a document, level with the
                   items box: a word floating at the row's far end read as a
                   stray caption. */}
-              <button
-                type="button"
-                onClick={() => remove(i)}
-                aria-label="Remove group"
+              <IconButton
+                size="md"
+                outline
+                tone="danger"
+                label="Remove group"
                 title="Remove group"
-                className="grid h-8 w-8 shrink-0 place-items-center self-start rounded-full border border-line bg-panel text-muted transition-colors duration-fast ease hover:border-ember/40 hover:text-ember sm:mt-[1.875rem]"
+                onClick={() => remove(i)}
+                className="self-start sm:mt-[1.875rem]"
               >
                 <TrashIcon size={13} />
-              </button>
+              </IconButton>
             </div>
           ))}
         </div>

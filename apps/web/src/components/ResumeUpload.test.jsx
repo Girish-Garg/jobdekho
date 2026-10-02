@@ -72,7 +72,7 @@ describe('ResumeUpload', () => {
         <button type="button">Fill in from resume</button>
       </ResumeUpload>,
     );
-    const card = screen.getByText('girish.pdf').closest('.bg-panel');
+    const card = screen.getByText('girish.pdf').closest('.card-panel');
     expect(card).not.toHaveClass('border-dashed');
     expect(card).toContainElement(screen.getByRole('button', { name: 'Fill in from resume' }));
   });

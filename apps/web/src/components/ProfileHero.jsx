@@ -5,6 +5,8 @@ import ContactChips from './ContactChips.jsx';
 import ProfileStrength from './ProfileStrength.jsx';
 import BasicsForm from './BasicsForm.jsx';
 import AskAiControl from './AskAiControl.jsx';
+import Button from './ui/Button.jsx';
+import Card from './ui/Card.jsx';
 import { PenIcon } from './Icon.jsx';
 
 // Who the record is about, as a card rather than eight open inputs: the name
@@ -17,7 +19,7 @@ export default function ProfileHero({ basics, profile, onChange }) {
   const [editing, setEditing] = useState(!basics.name);
 
   return (
-    <section id={sectionId('basics')} aria-label="Basics" className="scroll-mt-14 min-[1100px]:scroll-mt-4 rounded-2xl border border-line bg-panel p-5 sm:p-6">
+    <Card as="section" id={sectionId('basics')} aria-label="Basics" className="scroll-mt-14 min-[1100px]:scroll-mt-4 sm:p-6">
       <div className="flex flex-wrap items-start gap-5">
         <span aria-hidden="true" className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-primary/15 font-display text-xl font-extrabold text-primary">
           {basics.name ? initials(basics.name) : '?'}
@@ -31,23 +33,18 @@ export default function ProfileHero({ basics, profile, onChange }) {
           <ProfileStrength profile={profile} />
           <div className="flex flex-wrap items-center gap-2 self-start sm:self-end">
             <AskAiControl prompt="Add to my profile: " where="your profile" />
-            <button
-              type="button"
-              aria-expanded={editing}
-              onClick={() => setEditing(!editing)}
-              className="btn btn-quiet btn-sm px-3 py-1.5"
-            >
+            <Button size="sm" aria-expanded={editing} onClick={() => setEditing(!editing)} className="py-1.5">
               <PenIcon size={12} />
               {editing ? 'Done editing' : 'Edit basics'}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
       {editing && (
-        <div className="mt-5 rounded-xl border border-line bg-paper/60 p-4">
+        <Card variant="inset" className="mt-5 p-4">
           <BasicsForm basics={basics} onChange={onChange} />
-        </div>
+        </Card>
       )}
-    </section>
+    </Card>
   );
 }

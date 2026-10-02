@@ -2,10 +2,8 @@ import { useMemo } from 'react';
 import { diffLines } from '../lib/lineDiff.js';
 import { foldUnchanged } from '../lib/foldDiff.js';
 import DiffLines from './DiffLines.jsx';
+import Button from './ui/Button.jsx';
 import { CheckIcon } from './Icon.jsx';
-
-const APPLY = 'btn btn-primary';
-const CANCEL = 'btn btn-quiet text-muted hover:text-ink font-medium';
 
 // The header change shown the way the chat's document cards show theirs
 // (see ProposalSourceDiff.jsx): the line it replaces, then the line that
@@ -17,11 +15,11 @@ export default function ProfileHeaderReview({ before, after, busy, onApply, onCa
     <div className="mt-3 flex flex-col gap-2.5">
       <DiffLines ops={ops} />
       <div className="flex flex-wrap items-center gap-2">
-        <button type="button" onClick={onApply} disabled={busy} className={APPLY}>
+        <Button variant="primary" onClick={onApply} disabled={busy}>
           <CheckIcon size={14} />
           {busy ? 'Applying...' : 'Apply'}
-        </button>
-        <button type="button" onClick={onCancel} disabled={busy} className={CANCEL}>Cancel</button>
+        </Button>
+        <Button onClick={onCancel} disabled={busy} className="font-medium text-muted hover:text-ink">Cancel</Button>
         <span className="text-xs text-muted">Nothing changes until you apply.</span>
       </div>
     </div>

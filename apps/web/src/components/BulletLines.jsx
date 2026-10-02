@@ -1,5 +1,6 @@
 import { useId, useLayoutEffect, useRef, useState } from 'react';
 import BulletLine from './BulletLine.jsx';
+import Button from './ui/Button.jsx';
 import { PlusIcon } from './Icon.jsx';
 import { breakLine, dropLine, moveLine, pasteLines } from '../lib/bulletLines.js';
 
@@ -83,10 +84,10 @@ export default function BulletLines({ lines, onChange }) {
           onRemove={() => remove(i)}
         />
       ))}
-      <button ref={addButton} type="button" onClick={() => commit([...lines, ''], { index: lines.length, caret: 0 })} className="btn btn-ghost btn-sm self-start px-1.5">
+      <Button ref={addButton} variant="ghost" size="sm" onClick={() => commit([...lines, ''], { index: lines.length, caret: 0 })} className="self-start px-1.5">
         <PlusIcon size={12} />
         Add a line
-      </button>
+      </Button>
     </fieldset>
   );
 }

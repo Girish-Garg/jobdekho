@@ -4,6 +4,8 @@ import { useMemory } from '../lib/useMemory.js';
 import { MEMORY_SCOPES } from '../lib/memoryScopes.js';
 import ProfileSection, { AddControl } from './ProfileSection.jsx';
 import SettingSwitch from './SettingSwitch.jsx';
+import Button from './ui/Button.jsx';
+import Eyebrow from './ui/Eyebrow.jsx';
 import MemoryForm from './MemoryForm.jsx';
 import MemoryItem from './MemoryItem.jsx';
 import MemoryForget from './MemoryForget.jsx';
@@ -41,7 +43,7 @@ export default function MemorySection() {
       {memory.state === 'failed' && (
         <div className="flex flex-wrap items-center gap-3">
           <p className="text-sm text-ember">Could not load what the AI knows.</p>
-          <button type="button" onClick={memory.retry} className="btn btn-quiet btn-sm">Try again</button>
+          <Button size="sm" onClick={memory.retry}>Try again</Button>
         </div>
       )}
       {ready && (
@@ -51,7 +53,7 @@ export default function MemorySection() {
           {adding && <MemoryForm label="Add a memory" busy={memory.busy} onSave={add} onCancel={() => setAdding(false)} />}
           {groups.map((group) => (
             <div key={group.key} className="flex flex-col gap-0.5">
-              <h4 className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted">{group.label}</h4>
+              <Eyebrow as="h4">{group.label}</Eyebrow>
               <ul aria-label={group.label} className="flex flex-col divide-y divide-line">
                 {group.items.map((item) => <MemoryItem key={item.id} item={item} memory={memory} />)}
               </ul>

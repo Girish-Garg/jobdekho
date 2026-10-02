@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { notifyError } from '../lib/toast.js';
+import Button from './ui/Button.jsx';
 
 // A save button with transient confirmation: in saffron, the colour the app
 // gives the thing you act with, or quiet (`weight="quiet"`) where saving is
@@ -23,16 +24,19 @@ export default function SaveBar({ onSave, label: idleLabel = 'Save changes', wei
   }
 
   const label = { idle: idleLabel, saving: 'Saving...', saved: 'Saved', error: 'Retry' }[state];
+  const quiet = weight === 'quiet';
 
   return (
     <div className="flex items-center gap-3 pt-1">
-      <button
+      <Button
+        variant={quiet ? 'quiet' : 'primary'}
+        size={quiet ? 'sm' : undefined}
+        className={quiet ? '' : 'px-5 py-2'}
         onClick={save}
         disabled={state === 'saving'}
-        className={weight === 'quiet' ? 'btn btn-quiet btn-sm' : 'btn btn-primary px-5 py-2'}
       >
         {label}
-      </button>
+      </Button>
       {state === 'error' && <span className="text-sm text-ember">Could not save.</span>}
     </div>
   );

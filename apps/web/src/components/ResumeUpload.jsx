@@ -1,5 +1,6 @@
 import { useId, useRef, useState } from 'react';
 import { uploadResume } from '../api.js';
+import Card from './ui/Card.jsx';
 import { DocumentIcon, UploadIcon } from './Icon.jsx';
 
 // Upload is how a profile usually starts, but it only proposes values: the
@@ -32,13 +33,13 @@ export default function ResumeUpload({ resumeName, onUploaded, children }) {
   }
 
   return (
-    <div
+    <Card
       onDragOver={(event) => event.preventDefault()}
       onDrop={(event) => {
         event.preventDefault();
         send(event.dataTransfer?.files?.[0]);
       }}
-      className="flex flex-col gap-4 rounded-2xl border border-line bg-panel p-4 transition-colors duration-fast ease-ease focus-within:border-edge"
+      className="flex flex-col gap-4 p-4 transition-colors duration-fast ease-ease focus-within:border-edge"
     >
       <label htmlFor={inputId} className="text-xs font-semibold text-muted">Resume (PDF)</label>
       <input id={inputId} ref={inputRef} type="file" accept="application/pdf" disabled={busy} onChange={(event) => send(event.target.files?.[0])} className="sr-only" />
@@ -71,6 +72,6 @@ export default function ResumeUpload({ resumeName, onUploaded, children }) {
 
       {error && <p role="alert" className="text-sm text-ember">{error}</p>}
       {children}
-    </div>
+    </Card>
   );
 }

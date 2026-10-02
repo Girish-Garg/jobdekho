@@ -1,4 +1,5 @@
-import { BOX } from './ProfileField.jsx';
+import TextInput from './ui/TextInput.jsx';
+import IconButton from './ui/IconButton.jsx';
 import { CloseIcon, GripIcon } from './Icon.jsx';
 
 // One bullet line: the grip it is dragged by, the line itself across the
@@ -40,7 +41,7 @@ export default function BulletLine({ line, index, hintId, inputRef, drag, onDrag
       >
         <GripIcon size={14} />
       </span>
-      <input
+      <TextInput
         ref={inputRef}
         aria-label={`Line ${index + 1}`}
         aria-describedby={hintId}
@@ -48,16 +49,11 @@ export default function BulletLine({ line, index, hintId, inputRef, drag, onDrag
         onChange={(event) => onChange(event.target.value)}
         onKeyDown={onKeyDown}
         onPaste={onPaste}
-        className={`${BOX} min-w-0 flex-1`}
+        className="min-w-0 flex-1"
       />
-      <button
-        type="button"
-        aria-label={`Remove line ${index + 1}`}
-        onClick={onRemove}
-        className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-muted transition-colors duration-fast ease-ease hover:bg-ember/10 hover:text-ember"
-      >
+      <IconButton tone="danger" label={`Remove line ${index + 1}`} onClick={onRemove}>
         <CloseIcon size={11} />
-      </button>
+      </IconButton>
     </div>
   );
 }

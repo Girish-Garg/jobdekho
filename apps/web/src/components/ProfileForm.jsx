@@ -1,9 +1,10 @@
 import { PROFILE_DEGREE_OPTIONS } from '../lib/taxonomy.js';
 import { sectionId } from '../lib/profileIndex.js';
 import ProfileSection from './ProfileSection.jsx';
-import { BOX, Labelled } from './ProfileField.jsx';
+import { Labelled } from './ProfileField.jsx';
 import Select from './Select.jsx';
 import TagInput from './TagInput.jsx';
+import TextInput from './ui/TextInput.jsx';
 import { TargetIcon } from './Icon.jsx';
 
 const HINT = 'What the recommendations on Postings score against. Skills from the groups above fold in here when you save.';
@@ -30,7 +31,7 @@ export default function ProfileForm({ profile, onChange }) {
         </div>
         <div className="grid max-w-md grid-cols-2 gap-x-6 gap-y-3">
           <Labelled label="Years of experience">
-            <input
+            <TextInput
               type="number"
               min="0"
               max="50"
@@ -40,11 +41,10 @@ export default function ProfileForm({ profile, onChange }) {
               onChange={(event) =>
                 set('years')(event.target.value === '' ? null : Number(event.target.value))
               }
-              className={BOX}
             />
           </Labelled>
           <Labelled label="Highest degree">
-            <Select block value={profile.degree} onChange={(event) => set('degree')(event.target.value)} className={BOX}>
+            <Select block value={profile.degree} onChange={(event) => set('degree')(event.target.value)} className="field">
               {PROFILE_DEGREE_OPTIONS.map(([value, text]) => (
                 <option key={value} value={value}>{text}</option>
               ))}

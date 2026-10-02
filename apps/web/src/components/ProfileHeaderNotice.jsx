@@ -1,15 +1,14 @@
 import { useProfileHeader } from '../lib/useProfileHeader.js';
 import ProfileHeaderReview from './ProfileHeaderReview.jsx';
+import Button from './ui/Button.jsx';
+import Card from './ui/Card.jsx';
 import { UserIcon } from './Icon.jsx';
 
-const KEEP = 'rounded-full px-3 py-1.5 text-sm text-muted transition-colors duration-fast ease hover:text-ink disabled:opacity-50';
 // "name", "name and headline", "name, headline and contact line".
 function spoken(fields) {
   const words = fields.map((field) => field.toLowerCase());
   return words.length < 2 ? words.join('') : `${words.slice(0, -1).join(', ')} and ${words.at(-1)}`;
 }
-
-const UPDATE = 'btn btn-primary';
 
 // The document's header says something other than the profile: usually the
 // person changed their name or contact details after it was made, but a
@@ -25,7 +24,7 @@ export default function ProfileHeaderNotice({ doc, onApplied, onKept }) {
 
   return (
     <div className="shrink-0 bg-paper px-4 pt-4">
-      <section aria-label="Header from your profile" className="rounded-2xl border border-edge bg-panel shadow-raise">
+      <Card as="section" aria-label="Header from your profile" className="border-edge p-0 shadow-raise">
         <div className="rounded-2xl px-4 py-3">
           <div className="flex flex-wrap items-center gap-3">
             <span aria-hidden="true" className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
@@ -37,12 +36,12 @@ export default function ProfileHeaderNotice({ doc, onApplied, onKept }) {
             </div>
             {!header.review && (
               <div className="flex shrink-0 items-center gap-2">
-                <button type="button" onClick={header.keep} disabled={Boolean(header.busy)} className={KEEP}>
+                <Button variant="ghost" onClick={header.keep} disabled={Boolean(header.busy)} className="px-3 font-normal disabled:opacity-50">
                   {header.busy === 'keep' ? 'Keeping...' : 'Keep this one'}
-                </button>
-                <button type="button" onClick={header.start} disabled={Boolean(header.busy)} className={UPDATE}>
+                </Button>
+                <Button variant="primary" onClick={header.start} disabled={Boolean(header.busy)}>
                   {header.busy === 'preview' ? 'Preparing...' : 'Update from profile'}
-                </button>
+                </Button>
               </div>
             )}
           </div>
@@ -56,7 +55,7 @@ export default function ProfileHeaderNotice({ doc, onApplied, onKept }) {
             />
           )}
         </div>
-      </section>
+      </Card>
     </div>
   );
 }

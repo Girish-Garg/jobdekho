@@ -1,4 +1,5 @@
 import SlidingPill from './SlidingPill.jsx';
+import CountBadge from './ui/CountBadge.jsx';
 import { useSlidingPill } from '../lib/useSlidingPill.js';
 
 // The index of the record: one line per section with its count, the one
@@ -32,7 +33,8 @@ export default function ProfileIndex({ rows, current, onJump, horizontal = false
                 className={linkClass(horizontal, here)}
               >
                 <span>{row.label}</span>
-                {row.count != null && <span className="tnum rounded-full bg-select px-1.5 text-[11px] font-semibold">{row.count}</span>}
+                {/* The count takes the row's colour, so it follows its label when read or pointed at. */}
+                {row.count != null && <CountBadge n={row.count} className="text-inherit" />}
               </a>
             </li>
           );
