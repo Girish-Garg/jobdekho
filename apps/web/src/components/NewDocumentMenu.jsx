@@ -1,4 +1,6 @@
 import { usePopover } from '../lib/usePopover.js';
+import Button from './ui/Button.jsx';
+import Card from './ui/Card.jsx';
 import TemplatePicker from './TemplatePicker.jsx';
 import { PlusIcon } from './Icon.jsx';
 
@@ -10,17 +12,17 @@ export default function NewDocumentMenu({ templates, busy, onPick }) {
 
   return (
     <div ref={ref} className="relative">
-      <button
-        type="button"
+      <Button
+        variant="primary"
+        size="sm"
         aria-expanded={open}
         onClick={() => setOpen(!open)}
-        className="btn btn-primary btn-sm"
       >
         <PlusIcon size={12} />
         New
-      </button>
+      </Button>
       {open && (
-        <div role="dialog" aria-label="Start a new document" className="pop-in absolute left-0 top-full z-30 mt-2 w-80 rounded-2xl border border-line bg-overlay p-3 shadow-pop">
+        <Card variant="pop" as="div" role="dialog" aria-label="Start a new document" className="pop-in absolute left-0 top-full z-30 mt-2 w-80 p-3">
           <TemplatePicker
             templates={templates}
             busy={busy}
@@ -29,7 +31,7 @@ export default function NewDocumentMenu({ templates, busy, onPick }) {
               onPick(template);
             }}
           />
-        </div>
+        </Card>
       )}
     </div>
   );

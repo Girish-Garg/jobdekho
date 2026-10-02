@@ -1,3 +1,4 @@
+import Card from './ui/Card.jsx';
 import CompileFailure from './CompileFailure.jsx';
 
 // Measured on Chrome's viewer with its toolbar hidden: 5px of grey either
@@ -24,16 +25,16 @@ export default function DocumentPreview({ pdf, onOpenSource }) {
         // Chrome's viewer frames the page in a few pixels of its own dark
         // grey, which read as a heavy black rule on the marigold paper; the
         // frame is cropped just past that edge so the page sits on our own.
-        <div className="min-h-0 flex-1 overflow-hidden rounded-xl border border-line bg-panel shadow-raise">
+        <Card className="min-h-0 flex-1 overflow-hidden rounded-xl p-0 shadow-raise">
           <iframe
             title="PDF preview"
             src={`${pdf.url}#toolbar=0&navpanes=0&view=FitH`}
             style={{ margin: `-${CROP.top}px -${CROP.side}px 0`, width: `calc(100% + ${2 * CROP.side}px)`, height: `calc(100% + ${CROP.top}px)` }}
             className="block"
           />
-        </div>
+        </Card>
       ) : (
-        <div aria-hidden="true" className="breathe mx-auto aspect-[1/1.3] w-full max-w-2xl rounded-xl border border-line bg-panel shadow-raise" />
+        <Card aria-hidden="true" className="breathe mx-auto aspect-[1/1.3] w-full max-w-2xl rounded-xl p-0 shadow-raise" />
       )}
     </div>
   );

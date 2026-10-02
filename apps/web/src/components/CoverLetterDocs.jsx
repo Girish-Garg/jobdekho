@@ -1,8 +1,7 @@
 import { useState } from 'react';
+import Button from './ui/Button.jsx';
+import Card from './ui/Card.jsx';
 import { DocumentIcon, SparkleIcon } from './Icon.jsx';
-
-const BOTH = 'btn btn-primary';
-const ONE = 'btn btn-quiet font-medium';
 
 // What the letter becomes next: a cover letter document, or that and a
 // resume tailored to the same job in one go (see lib/makeApplicationDocs.js).
@@ -23,19 +22,19 @@ export default function CoverLetterDocs({ text, tailored, onMakeLetter, onMakeBo
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-xl border border-line bg-paper/60 p-3">
+    <Card variant="inset" className="flex flex-col gap-2 p-3">
       <div className="flex flex-wrap items-center gap-2">
         {onMakeBoth && (
-          <button type="button" disabled={Boolean(busy)} onClick={() => run('both', () => onMakeBoth(text, tailored))} className={BOTH}>
+          <Button variant="primary" disabled={Boolean(busy)} onClick={() => run('both', () => onMakeBoth(text, tailored))}>
             <SparkleIcon size={14} />
             {busy === 'both' ? 'Making them...' : tailored ? 'Make the letter and a tailored resume' : 'Tailor my resume and make both'}
-          </button>
+          </Button>
         )}
         {onMakeLetter && (
-          <button type="button" disabled={Boolean(busy)} onClick={() => run('letter', () => onMakeLetter(text))} className={ONE}>
+          <Button variant="quiet" className="font-medium" disabled={Boolean(busy)} onClick={() => run('letter', () => onMakeLetter(text))}>
             <DocumentIcon size={14} />
             {busy === 'letter' ? 'Making it...' : 'Just the letter'}
-          </button>
+          </Button>
         )}
       </div>
       <p className="text-xs text-muted">
@@ -43,6 +42,6 @@ export default function CoverLetterDocs({ text, tailored, onMakeLetter, onMakeBo
           ? "Both open on the Resume page, the resume from this job's tailoring. Your edits above go in."
           : 'Tailoring your resume for this job runs first, then both open on the Resume page. Your edits above go in.'}
       </p>
-    </div>
+    </Card>
   );
 }

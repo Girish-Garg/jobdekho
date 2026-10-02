@@ -165,6 +165,13 @@ describe('marks', () => {
     expect(screen.getByRole('heading', { level: 3, name: 'Proposed change' })).toHaveClass('eyebrow', 'text-primary');
     expect(screen.getByRole('heading', { level: 1, name: 'Postings' })).toHaveClass('page-title');
   });
+
+  it('an eyebrow inside an AI answer is the typewriter one, and can run inside a sentence', () => {
+    render(<p><Eyebrow as="span" mono>Gained </Eyebrow>React</p>);
+    const label = screen.getByText('Gained');
+    expect(label.tagName).toBe('SPAN');
+    expect(label).toHaveClass('eyebrow', 'eyebrow-mono');
+  });
 });
 
 // A variant the components can ask for has to exist in the stylesheets, or
@@ -178,7 +185,7 @@ describe('the stylesheets behind the building blocks', () => {
       'card', 'card-panel', 'card-inset', 'card-pop', 'card-list', 'card-rail',
       'field', 'field-search',
       'chip', 'chip-quiet', 'chip-primary', 'chip-applied', 'chip-line',
-      'count', 'count-solid', 'eyebrow', 'page-title',
+      'count', 'count-solid', 'eyebrow', 'eyebrow-mono', 'page-title',
     ];
     for (const name of classes) expect(css, name).toMatch(new RegExp(`\\.${name}(?![\\w-])`));
   });

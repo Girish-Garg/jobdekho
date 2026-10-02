@@ -1,5 +1,6 @@
 import LinkButton from './LinkButton.jsx';
 import GuardProblems from './GuardProblems.jsx';
+import Button from './ui/Button.jsx';
 import { CodeIcon, WarningIcon } from './Icon.jsx';
 
 // Why there is no PDF, by kind (see the server's documents/pdf.js and
@@ -15,12 +16,10 @@ const TITLE = {
   failed: 'The PDF could not be built',
 };
 
-const QUIET = 'btn btn-quiet font-medium';
-
 export default function CompileFailure({ failure, onOpenSource, onRetry }) {
   const kind = TITLE[failure.kind] ? failure.kind : 'failed';
   const fixable = kind === 'unsafe' || kind === 'compile_failed';
-  const sourceButton = <button type="button" onClick={onOpenSource} className={QUIET}><CodeIcon size={14} />Open the source</button>;
+  const sourceButton = <Button variant="quiet" className="font-medium" onClick={onOpenSource}><CodeIcon size={14} />Open the source</Button>;
 
   if (kind === 'unsafe') {
     return (
@@ -42,7 +41,7 @@ export default function CompileFailure({ failure, onOpenSource, onRetry }) {
         {kind === 'not_found' && (
           <LinkButton href="https://miktex.org/download">Get MiKTeX</LinkButton>
         )}
-        {fixable ? sourceButton : <button type="button" onClick={onRetry} className={QUIET}>Try again</button>}
+        {fixable ? sourceButton : <Button variant="quiet" className="font-medium" onClick={onRetry}>Try again</Button>}
       </div>
       {kind === 'not_found' && (
         <p className="text-xs text-muted">Install it with the default options, then press Try again. Download .tex works without it.</p>

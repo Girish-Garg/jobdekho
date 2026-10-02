@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { relativeDay } from '../lib/time.js';
+import Button from './ui/Button.jsx';
+import TextArea from './ui/TextArea.jsx';
+import Eyebrow from './ui/Eyebrow.jsx';
 import CoverLetterDocs from './CoverLetterDocs.jsx';
-
-const LABEL = 'font-mono text-[10px] uppercase tracking-[0.18em]';
 
 // The letter is editable before it is copied or made a document, since a
 // person always tweaks a name or a detail. Edits live in this component's
@@ -44,26 +45,26 @@ export default function CoverLetterResult({ record, providers, tailored = false,
 
   return (
     <div className="flex flex-col gap-3">
-      <textarea
+      <TextArea
         value={text}
         onChange={onChange}
         rows={10}
-        className="w-full rounded-md border border-line bg-paper p-2 text-sm leading-relaxed text-ink"
+        className="w-full rounded-md bg-paper p-2 leading-relaxed"
       />
       <p className="text-xs text-muted">Edit freely: the documents below are made from the text as it is here.</p>
 
       <CoverLetterDocs text={text} tailored={tailored} onMakeLetter={onMakeLetter} onMakeBoth={onMakeBoth} />
 
       <div className="flex flex-wrap items-center gap-3">
-        <button type="button" onClick={copy} className="btn btn-quiet font-normal">
+        <Button variant="quiet" className="font-normal" onClick={copy}>
           {copied ? 'Copied' : 'Copy'}
-        </button>
+        </Button>
         {copyError && <span className="text-sm text-ember">Could not copy, select the text and copy it by hand.</span>}
       </div>
 
       {result.usedFromResume?.length > 0 && (
         <div>
-          <p className={`${LABEL} text-muted`}>Draws on</p>
+          <Eyebrow mono>Draws on</Eyebrow>
           <ul className="mt-0.5 text-sm text-ink/80">
             {result.usedFromResume.map((item) => <li key={item}>{item}</li>)}
           </ul>
@@ -72,7 +73,7 @@ export default function CoverLetterResult({ record, providers, tailored = false,
 
       {result.notClaimed?.length > 0 && (
         <div>
-          <p className={`${LABEL} text-muted`}>Left out because your resume does not show it</p>
+          <Eyebrow mono>Left out because your resume does not show it</Eyebrow>
           <ul className="mt-0.5 text-sm text-ink/80">
             {result.notClaimed.map((item) => <li key={item}>{item}</li>)}
           </ul>

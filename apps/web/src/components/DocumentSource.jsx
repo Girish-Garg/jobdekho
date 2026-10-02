@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { notifyError } from '../lib/toast.js';
+import Button from './ui/Button.jsx';
+import TextArea from './ui/TextArea.jsx';
 import GuardProblems from './GuardProblems.jsx';
 import ChangedNotice from './ChangedNotice.jsx';
-
-const SAVE = 'btn btn-primary px-5 py-2';
 
 // The document's LaTeX, edited by hand. A save is a new version (restorable
 // from Versions) and compiles at once; the LaTeX guard stands in front of
@@ -49,20 +49,20 @@ export default function DocumentSource({ draft, pdf, onSave }) {
       {refused && (
         <GuardProblems title={refused.kind === 'unsafe' ? 'The saved source was not compiled. The LaTeX guard refused:' : refused.message} problems={refused.problems ?? []} />
       )}
-      <textarea
+      <TextArea
         aria-label="LaTeX source"
         spellCheck={false}
         value={draft.draft}
         onChange={(event) => draft.setDraft(event.target.value)}
         onKeyDown={onKeyDown}
-        className="min-h-[16rem] flex-1 resize-none rounded-xl border border-line bg-panel p-4 font-mono text-[12.5px] leading-relaxed text-ink shadow-raise outline-none transition-colors duration-fast ease focus:border-primary/50 focus:ring-4 focus:ring-primary/10 focus-visible:outline-none"
+        className="min-h-[16rem] flex-1 resize-none rounded-xl p-4 font-mono text-[12.5px] leading-relaxed shadow-raise focus:border-primary/50 focus:ring-4 focus:ring-primary/10 focus-visible:outline-none"
       />
       <div className="flex flex-wrap items-center gap-2">
-        <button type="button" onClick={save} disabled={!draft.dirty || saving} className={SAVE}>{saving ? 'Saving...' : 'Save'}</button>
+        <Button variant="primary" onClick={save} disabled={!draft.dirty || saving} className="px-5 py-2">{saving ? 'Saving...' : 'Save'}</Button>
         {draft.dirty && (
-          <button type="button" onClick={draft.discard} className="btn btn-quiet py-2 font-normal text-muted hover:text-ink">
+          <Button variant="quiet" className="py-2 font-normal text-muted hover:text-ink" onClick={draft.discard}>
             Discard edits
-          </button>
+          </Button>
         )}
         <span aria-live="polite" className="text-xs text-muted">{note}</span>
       </div>

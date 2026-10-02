@@ -1,3 +1,4 @@
+import PageTitle from './ui/PageTitle.jsx';
 import TemplatePicker from './TemplatePicker.jsx';
 import { DocumentIcon } from './Icon.jsx';
 
@@ -11,7 +12,7 @@ export default function ResumeEmptyState({ templates, busy, onPick }) {
         <span aria-hidden="true" className="grid h-12 w-12 place-items-center rounded-2xl bg-primary/15 text-primary ring-8 ring-primary/5">
           <DocumentIcon size={22} />
         </span>
-        <h1 className="mt-5 font-display text-xl font-extrabold tracking-tight text-ink">Your resumes and cover letters</h1>
+        <PageTitle className="mt-5 text-xl">Your resumes and cover letters</PageTitle>
         <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted">
           Start one from a template and it is filled in from your profile. From there it is yours: ask the chat to tailor,
           shorten or restyle it, or edit the LaTeX source yourself.

@@ -42,6 +42,12 @@
     @apply text-[10px] font-bold uppercase tracking-[0.14em] text-muted;
   }
 
+  /* The typewriter one, for the labels inside an AI's answer (Red flags,
+     Draws on), so what the AI found reads apart from the app's own cards. */
+  .eyebrow-mono {
+    @apply font-mono font-normal tracking-[0.18em];
+  }
+
   .page-title {
     @apply font-display text-2xl font-extrabold tracking-tight text-ink;
   }

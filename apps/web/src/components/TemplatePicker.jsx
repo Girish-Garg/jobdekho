@@ -1,3 +1,4 @@
+import Eyebrow from './ui/Eyebrow.jsx';
 import TemplateThumb from './TemplateThumb.jsx';
 
 const GROUPS = [
@@ -21,7 +22,7 @@ export default function TemplatePicker({ templates, busy = false, onPick, wide =
         if (!list.length) return null;
         return (
           <div key={kind}>
-            <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.14em] text-muted">{title}</p>
+            <Eyebrow className="mb-2">{title}</Eyebrow>
             <ul className={`grid gap-2 ${wide ? 'sm:grid-cols-2' : ''}`}>
               {list.map((template) => (
                 <li key={template.id}>

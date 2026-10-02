@@ -1,4 +1,4 @@
-const LABEL = 'font-mono text-[10px] uppercase tracking-[0.18em]';
+import Eyebrow from './ui/Eyebrow.jsx';
 
 const SECTIONS = [
   ['experience', 'Experience'],
@@ -21,7 +21,7 @@ export default function TailoredPicks({ sections }) {
 
   return (
     <div className="flex flex-col gap-2">
-      <p className={`${LABEL} text-muted`}>Leads the resume for this job</p>
+      <Eyebrow mono>Leads the resume for this job</Eyebrow>
       {used.map(([key, title]) => (
         <div key={key}>
           <p className="text-sm font-semibold text-ink">{title}</p>

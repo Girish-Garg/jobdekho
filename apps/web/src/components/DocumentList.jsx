@@ -1,4 +1,5 @@
 import { relativeDay } from '../lib/time.js';
+import Eyebrow from './ui/Eyebrow.jsx';
 import { DocumentIcon, MailIcon } from './Icon.jsx';
 
 const GROUPS = [
@@ -64,7 +65,7 @@ export default function DocumentList({ documents, unsaved = [], selectedId, onSe
           if (!list.length) return null;
           return (
             <div key={kind}>
-              <p className="px-2 pb-1 pt-3 text-[10px] font-bold uppercase tracking-[0.14em] text-muted">{title}</p>
+              <Eyebrow className="px-2 pb-1 pt-3">{title}</Eyebrow>
               <ul className="flex flex-col gap-0.5">
                 {list.map((doc) => (
                   <li key={doc.id}><Row doc={doc} here={doc.id === selectedId} unsaved={unsaved.includes(doc.id)} onSelect={onSelect} /></li>

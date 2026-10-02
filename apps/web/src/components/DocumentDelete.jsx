@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { usePopover } from '../lib/usePopover.js';
+import Button from './ui/Button.jsx';
+import Card from './ui/Card.jsx';
+import IconButton from './ui/IconButton.jsx';
 import { TrashIcon } from './Icon.jsx';
 
 // Deleting takes every kept version with it and there is no undo, so the
@@ -20,34 +23,34 @@ export default function DocumentDelete({ name, onDelete }) {
 
   return (
     <div ref={ref} className="relative">
-      <button
-        type="button"
-        aria-label="Delete this document"
+      <IconButton
+        label="Delete this document"
         title="Delete this document"
+        size="md"
+        outline
+        tone="danger"
         aria-expanded={open}
         onClick={() => setOpen(!open)}
-        className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-line bg-panel text-muted transition-colors duration-fast ease hover:border-ember/40 hover:text-ember"
       >
         <TrashIcon size={14} />
-      </button>
+      </IconButton>
       {open && (
-        <div role="dialog" aria-label="Delete this document?" className="pop-in absolute right-0 top-full z-30 mt-2 w-72 rounded-2xl border border-ember/25 bg-overlay p-4 shadow-pop">
+        <Card variant="pop" className="pop-in absolute right-0 top-full z-30 mt-2 w-72 border-ember/25 p-4" as="div" role="dialog" aria-label="Delete this document?">
           <p className="break-words text-sm font-semibold text-ink">Delete &ldquo;{name}&rdquo;?</p>
           <p className="mt-1 text-xs text-muted">Every version goes with it. There is no undo.</p>
           <div className="mt-3 flex justify-end gap-2">
-            <button type="button" onClick={() => setOpen(false)} className="btn btn-quiet px-3.5 font-normal text-muted hover:text-ink">
+            <Button variant="quiet" className="font-normal text-muted hover:text-ink" onClick={() => setOpen(false)}>
               Keep it
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="danger"
               disabled={busy}
               onClick={confirm}
-              className="rounded-full bg-ember px-3.5 py-1.5 text-sm font-semibold text-paper transition-opacity duration-fast ease hover:opacity-90 disabled:opacity-60"
             >
               {busy ? 'Deleting...' : 'Delete it'}
-            </button>
+            </Button>
           </div>
-        </div>
+        </Card>
       )}
     </div>
   );

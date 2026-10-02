@@ -1,4 +1,4 @@
-const LABEL = 'font-mono text-[10px] uppercase tracking-[0.18em]';
+import Eyebrow from './ui/Eyebrow.jsx';
 
 // Keyword coverage in the terms of the feed's fit: how many of the skills
 // this posting names a keyword matcher finds in the resume, before and
@@ -26,12 +26,12 @@ export default function ResumeCoverage({ coverage }) {
       </p>
       {gained.length > 0 && (
         <p className="text-sm text-ink/80">
-          <span className={`${LABEL} text-muted`}>Gained </span>{gained.join(', ')}
+          <Eyebrow as="span" mono>Gained </Eyebrow>{gained.join(', ')}
         </p>
       )}
       {missing.length > 0 && (
         <p className="text-sm text-ink/80">
-          <span className={`${LABEL} text-muted`}>Still missing </span>{missing.join(', ')}
+          <Eyebrow as="span" mono>Still missing </Eyebrow>{missing.join(', ')}
           <span className="text-muted"> (not added because your resume does not show them)</span>
         </p>
       )}

@@ -2,6 +2,10 @@ import { useState } from 'react';
 import { usePopover } from '../lib/usePopover.js';
 import { shortStamp } from '../lib/time.js';
 import { notifyError } from '../lib/toast.js';
+import Button from './ui/Button.jsx';
+import Card from './ui/Card.jsx';
+import Chip from './ui/Chip.jsx';
+import CountBadge from './ui/CountBadge.jsx';
 import { TOOL } from './DocumentToolButton.jsx';
 import { DocumentIcon, HistoryIcon, PenIcon, SparkleIcon, UserIcon } from './Icon.jsx';
 
@@ -40,13 +44,13 @@ export default function DocumentVersions({ versions, onRestore }) {
 
   return (
     <div ref={ref} className="relative">
-      <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} className={TOOL}>
+      <Button variant="quiet" size="sm" aria-expanded={open} onClick={() => setOpen(!open)} className="shrink-0 px-3 py-1.5 disabled:cursor-not-allowed">
         <HistoryIcon size={14} />
         Versions
-        <span className="tnum rounded-full bg-select px-1.5 text-[11px] font-semibold text-muted">{list.length}</span>
-      </button>
+        <CountBadge n={list.length} />
+      </Button>
       {open && (
-        <div role="dialog" aria-label="Versions" className="pop-in absolute right-0 top-full z-30 mt-2 w-80 rounded-2xl border border-line bg-overlay p-2 shadow-pop">
+        <Card variant="pop" as="div" role="dialog" aria-label="Versions" className="pop-in absolute right-0 top-full z-30 mt-2 w-80 p-2">
           <p className="px-2 pb-2 pt-1 text-xs text-muted">Restoring one adds it back as the newest version, so nothing is lost.</p>
           <ol className="flex max-h-80 flex-col gap-0.5 overflow-y-auto">
             {list.map((version, i) => {
@@ -59,22 +63,23 @@ export default function DocumentVersions({ versions, onRestore }) {
                     <span className="block text-xs text-muted">{shortStamp(version.at)}</span>
                   </span>
                   {i === 0 ? (
-                    <span className="rounded-full bg-applied/15 px-2 py-0.5 text-[11px] font-semibold text-applied">Current</span>
+                    <Chip tone="applied">Current</Chip>
                   ) : (
-                    <button
-                      type="button"
+                    <Button
+                      variant="quiet"
+                      size="sm"
                       disabled={Boolean(busy)}
                       onClick={() => restore(version.at)}
-                      className="btn btn-quiet btn-sm px-2.5"
+                      className="px-2.5"
                     >
                       {busy === version.at ? 'Restoring...' : 'Restore'}
-                    </button>
+                    </Button>
                   )}
                 </li>
               );
             })}
           </ol>
-        </div>
+        </Card>
       )}
     </div>
   );

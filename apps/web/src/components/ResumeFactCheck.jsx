@@ -1,4 +1,4 @@
-const LABEL = 'font-mono text-[10px] uppercase tracking-[0.18em]';
+import Eyebrow from './ui/Eyebrow.jsx';
 
 // What each flag type means, in the person's words. The server found these
 // by comparing the rewrite with the original in code, so they are shown as
@@ -28,7 +28,7 @@ export default function ResumeFactCheck({ factCheck }) {
           <li key={`${flag.type}:${flag.value}:${i}`} className="text-sm">
             <div className="flex flex-wrap items-baseline gap-x-2">
               <span className="font-semibold text-ink">{flag.value}</span>
-              <span className={`${LABEL} text-muted`}>{MEANING[flag.type] || 'not in your original'}</span>
+              <Eyebrow as="span" mono>{MEANING[flag.type] || 'not in your original'}</Eyebrow>
             </div>
             {flag.context && <p className="text-ink/80">{flag.context}</p>}
           </li>

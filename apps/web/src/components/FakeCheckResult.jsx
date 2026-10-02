@@ -1,6 +1,5 @@
 import { relativeDay } from '../lib/time.js';
-
-const LABEL = 'font-mono text-[10px] uppercase tracking-[0.18em]';
+import Eyebrow from './ui/Eyebrow.jsx';
 
 // The verdict in words a job seeker would use. Ink throughout, whatever the
 // verdict: ember is for errors and warnings about a posting, and the verdict
@@ -29,7 +28,7 @@ export default function FakeCheckResult({ record, providers }) {
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <p className="font-display text-base font-bold tracking-tight">{VERDICT_WORD[result.verdict] || VERDICT_WORD.unclear}</p>
           {result.stillOpen !== null && (
-            <p className={`${LABEL} text-muted`}>{result.stillOpen ? 'Still open' : 'No longer open'}</p>
+            <Eyebrow mono>{result.stillOpen ? 'Still open' : 'No longer open'}</Eyebrow>
           )}
         </div>
         {result.summary && <p className="mt-0.5 text-sm text-ink/80">{result.summary}</p>}
@@ -41,7 +40,7 @@ export default function FakeCheckResult({ record, providers }) {
             <li key={check.label} className="text-sm">
               <div className="flex flex-wrap items-baseline gap-x-2">
                 <span className="font-medium text-ink">{check.label}</span>
-                <span className={`${LABEL} text-muted`}>{OK_WORD[check.ok] || 'Unclear'}</span>
+                <Eyebrow as="span" mono>{OK_WORD[check.ok] || 'Unclear'}</Eyebrow>
               </div>
               {check.finding && <p className="text-ink/80">{check.finding}</p>}
               {check.sources?.length > 0 && (
@@ -60,7 +59,7 @@ export default function FakeCheckResult({ record, providers }) {
 
       {result.redFlags?.length > 0 && (
         <div>
-          <p className={`${LABEL} text-muted`}>Red flags</p>
+          <Eyebrow mono>Red flags</Eyebrow>
           <ul className="mt-0.5 text-sm text-ink/80">
             {result.redFlags.map((flag) => <li key={flag}>{flag}</li>)}
           </ul>

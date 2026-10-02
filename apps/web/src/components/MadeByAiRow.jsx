@@ -1,4 +1,6 @@
 import { describeMade, isJobItem } from '../lib/madeByAi.js';
+import Button from './ui/Button.jsx';
+import Eyebrow from './ui/Eyebrow.jsx';
 import { DocumentIcon, MailIcon, PenIcon, ShieldCheckIcon, SparkleIcon } from './Icon.jsx';
 
 // The colours the rest of the app already gives each thing: saffron for a
@@ -18,10 +20,8 @@ const lookOf = (item) => {
   return LOOK[item.kind] ?? LOOK.profile;
 };
 
-const LINK = 'btn btn-quiet btn-sm px-2.5';
-
 function Links({ item, links, onOpenConversation }) {
-  const link = (label, act) => <button type="button" onClick={act} className={LINK}>{label}</button>;
+  const link = (label, act) => <Button variant="quiet" size="sm" className="px-2.5" onClick={act}>{label}</Button>;
   if (isJobItem(item)) {
     return (
       <>
@@ -45,7 +45,7 @@ export default function MadeByAiRow({ item, links, onOpenConversation }) {
         <Icon size={15} />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted">{word}</p>
+        <Eyebrow>{word}</Eyebrow>
         <p className="truncate text-sm font-semibold text-ink" title={title}>{title}</p>
         <p className="truncate text-xs text-muted">{detail}</p>
         <div className="mt-2 flex flex-wrap gap-1.5">

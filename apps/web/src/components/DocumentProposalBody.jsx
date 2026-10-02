@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Button from './ui/Button.jsx';
 import GuardProblems from './GuardProblems.jsx';
 import ProposalSourceDiff from './ProposalSourceDiff.jsx';
 import { ChevronDownIcon, ChevronUpIcon, DocumentIcon, MailIcon, WarningIcon } from './Icon.jsx';
@@ -50,15 +51,15 @@ export default function DocumentProposalBody({ proposal }) {
       )}
       {proposal.factFlags.length > 0 && <FactFlags flags={proposal.factFlags} />}
       <div className="flex flex-wrap items-center gap-2">
-        <button
-          type="button"
+        <Button
+          variant="quiet"
+          size="sm"
           aria-expanded={open}
           onClick={() => setOpen((now) => !now)}
-          className="btn btn-quiet btn-sm"
         >
           {open ? 'Hide changes' : 'View changes'}
           {open ? <ChevronUpIcon size={12} /> : <ChevronDownIcon size={12} />}
-        </button>
+        </Button>
         {how && <span className="text-xs text-muted">{how}</span>}
       </div>
       {open && <ProposalSourceDiff proposal={proposal} />}
