@@ -57,7 +57,12 @@ const press = async (s, at) => {
   await onSocketMessage(s, { t: 'up', ...at, button: 'left', clicks: 1 })
 }
 
-describe.skipIf(!browser)('Apply assist in a real browser', () => {
+// Opens a real Chrome or Edge, which shows up on the owner's screen in the
+// middle of every test run. Apply assist is switched off (see the server's
+// config.js), so this runs only when it is switched back on, the same flag.
+const switchedOn = process.env.JOBDEKHO_APPLY_ASSIST === '1'
+
+describe.skipIf(!browser || !switchedOn)('Apply assist in a real browser', () => {
   beforeAll(async () => {
     server = createServer((req, res) => {
       const file = FILES[new URL(req.url, 'http://x').pathname]
