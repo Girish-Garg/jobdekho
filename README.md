@@ -569,7 +569,7 @@ installed. `npm run pack:npm -- --tgz` also packs
 the way a user would.
 
 A release is `npm version patch` (or `minor`), which bumps the version,
-commits and tags it, then `npm run pack:npm` and `npm publish dist/npm`, and
+commits and tags it, then `npm run pack:npm` and `npm publish ./dist/npm`, and
 `git push --follow-tags`. To let testers try a version first, publish it
 with `--tag next` (they run `npx jobdekho@next`), then move it to everyone
 with `npm dist-tag add jobdekho@<version> latest`.

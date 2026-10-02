@@ -6,7 +6,9 @@ import { rewriteImports, namesWorkspace } from './rewrite-imports.js'
 import { publishManifest, RUNTIME_WORKSPACES } from './manifest.js'
 import { bareImports } from './bare-imports.js'
 
-// Builds the npm package `jobdekho` into dist/npm, ready for `npm publish`.
+// Builds the npm package `jobdekho` into dist/npm, ready for
+// `npm publish ./dist/npm`; the ./ matters, since without it npm reads
+// dist/npm as a GitHub repository's owner/name.
 // It holds what the command runs, each folder where it sits in the repo, so
 // every path the code works out from its own folder (the web build,
 // config/, the LaTeX templates) lands the same once installed.
