@@ -20,9 +20,16 @@ describe('ProfileSaveBar', () => {
   });
 
   // Nothing is on the server yet, so there is nothing to go back to.
-  it('offers only the save on a record never saved', () => {
-    render(<ProfileSaveBar dirty={false} fresh onSave={vi.fn()} onDiscard={vi.fn()} />);
+  it('offers only the save on a record never saved, once something is entered', () => {
+    render(<ProfileSaveBar dirty fresh onSave={vi.fn()} onDiscard={vi.fn()} />);
     expect(screen.getByText('Your profile is not saved yet.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Discard' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save profile' })).toBeInTheDocument();
+  });
+
+  // A first visit that has typed nothing is not nagged to save a blank record.
+  it('is not there on a record never saved while nothing is entered', () => {
+    const { container } = render(<ProfileSaveBar dirty={false} fresh onSave={vi.fn()} onDiscard={vi.fn()} />);
+    expect(container).toBeEmptyDOMElement();
   });
 });

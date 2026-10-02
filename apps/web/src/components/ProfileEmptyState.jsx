@@ -1,29 +1,14 @@
-import { SparkleIcon } from './Icon.jsx';
-
-// A person landing here with nothing needs to know why they would bother
-// before being shown a pile of blank inputs, and the quickest way in: the
-// resume card beside this reads a PDF and fills the record from it.
-export default function ProfileEmptyState({ onStart }) {
+// The record is open the moment the page loads, so a first visit has no gate
+// to click through; what it does need is a pointer to the quickest ways in,
+// and word that typing it all by hand is just as good. Two short lines of
+// text rather than a card, so the record stays what the page is about from
+// the first screen. Each sentence has its own line: run together they
+// wrapped to leave one word alone on the second.
+export default function ProfileEmptyState() {
   return (
-    <div className="flex max-w-2xl flex-col items-start gap-4 rounded-2xl border border-line bg-panel p-6">
-      <span aria-hidden="true" className="grid h-11 w-11 place-items-center rounded-2xl bg-primary/15 text-primary">
-        <SparkleIcon size={18} />
-      </span>
-      <h2 className="font-display text-xl font-extrabold tracking-tight text-ink">Start your profile</h2>
-      <p className="text-sm leading-relaxed text-muted">
-        Your profile is your full career record: experience, projects, education, skills, certifications and
-        achievements, each holding as many entries as you need. The skills, target titles, experience and degree
-        in it are what the recommendations on Postings rank jobs by, and new resumes on the Resume page start from it. The
-        quickest start is to upload your resume and let the AI on this computer fill it in, or to tell the chat
-        about a job or a project and apply what it offers.
-      </p>
-      <button
-        type="button"
-        onClick={onStart}
-        className="btn btn-primary px-5 py-2"
-      >
-        Start writing it
-      </button>
-    </div>
+    <p className="max-w-2xl text-sm text-muted">
+      <span className="block">The quickest start is to upload your resume or tell the chat about yourself.</span>
+      <span className="block">Everything here can also be typed in directly.</span>
+    </p>
   );
 }

@@ -3,10 +3,14 @@ import SaveBar from './SaveBar.jsx';
 // The one save for the whole record, pinned to the bottom of the page while
 // anything is unsaved. It used to sit at the very end of the record, a long
 // scroll from the basics and the first sections, so an edit up top was easy
-// to leave unsaved without ever seeing the button. A new record (nothing on
-// the server yet) always shows it, since everything in it is unsaved.
+// to leave unsaved without ever seeing the button. A record never saved
+// follows the same rule: its `dirty` is measured against the empty profile
+// (see useProfileState.js), so a first visit that has typed nothing is not
+// nagged, and the bar arrives with the first thing entered. `fresh` only
+// changes what it says and takes Discard away, since a record never saved has
+// no earlier copy worth going back to.
 export default function ProfileSaveBar({ dirty, fresh, onSave, onDiscard }) {
-  if (!dirty && !fresh) return null;
+  if (!dirty) return null;
 
   return (
     <div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-panel/95 px-5 py-3 shadow-pop backdrop-blur">

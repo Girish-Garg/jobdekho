@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
-import { getProfile, putProfile } from '../api.js';
+import { useState } from 'react';
+import { putProfile } from '../api.js';
+import { useProfileLoad } from './useProfileLoad.js';
 import { withDefaults } from './emptyProfile.js';
 import { deriveSkills } from './deriveSkills.js';
 import { appendProposals } from './mergeProposals.js';
@@ -19,15 +20,11 @@ export function useProfileState() {
   // (see ProfileSaveBar.jsx) and to put an edit back.
   const [lastSaved, setLastSaved] = useState(null);
 
-  useEffect(() => {
-    let alive = true;
-    getProfile()
-      .then((p) => alive && (setProfile(withDefaults(p)), setLastSaved(withDefaults(p)), setExists(p !== null)))
-      .catch(() => alive && setProfile(withDefaults(null)));
-    return () => {
-      alive = false;
-    };
-  }, []);
+  const { failed, retry } = useProfileLoad((p) => {
+    setProfile(withDefaults(p));
+    setLastSaved(withDefaults(p));
+    setExists(p !== null);
+  });
 
   async function save() {
     const { resumeName, ...body } = profile;
@@ -65,10 +62,13 @@ export function useProfileState() {
     setProposed(null);
   }
 
+  // What a deleted resume proposed goes with it, so the blank record that
+  // follows is the same one a first visit gets.
   function reset() {
     setProfile(withDefaults(null));
     setLastSaved(withDefaults(null));
     setExists(false);
+    setProposed(null);
   }
 
   // A whole record the server already saved (a chat proposal applied, see
@@ -88,6 +88,6 @@ export function useProfileState() {
   const discard = () => lastSaved && setProfile(lastSaved);
 
   return {
-    profile, setProfile, exists, proposed, save, adopt, addProposals, dismissProposed: () => setProposed(null), reset, dirty, discard, replace, rebase,
+    profile, setProfile, exists, failed, retry, proposed, save, adopt, addProposals, dismissProposed: () => setProposed(null), reset, dirty, discard, replace, rebase,
   };
 }

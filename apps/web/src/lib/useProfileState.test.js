@@ -80,6 +80,50 @@ describe('useProfileState', () => {
     act(() => result.current.reset());
     expect(result.current.profile).toEqual(EMPTY_PROFILE);
     expect(result.current.exists).toBe(false);
+    expect(result.current.dirty).toBe(false);
+  });
+
+  it('reset also drops what the deleted resume proposed', async () => {
+    getProfile.mockResolvedValue(SAVED);
+    const { result } = renderHook(() => useProfileState());
+    await waitFor(() => expect(result.current.exists).toBe(true));
+    act(() => result.current.adopt({
+      ...SAVED,
+      proposed: { experience: [{ title: 'Proposed role' }], projects: [], education: [] },
+    }));
+    expect(result.current.proposed).not.toBeNull();
+    act(() => result.current.reset());
+    expect(result.current.proposed).toBeNull();
+  });
+
+  // The save bar shows on `dirty` alone, so for a profile never saved it has
+  // to be a comparison with the blank one: clean at first, unsaved on the
+  // first thing entered, clean again when it is typed back out.
+  it('a profile never saved is dirty only while it differs from the blank one', async () => {
+    getProfile.mockResolvedValue(null);
+    const { result } = renderHook(() => useProfileState());
+    await waitFor(() => expect(result.current.profile).toBeDefined());
+    expect(result.current.dirty).toBe(false);
+    const named = (name) => (p) => ({ ...p, basics: { ...p.basics, name } });
+    act(() => result.current.setProfile(named('Asha Rao')));
+    expect(result.current.dirty).toBe(true);
+    act(() => result.current.setProfile(named('')));
+    expect(result.current.dirty).toBe(false);
+  });
+
+  // A blank record standing in for one that could not be read would be
+  // saved over the real one, so a failed read leaves nothing to edit.
+  it('a profile that could not be read is a failure to retry, never a blank record', async () => {
+    getProfile.mockRejectedValueOnce(new Error('offline'));
+    const { result } = renderHook(() => useProfileState());
+    await waitFor(() => expect(result.current.failed).toBe(true));
+    expect(result.current.profile).toBeUndefined();
+    expect(result.current.dirty).toBe(false);
+    getProfile.mockResolvedValueOnce(SAVED);
+    act(() => result.current.retry());
+    await waitFor(() => expect(result.current.profile).toBeDefined());
+    expect(result.current.failed).toBe(false);
+    expect(result.current.exists).toBe(true);
   });
 
   it('replace shows a record the server already saved, as saved', async () => {

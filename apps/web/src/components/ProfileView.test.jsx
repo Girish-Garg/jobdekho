@@ -35,41 +35,92 @@ const pickFile = () =>
 
 beforeEach(() => vi.clearAllMocks());
 
+const WELCOME = /the quickest start is to upload your resume or tell the chat/i;
+
 describe('ProfileView with no profile', () => {
-  it('explains what a profile is for instead of showing blank fields', async () => {
+  beforeEach(() => getProfile.mockResolvedValue(null));
+
+  it('opens straight into the record, every section there with its add button', async () => {
     render(<ProfileView />);
-    expect(await screen.findByRole('heading', { name: 'Start your profile' })).toBeInTheDocument();
-    expect(screen.queryByLabelText('Years of experience')).not.toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Add role' })).toBeInTheDocument();
+    for (const name of ['Add project', 'Add programme', 'Add certification', 'Add achievement', 'Add group']) {
+      expect(screen.getByRole('button', { name })).toBeInTheDocument();
+    }
+    expect(screen.getByLabelText('Years of experience')).toBeInTheDocument();
+    // The basics open for editing on a record with no name yet.
+    expect(screen.getByRole('region', { name: 'Basics' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Name')).toBeInTheDocument();
+    // Nothing to press first, and no card standing in for the record.
+    expect(screen.queryByRole('button', { name: 'Start writing it' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Start your profile' })).not.toBeInTheDocument();
+    // Delete acts on the server's copy, which does not exist yet.
     expect(screen.queryByRole('button', { name: 'Delete profile' })).not.toBeInTheDocument();
     // The upload control is the main way in, so it stays visible.
     expect(screen.getByLabelText(/resume \(pdf\)/i)).toBeInTheDocument();
   });
 
-  it('opens a blank career record for building the profile by hand', async () => {
+  // The record opens ready to type into, so a profile that could not be read
+  // must not be shown as a blank one that Save would write over it.
+  it('says so when the saved profile could not be read, with no blank record to save, and retries', async () => {
+    getProfile.mockRejectedValueOnce(new Error('offline'));
     render(<ProfileView />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Start writing it' }));
-    expect(screen.getByLabelText('Years of experience')).toBeInTheDocument();
-    // The basics open for editing on a record with no name yet.
-    expect(screen.getByRole('region', { name: 'Basics' })).toBeInTheDocument();
-    expect(screen.getByLabelText('Name')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /Experience/ })).toBeInTheDocument();
-    // Delete acts on the server's copy, which does not exist yet.
-    expect(screen.queryByRole('button', { name: 'Delete profile' })).not.toBeInTheDocument();
+    expect(await screen.findByRole('alert')).toHaveTextContent(/could not be read/);
+    expect(screen.queryByRole('button', { name: 'Add role' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(await screen.findByRole('button', { name: 'Add role' })).toBeInTheDocument();
+    expect(screen.queryByText(/could not be read/)).not.toBeInTheDocument();
+  });
+
+  it('greets a first visit with the quickest ways in, until the profile is saved', async () => {
+    render(<ProfileView />);
+    expect(await screen.findByText(WELCOME)).toBeInTheDocument();
+    expect(screen.getByText(/can also be typed in directly/i)).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Asha Rao' } });
+    // Typing alone does not take the greeting away: nothing is saved yet.
+    expect(screen.getByText(WELCOME)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Save profile' }));
+    await waitFor(() => expect(putProfile).toHaveBeenCalled());
+    await waitFor(() => expect(screen.queryByText(WELCOME)).not.toBeInTheDocument());
+    expect(screen.getByRole('button', { name: 'Delete profile' })).toBeInTheDocument();
+  });
+
+  it('keeps the save bar away until something is typed, and again once it is typed back out', async () => {
+    render(<ProfileView />);
+    const name = await screen.findByLabelText('Name');
+    expect(screen.queryByText('Your profile is not saved yet.')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Save profile' })).not.toBeInTheDocument();
+    fireEvent.change(name, { target: { value: 'Asha Rao' } });
+    expect(screen.getByText('Your profile is not saved yet.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save profile' })).toBeInTheDocument();
+    fireEvent.change(name, { target: { value: '' } });
+    expect(screen.queryByRole('button', { name: 'Save profile' })).not.toBeInTheDocument();
+  });
+
+  it('shows the save bar for an entry added by hand, and saves it as the first write', async () => {
+    render(<ProfileView />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Add role' }));
+    fireEvent.change(await screen.findByLabelText('Role'), { target: { value: 'Backend Engineer' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save profile' }));
+    await waitFor(() => expect(putProfile).toHaveBeenCalledTimes(1));
+    expect(putProfile.mock.calls[0][0].experience).toMatchObject([{ title: 'Backend Engineer' }]);
   });
 
   it('adopts the profile the upload returns and shows the file name', async () => {
     render(<ProfileView />);
-    await screen.findByRole('heading', { name: 'Start your profile' });
+    await screen.findByText(WELCOME);
     pickFile();
     expect(await screen.findByText('react')).toBeInTheDocument();
     expect(uploadResume).toHaveBeenCalled();
     expect(screen.getByText('cv.pdf')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Delete profile' })).toBeInTheDocument();
+    // The upload saved a profile on the server, so the greeting has done its job.
+    expect(screen.queryByText(WELCOME)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Save profile' })).not.toBeInTheDocument();
   });
 
   it('offers to fill in from the resume only once one is on file', async () => {
     render(<ProfileView />);
-    await screen.findByRole('heading', { name: 'Start your profile' });
+    await screen.findByText(WELCOME);
     expect(screen.queryByRole('button', { name: 'Fill in from resume' })).not.toBeInTheDocument();
     pickFile();
     expect(await screen.findByRole('button', { name: 'Fill in from resume' })).toBeInTheDocument();
@@ -80,7 +131,7 @@ describe('ProfileView with no profile', () => {
       new Error('This PDF looks scanned. Export a text copy and retry.'),
     );
     render(<ProfileView />);
-    await screen.findByRole('heading', { name: 'Start your profile' });
+    await screen.findByText(WELCOME);
     pickFile();
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'This PDF looks scanned. Export a text copy and retry.',
@@ -216,13 +267,30 @@ describe('ProfileView with a saved profile', () => {
     expect(screen.queryByLabelText('Role')).not.toBeInTheDocument();
   });
 
-  it('returns to the empty state after a confirmed delete', async () => {
+  it('has no greeting and no save bar until something changes', async () => {
     render(<ProfileView />);
+    await screen.findByText('react');
+    expect(screen.queryByText(WELCOME)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Save profile' })).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Years of experience'), { target: { value: '2' } });
+    expect(screen.getByText('You have unsaved changes.')).toBeInTheDocument();
+  });
+
+  it('lands in the fresh, editable record after a confirmed delete', async () => {
+    getProfile.mockResolvedValue({ ...PROFILE, basics: { ...EMPTY_PROFILE.basics, name: 'Asha Rao' } });
+    render(<ProfileView />);
+    // A named record keeps its basics form closed, so seeing it open below
+    // means the record started over rather than just emptied.
     fireEvent.click(await screen.findByRole('button', { name: 'Delete profile' }));
+    expect(screen.queryByLabelText('Name')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Delete it' }));
     await waitFor(() => expect(deleteProfile).toHaveBeenCalledTimes(1));
-    expect(await screen.findByRole('heading', { name: 'Start your profile' })).toBeInTheDocument();
-    expect(screen.queryByLabelText('Years of experience')).not.toBeInTheDocument();
+    expect(await screen.findByText(WELCOME)).toBeInTheDocument();
+    expect(screen.getByLabelText('Name')).toHaveValue('');
+    expect(screen.getByRole('button', { name: 'Add role' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Years of experience')).toHaveValue(null);
+    expect(screen.queryByRole('button', { name: 'Delete profile' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Save profile' })).not.toBeInTheDocument();
   });
 });
 
@@ -270,13 +338,20 @@ describe('ProfileView index at wide widths', () => {
     expect(within(rail).getByRole('link', { name: 'Basics' })).not.toHaveAttribute('aria-current');
   });
 
-  it('shows no index while there is no record on screen, only the resume card', async () => {
+  it('lists every section for a blank record too, each with a section to jump to', async () => {
     getProfile.mockResolvedValue(null);
     render(<ProfileView />);
-    await screen.findByRole('heading', { name: 'Start your profile' });
-    const rail = screen.getByRole('complementary', { name: 'Record index' });
+    const rail = await screen.findByRole('complementary', { name: 'Record index' });
+    const index = within(rail).getByRole('navigation', { name: 'Sections' });
+    const lines = ['Basics', 'Experience 0', 'Projects 0', 'Education 0', 'Certifications 0', 'Achievements 0', 'Skills 0', 'Best fit'];
+    expect(within(index).getAllByRole('link')).toHaveLength(lines.length);
+    for (const name of lines) expect(within(index).getByRole('link', { name })).toBeInTheDocument();
+    // Not a hole where the record would be: every line has its section on the page.
+    for (const link of within(index).getAllByRole('link')) {
+      expect(document.getElementById(link.getAttribute('href').slice(1))).not.toBeNull();
+    }
     expect(within(rail).getByLabelText(/resume \(pdf\)/i)).toBeInTheDocument();
-    expect(screen.queryByRole('navigation', { name: 'Sections' })).not.toBeInTheDocument();
+    expect(within(rail).getByRole('link', { name: 'Basics' })).toHaveAttribute('aria-current', 'location');
   });
 });
 
@@ -299,11 +374,13 @@ describe('ProfileView index below 1100px', () => {
     expect(screen.getByLabelText(/resume \(pdf\)/i)).toBeInTheDocument();
   });
 
-  it('shows no strip at all while there is no record to index', async () => {
+  it('shows the strip for a blank record too, with no empty bar in its place', async () => {
     getProfile.mockResolvedValue(null);
     render(<ProfileView />);
-    await screen.findByRole('heading', { name: 'Start your profile' });
-    expect(screen.queryByRole('navigation', { name: 'Sections' })).not.toBeInTheDocument();
+    const strip = await screen.findByRole('navigation', { name: 'Sections' });
+    expect(strip.parentElement).toHaveClass('sticky');
+    expect(within(strip).getByRole('link', { name: 'Experience 0' })).toBeInTheDocument();
+    expect(within(strip).getByRole('link', { name: 'Best fit' })).toBeInTheDocument();
   });
 });
 
