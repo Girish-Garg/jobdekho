@@ -136,8 +136,9 @@ describe('FillFromResume with a CLI ready', () => {
     render(<FillFromResume profile={EDITED} onFilled={onFilled} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Fill in from resume' }));
     expect(extractProfile).not.toHaveBeenCalled();
-    expect(screen.getByText(/skills, target titles, locations, years and degree are replaced/)).toBeInTheDocument();
-    expect(screen.getByText(/corrected by hand\. Everything else comes to you to review first/)).toBeInTheDocument();
+    // Short, and about the profile, not about which AI reads the resume.
+    expect(screen.getByText('This replaces your skills, titles, locations, years and degree. Everything else is offered for review.')).toBeInTheDocument();
+    expect(screen.queryByText(/Claude Code|Antigravity|Ollama/)).not.toBeInTheDocument();
     // The resume card is as narrow as the rail: the choices stack at its
     // width in the shared button style instead of overflowing one line.
     const go = screen.getByRole('button', { name: 'Overwrite and fill in' });

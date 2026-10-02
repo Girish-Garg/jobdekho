@@ -65,7 +65,7 @@ export default function FillFromResume({ profile, onFilled }) {
   if (providers === undefined) return <p className="font-mono text-xs text-muted">Checking for an AI CLI...</p>;
   const ready = providerFor(providers, POLICY);
   if (!ready) return <InstallHint intro={INTRO} policies={[POLICY]} providers={providers} checking={checking} onRecheck={refresh} />;
-  if (step === 'confirm') return <OverwriteConfirm label={ready.label} onConfirm={run} onCancel={() => setStep('idle')} />;
+  if (step === 'confirm') return <OverwriteConfirm onConfirm={run} onCancel={() => setStep('idle')} />;
 
   return (
     <div className="flex flex-col gap-2 border-t border-line pt-4">

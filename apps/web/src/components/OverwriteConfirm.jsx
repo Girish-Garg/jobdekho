@@ -4,12 +4,11 @@
 // It lives in the resume card, as narrow as the rail it sits in, so the two
 // choices stack at the card's width rather than squeezing onto one line; the
 // go-ahead keeps the tint of the button that asked.
-export default function OverwriteConfirm({ label, onConfirm, onCancel }) {
+export default function OverwriteConfirm({ onConfirm, onCancel }) {
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-line bg-panel p-4">
-      <p className="text-sm leading-relaxed text-ink">
-        Your skills, target titles, locations, years and degree are replaced with what {label} reads in your
-        resume, including anything you corrected by hand. Everything else comes to you to review first.
+      <p className="text-sm text-ink">
+        This replaces your skills, titles, locations, years and degree. Everything else is offered for review.
       </p>
       <div className="flex flex-col gap-2">
         <button type="button" onClick={onConfirm} className="btn btn-tint w-full px-4 py-2 text-sm">
