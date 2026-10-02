@@ -12,7 +12,14 @@ describe('isLowEnd', () => {
     expect(isLowEnd({ deviceMemory: 2, hardwareConcurrency: 8 })).toBe(true);
     expect(isLowEnd({ hardwareConcurrency: 16, connection: { saveData: true } })).toBe(true);
     expect(isLowEnd({ hardwareConcurrency: 16, deviceMemory: 8 })).toBe(false);
-    expect(isLowEnd(undefined)).toBe(false);
+  });
+
+  // null, not undefined: undefined takes the default, the real navigator,
+  // whose core count is the test machine's own, and a 4-core CI runner is
+  // exactly what counts as low end.
+  it('takes no navigator at all for a computer that is not low end', () => {
+    expect(isLowEnd(null)).toBe(false);
+    expect(isLowEnd({})).toBe(false);
   });
 });
 
