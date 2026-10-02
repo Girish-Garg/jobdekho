@@ -29,6 +29,26 @@ describe('ProfileIndex', () => {
     expect(screen.getByRole('link', { name: 'Projects 0' })).not.toHaveAttribute('aria-current');
   });
 
+  // One highlight glides between entries, as the topbar's does, instead of
+  // each entry painting its own background on and off.
+  it('lights the current section in the column with one gliding highlight, not a background of its own', () => {
+    const { container, rerender } = render(<ProfileIndex rows={ROWS} current="profile-experience" onJump={() => {}} />);
+    const pills = container.querySelectorAll('nav > span[aria-hidden="true"]');
+    expect(pills).toHaveLength(1);
+    const here = screen.getByRole('link', { name: 'Experience 2' });
+    expect(here).toHaveAttribute('data-pill-key', 'profile-experience');
+    expect(here).not.toHaveClass('bg-select');
+    rerender(<ProfileIndex rows={ROWS} current="profile-projects" onJump={() => {}} />);
+    expect(container.querySelectorAll('nav > span[aria-hidden="true"]')).toHaveLength(1);
+    expect(screen.getByRole('link', { name: 'Projects 0' })).toHaveAttribute('aria-current', 'location');
+  });
+
+  it('keeps the ink rule, and no highlight, in the sideways strip', () => {
+    const { container } = render(<ProfileIndex horizontal rows={ROWS} current="profile-experience" onJump={() => {}} />);
+    expect(container.querySelector('nav > span[aria-hidden="true"]')).toBeNull();
+    expect(screen.getByRole('link', { name: 'Experience 2' })).toHaveClass('border-ink');
+  });
+
   it('jumps by hand instead of letting the hash navigate, since the record scrolls inside main', () => {
     const onJump = vi.fn();
     render(<ProfileIndex rows={ROWS} current="profile-basics" onJump={onJump} />);
