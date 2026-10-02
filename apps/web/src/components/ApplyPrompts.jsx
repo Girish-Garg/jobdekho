@@ -1,43 +1,46 @@
+import Card from './ui/Card.jsx';
+import Button from './ui/Button.jsx';
+
 // What the page asks the person directly, shown over the live view: a file
 // (its own Attach button opened a chooser, which JobDekho intercepts so no
 // dialog pops up on a window nobody sees) and an alert or confirm the page
 // raised. JobDekho answers neither on its own.
-function Card({ title, children }) {
+function Prompt({ title, children }) {
   return (
-    <div role="dialog" aria-label={title} className="rise rounded-lg border border-line bg-overlay p-4 shadow-pop">
+    <Card variant="pop" role="dialog" aria-label={title} className="rise rounded-lg p-4">
       <p className="mb-3 text-sm font-semibold text-ink">{title}</p>
       {children}
-    </div>
+    </Card>
   );
 }
 
 export function ApplyChooser({ files, onChoose }) {
   const offered = [['resume', 'Resume', files?.resume], ['cover', 'Cover letter', files?.cover]].filter(([, , name]) => name);
   return (
-    <Card title="The site asks for a file">
+    <Prompt title="The site asks for a file">
       {offered.length === 0 && (
         <p className="mb-3 text-sm text-muted">JobDekho has no PDF for this application yet. Pop the window out to pick one from this computer.</p>
       )}
       <div className="flex flex-wrap gap-2">
         {offered.map(([choice, what, name]) => (
-          <button key={choice} type="button" onClick={() => onChoose(choice)} className="btn btn-primary btn-sm">
+          <Button key={choice} variant="primary" size="sm" onClick={() => onChoose(choice)}>
             {what}: {name}
-          </button>
+          </Button>
         ))}
-        <button type="button" onClick={() => onChoose('cancel')} className="btn btn-quiet btn-sm">Cancel</button>
+        <Button variant="quiet" size="sm" onClick={() => onChoose('cancel')}>Cancel</Button>
       </div>
-    </Card>
+    </Prompt>
   );
 }
 
 export function ApplyPageDialog({ dialog, onAnswer }) {
   return (
-    <Card title="The page says">
+    <Prompt title="The page says">
       <p className="mb-3 whitespace-pre-wrap text-sm text-ink">{dialog.message || '(no message)'}</p>
       <div className="flex gap-2">
-        <button type="button" onClick={() => onAnswer(true)} className="btn btn-primary btn-sm">OK</button>
-        {dialog.kind !== 'alert' && <button type="button" onClick={() => onAnswer(false)} className="btn btn-quiet btn-sm">Cancel</button>}
+        <Button variant="primary" size="sm" onClick={() => onAnswer(true)}>OK</Button>
+        {dialog.kind !== 'alert' && <Button variant="quiet" size="sm" onClick={() => onAnswer(false)}>Cancel</Button>}
       </div>
-    </Card>
+    </Prompt>
   );
 }

@@ -1,3 +1,5 @@
+import Button from './ui/Button.jsx';
+import IconButton from './ui/IconButton.jsx';
 import { CloseIcon, CopyIcon, SparkleIcon } from './Icon.jsx';
 
 // Apply assist's top line: what this is and for which job, the promise it
@@ -15,13 +17,13 @@ export default function ApplyHeader({ posting, copying, onCopy, onClose }) {
           {posting.title} at {posting.company} · fills from your profile, never submits
         </p>
       </div>
-      <button type="button" aria-pressed={copying} onClick={onCopy} className={`btn btn-sm ${copying ? 'btn-tint' : 'btn-quiet'}`}>
+      <Button size="sm" aria-pressed={copying} onClick={onCopy} variant={copying ? 'tint' : 'quiet'}>
         <CopyIcon size={12} />
         Copy your details
-      </button>
-      <button type="button" onClick={onClose} aria-label="Close Apply assist" title="Close Apply assist" className="btn btn-ghost btn-icon">
+      </Button>
+      <IconButton label="Close Apply assist" title="Close Apply assist" onClick={onClose}>
         <CloseIcon size={14} />
-      </button>
+      </IconButton>
     </div>
   );
 }

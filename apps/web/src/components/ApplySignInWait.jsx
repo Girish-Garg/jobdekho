@@ -1,3 +1,5 @@
+import Card from './ui/Card.jsx';
+import Button from './ui/Button.jsx';
 import { hostOf } from '../lib/applyControl.js';
 import { WindowIcon } from './Icon.jsx';
 
@@ -8,7 +10,7 @@ import { WindowIcon } from './Icon.jsx';
 export default function ApplySignInWait({ url, onContinue, onClose }) {
   const host = hostOf(url) || 'the site';
   return (
-    <section aria-label="Signing in in a normal window" className="flex min-h-[24rem] flex-1 flex-col items-center justify-center rounded-xl border border-edge bg-overlay p-8 text-center">
+    <Card as="section" variant="inset" aria-label="Signing in in a normal window" className="flex min-h-[24rem] flex-1 flex-col items-center justify-center border-edge bg-overlay p-8 text-center">
       <span aria-hidden="true" className="grid h-14 w-14 place-items-center rounded-2xl bg-primary/15 text-primary">
         <WindowIcon size={22} />
       </span>
@@ -19,13 +21,13 @@ export default function ApplySignInWait({ url, onContinue, onClose }) {
         <li><span className="font-semibold text-ink">3.</span> Close that window. Apply assist opens again, signed in.</li>
       </ol>
       <div className="mt-6 flex flex-wrap justify-center gap-2">
-        <button type="button" onClick={onContinue} className="btn btn-primary">I&apos;ve signed in, continue</button>
-        <button type="button" onClick={onClose} className="btn btn-ghost">Close Apply assist</button>
+        <Button variant="primary" onClick={onContinue}>I&apos;ve signed in, continue</Button>
+        <Button variant="ghost" onClick={onClose}>Close Apply assist</Button>
       </div>
       <p className="mt-4 inline-flex items-center gap-2 text-xs text-muted">
         <span aria-hidden="true" className="breathe h-1.5 w-1.5 rounded-full bg-primary" />
         Waiting for the window to close
       </p>
-    </section>
+    </Card>
   );
 }

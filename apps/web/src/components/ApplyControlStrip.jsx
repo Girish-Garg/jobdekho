@@ -1,3 +1,4 @@
+import Button from './ui/Button.jsx';
 import { controlFor, progressOf, hostOf } from '../lib/applyControl.js';
 import { CheckIcon, PointerIcon, SparkleIcon, WarningIcon, WindowIcon } from './Icon.jsx';
 
@@ -45,10 +46,10 @@ export default function ApplyControlStrip({ view, onAction }) {
       </div>
       {filling && <span className="hidden text-xs text-muted xl:inline">Nothing is sent until you press Submit</span>}
       {control.actions.map((a) => (
-        <button key={a.id} type="button" onClick={() => onAction(a.id)} className={`btn btn-sm shrink-0 ${a.primary ? 'btn-primary' : 'btn-quiet'}`}>
+        <Button key={a.id} size="sm" onClick={() => onAction(a.id)} className="shrink-0" variant={a.primary ? 'primary' : 'quiet'}>
           {a.id === 'window' && <WindowIcon size={12} />}
           {a.label}
-        </button>
+        </Button>
       ))}
     </div>
   );

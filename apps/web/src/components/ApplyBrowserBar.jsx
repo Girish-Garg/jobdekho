@@ -1,3 +1,5 @@
+import IconButton from './ui/IconButton.jsx';
+import Chip from './ui/Chip.jsx';
 import { ArrowLeftIcon, ArrowRightIcon, ExternalLinkIcon, LockIcon, PopOutIcon, ReloadIcon, WarningIcon } from './Icon.jsx';
 
 // The top of the browser frame Apply assist draws around the live page, the
@@ -17,9 +19,9 @@ function partsOf(url) {
 
 function BarButton({ label, onClick, children }) {
   return (
-    <button type="button" onClick={onClick} aria-label={label} title={label} className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-muted transition-colors duration-fast ease hover:bg-select hover:text-ink">
+    <IconButton label={label} title={label} onClick={onClick} square className="rounded-md">
       {children}
-    </button>
+    </IconButton>
   );
 }
 
@@ -32,10 +34,10 @@ export default function ApplyBrowserBar({ view, onNav, onPopOut, onOwnBrowser })
           <span aria-hidden="true" className="grid h-4 w-4 shrink-0 place-items-center rounded-sm bg-select text-[9px] font-bold uppercase text-muted">{(view.title || host).charAt(0) || '·'}</span>
           <span className="truncate font-medium text-ink">{view.title || host || 'Opening...'}</span>
         </div>
-        <span className="mb-1.5 ml-auto mr-1 inline-flex shrink-0 items-center gap-1.5 rounded-full border border-applied/30 bg-applied/10 px-2 py-0.5 text-[10.5px] font-semibold text-applied">
+        <Chip tone="applied" className="mb-1.5 ml-auto mr-1 shrink-0 gap-1.5 border border-applied/30 bg-applied/10 text-[10.5px]">
           <span aria-hidden="true" className="breathe h-1.5 w-1.5 rounded-full bg-applied" />
           Live
-        </span>
+        </Chip>
       </div>
       <div className="flex items-center gap-1 border-b border-line bg-panel px-2 py-1.5">
         <BarButton label="Back" onClick={() => onNav('back')}><ArrowLeftIcon size={13} /></BarButton>

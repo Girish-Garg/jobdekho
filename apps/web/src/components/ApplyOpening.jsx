@@ -1,3 +1,4 @@
+import Button from './ui/Button.jsx';
 import ApplyCopyPanel from './ApplyCopyPanel.jsx';
 
 // What the panel shows before there is a live view: opening, a session for
@@ -24,10 +25,10 @@ export default function ApplyOpening({ apply, posting, onClose, onOwnBrowser }) 
         {status === 'failed' && <p className="text-sm text-muted">{error}</p>}
       </div>
       <div className="flex flex-wrap gap-2">
-        {status === 'conflict' && <button type="button" onClick={apply.replace} className="btn btn-primary">Close that one and open this</button>}
-        {status === 'closed' && <button type="button" onClick={apply.replace} className="btn btn-primary">Open it again</button>}
-        {status !== 'opening' && <button type="button" onClick={onOwnBrowser} className="btn btn-quiet">Open in my browser</button>}
-        <button type="button" onClick={onClose} className="btn btn-ghost">Close</button>
+        {status === 'conflict' && <Button variant="primary" onClick={apply.replace}>Close that one and open this</Button>}
+        {status === 'closed' && <Button variant="primary" onClick={apply.replace}>Open it again</Button>}
+        {status !== 'opening' && <Button variant="quiet" onClick={onOwnBrowser}>Open in my browser</Button>}
+        <Button variant="ghost" onClick={onClose}>Close</Button>
       </div>
       {status !== 'opening' && <ApplyCopyPanel postingId={posting.id} />}
     </div>

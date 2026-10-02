@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
+import Card from './ui/Card.jsx';
 import { useApplySession } from '../lib/useApplySession.js';
 import { useApplyChat } from '../lib/useApplyChat.js';
 import { useSignInWindow } from '../lib/useSignInWindow.js';
@@ -51,7 +52,7 @@ export default function ApplyPanel({ posting, onClose, onApplied }) {
 
   return createPortal(
     <div className="fixed inset-0 z-50 bg-ink/50 p-2 sm:p-4" onKeyDown={(event) => event.stopPropagation()}>
-      <div role="dialog" aria-modal="true" aria-label={`Apply assist: ${posting.title} at ${posting.company}`} className="pop-in mx-auto flex h-full max-w-[1500px] flex-col overflow-hidden rounded-2xl border border-line bg-panel shadow-pop">
+      <Card role="dialog" aria-modal="true" aria-label={`Apply assist: ${posting.title} at ${posting.company}`} variant="panel" className="p-0 pop-in mx-auto flex h-full max-w-[1500px] flex-col overflow-hidden shadow-pop">
         <ApplyHeader posting={posting} copying={copying} onCopy={() => setCopying((on) => !on)} onClose={close} />
         <div className="grid min-h-0 flex-1 overflow-y-auto lg:grid-cols-[minmax(0,1fr)_380px] lg:overflow-hidden">
           <div className="flex min-h-0 flex-col p-3 sm:p-4 lg:overflow-y-auto">{main}</div>
@@ -63,7 +64,7 @@ export default function ApplyPanel({ posting, onClose, onApplied }) {
             copy={{ open: copying, close: () => setCopying(false), postingId: posting.id }}
           />
         </div>
-      </div>
+      </Card>
     </div>,
     document.body,
   );

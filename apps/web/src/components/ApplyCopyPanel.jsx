@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import Button from './ui/Button.jsx';
 import { getApplyCopy, applyFileUrl, APPLY_RESUME_URL } from '../api/apply.js';
 
 // Everything Apply assist would have filled, to paste into the form in the
@@ -8,17 +9,18 @@ import { getApplyCopy, applyFileUrl, APPLY_RESUME_URL } from '../api/apply.js';
 function CopyButton({ text }) {
   const [copied, setCopied] = useState(false);
   return (
-    <button
-      type="button"
+    <Button
+      variant="quiet"
+      size="sm"
       onClick={async () => {
         await navigator.clipboard?.writeText(text).catch(() => {});
         setCopied(true);
         setTimeout(() => setCopied(false), 1400);
       }}
-      className="btn btn-quiet btn-sm shrink-0"
+      className="shrink-0"
     >
       {copied ? 'Copied' : 'Copy'}
-    </button>
+    </Button>
   );
 }
 

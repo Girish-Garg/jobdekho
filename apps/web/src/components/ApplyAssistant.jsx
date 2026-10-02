@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { localDraft } from '../lib/chatDraftSignal.js';
+import Button from './ui/Button.jsx';
+import IconButton from './ui/IconButton.jsx';
 import ApplyTimeline from './ApplyTimeline.jsx';
 import ApplyChatMessage, { ApplyPending } from './ApplyChatMessage.jsx';
 import ApplyComposer from './ApplyComposer.jsx';
@@ -44,7 +46,7 @@ export default function ApplyAssistant({ view, chat, onHover, onTakeOver, copy }
       {view?.state === 'filling' && !chat.pending && (
         <p className="mx-3 mb-2 flex items-center gap-2 rounded-xl border border-line px-3 py-2 text-xs text-muted">
           <span className="min-w-0 flex-1">JobDekho is filling. Any press in the window stops it.</span>
-          <button type="button" onClick={onTakeOver} className="btn btn-quiet btn-sm shrink-0">Take control</button>
+          <Button variant="quiet" size="sm" onClick={onTakeOver} className="shrink-0">Take control</Button>
         </p>
       )}
       <ApplyComposer chat={chat} draft={draft} disabled={!view} />
@@ -52,7 +54,7 @@ export default function ApplyAssistant({ view, chat, onHover, onTakeOver, copy }
         <div className="absolute inset-0 z-10 flex flex-col bg-panel">
           <div className="flex items-center gap-2 border-b border-line px-4 py-3">
             <p className="flex-1 text-sm font-semibold text-ink">Copy your details</p>
-            <button type="button" onClick={copy.close} aria-label="Back to the assistant" className="btn btn-ghost btn-icon"><CloseIcon size={13} /></button>
+            <IconButton label="Back to the assistant" onClick={copy.close}><CloseIcon size={13} /></IconButton>
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto p-3">
             <ApplyCopyPanel postingId={copy.postingId} sessionId={view?.id} files={view?.files} />

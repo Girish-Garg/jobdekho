@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import Card from './ui/Card.jsx';
+import Button from './ui/Button.jsx';
 import { toView } from '../lib/applyPoint.js';
 
 // The list or calendar of a native control in the page (a select, a date, a
@@ -13,7 +15,8 @@ export default function ApplyPicker({ picker, frame, width, onPick }) {
   const listed = picker.kind === 'select' || picker.kind === 'list';
 
   return (
-    <div
+    <Card
+      variant="pop"
       role="dialog"
       aria-label="Choose a value"
       style={{ left: Math.max(8, at.left), top: at.top + (at.height ?? 0) + 4 }}
@@ -21,7 +24,7 @@ export default function ApplyPicker({ picker, frame, width, onPick }) {
         event.stopPropagation();
         if (event.key === 'Escape') onPick(null);
       }}
-      className="rise absolute z-20 flex max-h-72 w-72 flex-col overflow-hidden rounded-lg border border-line bg-overlay shadow-pop"
+      className="rise absolute z-20 flex max-h-72 w-72 flex-col overflow-hidden rounded-lg"
     >
       {listed ? (
         <ul role="listbox" className="min-h-0 flex-1 overflow-y-auto py-1">
@@ -43,10 +46,10 @@ export default function ApplyPicker({ picker, frame, width, onPick }) {
       ) : (
         <form className="flex items-center gap-2 p-3" onSubmit={(event) => { event.preventDefault(); onPick(typed); }}>
           <input ref={first} type={picker.kind} value={typed} onChange={(event) => setTyped(event.target.value)} className="min-w-0 flex-1 rounded border border-line bg-panel px-2 py-1 text-sm text-ink" />
-          <button type="submit" className="btn btn-primary btn-sm">Set</button>
+          <Button variant="primary" size="sm" type="submit">Set</Button>
         </form>
       )}
-      <button type="button" onClick={() => onPick(null)} className="btn btn-ghost btn-sm m-1 self-end">Cancel</button>
-    </div>
+      <Button variant="ghost" size="sm" onClick={() => onPick(null)} className="m-1 self-end">Cancel</Button>
+    </Card>
   );
 }

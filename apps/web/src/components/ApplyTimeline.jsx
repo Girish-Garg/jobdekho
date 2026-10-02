@@ -1,3 +1,5 @@
+import Card from './ui/Card.jsx';
+import Eyebrow from './ui/Eyebrow.jsx';
 import { hostOf } from '../lib/applyControl.js';
 import { CheckIcon, GlobeIcon, WarningIcon } from './Icon.jsx';
 
@@ -49,8 +51,8 @@ export default function ApplyTimeline({ view, onHover, onPick }) {
         </Step>
       )}
       {need.length > 0 && (
-        <li className="rounded-xl border border-primary/30 bg-primary/5 p-2">
-          <p className="px-2 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wider text-primary">{need.length} need you</p>
+        <Card as="li" variant="inset" className="bg-primary/5 border-primary/30 p-2">
+          <Eyebrow as="p" primary className="text-[11px] font-semibold tracking-wider px-2 pb-1 pt-1">{need.length} need you</Eyebrow>
           <ul>
             {need.map((row) => (
               <li key={row.fid}>
@@ -70,7 +72,7 @@ export default function ApplyTimeline({ view, onHover, onPick }) {
               </li>
             ))}
           </ul>
-        </li>
+        </Card>
       )}
     </ol>
   );

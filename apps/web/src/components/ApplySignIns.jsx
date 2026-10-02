@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import Card from './ui/Card.jsx';
+import Button from './ui/Button.jsx';
 import { clearApplySignIns } from '../api/apply.js';
 import { UserIcon } from './Icon.jsx';
 
@@ -22,7 +24,7 @@ export default function ApplySignIns() {
   }
 
   return (
-    <li className="flex flex-wrap items-start gap-3 rounded-xl border border-line bg-paper/60 p-3.5 sm:col-span-2">
+    <Card as="li" variant="inset" className="flex flex-wrap items-start gap-3 sm:col-span-2">
       <span className="mt-0.5 shrink-0 text-muted"><UserIcon size={15} /></span>
       <span className="min-w-0 flex-1 text-sm">
         <span className="block font-semibold text-ink">Apply assist stays signed in</span>
@@ -32,9 +34,9 @@ export default function ApplySignIns() {
         </span>
         {state === 'error' && <span role="alert" className="mt-1 block text-xs text-ember">{error}</span>}
       </span>
-      <button type="button" disabled={state === 'working' || state === 'done'} onClick={signOut} className="btn btn-quiet btn-sm shrink-0">
+      <Button variant="quiet" size="sm" disabled={state === 'working' || state === 'done'} onClick={signOut} className="shrink-0">
         {state === 'done' ? 'Signed out' : state === 'working' ? 'Signing out...' : 'Sign out of every site'}
-      </button>
-    </li>
+      </Button>
+    </Card>
   );
 }

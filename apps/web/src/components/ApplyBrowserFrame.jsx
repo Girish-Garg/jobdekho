@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Card from './ui/Card.jsx';
 import ApplyBrowserBar from './ApplyBrowserBar.jsx';
 import ApplyLiveView from './ApplyLiveView.jsx';
 import ApplyControlStrip from './ApplyControlStrip.jsx';
@@ -13,7 +14,7 @@ export default function ApplyBrowserFrame({ apply, view, hover, onAction, onPopO
   const [typing, setTyping] = useState(false);
   return (
     <div className="flex min-h-0 flex-col gap-2">
-      <div className="overflow-hidden rounded-xl border border-edge bg-overlay">
+      <Card variant="list" className="border-edge bg-overlay">
         <ApplyBrowserBar view={view} onNav={(go) => apply.send({ t: 'nav', go })} onPopOut={onPopOut} onOwnBrowser={onOwnBrowser} />
         <div className="relative">
           <ApplyLiveView apply={apply} view={view} hover={hover} onTyping={setTyping} />
@@ -23,7 +24,7 @@ export default function ApplyBrowserFrame({ apply, view, hover, onAction, onPopO
           </div>
         </div>
         <ApplyControlStrip view={view} onAction={onAction} />
-      </div>
+      </Card>
       <p className="px-1 text-xs text-muted">
         {typing ? 'Typing goes to the form. Click outside it to stop.' : 'Click in the page to type into it, as in any browser. Any press takes control.'}
       </p>
