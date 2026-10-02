@@ -13,10 +13,13 @@ const OWN_GUARD = new Set(['linkedin'])
 const WORDS = 150
 const MIN_NEW = 5
 
+// What happened, without a fix: the note shows in the app too, and a board's
+// name lives in config/companies.json, which only a clone of the repo can
+// change (docs/adding-sources.md says what a 404 means there).
 const REASON = {
   failing: 'failed three runs in a row',
   refused: 'the site answered 429',
-  gone: 'the board answered 404 twice; check its name in config/companies.json',
+  gone: 'the board answered 404 twice',
 }
 
 const note = (record) => `Paused until ${shortDay(record.pausedUntil)}: ${REASON[record.reason] ?? REASON.failing}`

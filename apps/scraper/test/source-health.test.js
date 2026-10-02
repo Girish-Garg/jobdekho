@@ -21,7 +21,7 @@ describe('nextRecord', () => {
     expect(record.reason).toBe('failing')
   })
 
-  it('rests a board that answers 404 twice for two weeks, and says to check its name', () => {
+  it('rests a board that answers 404 twice for two weeks', () => {
     const once = nextRecord({}, failed('HTTP 404 for https://boards-api.greenhouse.io/v1/boards/x/jobs'), NOW)
     expect(isPaused(once, NOW)).toBe(false)
     const twice = nextRecord(once, failed('HTTP 404 for https://boards-api.greenhouse.io/v1/boards/x/jobs'), NOW)
@@ -84,6 +84,13 @@ describe('startHealthTurn', () => {
     const [skipped] = turn.settle([])
     expect(skipped).toMatchObject({ name: 'greenhouse:x', skipped: true, paused: true, ok: true })
     expect(skipped.note).toMatch(/^Paused until .*: the site answered 429$/)
+  })
+
+  // The note reaches the app, where no config/companies.json is the person's to edit.
+  it('says a board that is gone answered 404, and names no file to fix it in', () => {
+    const db = fakeDb({ 'greenhouse:x': { pausedUntil: new Date(NOW + DAY).toISOString(), reason: 'gone' } })
+    const [skipped] = startHealthTurn({ db, adapters: [{ name: 'greenhouse:x' }], now: () => NOW }).settle([])
+    expect(skipped.note).toMatch(/^Paused until .*: the board answered 404 twice$/)
   })
 
   it('records each source it ran, counting postings listed without being sent, and judges bodies on new postings', () => {
