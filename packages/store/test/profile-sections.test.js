@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { normalizeSections, ENTRY_SECTIONS } from '@jobdekho/store/profile-sections.js'
 
-const EMPTY_BASICS = { name: '', headline: '', email: '', phone: '', location: '', links: { github: '', linkedin: '', portfolio: '' } }
+const EMPTY_BASICS = { name: '', headline: '', email: '', phone: '', location: '', links: { github: '', linkedin: '', portfolio: '' }, moreLinks: [] }
 
 describe('normalizeSections', () => {
   it('defaults every section for a wholly new profile', () => {
@@ -15,7 +15,7 @@ describe('normalizeSections', () => {
     const sections = normalizeSections({ basics: { name: ' Jane Doe ', links: { github: 'github.com/jane' } } })
     expect(sections.basics).toEqual({
       name: 'Jane Doe', headline: '', email: '', phone: '', location: '',
-      links: { github: 'github.com/jane', linkedin: '', portfolio: '' },
+      links: { github: 'github.com/jane', linkedin: '', portfolio: '' }, moreLinks: [],
     })
   })
 

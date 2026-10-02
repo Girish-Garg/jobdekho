@@ -1,4 +1,5 @@
-import { makeEntry } from '../lib/newEntry.js';
+import { useState } from 'react';
+import { copyEntry, makeEntry } from '../lib/newEntry.js';
 import { sectionId } from '../lib/profileIndex.js';
 import ProfileSection, { AddControl } from './ProfileSection.jsx';
 import EntryCard from './EntryCard.jsx';
@@ -15,8 +16,10 @@ const ICONS = {
 // metadata from profileSections.js changes what it is called and how it
 // labels an entry's fields. The purpose line shows only while the section
 // is empty: once there are rows, they say what the section is for, and an
-// empty record stays short.
+// empty record stays short. A copy lands right under its original, open,
+// since it was made to be changed.
 export default function EntrySection({ meta, entries, onChange }) {
+  const [copied, setCopied] = useState(null);
   const add = () => onChange([...entries, makeEntry()]);
   const update = (index, entry) => onChange(entries.map((e, i) => (i === index ? entry : e)));
   const remove = (index) => onChange(entries.filter((_, i) => i !== index));
@@ -26,6 +29,11 @@ export default function EntrySection({ meta, entries, onChange }) {
     const next = [...entries];
     [next[index], next[to]] = [next[to], next[index]];
     onChange(next);
+  }
+  function duplicate(index) {
+    const copy = copyEntry(entries[index]);
+    setCopied(copy.id);
+    onChange([...entries.slice(0, index + 1), copy, ...entries.slice(index + 1)]);
   }
 
   return (
@@ -48,14 +56,14 @@ export default function EntrySection({ meta, entries, onChange }) {
             <EntryCard
               key={entry.id}
               entry={entry}
-              titleLabel={meta.titleLabel}
-              orgLabel={meta.orgLabel}
-              startOpen={!entry.title}
+              meta={meta}
+              startOpen={!entry.title || entry.id === copied}
               isFirst={i === 0}
               isLast={i === entries.length - 1}
               onChange={(next) => update(i, next)}
               onRemove={() => remove(i)}
               onMove={(dir) => move(i, dir)}
+              onDuplicate={() => duplicate(i)}
             />
           ))}
         </div>

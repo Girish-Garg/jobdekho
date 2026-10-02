@@ -1,6 +1,6 @@
 const EMPTY_BASICS = {
   name: '', headline: '', email: '', phone: '', location: '',
-  links: { github: '', linkedin: '', portfolio: '' },
+  links: { github: '', linkedin: '', portfolio: '' }, moreLinks: [],
 };
 
 export const EMPTY_PROFILE = {

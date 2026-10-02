@@ -39,7 +39,7 @@ describe('withProposals', () => {
       achievements: [{ title: 'First place' }],
     });
     expect(next.certifications[0]).toEqual(HAND_TYPED);
-    expect(next.certifications[1]).toMatchObject({ title: 'Cloud Practitioner', organisation: 'Demo Cloud', bullets: [], link: '' });
+    expect(next.certifications[1]).toMatchObject({ title: 'Cloud Practitioner', organisation: 'Demo Cloud', bullets: [] });
     expect(next.achievements).toMatchObject([{ title: 'First place', tech: [] }]);
     expect(next.experience).toEqual([]);
   });

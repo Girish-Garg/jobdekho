@@ -56,8 +56,7 @@ export function escapeLine(value) {
 // dropped in there: escapeLatex's rules do not apply in that regime, so
 // nothing here would stop a `}` or a `\` from breaking out of the argument.
 // Instead the raw value is checked against a whitelist of characters a URL
-// is actually made of; only a value that matches whole becomes a live link,
-// and even then the visible text is the same URL, never a substituted label.
+// is actually made of; only a value that matches whole becomes a live link.
 // Anything else - including anything with a brace, a backslash or a dollar
 // sign - falls back to plain escaped text, which is always safe.
 //
@@ -74,4 +73,15 @@ export function texLink(value) {
   if (!text) return ''
   const trimmed = toStr(value).trim()
   return SAFE_URL.test(trimmed) ? `\\href{${trimmed}}{${text}}` : text
+}
+
+// An entry's link as its name ("Code", "Demo video") rather than its
+// address, as the person asked for them under a project. The name is the
+// second argument of \href, which TeX reads with ordinary character codes,
+// so the usual escaping is all it needs. An address that cannot be a live
+// link is printed as itself instead: a name leading nowhere would hide it.
+export function texNamedLink(value, name) {
+  const trimmed = toStr(value).trim()
+  if (!trimmed) return ''
+  return SAFE_URL.test(trimmed) ? `\\href{${trimmed}}{${escapeLine(name) || escapeLine(trimmed)}}` : escapeLine(trimmed)
 }

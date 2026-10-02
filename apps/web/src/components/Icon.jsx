@@ -2,6 +2,7 @@ import Svg from './IconSvg.jsx';
 
 export * from './IconFacts.jsx';
 export * from './IconBrowser.jsx';
+export * from './IconLinks.jsx';
 
 export function ChevronDownIcon(props) {
   return <Svg {...props}><path d="M4 6l4 4 4-4" /></Svg>;

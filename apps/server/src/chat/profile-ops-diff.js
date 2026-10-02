@@ -1,4 +1,5 @@
-import { BASICS_TEXT } from './profile-op-values.js'
+import { linkName } from '@jobdekho/core/link-kind.js'
+import { inBasics } from './profile-op-values.js'
 
 // The lines a proposal card shows, one { label, before, after } per visible
 // change, written by the server from the record before and after the op
@@ -6,10 +7,11 @@ import { BASICS_TEXT } from './profile-op-values.js'
 // Apply will really do. Plain text; a value that spans lines (an entry with
 // its bullets) uses "\n" between them.
 const SECTION = { experience: 'Experience', projects: 'Projects', education: 'Education', certifications: 'Certifications', achievements: 'Achievements' }
-const FIELD = { title: 'title', organisation: 'organisation', location: 'location', startDate: 'start date', endDate: 'end date', bullets: 'bullets', tech: 'stack', link: 'link' }
+const FIELD = { title: 'title', organisation: 'organisation', location: 'location', startDate: 'start date', endDate: 'end date', bullets: 'bullets', tech: 'stack', link: 'link', links: 'links' }
 const SET_LABEL = {
   name: 'Name', headline: 'Headline', email: 'Email', phone: 'Phone', location: 'Location', skills: 'Skills',
   titles: 'Target titles', locations: 'Preferred locations', years: 'Years of experience', degree: 'Highest degree',
+  moreLinks: 'More links',
 }
 const LINK_LABEL = { github: 'GitHub link', linkedin: 'LinkedIn link', portfolio: 'Portfolio link' }
 
@@ -20,9 +22,15 @@ export function entryLine(entry) {
   return `${head}${dates ? ` (${dates})` : ''}${entry.tech?.length ? `: ${entry.tech.join(', ')}` : ''}`
 }
 
-const withBullets = (entry) => [entryLine(entry), ...(entry.bullets ?? []).map((b) => `- ${b}`)].join('\n')
+// A link as the card shows it: the name the resume prints, then where it
+// goes, so the address is seen before anyone applies it.
+const linkLine = (link) => `${linkName(link)}: ${link.url}`
+const LINK_LISTS = new Set(['links', 'moreLinks'])
+
+const withBullets = (entry) => [entryLine(entry), ...(entry.bullets ?? []).map((b) => `- ${b}`), ...(entry.links ?? []).map(linkLine)].join('\n')
 
 function shown(field, value) {
+  if (LINK_LISTS.has(field)) return (value ?? []).map(linkLine).join('\n')
   if (Array.isArray(value)) return field === 'bullets' ? value.map((b) => `- ${b}`).join('\n') : value.join(', ')
   return value === null || value === undefined ? '' : String(value)
 }
@@ -57,7 +65,7 @@ function setDiff(op, before, after) {
   if (op.field === 'links') {
     return Object.keys(op.value).flatMap((key) => line(LINK_LABEL[key], before.basics.links[key], after.basics.links[key]))
   }
-  const read = (w) => (Object.hasOwn(BASICS_TEXT, op.field) ? w.basics[op.field] : w[op.field])
+  const read = (w) => (inBasics(op.field) ? w.basics[op.field] : w[op.field])
   return line(SET_LABEL[op.field], shown(op.field, read(before)), shown(op.field, read(after)))
 }
 

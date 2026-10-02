@@ -26,4 +26,22 @@ describe('BasicsForm', () => {
     fireEvent.change(screen.getByLabelText('GitHub'), { target: { value: 'github.com/jane' } });
     expect(onChange).toHaveBeenCalledWith({ ...BASICS, links: { ...BASICS.links, github: 'github.com/jane' } });
   });
+
+  it('keeps every other profile under More links, as rows that read their kind from the address', () => {
+    const onChange = vi.fn();
+    const kaggle = { kind: 'kaggle', url: 'https://www.kaggle.com/demo', label: '' };
+    render(<BasicsForm basics={{ ...BASICS, moreLinks: [kaggle] }} onChange={onChange} />);
+    expect(screen.getByRole('group', { name: 'More links' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Link 1 address')).toHaveValue(kaggle.url);
+    fireEvent.click(screen.getByRole('button', { name: 'Add a link' }));
+    expect(onChange).toHaveBeenLastCalledWith({ ...BASICS, moreLinks: [kaggle, { kind: 'other', url: '', label: '' }] });
+    fireEvent.change(screen.getByLabelText('Link 1 address'), { target: { value: 'https://www.behance.net/demo' } });
+    expect(onChange).toHaveBeenLastCalledWith({ ...BASICS, moreLinks: [{ ...kaggle, kind: 'design', url: 'https://www.behance.net/demo' }] });
+  });
+
+  it('starts More links empty for basics saved before the list existed', () => {
+    render(<BasicsForm basics={BASICS} onChange={() => {}} />);
+    expect(screen.queryByLabelText('Link 1 address')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add a link' })).toBeInTheDocument();
+  });
 });

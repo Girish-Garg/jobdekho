@@ -1,8 +1,9 @@
-import { escapeLatex, escapeLine, texLink } from './escape.js'
+import { linkName } from '@jobdekho/core/link-kind.js'
+import { escapeLatex, escapeLine, texNamedLink } from './escape.js'
 
 // One entry (a job, a project, a degree, a certification, an achievement)
-// becomes a header line plus whatever it has of bullets, a tech line and a
-// link line. The subtitle (organisation and location) is built here, not in
+// becomes a header line plus whatever it has of links, bullets and a tech
+// line. The subtitle (organisation and location) is built here, not in
 // the .tex macro, so the template never has to reason in LaTeX about which
 // of the two is present - a plain hyphen joins the dates, never an en dash
 // (see the no-slop rule), since a single "-" is not TeX's dash ligature.
@@ -20,10 +21,17 @@ function bulletList(bullets) {
   return ['\\begin{resItems}', ...items, '\\end{resItems}'].join('\n')
 }
 
+// The links sit right under the title, short and named the way a reader
+// scans them ("Code · Demo video · Live"), each name a live link to its
+// address; \textperiodcentered is the dot, which the LaTeX guard allows.
+function linkLine(links) {
+  const named = (links ?? []).map((link) => texNamedLink(link.url, linkName(link))).filter(Boolean)
+  return named.length ? `\\resMetaLine{${named.join(' \\textperiodcentered{} ')}}` : ''
+}
+
 function entryBlock(entry) {
-  const lines = [entryHeader(entry), bulletList(entry.bullets)]
+  const lines = [entryHeader(entry), linkLine(entry.links), bulletList(entry.bullets)]
   if (entry.tech.length) lines.push(`\\resMetaLine{Stack: ${escapeLine(entry.tech.join(', '))}}`)
-  if (entry.link) lines.push(`\\resMetaLine{${texLink(entry.link)}}`)
   return lines.filter(Boolean).join('\n')
 }
 

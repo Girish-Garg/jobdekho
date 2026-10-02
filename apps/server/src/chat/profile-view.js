@@ -6,8 +6,10 @@ import { ENTRY_SECTIONS } from '@jobdekho/store/profile-sections.js'
 // nothing the store keeps for itself (order, pinned, weight, the uploaded
 // file's name). On the feed the chat still gets only the summary in
 // profile-summary.js; this fuller view is for the pages where changing the
-// record is the point.
-const ENTRY_KEYS = ['id', 'title', 'organisation', 'location', 'startDate', 'endDate', 'bullets', 'tech', 'link']
+// record is the point. An entry's links go as the list, never the old
+// single `link` the store still keeps beside it, so the model proposes
+// lists too.
+const ENTRY_KEYS = ['id', 'title', 'organisation', 'location', 'startDate', 'endDate', 'bullets', 'tech', 'links']
 
 const entries = (list) => (list ?? []).map((entry) => Object.fromEntries(ENTRY_KEYS.map((key) => [key, entry[key]])))
 

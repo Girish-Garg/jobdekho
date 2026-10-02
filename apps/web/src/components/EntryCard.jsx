@@ -1,72 +1,46 @@
 import { useState } from 'react';
 import TagInput from './TagInput.jsx';
-import CompanyMark from './CompanyMark.jsx';
-import { BOX, TextField } from './ProfileField.jsx';
-import { ChevronDownIcon, ArrowUpIcon, ArrowDownIcon } from './Icon.jsx';
+import EntryHeader from './EntryHeader.jsx';
+import EntryFields from './EntryFields.jsx';
+import BulletLines from './BulletLines.jsx';
+import LinkRows from './LinkRows.jsx';
+import EntryFooter from './EntryFooter.jsx';
+import { linksOf, withLinks } from '../lib/entryLinks.js';
 
-const TEXT_BTN = 'inline-flex items-center gap-1 text-sm text-muted transition-colors duration-fast ease-ease hover:text-ink disabled:opacity-30 disabled:hover:text-muted';
+// The kinds an entry's links are most often, one button each under them.
+const QUICK = ['code', 'live', 'video', 'figma', 'drive', 'kaggle', 'photos', 'other'];
 
-// One shape (title, organisation, dates, bullets, tech, link) covers a job,
+// One shape (title, organisation, dates, bullets, tech, links) covers a job,
 // a project, a degree, a certification and an achievement, so this is the
-// only place any of them gets edited; profileSections.js swaps the labels
-// per section. A row by default, with the organisation's monogram and the
-// bullets as a count, so a section with a hundred of these reads as a
-// hundred lines, not a hundred open forms; the editor opens in a panel
-// under the row.
-export default function EntryCard({ entry, titleLabel, orgLabel, startOpen, isFirst, isLast, onChange, onRemove, onMove }) {
+// only place any of them gets edited; the section's entry in
+// profileSections.js names its fields. A row by default, so a section with
+// a hundred of these reads as a hundred lines, not a hundred open forms.
+// Open, it is one column whose every row runs the panel's full width, so
+// its right edge is straight whatever the section holds.
+export default function EntryCard({ entry, meta, startOpen, isFirst, isLast, onChange, onRemove, onMove, onDuplicate }) {
   const [open, setOpen] = useState(startOpen);
-  const set = (key) => (value) => onChange({ ...entry, [key]: value });
-  const dates = [entry.startDate, entry.endDate].filter(Boolean).join(' - ');
-  const bullets = entry.bullets.filter((line) => line.trim()).length;
-  const place = [entry.organisation, entry.location].filter(Boolean).join('  ·  ');
+  const links = linksOf(entry);
+  const tech = entry.tech ?? [];
 
   return (
     <details className="group" open={open} onToggle={(event) => setOpen(event.currentTarget.open)}>
-      <summary className="flex cursor-pointer list-none items-center gap-3 py-3 [&::-webkit-details-marker]:hidden">
-        <CompanyMark company={entry.organisation || entry.title} size="sm" />
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-[15px] font-semibold text-ink">{entry.title || `Untitled ${titleLabel.toLowerCase()}`}</span>
-          {/* Only what is filled in: the field's own label here read as though
-              it were the organisation ("Org (optional)"). */}
-          {place && <span className="block truncate text-[13px] text-muted">{place}</span>}
-        </span>
-        <span className="flex shrink-0 items-center gap-3 text-sm text-muted">
-          {entry.pinned && <span className="rounded-full bg-select px-2 py-0.5 text-xs font-medium text-ink">Pinned</span>}
-          {bullets > 0 && <span className="text-xs group-open:hidden">{bullets} {bullets === 1 ? 'bullet' : 'bullets'}</span>}
-          {dates && <span className="tnum">{dates}</span>}
-          <ChevronDownIcon className="transition-transform duration-fast ease-ease group-open:rotate-180" />
-        </span>
-      </summary>
-      <div className="mb-4 flex flex-col gap-3 rounded-xl border border-line bg-paper/60 p-4">
-        {/* Wide enough to hold a record's rest, this row goes from two
-            stacked pairs to title, organisation, location and dates side by
-            side in one line, rather than reserving that width and stacking
-            anyway. */}
-        <div className="grid grid-cols-1 gap-x-5 gap-y-3 sm:grid-cols-2 min-[1100px]:grid-cols-[1.3fr_1.3fr_1fr_auto]">
-          <TextField label={titleLabel} value={entry.title} onChange={set('title')} />
-          <TextField label={orgLabel} value={entry.organisation} onChange={set('organisation')} />
-          <TextField label="Location" value={entry.location} onChange={set('location')} />
-          <div className="grid grid-cols-2 gap-x-3 min-[1100px]:w-56">
-            <TextField label="Start" value={entry.startDate} onChange={set('startDate')} />
-            <TextField label="End" value={entry.endDate} onChange={set('endDate')} placeholder="Present" />
-          </div>
-        </div>
-        <label className="flex max-w-2xl flex-col gap-1">
-          <span className="text-sm text-muted">Bullet lines, one per line</span>
-          <textarea rows={3} className={`${BOX} resize-y`} value={entry.bullets.join('\n')} onChange={(event) => set('bullets')(event.target.value.split('\n'))} />
-        </label>
-        <div className="grid max-w-2xl gap-3 sm:grid-cols-2">
-          <TagInput plain label="Tech" values={entry.tech} onChange={set('tech')} />
-          <TextField label="Link" value={entry.link} onChange={set('link')} />
-        </div>
-        <div className="flex flex-wrap items-center gap-4 border-t border-line pt-3">
-          <button type="button" aria-pressed={entry.pinned} onClick={() => set('pinned')(!entry.pinned)} className={TEXT_BTN}>
-            {entry.pinned ? 'Pinned' : 'Pin'}
-          </button>
-          <button type="button" disabled={isFirst} onClick={() => onMove(-1)} className={TEXT_BTN}><ArrowUpIcon size={12} />Move up</button>
-          <button type="button" disabled={isLast} onClick={() => onMove(1)} className={TEXT_BTN}><ArrowDownIcon size={12} />Move down</button>
-          <button type="button" onClick={onRemove} className={`${TEXT_BTN} ml-auto hover:text-ember`}>Remove</button>
-        </div>
+      <EntryHeader entry={entry} meta={meta} links={links} />
+      <div className="mb-4 flex flex-col gap-4 rounded-xl border border-line bg-paper/60 p-4">
+        <EntryFields entry={entry} meta={meta} onChange={onChange} />
+        <BulletLines lines={entry.bullets} onChange={(bullets) => onChange({ ...entry, bullets })} />
+        {(meta.tech !== false || tech.length > 0) && (
+          <TagInput plain label="Tech" values={tech} onChange={(next) => onChange({ ...entry, tech: next })} />
+        )}
+        <LinkRows links={links} quick={QUICK} onChange={(next) => onChange(withLinks(entry, next))} />
+        <EntryFooter
+          pinned={entry.pinned}
+          isFirst={isFirst}
+          isLast={isLast}
+          onPin={() => onChange({ ...entry, pinned: !entry.pinned })}
+          onMove={onMove}
+          onDuplicate={onDuplicate}
+          onRemove={onRemove}
+        />
       </div>
     </details>
   );

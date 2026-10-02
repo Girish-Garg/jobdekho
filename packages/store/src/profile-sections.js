@@ -1,4 +1,5 @@
 import { normalizeEntryList, normalizeGroupList } from './profile-entry.js'
+import { normalizeLinks } from './profile-links.js'
 
 const str = (v) => (v === null || v === undefined ? '' : String(v).trim())
 
@@ -11,6 +12,10 @@ function normalizeBasics(input) {
     name: str(src.name), headline: str(src.headline), email: str(src.email),
     phone: str(src.phone), location: str(src.location),
     links: Object.fromEntries(LINK_KEYS.map((key) => [key, str(links[key])])),
+    // Every other profile worth a link (Kaggle, LeetCode, a blog), held
+    // apart from the three named ones so a reader of `links` still finds
+    // three strings there.
+    moreLinks: normalizeLinks(src.moreLinks),
   }
 }
 

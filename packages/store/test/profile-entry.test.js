@@ -5,7 +5,7 @@ describe('normalizeEntry', () => {
   it('fills every field a resume line needs, defaulting what is missing', () => {
     expect(normalizeEntry(null, 0)).toMatchObject({
       order: 0, title: '', organisation: '', location: '', startDate: '', endDate: '',
-      bullets: [], tech: [], link: '', pinned: false, weight: 0,
+      bullets: [], tech: [], links: [], link: '', pinned: false, weight: 0,
     })
     expect(normalizeEntry(null, 0).id).toMatch(/^[0-9a-f-]{36}$/)
   })

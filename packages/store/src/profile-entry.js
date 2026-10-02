@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto'
+import { entryLinks } from './profile-links.js'
 
 // A resume line is written by a person, not a ranking token: keep whatever
 // casing and spacing they typed rather than folding it the way
@@ -18,6 +19,7 @@ const hasId = (src) => typeof src.id === 'string' && src.id
 // resume builder, or a person opening profile.json by hand).
 export function normalizeEntry(input, order) {
   const src = input ?? {}
+  const links = entryLinks(src)
   return {
     id: hasId(src) ? src.id : randomUUID(),
     order,
@@ -28,7 +30,10 @@ export function normalizeEntry(input, order) {
     endDate: str(src.endDate),
     bullets: list(src.bullets),
     tech: list(src.tech),
-    link: str(src.link),
+    links,
+    // The one address an entry held before it held a list, kept equal to
+    // the first link while anything still reads the old field.
+    link: links[0]?.url ?? '',
     // A hint the future resume builder can weigh entries by; no screen here
     // sets weight yet, so it just rides along untouched.
     pinned: Boolean(src.pinned),

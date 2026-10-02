@@ -5,6 +5,7 @@ import { EMPTY_PROFILE } from './emptyProfile.js';
 const BASICS = {
   name: 'Typed but not saved', headline: '', email: '', phone: '', location: '',
   links: { github: '', linkedin: '', portfolio: '' },
+  moreLinks: [],
 };
 const LOCAL = { ...EMPTY_PROFILE, skills: ['react'], basics: BASICS, experience: [{ id: 'e1', title: 'Hand typed role' }] };
 

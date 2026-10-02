@@ -1,6 +1,7 @@
 import { normalizeProfile } from '@jobdekho/core/profile.js'
 import { normalizeSections } from '@jobdekho/store/profile-sections.js'
-import { BASICS_TEXT } from './profile-op-values.js'
+import { normalizeLinks } from '@jobdekho/store/profile-links.js'
+import { inBasics } from './profile-op-values.js'
 
 // A cleaned op (see profile-ops-clean.js) against a record: whether it can
 // apply, and the record after it does. The record is always held in the
@@ -24,7 +25,7 @@ const GROUP_TARGET = new Set(['renameGroup', 'setGroupItems', 'removeGroup'])
 function snapshotOf(op, working) {
   if (op.op === 'update') return Object.fromEntries(Object.keys(op.fields).map((k) => [k, entryIn(working, op.section, op.id)[k]]))
   if (op.op === 'set' && op.field === 'links') return Object.fromEntries(Object.keys(op.value).map((k) => [k, working.basics.links[k]]))
-  if (op.op === 'set') return Object.hasOwn(BASICS_TEXT, op.field) ? working.basics[op.field] : working[op.field]
+  if (op.op === 'set') return inBasics(op.field) ? working.basics[op.field] : working[op.field]
   if (op.op === 'renameGroup') return groupIn(working, op.id).name
   if (op.op === 'setGroupItems') return groupIn(working, op.id).items
   return undefined
@@ -65,10 +66,19 @@ export function conflictOf(op, working) {
 
 const mapById = (list, id, change) => list.map((item) => (item.id === id ? change(item) : item))
 
+// The single link entries held before they held a list was its first: a
+// change to it, from a reply or from a card saved before the list, replaces
+// that one link and leaves the rest where they are.
+function withList(fields, entry) {
+  if (!Object.hasOwn(fields, 'link')) return fields
+  const { link, ...rest } = fields
+  return { ...rest, links: [...normalizeLinks([link]), ...entry.links.slice(1)] }
+}
+
 function changed(op, w) {
   switch (op.op) {
     case 'add': return { [op.section]: op.position === 'first' ? [op.entry, ...w[op.section]] : [...w[op.section], op.entry] }
-    case 'update': return { [op.section]: mapById(w[op.section], op.id, (e) => ({ ...e, ...op.fields })) }
+    case 'update': return { [op.section]: mapById(w[op.section], op.id, (e) => ({ ...e, ...withList(op.fields, e) })) }
     case 'remove': return { [op.section]: w[op.section].filter((e) => e.id !== op.id) }
     case 'addGroup': return { skillGroups: [...w.skillGroups, { name: op.name, items: op.items }] }
     case 'renameGroup': return { skillGroups: mapById(w.skillGroups, op.id, (g) => ({ ...g, name: op.name })) }
@@ -77,7 +87,7 @@ function changed(op, w) {
     default: break
   }
   if (op.field === 'links') return { basics: { ...w.basics, links: { ...w.basics.links, ...op.value } } }
-  if (Object.hasOwn(BASICS_TEXT, op.field)) return { basics: { ...w.basics, [op.field]: op.value } }
+  if (inBasics(op.field)) return { basics: { ...w.basics, [op.field]: op.value } }
   return { [op.field]: op.value }
 }
 

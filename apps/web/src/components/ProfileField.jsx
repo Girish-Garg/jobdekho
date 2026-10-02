@@ -12,10 +12,19 @@ export function Labelled({ label, children }) {
   );
 }
 
-export function TextField({ label, value, onChange, placeholder }) {
+// `readOnly` shows a value the field cannot take typing for just now (an End
+// a "Still going" switch holds at Present), in the quieter tone.
+export function TextField({ label, value, onChange, placeholder, readOnly = false, inputRef }) {
   return (
     <Labelled label={label}>
-      <input className={BOX} value={value} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} />
+      <input
+        ref={inputRef}
+        className={`${BOX} read-only:text-muted`}
+        value={value}
+        placeholder={placeholder}
+        readOnly={readOnly}
+        onChange={(event) => onChange(event.target.value)}
+      />
     </Labelled>
   );
 }

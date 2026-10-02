@@ -4,7 +4,7 @@
 // that must keep working after any fix to it.
 const entry = (over = {}) => ({
   id: 'e1', order: 0, title: 'Software Engineer', organisation: 'Startup Co', location: 'Pune',
-  startDate: 'Jul 2023', endDate: 'Present', tech: ['react'], link: '', pinned: false, weight: 0,
+  startDate: 'Jul 2023', endDate: 'Present', tech: ['react'], links: [], link: '', pinned: false, weight: 0,
   bullets: ['Built the onboarding portal in React, used by 40,000 people a month.'],
   ...over,
 })
@@ -46,4 +46,22 @@ export const PROFILE_SHAPES = {
   ),
   'no skills': record({ location: 'Pune' }, { skillGroups: [] }),
   'skills only': record({ location: 'Pune' }, { experience: [] }),
+  // Links print by name under a title, a label with LaTeX's own characters
+  // in it included, and an address that cannot be a live link (a # in it)
+  // as itself; the header's extra profile links follow its named ones.
+  'links on an entry and in the header': record(
+    { location: 'Pune', moreLinks: [{ kind: 'kaggle', url: 'https://www.kaggle.com/demo', label: '' }] },
+    {
+      projects: [entry({
+        id: 'p1', title: 'Job tracker', organisation: '', location: '', startDate: '2024', endDate: '', tech: ['node'],
+        bullets: ['Built a job tracker that 300 students used to plan their applications.'],
+        links: [
+          { kind: 'code', url: 'https://github.com/demo/tracker', label: '' },
+          { kind: 'video', url: 'https://youtu.be/abc123', label: 'Demo video & slides_1' },
+          { kind: 'live', url: 'https://tracker.example.dev/#home', label: '' },
+        ],
+        link: 'https://github.com/demo/tracker',
+      })],
+    },
+  ),
 }

@@ -1,11 +1,17 @@
 import { describe, it, expect, vi } from 'vitest';
+import { useState } from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import EntrySection from './EntrySection.jsx';
 import { onChatDraft } from '../lib/chatDraftSignal.js';
 
 const META = { key: 'experience', label: 'Experience', add: 'Add role', ask: 'Add a job: ', titleLabel: 'Role', orgLabel: 'Company', hint: 'Jobs and internships.' };
 
-const ENTRY = (id, title) => ({ id, title, organisation: '', location: '', startDate: '', endDate: '', bullets: [], tech: [], link: '', pinned: false, weight: 0 });
+const ENTRY = (id, title) => ({ id, title, organisation: '', location: '', startDate: '', endDate: '', bullets: [], tech: [], links: [], link: '', pinned: false, weight: 0 });
+
+function KeptSection({ initial, onEntries = () => {} }) {
+  const [entries, setEntries] = useState(initial);
+  return <EntrySection meta={META} entries={entries} onChange={(next) => { setEntries(next); onEntries(next); }} />;
+}
 
 describe('EntrySection', () => {
   it('shows the one-line hint and a zero count when there are no entries', () => {
@@ -43,6 +49,22 @@ describe('EntrySection', () => {
     fireEvent.click(screen.getByText('First')); // opens the first card
     fireEvent.click(screen.getAllByRole('button', { name: 'Move down' })[0]);
     expect(onChange).toHaveBeenCalledWith([entries[1], entries[0]]);
+  });
+
+  it('puts a copy of an entry right under it, under a new id, and opens the copy', () => {
+    const onEntries = vi.fn();
+    const entries = [{ ...ENTRY('1', 'First'), bullets: ['Built X'] }, ENTRY('2', 'Second')];
+    render(<KeptSection initial={entries} onEntries={onEntries} />);
+    fireEvent.click(screen.getByText('First')); // opens the first card
+    fireEvent.click(screen.getAllByRole('button', { name: 'Duplicate' })[0]);
+    const [sent] = onEntries.mock.calls[0];
+    expect(sent.map((e) => e.title)).toEqual(['First', 'First', 'Second']);
+    expect(sent[1]).toEqual({ ...entries[0], id: sent[1].id });
+    expect(sent[1].id).not.toBe('1');
+    const roles = screen.getAllByLabelText('Role');
+    expect(roles).toHaveLength(3);
+    expect(roles[1]).toBeVisible();
+    expect(roles[2]).not.toBeVisible();
   });
 
   // The quick way in: the chat opens with the start of the request in its

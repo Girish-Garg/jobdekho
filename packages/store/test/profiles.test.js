@@ -10,7 +10,7 @@ let store
 beforeEach(() => { dir = mkdtempSync(join(tmpdir(), 'jobdekho-store-')); store = openStore(dir) })
 afterEach(() => { rmSync(dir, { recursive: true, force: true }) })
 
-const EMPTY_BASICS = { name: '', headline: '', email: '', phone: '', location: '', links: { github: '', linkedin: '', portfolio: '' } }
+const EMPTY_BASICS = { name: '', headline: '', email: '', phone: '', location: '', links: { github: '', linkedin: '', portfolio: '' }, moreLinks: [] }
 const EMPTY_SECTIONS = {
   basics: EMPTY_BASICS, experience: [], projects: [], education: [], skillGroups: [], certifications: [], achievements: [],
 }
