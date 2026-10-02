@@ -1,4 +1,5 @@
 import { useChatBox } from '../lib/useChatBox.js';
+import Button from './ui/Button.jsx';
 import ChatQueued from './ChatQueued.jsx';
 import { ArrowUpIcon } from './Icon.jsx';
 
@@ -6,8 +7,6 @@ const ASK = 'Ask about what is on screen';
 
 const BOX = 'flex items-end gap-2 rounded-2xl border border-line bg-paper py-1.5 pl-3.5 pr-1.5 shadow-raise transition duration-fast ease '
   + 'focus-within:border-primary/50 focus-within:ring-4 focus-within:ring-primary/15';
-const SEND = 'btn btn-primary btn-icon h-8 w-8 shrink-0';
-const STOP = 'btn btn-quiet h-8 shrink-0 gap-1.5 px-3 text-xs';
 
 // Enter sends, shift+Enter writes a new line - the one binding a multi-line
 // question box needs beyond what a plain input already gives for free.
@@ -67,14 +66,21 @@ export default function ChatInput({
           className="max-h-[8.75rem] min-w-0 flex-1 resize-none overflow-y-auto bg-transparent py-1 text-base text-ink outline-none placeholder:text-muted focus-visible:outline-none"
         />
         {stopping ? (
-          <button type="button" onClick={onStop} title="Stop the answer (Esc)" className={STOP}>
+          <Button size="sm" onClick={onStop} title="Stop the answer (Esc)" className="h-8 shrink-0">
             <span aria-hidden="true" className="h-2.5 w-2.5 rounded-[2px] bg-current" />
             Stop
-          </button>
+          </Button>
         ) : (
-          <button type="button" onClick={submit} disabled={!value.trim() || (busy && !onQueue)} aria-label={submitLabel} title={submitLabel} className={SEND}>
+          <Button
+            variant="primary"
+            onClick={submit}
+            disabled={!value.trim() || (busy && !onQueue)}
+            aria-label={submitLabel}
+            title={submitLabel}
+            className="btn-icon h-8 w-8 shrink-0"
+          >
             <ArrowUpIcon size={16} />
-          </button>
+          </Button>
         )}
       </div>
       <p className="px-1 text-xs text-muted">

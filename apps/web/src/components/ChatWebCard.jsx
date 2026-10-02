@@ -1,3 +1,4 @@
+import Card from './ui/Card.jsx';
 import ChatText from './ChatText.jsx';
 import ChatSources from './ChatSources.jsx';
 import { GlobeIcon } from './Icon.jsx';
@@ -8,7 +9,7 @@ import { GlobeIcon } from './Icon.jsx';
 // details, never the profile (see the server's chat/web-prompt.js).
 export default function ChatWebCard({ web }) {
   return (
-    <section aria-label="From the web" className="overflow-hidden rounded-xl border border-line bg-panel">
+    <Card as="section" variant="list" aria-label="From the web">
       <div className="flex items-start gap-2.5 border-b border-line bg-select/60 px-3 py-2.5">
         <span aria-hidden="true" className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
           <GlobeIcon size={13} />
@@ -22,6 +23,6 @@ export default function ChatWebCard({ web }) {
         {web.answer && <ChatText text={web.answer} />}
         {web.sources.length > 0 && <ChatSources sources={web.sources} />}
       </div>
-    </section>
+    </Card>
   );
 }

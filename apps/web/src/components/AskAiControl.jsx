@@ -1,4 +1,5 @@
 import { startChatDraft } from '../lib/chatDraftSignal.js';
+import Button from './ui/Button.jsx';
 import { SparkleIcon } from './Icon.jsx';
 
 // "Add with AI": opens the chat with the start of the request already in
@@ -10,15 +11,15 @@ import { SparkleIcon } from './Icon.jsx';
 // `where` names the section for a screen reader, since every card has one.
 export default function AskAiControl({ prompt = '', where, label = 'Add with AI' }) {
   return (
-    <button
-      type="button"
+    <Button
+      size="sm"
       onClick={() => startChatDraft(prompt)}
       aria-label={where ? `${label}: ${where}` : label}
       title={`Opens the chat with "${prompt.trim()}" to finish`}
-      className="btn btn-quiet btn-sm shrink-0 px-3 py-1.5"
+      className="shrink-0 py-1.5"
     >
       <SparkleIcon size={12} className="text-primary" />
       {label}
-    </button>
+    </Button>
   );
 }

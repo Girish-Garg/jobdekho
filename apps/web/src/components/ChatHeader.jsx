@@ -1,4 +1,5 @@
 import ChatAvatar from './ChatAvatar.jsx';
+import IconButton from './ui/IconButton.jsx';
 import { CloseIcon, HistoryIcon, PinIcon, PinOffIcon, PlusIcon } from './Icon.jsx';
 
 // Which CLI will answer, said before anything is asked: the person pays for
@@ -12,19 +13,16 @@ function status(providers, answerer) {
   return { text: 'No AI CLI found on this computer', dot: 'bg-ember' };
 }
 
+// A button that is on (History open, panel pinned) is a saffron wash that
+// stays saffron under the pointer, a shade deeper, rather than turning to
+// the grey every other icon button takes.
+const ON = 'bg-primary/10 text-primary hover:bg-primary/15';
+
 function HeaderButton({ label, active = false, onClick, children }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      title={label}
-      className={`grid h-8 w-8 place-items-center rounded-lg transition-colors duration-fast ease ${
-        active ? 'bg-primary/10 text-primary hover:bg-primary/15' : 'text-muted hover:bg-ink/5 hover:text-ink'
-      }`}
-    >
+    <IconButton label={label} title={label} size="md" square onClick={onClick} className={active ? ON : ''}>
       {children}
-    </button>
+    </IconButton>
   );
 }
 

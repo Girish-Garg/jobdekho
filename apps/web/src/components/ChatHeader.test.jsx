@@ -43,7 +43,10 @@ describe('ChatHeader', () => {
     expect(onHistory).toHaveBeenCalled();
     unmount();
     render(<ChatHeader providers={[CLAUDE]} answerer={CLAUDE} layout={layout()} history onHistory={onHistory} onNew={vi.fn()} onClose={vi.fn()} />);
-    expect(screen.getByRole('button', { name: 'Close history' })).toHaveClass('text-primary');
+    const open = screen.getByRole('button', { name: 'Close history' });
+    expect(open).toHaveClass('text-primary');
+    // An icon button's own hover is grey; this one has to stay saffron under the pointer.
+    expect(open).toHaveClass('hover:bg-primary/15');
   });
 
   it('offers to pin a floating panel and to float a pinned one', () => {

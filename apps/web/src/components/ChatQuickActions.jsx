@@ -1,4 +1,5 @@
 import { ACTION_KINDS, ACTION_ORDER } from '../lib/chatActionKinds.js';
+import Button from './ui/Button.jsx';
 import ChatActionIcon from './ChatActionIcon.jsx';
 
 // The three things the chat can do to the job in scope, one click each.
@@ -12,16 +13,16 @@ export default function ChatQuickActions({ results, busy, onRun }) {
   return (
     <div role="group" aria-label="Actions for this job" className="flex flex-wrap gap-1">
       {ACTION_ORDER.map((kind) => (
-        <button
+        <Button
           key={kind}
-          type="button"
+          size="sm"
           disabled={busy || results === undefined}
           onClick={() => onRun(kind)}
-          className="btn btn-quiet btn-sm group bg-paper px-2.5 py-1.5"
+          className="bg-paper px-2.5 py-1.5"
         >
           <ChatActionIcon kind={kind} size={13} className="text-primary" />
           {saved.has(kind) ? ACTION_KINDS[kind].again : ACTION_KINDS[kind].label}
-        </button>
+        </Button>
       ))}
     </div>
   );

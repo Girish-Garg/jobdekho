@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { relativeDay } from '../lib/time.js';
 import { ACTION_KINDS } from '../lib/chatActionKinds.js';
+import Button from './ui/Button.jsx';
+import Card from './ui/Card.jsx';
+import Eyebrow from './ui/Eyebrow.jsx';
 import FakeCheckResult, { VERDICT_WORD } from './FakeCheckResult.jsx';
 import CoverLetterResult from './CoverLetterResult.jsx';
 import ResumeTailorResult from './ResumeTailorResult.jsx';
@@ -24,7 +27,7 @@ const SUMMARY = {
 // newest card makes it the reply target, which is what "click the card" means.
 const OWN_CLICK = 'button, a, textarea, input, select, label';
 
-const FRAME = 'overflow-hidden rounded-xl border bg-paper transition duration-fast ease';
+const FRAME = 'bg-paper transition duration-fast';
 const TARGETED = 'border-primary ring-4 ring-primary/15';
 
 // One answer from a posting action, inside the conversation. The newest
@@ -49,7 +52,7 @@ export default function ChatResultCard({ entry, providers, targeted, onTarget, d
   }
 
   return (
-    <section aria-label={name} onClick={onCardClick} className={`${FRAME} ${targeted ? TARGETED : latest ? 'border-line hover:border-edge' : 'border-line'}`}>
+    <Card as="section" variant="list" aria-label={name} onClick={onCardClick} className={`${FRAME} ${targeted ? TARGETED : latest ? 'hover:border-edge' : ''}`}>
       <div className="flex items-center gap-2.5 px-3 py-2.5">
         <span aria-hidden="true" className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
           <ChatActionIcon kind={kind} size={15} />
@@ -61,22 +64,21 @@ export default function ChatResultCard({ entry, providers, targeted, onTarget, d
           className="flex min-w-0 flex-1 items-center gap-2 text-left text-muted transition-colors duration-fast ease hover:text-ink"
         >
           <span className="flex min-w-0 flex-1 flex-col">
-            <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-primary">{name}</span>
+            <Eyebrow as="span" primary>{name}</Eyebrow>
             <span className="truncate text-sm font-medium text-ink">{SUMMARY[kind](record)}</span>
           </span>
           {open ? <ChevronUpIcon /> : <ChevronDownIcon />}
         </button>
         {latest && (
-          <button
-            type="button"
+          <Button
+            variant={targeted ? 'primary' : 'tint'}
+            size="sm"
             aria-pressed={targeted}
             onClick={() => onTarget(kind)}
-            className={`shrink-0 rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors duration-fast ease ${
-              targeted ? 'border-primary bg-primary text-on-primary' : 'border-primary/30 text-primary hover:bg-primary/10'
-            }`}
+            className={targeted ? 'shrink-0' : 'shrink-0 bg-transparent hover:bg-primary/10'}
           >
             Change this
-          </button>
+          </Button>
         )}
       </div>
       {open && (
@@ -91,6 +93,6 @@ export default function ChatResultCard({ entry, providers, targeted, onTarget, d
           />
         </div>
       )}
-    </section>
+    </Card>
   );
 }

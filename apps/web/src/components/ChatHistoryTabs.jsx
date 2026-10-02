@@ -1,3 +1,5 @@
+import Button from './ui/Button.jsx';
+
 // History's two lists as one control with two sides, like the Resume
 // page's Preview and Source toggle, with the way back to the chat beside
 // them for a person who does not think to press History again.
@@ -27,13 +29,11 @@ export default function ChatHistoryTabs({ tab, onTab, onBack }) {
           </button>
         ))}
       </div>
-      <button
-        type="button"
-        onClick={onBack}
-        className="ml-auto rounded-full px-2.5 py-1 text-xs font-semibold text-muted transition-colors duration-fast ease hover:bg-ink/5 hover:text-ink"
-      >
+      {/* The panel can be as narrow as 320px, so the way back wraps there
+          rather than pushing the row past the panel's edge. */}
+      <Button variant="ghost" size="sm" onClick={onBack} className="ml-auto whitespace-normal">
         Back to the chat
-      </button>
+      </Button>
     </div>
   );
 }

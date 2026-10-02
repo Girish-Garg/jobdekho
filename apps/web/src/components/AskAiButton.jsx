@@ -1,5 +1,7 @@
 import { askAboutPosting } from '../lib/askAiSignal.js';
 import { isDoubtful } from '../lib/chatActionKinds.js';
+import Button from './ui/Button.jsx';
+import Card from './ui/Card.jsx';
 import { ArrowRightIcon, SparkleIcon, ShieldCheckIcon, PenIcon, DocumentIcon } from './Icon.jsx';
 
 // The pane's way into AI: it hands this posting to the chat panel, where
@@ -15,8 +17,6 @@ const QUICK = [
   ['resume-tailor', 'Tailor resume', DocumentIcon],
 ];
 
-const CHIP = 'btn btn-quiet btn-sm font-medium';
-
 export default function AskAiButton({ posting, onAsked }) {
   const doubtful = isDoubtful(posting);
   const title = doubtful ? 'Check whether this job is real' : 'Ask AI about this job';
@@ -26,7 +26,7 @@ export default function AskAiButton({ posting, onAsked }) {
   };
 
   return (
-    <section aria-label="AI" className="dither-spot rounded-xl border border-line bg-panel p-4 hover:border-edge">
+    <Card as="section" aria-label="AI" className="dither-spot rounded-xl p-4 hover:border-edge">
       <button type="button" aria-label={title} onClick={() => ask(doubtful ? 'fake-check' : null)} className="group flex w-full items-center gap-3 text-left">
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary text-on-primary">
           <SparkleIcon size={16} />
@@ -41,12 +41,12 @@ export default function AskAiButton({ posting, onAsked }) {
       </button>
       <div className="mt-3 flex flex-wrap gap-1.5">
         {QUICK.filter(([kind]) => !(doubtful && kind === 'fake-check')).map(([kind, label, Icon]) => (
-          <button key={kind} type="button" onClick={() => ask(kind)} className={CHIP}>
+          <Button key={kind} size="sm" onClick={() => ask(kind)} className="font-medium">
             <Icon size={13} />
             {label}
-          </button>
+          </Button>
         ))}
       </div>
-    </section>
+    </Card>
   );
 }

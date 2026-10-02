@@ -1,8 +1,9 @@
 import { shortStamp } from '../lib/time.js';
+import Button from './ui/Button.jsx';
 import { CheckIcon, WarningIcon } from './Icon.jsx';
 
-const APPLY = 'btn btn-primary';
-const DISCARD = 'btn btn-quiet text-muted hover:text-ink font-medium';
+// Discard sits back from Apply: the quiet button with its label muted.
+const MUTED = 'font-medium text-muted hover:text-ink';
 
 // The foot of a proposal card: the two buttons while it waits, or what
 // became of it. Apply is saffron because it is the one thing on the card
@@ -40,13 +41,13 @@ export default function ProposalFooter({ state, blocked }) {
   return (
     <div className="flex flex-col gap-2.5">
       <div className="flex flex-wrap items-center gap-2">
-        <button type="button" onClick={state.apply} disabled={blocked || Boolean(state.busy)} className={APPLY}>
+        <Button variant="primary" onClick={state.apply} disabled={blocked || Boolean(state.busy)}>
           <CheckIcon size={14} />
           {state.busy === 'apply' ? 'Applying...' : 'Apply'}
-        </button>
-        <button type="button" onClick={state.discard} disabled={Boolean(state.busy)} className={DISCARD}>
+        </Button>
+        <Button onClick={state.discard} disabled={Boolean(state.busy)} className={MUTED}>
           {state.busy === 'discard' ? 'Discarding...' : 'Discard'}
-        </button>
+        </Button>
         <span className="text-xs text-muted">{blocked ? 'Fix the lines above first.' : 'Nothing changes until you apply.'}</span>
       </div>
       {state.error && <Refusal error={state.error} />}

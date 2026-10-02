@@ -1,4 +1,7 @@
 import { useProposal } from '../lib/useProposal.js';
+import Card from './ui/Card.jsx';
+import Chip from './ui/Chip.jsx';
+import Eyebrow from './ui/Eyebrow.jsx';
 import ProfileDiff from './ProfileDiff.jsx';
 import DocumentProposalBody from './DocumentProposalBody.jsx';
 import ProposalRefusal from './ProposalRefusal.jsx';
@@ -20,8 +23,8 @@ const KIND = {
 const FRAME = {
   pending: 'border-primary/35 shadow-raise',
   applied: 'border-applied/40',
-  discarded: 'border-line opacity-70',
-  refused: 'border-line',
+  discarded: 'opacity-70',
+  refused: '',
 };
 
 const TILE = {
@@ -31,11 +34,13 @@ const TILE = {
   refused: 'bg-ink/5 text-muted',
 };
 
+// The greyed chip sits on the same wash as its tile, a shade darker than
+// Chip's own quiet one, so the two read as one mark.
 const CHIP = {
-  pending: ['bg-primary/10 text-primary', 'Waiting for you'],
-  applied: ['bg-applied/15 text-applied', 'Applied'],
-  discarded: ['bg-ink/5 text-muted', 'Discarded'],
-  refused: ['bg-ink/5 text-muted', 'Not made'],
+  pending: ['primary', 'Waiting for you'],
+  applied: ['applied', 'Applied'],
+  discarded: ['quiet', 'Discarded'],
+  refused: ['quiet', 'Not made'],
 };
 
 function Body({ proposal, status }) {
@@ -51,16 +56,22 @@ export default function ProposalCard({ proposal }) {
   const blocked = proposal.kind === 'document' && proposal.problems.length > 0;
 
   return (
-    <section aria-label={`${kind.word}: ${proposal.summary}`} data-status={state.status} className={`overflow-hidden rounded-2xl border bg-paper transition-opacity duration-slow ease ${FRAME[state.status]}`}>
+    <Card
+      as="section"
+      variant="list"
+      aria-label={`${kind.word}: ${proposal.summary}`}
+      data-status={state.status}
+      className={`rounded-2xl bg-paper transition-opacity duration-slow ${FRAME[state.status]}`}
+    >
       <div className="flex items-start gap-2.5 px-3.5 py-3">
         <span aria-hidden="true" className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${TILE[state.status]}`}>
           <Icon size={15} />
         </span>
         <div className="min-w-0 flex-1">
-          <p className={`text-[10px] font-bold uppercase tracking-[0.14em] ${state.status === 'pending' ? 'text-primary' : 'text-muted'}`}>{kind.word}</p>
+          <Eyebrow primary={state.status === 'pending'}>{kind.word}</Eyebrow>
           <p className="text-sm font-semibold leading-snug text-ink">{proposal.summary}</p>
         </div>
-        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${chipTone}`}>{chipWord}</span>
+        <Chip tone={chipTone} className={`shrink-0 ${chipTone === 'quiet' ? 'bg-ink/5' : ''}`}>{chipWord}</Chip>
       </div>
       <div className="border-t border-line bg-panel px-3.5 py-3">
         <Body proposal={proposal} status={state.status} />
@@ -68,6 +79,6 @@ export default function ProposalCard({ proposal }) {
       <div className="border-t border-line px-3.5 py-2.5">
         <ProposalFooter state={state} blocked={blocked} />
       </div>
-    </section>
+    </Card>
   );
 }

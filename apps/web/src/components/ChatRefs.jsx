@@ -1,3 +1,6 @@
+import Card from './ui/Card.jsx';
+import CountBadge from './ui/CountBadge.jsx';
+import Eyebrow from './ui/Eyebrow.jsx';
 import ChatMonogram from './ChatMonogram.jsx';
 import { ArrowRightIcon } from './Icon.jsx';
 
@@ -22,11 +25,11 @@ function Fit({ fit }) {
 export default function ChatRefs({ refs, onOpen }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-muted">
+      <Eyebrow className="flex items-center gap-1.5">
         Jobs in JobDekho
-        <span className="rounded-full bg-primary/10 px-1.5 text-[10px] font-bold normal-case leading-4 tracking-normal text-primary tnum">{refs.length}</span>
-      </p>
-      <ul aria-label="Jobs in this answer" className="flex flex-col divide-y divide-line overflow-hidden rounded-xl border border-line bg-paper">
+        <CountBadge n={refs.length} className="bg-primary/10 text-[10px] font-bold normal-case leading-4 tracking-normal text-primary" />
+      </Eyebrow>
+      <Card as="ul" variant="list" aria-label="Jobs in this answer" className="flex flex-col divide-y divide-line bg-paper">
         {refs.map((ref) => (
           <li key={ref.id}>
             <button
@@ -46,7 +49,7 @@ export default function ChatRefs({ refs, onOpen }) {
             </button>
           </li>
         ))}
-      </ul>
+      </Card>
     </div>
   );
 }

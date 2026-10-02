@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import Button from './ui/Button.jsx';
 import { TrashIcon } from './Icon.jsx';
 
-const CONTINUE = 'btn btn-primary';
-const QUIET = 'btn btn-quiet text-muted hover:text-ink font-normal';
+// The ways out sit back from Continue: the quiet button with its label
+// muted and at the plain weight.
+const MUTED = 'font-normal text-muted hover:text-ink';
 
 // Under a filed conversation: carry on with it, saffron because it is the
 // one thing here that acts, or delete it, which asks first, since a
@@ -14,28 +16,29 @@ export default function ConversationReaderFooter({ busy, onContinue, onDelete })
     return (
       <div role="group" aria-label="Delete this conversation?" className="flex flex-wrap items-center gap-2">
         <p className="min-w-0 flex-1 text-sm text-ink">Delete it for good? Changes it still offers go with it.</p>
-        <button type="button" onClick={() => setAsking(false)} className={QUIET}>Keep it</button>
-        <button
-          type="button"
-          disabled={Boolean(busy)}
-          onClick={onDelete}
-          className="rounded-full bg-ember px-3.5 py-1.5 text-sm font-semibold text-paper transition-opacity duration-fast ease hover:opacity-90 disabled:opacity-60"
-        >
+        <Button onClick={() => setAsking(false)} className={MUTED}>Keep it</Button>
+        <Button variant="danger" disabled={Boolean(busy)} onClick={onDelete}>
           {busy === 'delete' ? 'Deleting...' : 'Delete it'}
-        </button>
+        </Button>
       </div>
     );
   }
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <button type="button" disabled={Boolean(busy)} onClick={onContinue} className={CONTINUE}>
+      <Button variant="primary" disabled={Boolean(busy)} onClick={onContinue}>
         {busy === 'continue' ? 'Opening...' : 'Continue this conversation'}
-      </button>
-      <button type="button" disabled={Boolean(busy)} onClick={() => setAsking(true)} aria-label="Delete this conversation" title="Delete this conversation" className={`${QUIET} inline-flex items-center gap-1.5`}>
+      </Button>
+      <Button
+        disabled={Boolean(busy)}
+        onClick={() => setAsking(true)}
+        aria-label="Delete this conversation"
+        title="Delete this conversation"
+        className={MUTED}
+      >
         <TrashIcon size={13} />
         Delete
-      </button>
+      </Button>
     </div>
   );
 }

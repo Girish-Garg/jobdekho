@@ -1,4 +1,5 @@
 import { elapsedText } from '../lib/aiSteps.js';
+import Button from './ui/Button.jsx';
 import ChatBubble from './ChatBubble.jsx';
 import ChatText from './ChatText.jsx';
 import { WarningIcon } from './Icon.jsx';
@@ -19,7 +20,7 @@ export default function ChatMissed({ missed, onAgain, onEdit, onRecheck, checkin
         <div className="flex items-center gap-2 text-xs text-muted">
           <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-[2px] bg-muted" />
           <span className="mr-auto">You stopped it after {elapsedText(missed.elapsedMs)}</span>
-          <button type="button" onClick={onAgain} className="btn btn-quiet btn-sm">Ask again</button>
+          <Button size="sm" onClick={onAgain}>Ask again</Button>
         </div>
       </div>
     );
@@ -35,12 +36,12 @@ export default function ChatMissed({ missed, onAgain, onEdit, onRecheck, checkin
         </p>
         <p className="mt-1 text-sm text-muted">{missed.message}</p>
         <div className="mt-3 flex flex-wrap gap-2">
-          <button type="button" onClick={onAgain} className="btn btn-quiet btn-sm">Ask again</button>
-          <button type="button" onClick={onEdit} className="btn btn-ghost btn-sm">Edit question</button>
+          <Button size="sm" onClick={onAgain}>Ask again</Button>
+          <Button variant="ghost" size="sm" onClick={onEdit}>Edit question</Button>
           {missed.kind === 'not_found' && onRecheck && (
-            <button type="button" disabled={checking} onClick={onRecheck} className="btn btn-ghost btn-sm">
+            <Button variant="ghost" size="sm" disabled={checking} onClick={onRecheck}>
               {checking ? 'Checking...' : 'Check again'}
-            </button>
+            </Button>
           )}
         </div>
       </div>
