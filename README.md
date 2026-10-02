@@ -179,9 +179,9 @@ answers those.
 ## Postings
 
 While JobDekho is running it refreshes postings on its own once a day. You
-can also press **Refresh now** in Settings, under Postings, or run
-`npm run scrape` in a terminal. A scrape checks around 280 sources, 8 at a
-time, with a 15 second timeout and one retry per source:
+can also press **Refresh now** in Settings, under Postings; running from
+source, `npm run scrape` in a terminal does the same. A scrape checks around
+280 sources, 8 at a time, with a 15 second timeout and one retry per source:
 
 - company careers boards for the 262 entries in `config/companies.json`, on
   Greenhouse, Lever, Ashby, SmartRecruiters, Workable, Recruitee, Workday,
@@ -198,8 +198,8 @@ it at most once a day, slowly, and stays away for two days or more (longer
 each time) if LinkedIn refuses a request.
 
 Adzuna, an aggregator, joins every run once you paste your own free Adzuna key
-into Settings (or set it in `.env`, see [Configuration](#configuration)). A
-run usually finishes in a few minutes; it
+into Settings (or set `ADZUNA_APP_ID` and `ADZUNA_APP_KEY`, see
+[Configuration](#configuration)). A run usually finishes in a few minutes; it
 takes longer when several sources are down that day, since each is tried
 twice before it is logged as failed. The corpus starts empty, so the first
 scrape treats every posting it finds as new.
@@ -219,9 +219,9 @@ What is kept, and for how long:
   since it has almost certainly closed. "Include stale postings" under More
   filters shows those again.
 
-`npm run scrape` prints how many were new, how many were skipped as posted
-over 60 days ago, how many old ones were cleaned out, and one line per
-source.
+Running from source, `npm run scrape` prints how many were new, how many
+were skipped as posted over 60 days ago, how many old ones were cleaned out,
+and one line per source.
 
 ## Daily use
 
@@ -523,10 +523,12 @@ https://miktex.org/download on Windows, or TeX Live elsewhere, then restart
 JobDekho so it finds `pdflatex` on the new PATH. The `.tex` download works
 meanwhile.
 
-**A source fails during a scrape.** Not fatal. The scrape log prints one line
-per source, `name: FAIL <error>`, and the run continues with everything
-else. A source that fails on every run is usually a dead slug or an endpoint
-that changed shape; see `docs/adding-sources.md`.
+**A source fails during a scrape.** Not fatal: the run continues with
+everything else. Settings, under Postings, names the sources the last
+refresh could not reach, with each one's error on hover; `npm run scrape`
+prints one line per source, `name: FAIL <error>`. A source that fails on
+every run is usually a dead slug or an endpoint that changed shape; running
+from source, see `docs/adding-sources.md`.
 
 **A scanned PDF resume.** If the PDF has no text layer, a scan or a photo,
 the upload fails with a message saying so. Type the profile in by hand
