@@ -10,6 +10,7 @@ import FeedTop from './FeedTop.jsx';
 import FeedBody from './FeedBody.jsx';
 import PostingDetailSlot from './PostingDetailSlot.jsx';
 import RecommendedNotice from './RecommendedNotice.jsx';
+import Button from './ui/Button.jsx';
 
 // Below this the pane has nowhere to sit beside the list, so a dialog takes
 // over instead.
@@ -69,12 +70,9 @@ export default function PostingsView({
         />
         {!loading && more && (
           <div className="flex justify-center pt-6">
-            <button
-              onClick={loadMore}
-              className="btn btn-quiet px-6 py-2 font-medium"
-            >
+            <Button onClick={loadMore} className="px-6 py-2 font-medium">
               Load more
-            </button>
+            </Button>
           </div>
         )}
       </div>

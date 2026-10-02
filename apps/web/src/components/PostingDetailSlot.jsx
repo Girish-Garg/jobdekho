@@ -4,6 +4,7 @@ import { overlayHost } from '../lib/overlayHost.js';
 import { useOutsideDismiss } from '../lib/useOutsideDismiss.js';
 import PostingDetail from './PostingDetail.jsx';
 import PostingDialog from './PostingDialog.jsx';
+import Card from './ui/Card.jsx';
 
 // The pane floats over the right of the feed rather than taking a column
 // beside it, so opening a job never reflows the rows or the grid; closing it
@@ -28,15 +29,17 @@ export default function PostingDetailSlot({ isWide, opened, onClose, onDismiss =
   }
 
   const pane = (
-    <aside
+    <Card
+      as="aside"
       ref={paneRef}
+      variant="pop"
       aria-label="Posting"
-      className="slide-in-right absolute bottom-3 right-3 top-3 z-30 flex w-[460px] max-w-[calc(100%-1.5rem)] flex-col overflow-hidden rounded-2xl border border-line bg-panel shadow-pop"
+      className="slide-in-right absolute bottom-3 right-3 top-3 z-30 flex w-[460px] max-w-[calc(100%-1.5rem)] flex-col overflow-hidden bg-panel"
     >
       <div key={opened.id} className="rise flex min-h-0 flex-1 flex-col">
         <PostingDetail posting={opened} onClose={onClose} onStatus={onStatus} onCompany={onCompany} onBlock={onBlock} />
       </div>
-    </aside>
+    </Card>
   );
 
   const host = overlayHost();

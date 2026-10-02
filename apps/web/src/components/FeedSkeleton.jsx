@@ -1,3 +1,5 @@
+import Card from './ui/Card.jsx';
+
 // Rows, not a spinner: a placeholder shaped like the real thing reserves the
 // height the results will land in, so the feed does not jump once they
 // arrive, and there is nothing to animate but a quiet pulse. Shaped like the
@@ -21,7 +23,7 @@ function SkeletonRow({ index }) {
 
 function SkeletonCard() {
   return (
-    <div className="flex h-48 flex-col gap-3 rounded-xl border border-line bg-panel p-4">
+    <Card variant="panel" className="flex h-48 flex-col gap-3 rounded-xl p-4">
       <span className="flex items-center gap-3">
         <span className={MARK} />
         <span className={`h-3 w-1/3 ${BAR}`} />
@@ -29,7 +31,7 @@ function SkeletonCard() {
       <span className={`h-4 w-4/5 ${BAR}`} />
       <span className={`h-3 w-1/2 ${BAR}`} />
       <span className={`mt-auto h-3 w-2/3 ${BAR}`} />
-    </div>
+    </Card>
   );
 }
 
@@ -45,8 +47,8 @@ export default function FeedSkeleton({ mode = 'list' }) {
   }
 
   return (
-    <div aria-hidden="true" data-testid="feed-skeleton" className="overflow-hidden rounded-xl border border-line bg-panel">
+    <Card variant="list" aria-hidden="true" data-testid="feed-skeleton">
       {items.map((index) => <SkeletonRow key={index} index={index} />)}
-    </div>
+    </Card>
   );
 }

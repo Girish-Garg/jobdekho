@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 import { useFocusTrap } from '../lib/useFocusTrap.js';
 import { matchCommands } from '../lib/fuzzyMatch.js';
 import { buildCommands } from '../lib/useCommandList.js';
+import Card from './ui/Card.jsx';
+import Eyebrow from './ui/Eyebrow.jsx';
 
 const TITLE_ID = 'command-palette-title';
 
@@ -44,14 +46,15 @@ export default function CommandPalette({ open, onClose, view, setView, filters, 
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-ink/40 pt-[15vh]" onMouseDown={onClose}>
-      <div
+      <Card
         ref={trapRef}
+        variant="pop"
         role="dialog"
         aria-modal="true"
         aria-labelledby={TITLE_ID}
         onMouseDown={(event) => event.stopPropagation()}
         onKeyDown={handleKeyDown}
-        className="pop-in w-full max-w-lg rounded-lg border border-line bg-overlay shadow-pop"
+        className="pop-in w-full max-w-lg rounded-lg"
       >
         <h2 id={TITLE_ID} className="sr-only">Command palette</h2>
         <input
@@ -81,9 +84,9 @@ export default function CommandPalette({ open, onClose, view, setView, filters, 
                 {/* Visual grouping only: folded into the option's accessible
                     name it would read as "Clear all filters Filter", which
                     says nothing a screen reader user needs. */}
-                <span aria-hidden="true" className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
+                <Eyebrow as="span" aria-hidden="true" className="font-mono font-normal">
                   {command.category}
-                </span>
+                </Eyebrow>
               </button>
             </li>
           ))}
@@ -91,7 +94,7 @@ export default function CommandPalette({ open, onClose, view, setView, filters, 
             <li className="px-3 py-6 text-center font-mono text-xs text-muted">No matching command.</li>
           )}
         </ul>
-      </div>
+      </Card>
     </div>
   );
 }

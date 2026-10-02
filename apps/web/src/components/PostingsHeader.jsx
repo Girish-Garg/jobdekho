@@ -1,4 +1,5 @@
 import CompanyMark from './CompanyMark.jsx';
+import PageTitle from './ui/PageTitle.jsx';
 
 // The feed's title line: what this is, how many postings match and how many
 // of them arrived today (counted by the server over the whole match, not the
@@ -17,7 +18,7 @@ export default function PostingsHeader({ shown, total = shown, fresh, controls =
       <div className="flex min-w-0 items-center gap-3">
         {company && <CompanyMark company={company} logoOf={logoOf} />}
         <div className="min-w-0">
-          <h1 className="truncate font-display text-2xl font-extrabold tracking-tight text-ink">{company ?? 'Postings'}</h1>
+          <PageTitle className="truncate">{company ?? 'Postings'}</PageTitle>
           <p className="tnum mt-0.5 text-sm text-muted">
             <span>{total > shown ? `${count(shown)} of ${count(total)} shown` : `${count(total)} postings`}</span>
             {fresh > 0 && <span className="font-medium text-primary">{`  ·  ${fresh} new today`}</span>}

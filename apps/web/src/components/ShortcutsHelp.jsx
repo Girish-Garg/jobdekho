@@ -1,5 +1,8 @@
 import { useFocusTrap } from '../lib/useFocusTrap.js';
 import { CloseIcon } from './Icon.jsx';
+import Card from './ui/Card.jsx';
+import Eyebrow from './ui/Eyebrow.jsx';
+import IconButton from './ui/IconButton.jsx';
 
 const GLOBAL = [
   ['Ctrl K / Cmd K', 'Open the command palette'],
@@ -34,24 +37,25 @@ export default function ShortcutsHelp({ open, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40" onMouseDown={onClose}>
-      <div
+      <Card
         ref={trapRef}
+        variant="pop"
         role="dialog"
         aria-modal="true"
         aria-labelledby={TITLE_ID}
         onMouseDown={(event) => event.stopPropagation()}
         onKeyDown={handleKeyDown}
-        className="pop-in w-full max-w-md rounded-lg border border-line bg-overlay p-5 shadow-pop"
+        className="pop-in w-full max-w-md rounded-lg p-5"
       >
         <div className="flex items-center justify-between">
           <h2 id={TITLE_ID} className="text-md font-semibold text-ink">Keyboard shortcuts</h2>
-          <button type="button" onClick={onClose} aria-label="Close" className="grid h-6 w-6 place-items-center text-muted transition hover:text-ink">
+          <IconButton label="Close" onClick={onClose} className="h-6 w-6">
             <CloseIcon />
-          </button>
+          </IconButton>
         </div>
         <ShortcutGroup title="Global" rows={GLOBAL} />
         <ShortcutGroup title="On the feed" rows={FEED} />
-      </div>
+      </Card>
     </div>
   );
 }
@@ -59,7 +63,7 @@ export default function ShortcutsHelp({ open, onClose }) {
 function ShortcutGroup({ title, rows }) {
   return (
     <div className="mt-4">
-      <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">{title}</p>
+      <Eyebrow className="font-mono font-normal tracking-[0.18em]">{title}</Eyebrow>
       <dl className="mt-2 space-y-1.5">
         {rows.map(([key, text]) => (
           <div key={key} className="flex items-center justify-between gap-4 text-sm">

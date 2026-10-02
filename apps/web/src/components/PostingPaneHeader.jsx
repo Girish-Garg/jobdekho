@@ -4,6 +4,7 @@ import PostingChips from './PostingChips.jsx';
 import BlockCompanyConfirm from './BlockCompanyConfirm.jsx';
 import { ArrowRightIcon, CloseIcon } from './Icon.jsx';
 import { TITLE_ID } from '../lib/postingTitle.js';
+import IconButton from './ui/IconButton.jsx';
 
 // Who and what, before anything else. The title is held to three lines: a
 // scraped title can run to "Senior Software Test Engineer (python, pyspark,
@@ -64,14 +65,9 @@ export default function PostingPaneHeader({ posting, onClose, onCompany, onBlock
         )}
       </div>
       {onClose && (
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close"
-          className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-line text-muted transition-colors duration-fast ease hover:border-edge hover:text-ink"
-        >
+        <IconButton label="Close" size="md" outline onClick={onClose}>
           <CloseIcon />
-        </button>
+        </IconButton>
       )}
     </header>
   );

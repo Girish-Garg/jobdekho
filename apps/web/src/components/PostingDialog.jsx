@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import PostingDetail, { TITLE_ID } from './PostingDetail.jsx';
+import Card from './ui/Card.jsx';
 
 export default function PostingDialog({ posting, onClose, onStatus, onCompany, onBlock }) {
   const panelRef = useRef(null);
@@ -26,16 +27,17 @@ export default function PostingDialog({ posting, onClose, onStatus, onCompany, o
       onClick={(event) => event.target === event.currentTarget && onClose()}
       className="fixed inset-0 z-50 overflow-y-auto bg-ink/40 px-4 py-8 sm:px-8"
     >
-      <div
+      <Card
         ref={panelRef}
+        variant="pop"
         role="dialog"
         aria-modal="true"
         aria-labelledby={TITLE_ID}
         tabIndex={-1}
-        className="mx-auto w-full max-w-2xl overflow-hidden rounded-xl border border-line bg-panel shadow-pop outline-none"
+        className="mx-auto w-full max-w-2xl overflow-hidden rounded-xl bg-panel outline-none"
       >
         <PostingDetail posting={posting} onClose={onClose} onStatus={onStatus} onAsked={onClose} onCompany={onCompany} onBlock={onBlock} />
-      </div>
+      </Card>
     </div>
   );
 }

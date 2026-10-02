@@ -2,6 +2,7 @@ import { Fragment, useState } from 'react';
 import { useSetup } from '../lib/useSetup.js';
 import SettingsCard from './SettingsCard.jsx';
 import { CheckIcon, WarningIcon } from './Icon.jsx';
+import Button from './ui/Button.jsx';
 
 // What JobDekho needs on this computer, one row per check the server ran
 // (see its setup/checks.js), in its order: the required ones, then the two
@@ -78,13 +79,13 @@ export default function SetupCard() {
       )}
       {listed && <ul className="mt-4 divide-y divide-line first:mt-0">{checks.map((c) => <Row key={c.id} check={c} />)}</ul>}
       <div className="mt-5 flex flex-wrap gap-2">
-        <button type="button" disabled={checking} onClick={refresh} className="btn btn-quiet font-normal">
+        <Button disabled={checking} onClick={refresh} className="font-normal">
           {checking ? 'Checking...' : 'Check again'}
-        </button>
+        </Button>
         {allSet && (
-          <button type="button" aria-expanded={shown} onClick={() => setShown(!shown)} className="btn btn-ghost font-normal">
+          <Button variant="ghost" aria-expanded={shown} onClick={() => setShown(!shown)} className="font-normal">
             {shown ? 'Hide details' : 'Show details'}
-          </button>
+          </Button>
         )}
       </div>
     </SettingsCard>

@@ -1,4 +1,5 @@
 import { BookmarkIcon, CheckIcon, CloseIcon } from './Icon.jsx';
+import IconButton from './ui/IconButton.jsx';
 
 // The three status buttons of a row, as icons named for screen readers and
 // tooltips, in the colours the pane's footer uses for the same statuses; and
@@ -31,19 +32,17 @@ export default function RowActions({ posting, flashUndo, onStatus, onUndo }) {
       {ACTIONS.map(([value, label, Icon, pressed]) => {
         const on = posting.status === value;
         return (
-          <button
+          <IconButton
             key={value}
-            type="button"
-            aria-label={label}
+            label={label}
             title={label}
+            outline
             aria-pressed={on}
             onClick={(event) => { event.stopPropagation(); onStatus(posting.id, value); }}
-            className={`grid h-7 w-7 place-items-center rounded-full border transition-colors duration-fast ease ${
-              on ? pressed : 'border-line bg-panel text-muted hover:border-edge hover:text-ink'
-            }`}
+            className={on ? pressed : ''}
           >
             <Icon size={13} />
-          </button>
+          </IconButton>
         );
       })}
     </span>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { applyTheme, onChoiceChange, prefersDark, readChoice, resolve, writeChoice } from '../lib/theme.js';
+import IconButton from './ui/IconButton.jsx';
 
 // A control has to visibly do something every time it is pressed. Cycling
 // system, light, dark failed that: on a machine set to dark, going from dark
@@ -24,15 +25,9 @@ export default function ThemeToggle() {
 
   const to = theme === 'dark' ? 'light' : 'dark';
   return (
-    <button
-      type="button"
-      onClick={flip}
-      aria-label={`Switch to ${to} theme`}
-      title={`Switch to ${to} theme`}
-      className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-line text-muted transition-colors duration-fast ease hover:border-edge hover:text-ink"
-    >
+    <IconButton label={`Switch to ${to} theme`} title={`Switch to ${to} theme`} size="md" outline onClick={flip}>
       {theme === 'dark' ? <Sun /> : <Moon />}
-    </button>
+    </IconButton>
   );
 }
 

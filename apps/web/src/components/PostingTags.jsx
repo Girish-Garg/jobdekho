@@ -1,6 +1,10 @@
 import { levelLabel } from '../lib/taxonomy.js';
+import Chip from './ui/Chip.jsx';
 
-const CHIP = 'inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-[11px] font-medium';
+// Every tag keeps its size when a row squeezes, and the neutral ones stay
+// see-through so a hovered or selected row shows through them.
+const CHIP = 'shrink-0 font-medium';
+const HAIRLINE = `${CHIP} bg-transparent`;
 
 // Onsite is also what a posting scraped before the field existed reads as, so
 // it is not evidence of an office and would sit on most rows saying nothing.
@@ -10,11 +14,12 @@ const MODE_WORD = { remote: 'Remote', hybrid: 'Hybrid' };
 // config/companies.json); the chip says YC and the batch is on hover.
 const YC_TAG = /^YC [A-Z]\d{2}$/;
 
-// What the person already did, in the colours the pane uses for the same.
+// What the person already did, in the tones the pane uses for the same, each
+// on the hairline every tag in the feed carries.
 const STATUS = {
-  saved: ['Saved', 'border-primary/40 bg-primary/10 text-primary'],
-  applied: ['Applied', 'border-applied/40 bg-applied/10 text-applied'],
-  dismissed: ['Dismissed', 'border-line bg-select text-muted'],
+  saved: ['Saved', 'primary', 'border-primary/40'],
+  applied: ['Applied', 'applied', 'border-applied/40 bg-applied/10'],
+  dismissed: ['Dismissed', 'quiet', 'border-line'],
 };
 
 // The small facts a row and a card are scanned by: the level, a work mode
@@ -32,12 +37,12 @@ export default function PostingTags({ posting, dominantWorkMode = null, align = 
   return (
     <span className={`flex flex-wrap items-center gap-1.5 ${align === 'start' ? 'justify-start' : 'justify-end'}`}>
       {/* A missing level reads as Mid, the same fallback levelLabel uses. */}
-      <span className={`${CHIP} border-line text-ink/80`}>{levelLabel(posting.level)}</span>
-      {mode && <span className={`${CHIP} border-line text-ink`}>{mode}</span>}
-      {yc && <span className={`${CHIP} border-line text-muted`} title={`Y Combinator, batch ${yc.slice(3)}`}>YC</span>}
-      {doubtful && <span className={`${CHIP} border-ember/40 bg-ember/10 text-ember`}>Caution</span>}
-      {status && <span className={`${CHIP} ${status[1]}`}>{status[0]}</span>}
-      {posting.closedAt && <span className={`${CHIP} border-line bg-select text-muted`} title="The board no longer lists this job">Closed</span>}
+      <Chip tone="line" className={`${HAIRLINE} text-ink/80`}>{levelLabel(posting.level)}</Chip>
+      {mode && <Chip tone="line" className={HAIRLINE}>{mode}</Chip>}
+      {yc && <Chip tone="line" className={`${HAIRLINE} text-muted`} title={`Y Combinator, batch ${yc.slice(3)}`}>YC</Chip>}
+      {doubtful && <Chip tone="line" className={`${CHIP} border-ember/40 bg-ember/10 text-ember`}>Caution</Chip>}
+      {status && <Chip tone={status[1]} className={`${CHIP} border ${status[2]}`}>{status[0]}</Chip>}
+      {posting.closedAt && <Chip className={`${CHIP} border border-line`} title="The board no longer lists this job">Closed</Chip>}
     </span>
   );
 }

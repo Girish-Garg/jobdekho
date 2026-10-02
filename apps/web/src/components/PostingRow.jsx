@@ -4,6 +4,7 @@ import CompanyMark from './CompanyMark.jsx';
 import PostingTags from './PostingTags.jsx';
 import FitMeter from './FitMeter.jsx';
 import RowActions from './RowActions.jsx';
+import Chip from './ui/Chip.jsx';
 
 // Every row lays its cells on the same tracks, so the tags, the pay and the
 // score sit in columns whatever the title beside them did. Two lines rather
@@ -44,7 +45,7 @@ export default function PostingRow({
       <span role="gridcell" className="min-w-0">
         <span className="flex min-w-0 items-center gap-2">
           <span className="truncate text-[15px] font-semibold leading-snug text-ink">{posting.title}</span>
-          {fresh && <span aria-label="New today" className="shrink-0 rounded-full bg-primary/10 px-1.5 py-px text-[10px] font-bold uppercase tracking-wide text-primary">New</span>}
+          {fresh && <Chip tone="primary" aria-label="New today" className="shrink-0 px-1.5 py-px text-[10px] font-bold uppercase tracking-wide">New</Chip>}
         </span>
         <span className="mt-0.5 block truncate text-[13px] text-muted">{meta.filter(Boolean).join('  ·  ')}</span>
       </span>

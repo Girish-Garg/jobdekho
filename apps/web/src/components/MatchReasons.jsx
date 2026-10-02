@@ -2,6 +2,8 @@ import FitBreakdown from './FitBreakdown.jsx';
 import FitWhy from './FitWhy.jsx';
 import { gradeTone } from '../lib/gradeTone.js';
 import { useCountUp } from '../lib/useCountUp.js';
+import Card from './ui/Card.jsx';
+import Chip from './ui/Chip.jsx';
 
 // The fit card: the score, its grade, why (FitWhy), and where the content
 // part came from (FitBreakdown). Every word is the server's: it scores the
@@ -24,13 +26,13 @@ export default function MatchReasons({ fit, reasons, grade, breakdown, why, gate
   const tone = gradeTone(grade);
 
   return (
-    <section aria-label="Fit" className="rounded-xl border border-line bg-paper/60 p-4">
+    <Card as="section" variant="inset" aria-label="Fit" className="p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold text-muted">How you fit</p>
           {Number.isInteger(fit) && <p className="tnum mt-1 font-display text-3xl font-extrabold leading-none text-ink">{shown}</p>}
         </div>
-        {grade && <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${tone.soft} ${tone.text}`}>Grade {grade}</span>}
+        {grade && <Chip className={`px-2.5 py-1 text-xs font-bold ${tone.soft} ${tone.text}`}>Grade {grade}</Chip>}
       </div>
       {why ? <FitWhy why={why} gates={gates} /> : reasons?.length > 0 && (
         <ul className="mt-3 flex flex-col gap-1 text-sm text-ink/85">
@@ -43,6 +45,6 @@ export default function MatchReasons({ fit, reasons, grade, breakdown, why, gate
         </ul>
       )}
       <FitBreakdown breakdown={breakdown} />
-    </section>
+    </Card>
   );
 }

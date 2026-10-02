@@ -4,6 +4,8 @@ import CompanyMark from './CompanyMark.jsx';
 import PostingTags from './PostingTags.jsx';
 import FitMeter from './FitMeter.jsx';
 import RowActions from './RowActions.jsx';
+import Card from './ui/Card.jsx';
+import Chip from './ui/Chip.jsx';
 
 // A card is a scan unit, so it carries only the fields candidates are sorted
 // by: who (monogram, company, place), what (the title), the tags, and at the
@@ -23,12 +25,14 @@ export default function PostingCard({ posting, selected = false, flashUndo = fal
   const pinned = selected || flashUndo;
 
   return (
-    <article
+    <Card
+      as="article"
+      variant="panel"
       data-row-id={posting.id}
       data-reveal
       aria-current={selected || undefined}
-      className={`dither-spot group relative flex flex-col gap-3 rounded-xl border p-4 ${
-        selected ? 'border-primary/50 bg-select' : 'border-line bg-panel hover:border-edge'
+      className={`dither-spot group relative flex flex-col gap-3 rounded-xl p-4 ${
+        selected ? 'border-primary/50 bg-select' : 'hover:border-edge'
       } ${posting.status === 'dismissed' ? 'opacity-50' : ''}`}
     >
       <button
@@ -47,9 +51,9 @@ export default function PostingCard({ posting, selected = false, flashUndo = fal
           </span>
         </span>
         {fresh && (
-          <span aria-label="New today" className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">
+          <Chip tone="primary" aria-label="New today" className="shrink-0 text-[10px] font-bold uppercase tracking-wide">
             New
-          </span>
+          </Chip>
         )}
       </span>
 
@@ -84,6 +88,6 @@ export default function PostingCard({ posting, selected = false, flashUndo = fal
           )}
         </span>
       </span>
-    </article>
+    </Card>
   );
 }

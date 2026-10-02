@@ -1,4 +1,5 @@
 import { SparkleIcon } from './Icon.jsx';
+import Button from './ui/Button.jsx';
 
 // With no profile the server quietly serves the recommendations as
 // newest-first and ignores the fit floor, so this banner is the only thing
@@ -17,13 +18,9 @@ export default function RecommendedNotice({ onOpenProfile, fitFiltered = false }
             : 'Recommendations need a profile to rank against. Until you make one, this is just the newest postings.'}
         </span>
       </p>
-      <button
-        type="button"
-        onClick={onOpenProfile}
-        className="btn btn-primary"
-      >
+      <Button variant="primary" onClick={onOpenProfile}>
         Set up your profile
-      </button>
+      </Button>
     </div>
   );
 }

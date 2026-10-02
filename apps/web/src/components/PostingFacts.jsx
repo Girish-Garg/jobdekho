@@ -2,6 +2,7 @@ import { degreeLabel } from '../lib/taxonomy.js';
 import { relativeDay } from '../lib/time.js';
 import { sourceName } from '../lib/sourceName.js';
 import { MapPinIcon, WalletIcon, BriefcaseIcon, GraduationCapIcon, CalendarIcon, ClockIcon, BuildingIcon } from './Icon.jsx';
+import Card from './ui/Card.jsx';
 
 // Level and work mode moved up into the header chips; what is left is the
 // context a person checks once interested. Pay is always shown, and says so
@@ -26,13 +27,13 @@ export default function PostingFacts({ posting }) {
   return (
     <dl className="grid grid-cols-2 gap-2">
       {facts(posting).map(([label, value, Icon, { wide, quiet } = {}]) => (
-        <div key={label} className={`flex min-w-0 items-start gap-2.5 rounded-lg border border-line bg-paper/60 px-3 py-2.5 ${wide ? 'col-span-2' : ''}`}>
+        <Card key={label} variant="inset" className={`flex min-w-0 items-start gap-2.5 rounded-lg px-3 py-2.5 ${wide ? 'col-span-2' : ''}`}>
           <Icon size={15} className="mt-0.5 text-muted" />
           <div className="min-w-0">
             <dt className="text-[11px] leading-tight text-muted">{label}</dt>
             <dd title={value} className={`truncate text-sm font-semibold ${quiet ? 'text-muted' : 'text-ink'}`}>{value}</dd>
           </div>
-        </div>
+        </Card>
       ))}
     </dl>
   );

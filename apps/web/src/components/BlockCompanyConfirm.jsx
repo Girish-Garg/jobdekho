@@ -1,5 +1,7 @@
 import { useEffect, useId, useState } from 'react';
 import { getCareersPage } from '../api.js';
+import Button from './ui/Button.jsx';
+import Card from './ui/Card.jsx';
 
 // Blocking hides a whole company rather than one job, and keeps hiding the
 // ones it posts later, so the pane asks first, in place under the company's
@@ -38,7 +40,7 @@ export default function BlockCompanyConfirm({ company, onBlock, onCancel }) {
   }
 
   return (
-    <div role="group" aria-labelledby={questionId} className="mt-3 rounded-xl border border-line bg-paper/60 p-3">
+    <Card variant="inset" role="group" aria-labelledby={questionId} className="mt-3 p-3">
       <p id={questionId} className="text-sm text-ink">Hide every job from {company}, now and in future refreshes?</p>
       {careersPage && (
         <label className="mt-2 flex cursor-pointer items-start gap-2 text-sm text-muted">
@@ -47,18 +49,13 @@ export default function BlockCompanyConfirm({ company, onBlock, onCancel }) {
         </label>
       )}
       <div className="mt-3 flex gap-2">
-        <button
-          type="button"
-          onClick={block}
-          disabled={busy || careersPage === null}
-          className="btn btn-sm bg-ember text-paper transition-opacity duration-fast ease hover:opacity-90"
-        >
+        <Button variant="danger" size="sm" onClick={block} disabled={busy || careersPage === null}>
           {busy ? 'Blocking...' : 'Block'}
-        </button>
-        <button type="button" onClick={onCancel} disabled={busy} className="btn btn-sm btn-quiet font-normal text-muted hover:text-ink">
+        </Button>
+        <Button size="sm" onClick={onCancel} disabled={busy} className="font-normal text-muted hover:text-ink">
           Cancel
-        </button>
+        </Button>
       </div>
-    </div>
+    </Card>
   );
 }

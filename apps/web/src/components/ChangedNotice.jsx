@@ -1,4 +1,5 @@
 import { SparkleIcon } from './Icon.jsx';
+import Button from './ui/Button.jsx';
 
 // A record changed while the person had unsaved edits of their own: a chat
 // proposal was applied to it, or an old version restored. Their edits are
@@ -18,12 +19,12 @@ export default function ChangedNotice({ title, detail, loadLabel, keepLabel = 'K
           <p className="text-xs text-muted">{detail}</p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <button type="button" onClick={onKeep} className="btn btn-ghost">
+          <Button variant="ghost" onClick={onKeep}>
             {keepLabel}
-          </button>
-          <button type="button" onClick={onLoad} className="btn btn-primary">
+          </Button>
+          <Button variant="primary" onClick={onLoad}>
             {loadLabel}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

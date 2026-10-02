@@ -81,7 +81,7 @@ describe('PostingCard new-today mark', () => {
   // carries none of it.
   it('marks a new posting in saffron, and carries no warning colour when fine', () => {
     const { container } = render(<PostingCard posting={base} onOpen={() => {}} />);
-    expect(screen.getByLabelText('New today').className).toContain('text-primary');
+    expect(screen.getByLabelText('New today')).toHaveClass('chip-primary');
     expect(container.querySelectorAll('.bg-ember, .text-ember')).toHaveLength(0);
   });
 });
@@ -145,8 +145,8 @@ describe('PostingCard level label', () => {
   it('draws the level as a neutral hairline chip rather than a filled badge', () => {
     render(<PostingCard posting={{ ...base, level: 'executive' }} onOpen={() => {}} />);
     const label = screen.getByText('Executive');
-    expect(label.className).toContain('border-line');
-    expect(label.className).not.toContain('bg-');
+    expect(label).toHaveClass('chip-line');
+    expect(label.className).not.toMatch(/chip-(primary|applied)|bg-(primary|ember|applied|select)/);
   });
 
   // Colour is never the only carrier: the word is always present, so nothing is
@@ -168,7 +168,7 @@ describe('PostingCard level label', () => {
 describe('PostingCard work mode', () => {
   it('names a remote posting next to its level', () => {
     render(<PostingCard posting={{ ...base, workMode: 'remote' }} onOpen={() => {}} />);
-    expect(screen.getByText('Remote', { selector: 'span.rounded-full' })).toBeInTheDocument();
+    expect(screen.getByText('Remote', { selector: 'span.chip' })).toBeInTheDocument();
   });
 
   it('names a hybrid posting', () => {
@@ -200,9 +200,10 @@ describe('PostingCard selection', () => {
 
   it('paints the selection background when selected, the panel surface otherwise', () => {
     const { rerender } = render(<PostingCard posting={base} onOpen={() => {}} />);
-    expect(cardOf().className).toContain('bg-panel');
+    expect(cardOf()).toHaveClass('card-panel');
+    expect(cardOf()).not.toHaveClass('bg-select');
     rerender(<PostingCard posting={base} selected onOpen={() => {}} />);
-    expect(cardOf().className).toContain('bg-select');
+    expect(cardOf()).toHaveClass('bg-select');
   });
 });
 

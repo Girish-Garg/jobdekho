@@ -3,6 +3,7 @@ import PostingRow from './PostingRow.jsx';
 import GradeBand from './GradeBand.jsx';
 import { bandStarts } from '../lib/gradeBands.js';
 import { scrollSelectedIntoView } from '../lib/scrollSelectedIntoView.js';
+import Card from './ui/Card.jsx';
 
 // The mode nearly every row on screen shares is not information; only a row
 // that differs from the rest of the page is worth a word for it.
@@ -34,7 +35,7 @@ export default function PostingList({ postings, bands = null, selectedId, flashI
   }, [selectedId]);
 
   return (
-    <div ref={containerRef} role="grid" aria-label="Postings" data-testid="posting-list" className="overflow-hidden rounded-xl border border-line bg-panel">
+    <Card ref={containerRef} variant="list" role="grid" aria-label="Postings" data-testid="posting-list">
       {postings.map((posting) => (
         <Fragment key={posting.id}>
           {starts.has(posting.id) && <GradeBand grade={posting.grade} count={bands?.[posting.grade]} />}
@@ -50,6 +51,6 @@ export default function PostingList({ postings, bands = null, selectedId, flashI
           />
         </Fragment>
       ))}
-    </div>
+    </Card>
   );
 }

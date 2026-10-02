@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { canRecheck, recheckProviders } from '../lib/noticeAction.js';
 import { CloseIcon } from './Icon.jsx';
+import Card from './ui/Card.jsx';
+import IconButton from './ui/IconButton.jsx';
 
 // One notice on its own: the dismiss control every kind gets, the repeat
 // count when the host has bumped one onto it, and the recheck button only
@@ -21,23 +23,19 @@ export default function Toast({ notice, onDismiss }) {
   }
 
   return (
-    <div
+    <Card
+      variant="pop"
       role={isError ? 'alert' : 'status'}
-      className="rise pointer-events-auto w-full rounded-md border border-edge bg-overlay p-3 shadow-pop"
+      className="rise pointer-events-auto w-full rounded-md border-edge p-3"
     >
       <div className="flex items-start gap-2">
         <p className={`flex-1 text-sm font-semibold ${isError ? 'text-ember' : 'text-ink'}`}>
           {notice.title}
           {notice.count > 1 && <span className="font-normal text-muted"> ({'×'}{notice.count})</span>}
         </p>
-        <button
-          type="button"
-          onClick={() => onDismiss(notice.id)}
-          aria-label="Dismiss"
-          className="grid h-5 w-5 shrink-0 place-items-center text-muted transition-colors duration-fast ease-ease hover:text-ink"
-        >
+        <IconButton label="Dismiss" size="xs" onClick={() => onDismiss(notice.id)}>
           <CloseIcon size={12} />
-        </button>
+        </IconButton>
       </div>
       {notice.detail && <p className="mt-1 text-sm leading-relaxed text-ink/80">{notice.detail}</p>}
       {canRecheck(notice.action) && (
@@ -50,6 +48,6 @@ export default function Toast({ notice, onDismiss }) {
           {checking ? 'Checking...' : 'Check again'}
         </button>
       )}
-    </div>
+    </Card>
   );
 }

@@ -1,4 +1,5 @@
 import { BookmarkIcon, CheckIcon, CloseIcon } from './Icon.jsx';
+import Button from './ui/Button.jsx';
 
 // Each status takes its own colour when pressed (saved saffron, applied green,
 // dismissed grey), the same the header chip uses, so the state reads at a
@@ -15,16 +16,16 @@ export default function PostingActions({ status, onStatus }) {
       {ACTIONS.map(([value, label, Icon, pressed]) => {
         const on = status === value;
         return (
-          <button
+          <Button
             key={value}
-            type="button"
+            size="sm"
             onClick={() => onStatus(value)}
             aria-pressed={on}
-            className={`btn btn-sm font-medium ${on ? pressed : 'btn-quiet text-muted hover:text-ink'}`}
+            className={`font-medium ${on ? pressed : 'text-muted hover:text-ink'}`}
           >
             <Icon size={13} />
             {label}
-          </button>
+          </Button>
         );
       })}
     </div>
