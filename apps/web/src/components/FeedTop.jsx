@@ -3,6 +3,7 @@ import PostingsHeader from './PostingsHeader.jsx';
 import DensityToggle from './DensityToggle.jsx';
 import SortSelect from './SortSelect.jsx';
 import SetupNotice from './SetupNotice.jsx';
+import Card from './ui/Card.jsx';
 
 // Everything above the rows. The filters sit in the feed's own column rather
 // than in a full-width band of chrome: in the band they started at the
@@ -16,9 +17,9 @@ export default function FeedTop({ filters, setFilters, sort, setSort, viewMode, 
   const picked = filters.companies || [];
   return (
     <>
-      <div className="sticky-lift sticky top-2 z-20 mt-3 rounded-2xl border border-line bg-panel/85 p-1.5 shadow-raise backdrop-blur-md">
+      <Card className="sticky-lift sticky top-2 z-20 mt-3 bg-panel/85 p-1.5 shadow-raise backdrop-blur-md">
         <FilterBar filters={filters} setFilters={setFilters} />
-      </div>
+      </Card>
       <PostingsHeader
         shown={shown}
         total={total}

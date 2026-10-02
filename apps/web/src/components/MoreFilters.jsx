@@ -5,6 +5,8 @@ import PillGroup from './PillGroup.jsx';
 import StepSlider from './StepSlider.jsx';
 import SettingSwitch from './SettingSwitch.jsx';
 import SaveDefaultFilters from './SaveDefaultFilters.jsx';
+import Button from './ui/Button.jsx';
+import Eyebrow from './ui/Eyebrow.jsx';
 
 // The chips say "Up to 3 months"; inside a group already captioned with
 // the length, the pills only need the number.
@@ -19,7 +21,7 @@ const CLEARED = { minStipend: '', maxExp: '', maxMonths: '', maxDegree: '', incl
 function Section({ title, children }) {
   return (
     <section className="flex flex-col gap-4 border-t border-line pt-4">
-      <h4 className="text-[11px] font-semibold uppercase tracking-wider text-muted">{title}</h4>
+      <Eyebrow as="h4" className="text-[11px] font-semibold tracking-wider">{title}</Eyebrow>
       {children}
     </section>
   );
@@ -41,9 +43,9 @@ export default function MoreFilters({ filters, setFilters }) {
       <div className="flex min-h-7 items-center justify-between gap-3">
         <p className="text-sm font-semibold text-ink">More filters</p>
         {touched && (
-          <button type="button" onClick={() => setFilters({ ...filters, ...CLEARED })} className="btn btn-ghost btn-sm">
+          <Button variant="ghost" size="sm" onClick={() => setFilters({ ...filters, ...CLEARED })}>
             Reset
-          </button>
+          </Button>
         )}
       </div>
       <div className="grid grid-cols-1 items-start gap-x-6 gap-y-4 md:grid-cols-2">

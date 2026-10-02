@@ -1,6 +1,8 @@
 import { usePopover } from '../lib/usePopover.js';
 import { useFitBelow } from '../lib/useFitBelow.js';
 import { ChevronDownIcon } from './Icon.jsx';
+import Card from './ui/Card.jsx';
+import CountBadge from './ui/CountBadge.jsx';
 
 // Shared by every trigger in the bar, including the source picker, so the row
 // stays one uniform line of controls. No background here: triggerTone owns
@@ -10,13 +12,13 @@ import { ChevronDownIcon } from './Icon.jsx';
 export const TRIGGER =
   'dither flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm outline-none';
 
-// The panel every trigger opens, so the filters, the source list and More
-// filters read as one family of surfaces. Never taller than the window under
-// the bar: on a short screen it scrolls inside itself, where it used to run
-// off the bottom with no way to reach what was there. The class is a rough
-// cap; a Dropdown measures the room it really has (see useFitBelow.js).
-export const PANEL = 'pop-in absolute top-full z-30 mt-2 max-h-[calc(100dvh-8rem)] overflow-y-auto overscroll-contain '
-  + 'rounded-2xl border border-line bg-overlay shadow-pop';
+// What the panel every trigger opens adds to a pop Card: it drops under its
+// trigger and unfolds, so the filters, the source list and More filters read
+// as one family of surfaces. Never taller than the window under the bar: on a
+// short screen it scrolls inside itself, where it used to run off the bottom
+// with no way to reach what was there. The class is a rough cap; a Dropdown
+// measures the room it really has (see useFitBelow.js).
+export const PANEL = 'pop-in absolute top-full z-30 mt-2 max-h-[calc(100dvh-8rem)] overflow-y-auto overscroll-contain';
 
 // Three readable states, not two: a saffron trigger means it is holding a
 // value, a tinted one means it is only open, and the quiet default means
@@ -47,11 +49,7 @@ export function TriggerFace({ icon: Icon, label, count = 0, open }) {
     <>
       {Icon && <Icon size={14} className="shrink-0 opacity-70" />}
       <span>{label}</span>
-      {count > 0 && (
-        <span aria-hidden="true" className="tnum grid h-[18px] min-w-[18px] place-items-center rounded-full bg-primary px-1 text-[10px] font-bold text-on-primary">
-          {count}
-        </span>
-      )}
+      {count > 0 && <CountBadge n={count} solid aria-hidden="true" />}
       <Caret open={open} />
     </>
   );
@@ -77,10 +75,10 @@ export default function Dropdown({ label, title = '', icon, count = 0, width = '
         <TriggerFace icon={icon} label={label} count={count} open={open} />
       </button>
       {open && (
-        <div ref={panel} style={maxHeight ? { maxHeight } : undefined} className={`${PANEL} p-3 ${align === 'right' ? 'right-0' : 'left-0'} ${width}`}>
+        <Card ref={panel} variant="pop" style={maxHeight ? { maxHeight } : undefined} className={`${PANEL} p-3 ${align === 'right' ? 'right-0' : 'left-0'} ${width}`}>
           {title && <p className="mb-2.5 text-xs text-muted">{title}</p>}
           {children}
-        </div>
+        </Card>
       )}
     </div>
   );

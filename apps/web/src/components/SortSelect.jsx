@@ -2,6 +2,7 @@ import { usePopover } from '../lib/usePopover.js';
 import { DEFAULT_SORT, SORTS, sortLabel } from '../lib/sorts.js';
 import { PANEL, Caret } from './Dropdown.jsx';
 import { CheckIcon, SortIcon } from './Icon.jsx';
+import Card from './ui/Card.jsx';
 
 // A menu in the filters' own style rather than the browser's select, which
 // drew a system list under a control that matched nothing around it. The
@@ -35,7 +36,7 @@ export default function SortSelect({ sort, setSort }) {
         <Caret open={open} />
       </button>
       {open && (
-        <div role="menu" aria-label="Sort" className={`${PANEL} right-0 w-64 p-1.5`}>
+        <Card variant="pop" role="menu" aria-label="Sort" className={`${PANEL} right-0 w-64 p-1.5`}>
           <p className="px-3 pb-1.5 pt-1 text-xs text-muted">Inside each grade:</p>
           {SORTS.map(([value, name, hint]) => {
             const on = value === sort;
@@ -58,7 +59,7 @@ export default function SortSelect({ sort, setSort }) {
               </button>
             );
           })}
-        </div>
+        </Card>
       )}
     </div>
   );
