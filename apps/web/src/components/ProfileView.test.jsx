@@ -267,6 +267,33 @@ describe('ProfileView with a saved profile', () => {
     expect(screen.queryByLabelText('Role')).not.toBeInTheDocument();
   });
 
+  it('reviews a proposed certification and skill group and saves the ones kept', async () => {
+    render(<ProfileView />);
+    extractProfile.mockResolvedValueOnce({
+      ...PROFILE,
+      proposed: {
+        experience: [], projects: [], education: [], achievements: [{ title: 'First place', organisation: 'Demo Hackathon' }],
+        certifications: [{ title: 'Cloud Practitioner', organisation: 'Demo Cloud', link: 'https://demo.dev/cert' }],
+        skillGroups: [{ name: 'Languages', items: ['Rust'] }],
+      },
+    });
+    fireEvent.click(await screen.findByRole('button', { name: 'Fill in from resume' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Overwrite and fill in' }));
+    expect(await screen.findByText(/Found 1 certification, 1 achievement and 1 skill group to review/)).toBeInTheDocument();
+
+    const skip = screen.getByText('First place at Demo Hackathon').closest('label');
+    fireEvent.click(within(skip).getByRole('checkbox'));
+    expect(screen.getByText('Languages: Rust')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Add selected' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save profile' }));
+    await waitFor(() => expect(putProfile).toHaveBeenCalled());
+    const [sent] = putProfile.mock.calls[0];
+    expect(sent.certifications).toMatchObject([{ title: 'Cloud Practitioner', organisation: 'Demo Cloud', link: 'https://demo.dev/cert' }]);
+    expect(sent.achievements).toEqual([]);
+    expect(sent.skillGroups).toMatchObject([{ name: 'Languages', items: ['Rust'] }]);
+    expect(sent.skills).toEqual(expect.arrayContaining(['react', 'rust']));
+  });
+
   it('has no greeting and no save bar until something changes', async () => {
     render(<ProfileView />);
     await screen.findByText('react');

@@ -3,6 +3,7 @@ import { extractProfile } from '../api.js';
 import { useProviders } from '../lib/useProviders.js';
 import { providerFor } from '../lib/providerFor.js';
 import { progressText } from '../lib/aiProgress.js';
+import { fillSummary } from '../lib/fillSummary.js';
 import InstallHint from './InstallHint.jsx';
 import OverwriteConfirm from './OverwriteConfirm.jsx';
 import AiError from './AiError.jsx';
@@ -34,6 +35,8 @@ export default function FillFromResume({ profile, onFilled }) {
   const [step, setStep] = useState('idle');
   const [progress, setProgress] = useState('');
   const [error, setError] = useState(null);
+  // What the finished run found, section by section (see fillSummary.js).
+  const [summary, setSummary] = useState('');
   // Only the start event names the CLI, so its label is kept for the rest.
   const label = useRef('');
 
@@ -49,7 +52,9 @@ export default function FillFromResume({ profile, onFilled }) {
     setError(null);
     setProgress('Starting...');
     try {
-      onFilled(await extractProfile({ onEvent }));
+      const result = await extractProfile({ onEvent });
+      onFilled(result);
+      setSummary(fillSummary(result));
       setStep('done');
     } catch (err) {
       setError(err);
@@ -77,7 +82,7 @@ export default function FillFromResume({ profile, onFilled }) {
           {step === 'busy' ? 'Filling in...' : 'Fill in from resume'}
         </button>
         <span aria-live="polite" className="text-xs text-muted empty:hidden">
-          {step === 'busy' ? progress : step === 'done' ? 'Filled in. Check the fields, then save.' : ''}
+          {step === 'busy' ? progress : step === 'done' ? summary : ''}
         </span>
       </div>
       <AiError error={error} checking={checking} onRecheck={() => (setError(null), refresh())} />

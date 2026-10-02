@@ -3,7 +3,8 @@ import { putProfile } from '../api.js';
 import { useProfileLoad } from './useProfileLoad.js';
 import { withDefaults } from './emptyProfile.js';
 import { deriveSkills } from './deriveSkills.js';
-import { appendProposals } from './mergeProposals.js';
+import { hasProposals, withProposals } from './mergeProposals.js';
+import { adoptResult } from './adoptResult.js';
 
 // Everything ProfileView needs to know or do with the profile, kept out of
 // the component so its render stays about layout, not data flow.
@@ -34,31 +35,18 @@ export function useProfileState() {
     setExists(true);
   }
 
-  // Upload and fill-in both save on the server, but neither one ever writes
-  // a structured section there (see apps/server/src/api/profile.js) - so
-  // only the fields they do change (the flat ranking fields, resumeName)
-  // are folded into local state here. Replacing the whole profile with the
-  // server's answer instead would revert any section the person had edited
-  // locally but not yet saved back to its last-saved copy, which is exactly
-  // the silent overwrite the structured record is not supposed to allow.
-  // Extraction's proposed entries ride along separately so they can be
-  // reviewed before anything is written.
+  // Only what upload and fill-in change on the server is taken from their
+  // answer (see adoptResult.js), so a section edited here but not yet saved
+  // survives them. Extraction's proposals are held apart for review.
   function adopt(result) {
-    const { proposed: found, experience, projects, education, basics, skillGroups, certifications, achievements, ...flat } = result;
-    setProfile((p) => ({ ...withDefaults(p), ...flat }));
-    setLastSaved((p) => ({ ...withDefaults(p), ...flat }));
+    setProfile((p) => adoptResult(p, result, { keepTyped: true }));
+    setLastSaved((p) => adoptResult(p, result));
     setExists(true);
-    const any = found && (found.experience.length || found.projects.length || found.education.length);
-    setProposed(any ? found : null);
+    setProposed(hasProposals(result.proposed) ? result.proposed : null);
   }
 
   function addProposals(chosen) {
-    setProfile((p) => ({
-      ...p,
-      experience: appendProposals(p.experience, chosen.experience),
-      projects: appendProposals(p.projects, chosen.projects),
-      education: appendProposals(p.education, chosen.education),
-    }));
+    setProfile((p) => withProposals(p, chosen));
     setProposed(null);
   }
 

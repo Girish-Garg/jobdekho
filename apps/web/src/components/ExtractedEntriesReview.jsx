@@ -1,8 +1,18 @@
 import { useState } from 'react';
 import { ENTRY_SECTIONS } from '../lib/profileSections.js';
+import { PROPOSAL_KEYS } from '../lib/mergeProposals.js';
 
-const PROPOSED_KEYS = ['experience', 'projects', 'education'];
-const labelFor = (key) => ENTRY_SECTIONS.find((section) => section.key === key).label;
+// Skill groups are the one proposal that is not an entry; they land in the
+// section the page calls Skills.
+const labelFor = (key) => ENTRY_SECTIONS.find((section) => section.key === key)?.label ?? 'Skills';
+
+// A certificate comes from its issuer; everything else happens at a place.
+// A skill group has neither, so its name and items say what it is.
+function summary(key, entry) {
+  if (key === 'skillGroups') return `${entry.name || 'Skills'}: ${(entry.items ?? []).join(', ')}`;
+  const at = key === 'certifications' ? 'from' : 'at';
+  return `${entry.title || 'Untitled'}${entry.organisation ? ` ${at} ${entry.organisation}` : ''}`;
+}
 
 // Extraction proposes; nothing here is saved until "Add selected" merges the
 // chosen entries into local state (see mergeProposals.js), and even then
@@ -11,7 +21,7 @@ const labelFor = (key) => ENTRY_SECTIONS.find((section) => section.key === key).
 // the record around it, because it is the one thing on the page that is
 // waiting on a decision and goes away once it has one.
 export default function ExtractedEntriesReview({ proposed, onAdd, onDismiss }) {
-  const flat = PROPOSED_KEYS.flatMap((key) => (proposed[key] ?? []).map((entry, i) => ({ key, entry, id: `${key}-${i}` })));
+  const flat = PROPOSAL_KEYS.flatMap((key) => (proposed[key] ?? []).map((entry, i) => ({ key, entry, id: `${key}-${i}` })));
   const [picked, setPicked] = useState(() => new Set(flat.map((row) => row.id)));
   if (flat.length === 0) return null;
 
@@ -25,7 +35,7 @@ export default function ExtractedEntriesReview({ proposed, onAdd, onDismiss }) {
   }
 
   function addSelected() {
-    const chosen = { experience: [], projects: [], education: [] };
+    const chosen = Object.fromEntries(PROPOSAL_KEYS.map((key) => [key, []]));
     for (const row of flat) if (picked.has(row.id)) chosen[row.key].push(row.entry);
     onAdd(chosen);
   }
@@ -45,10 +55,7 @@ export default function ExtractedEntriesReview({ proposed, onAdd, onDismiss }) {
               <label className="flex cursor-pointer items-baseline gap-3 py-2 text-sm text-ink">
                 <input type="checkbox" checked={keep} onChange={() => toggle(row.id)} className="relative top-px accent-ink" />
                 <span className="w-24 shrink-0 text-xs text-muted">{labelFor(row.key)}</span>
-                <span className="min-w-0 flex-1 truncate">
-                  {row.entry.title || 'Untitled'}
-                  {row.entry.organisation ? ` at ${row.entry.organisation}` : ''}
-                </span>
+                <span className="min-w-0 flex-1 truncate">{summary(row.key, row.entry)}</span>
                 <span className="shrink-0 text-xs text-muted">{keep ? 'keep' : 'discard'}</span>
               </label>
             </li>

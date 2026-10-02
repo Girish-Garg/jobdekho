@@ -113,6 +113,24 @@ describe('FillFromResume with a CLI ready', () => {
     expect(await screen.findByText(/filled in\. check the fields/i)).toBeInTheDocument();
   });
 
+  it('says what the resume gave once it is done, section by section', async () => {
+    extractProfile.mockResolvedValueOnce({
+      ...FILLED,
+      proposed: {
+        experience: [], projects: [{ title: 'Chess Engine' }], education: [],
+        certifications: [{ title: 'Cloud Practitioner' }, { title: 'Data Engineer' }], achievements: [{ title: 'First place' }], skillGroups: [],
+      },
+      filledBasics: ['email', 'links.github'],
+    });
+    render(<FillFromResume profile={EMPTY} onFilled={() => {}} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Fill in from resume' }));
+    const said = await screen.findByText(/^Filled in\. Found/);
+    expect(said).toHaveTextContent(
+      'Filled in. Found 1 project, 2 certifications and 1 achievement to review. Added your email and GitHub. Check the fields, then save.',
+    );
+    expect(said).toHaveAttribute('aria-live', 'polite');
+  });
+
   it('warns before overwriting a profile that already has fields', async () => {
     const onFilled = vi.fn();
     render(<FillFromResume profile={EDITED} onFilled={onFilled} />);

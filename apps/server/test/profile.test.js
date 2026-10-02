@@ -1,7 +1,11 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest'
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { buildApp } from '@jobdekho/server/app.js'
 import { readNdjson, NDJSON_TYPE } from '@jobdekho/server/ai/events.js'
 import { CLAUDE_MODELS, DEFAULT_MODEL } from '@jobdekho/server/ai/cli-models.js'
+import { pdfWithLinks, DEMO_LINES, DEMO_LINKS } from './fixtures/link-pdf.js'
 
 const config = { googleClientId: 'id', googleClientSecret: 'sec', sessionSecret: 'test-secret', baseUrl: 'http://localhost:3000' }
 
@@ -197,20 +201,150 @@ describe('POST /api/profile/extract', () => {
     })))
     const res = await extract(store, cli)
     expect(res.statusCode).toBe(200)
+    // The ranking fields the reply left out keep what the profile held.
     expect(store.upsertProfile).toHaveBeenCalledWith('u1', {
-      skills: ['node'], resumeText: 'Jane Doe, two years of React.', resumeName: 'cv.pdf',
+      skills: ['node'], titles: [], locations: [], years: 2, degree: 'bachelors',
+      resumeText: 'Jane Doe, two years of React.', resumeName: 'cv.pdf',
     })
     expect(res.json().proposed).toEqual({
       experience: [{ title: 'Backend Engineer', organisation: 'Acme' }],
       projects: [{ title: 'Side project' }],
       education: [{ title: 'B.Tech', organisation: 'IIT' }],
+      certifications: [], achievements: [], skillGroups: [],
     })
   })
 
   it('proposes nothing structured when the reply carries none', async () => {
     const store = makeFakeStore()
     const res = await extract(store, cliAnswering(envelope('{"skills":["node"]}')))
-    expect(res.json().proposed).toEqual({ experience: [], projects: [], education: [] })
+    expect(res.json().proposed).toEqual({
+      experience: [], projects: [], education: [], certifications: [], achievements: [], skillGroups: [],
+    })
+    expect(res.json().filledBasics).toEqual([])
+  })
+})
+
+// The rest of the record a resume carries: certifications, achievements and
+// skill groups are proposals like the entries above, and the basics fill
+// only what the person has left empty.
+describe('POST /api/profile/extract, beyond jobs, projects and degrees', () => {
+  const BASICS = {
+    name: 'Demo Candidate', headline: '', email: '', phone: '+91 90000 00000', location: '',
+    links: { github: '', linkedin: 'https://linkedin.com/in/typed-by-hand', portfolio: '' },
+  }
+  const withBasics = (basics = BASICS) => makeFakeStore({ profile: { ...STORED, basics } })
+  const replying = (reply) => cliAnswering(envelope(JSON.stringify(reply)))
+  const sentFields = (store) => store.upsertProfile.mock.calls[0][1]
+
+  it('proposes certifications, achievements and skill groups for review without saving them', async () => {
+    const store = makeFakeStore()
+    const res = await extract(store, replying({
+      skills: ['rust'],
+      certifications: [{ title: 'Cloud Practitioner', organisation: 'Demo Cloud', startDate: 'Jan 2024', link: 'https://demo.dev/cert' }],
+      achievements: [{ title: 'First place', organisation: 'Demo Hackathon', startDate: '2023', bullets: ['Out of 400 teams'] }],
+      skillGroups: [{ name: 'Languages', items: ['Rust', 'Go'] }, { name: 'Tools', items: ['Git'] }],
+    }))
+    expect(res.statusCode).toBe(200)
+    expect(res.json().proposed).toMatchObject({
+      certifications: [{ title: 'Cloud Practitioner', organisation: 'Demo Cloud', startDate: 'Jan 2024', link: 'https://demo.dev/cert' }],
+      achievements: [{ title: 'First place', organisation: 'Demo Hackathon', startDate: '2023', bullets: ['Out of 400 teams'] }],
+      skillGroups: [{ name: 'Languages', items: ['Rust', 'Go'] }, { name: 'Tools', items: ['Git'] }],
+    })
+    for (const key of ['certifications', 'achievements', 'skillGroups', 'basics']) expect(sentFields(store)).not.toHaveProperty(key)
+  })
+
+  it('fills only the empty basics, keeps what the person typed, and says which it filled', async () => {
+    const store = withBasics()
+    const res = await extract(store, replying({
+      basics: {
+        name: 'Someone Else', headline: 'Backend engineer', email: 'demo@example.com', phone: '+91 98765 43210',
+        links: { github: 'https://github.com/demo-candidate', linkedin: 'https://linkedin.com/in/from-the-resume' },
+      },
+    }))
+    expect(sentFields(store).basics).toEqual({
+      ...BASICS, headline: 'Backend engineer', email: 'demo@example.com',
+      links: { ...BASICS.links, github: 'https://github.com/demo-candidate' },
+    })
+    expect(res.json().filledBasics).toEqual(['headline', 'email', 'links.github'])
+  })
+
+  it('leaves the basics out of the write when there is nothing empty to fill', async () => {
+    const full = { ...BASICS, headline: 'Engineer', email: 'demo@example.com', location: 'Pune', links: { github: 'g', linkedin: 'l', portfolio: 'p' } }
+    const store = withBasics(full)
+    const res = await extract(store, replying({ skills: ['rust'], basics: { name: 'Someone Else', email: 'other@example.com' } }))
+    expect(sentFields(store)).not.toHaveProperty('basics')
+    expect(res.json().filledBasics).toEqual([])
+  })
+
+  it('drops junk field by field and keeps the rest of the reply', async () => {
+    const store = makeFakeStore()
+    const res = await extract(store, replying({
+      skills: 'rust, go', titles: ['backend engineer'], years: 'lots', degree: 'B.Tech',
+      resumeText: 'not the resume', resumeName: 'other.pdf', experience: 'one job', foo: 1,
+      projects: [{ title: 'Chess Engine', bullets: 'built it', startDate: 2021, id: 'mine', pinned: true }, 'junk', { bullets: ['orphan'] }],
+      skillGroups: [{ name: 'Languages', items: 'Rust' }, { name: 'Tools', items: ['Git', 7, null] }],
+      basics: { name: ['Demo'], email: 'demo@example.com', links: { github: 'javascript:alert(1)' } },
+    }))
+    expect(res.statusCode).toBe(200)
+    expect(store.upsertProfile).toHaveBeenCalledWith('u1', {
+      skills: ['react'], titles: ['backend engineer'], locations: [], years: 2, degree: 'bachelors',
+      basics: { links: { github: '', linkedin: '', portfolio: '' }, name: '', headline: '', email: 'demo@example.com', phone: '', location: '' },
+      resumeText: 'Jane Doe, two years of React.', resumeName: 'cv.pdf',
+    })
+    expect(res.json().proposed).toEqual({
+      experience: [], projects: [{ title: 'Chess Engine', startDate: '2021' }], education: [],
+      certifications: [], achievements: [], skillGroups: [{ name: 'Tools', items: ['Git', '7'] }],
+    })
+    expect(res.json().filledBasics).toEqual(['email'])
+  })
+})
+
+// A PDF's links are boxes over its words, not text, so they are read from
+// the uploaded file itself and listed after the resume text.
+describe('POST /api/profile/extract with the uploaded file on disk', () => {
+  let dir
+  beforeAll(() => { dir = mkdtempSync(join(tmpdir(), 'jobdekho-links-')) })
+  afterAll(() => rmSync(dir, { recursive: true, force: true }))
+
+  const storeWithFile = (bytes) => {
+    const path = join(dir, `${Math.random().toString(36).slice(2)}.pdf`)
+    writeFileSync(path, bytes)
+    return { ...makeFakeStore(), originalResumePath: () => path }
+  }
+  const sentPrompt = (cli) => cli.run.mock.calls.at(-1)[0].input
+  // The instruction names the list too, so the heading is matched in full.
+  const HEADING = 'LINKS IN THE RESUME (visible text -> address):'
+
+  it('hands the AI each link with the words it sits under', async () => {
+    const cli = cliAnswering(envelope('{"skills":["rust"]}'))
+    const res = await extract(storeWithFile(pdfWithLinks(DEMO_LINES, DEMO_LINKS)), cli)
+    expect(res.statusCode).toBe(200)
+    const prompt = sentPrompt(cli)
+    expect(prompt).toContain(`${HEADING}\nDemo video -> https://www.youtube.com/watch?v=demo (on the line: Chess Engine | Demo video)`)
+    // The email is written out in the text already, so it is not listed again.
+    expect(prompt).not.toContain('-> mailto:')
+    expect(prompt.indexOf(HEADING)).toBeGreaterThan(prompt.indexOf('Jane Doe, two years of React.'))
+  })
+
+  it('sends the text alone when the PDF has no links', async () => {
+    const cli = cliAnswering(envelope('{"skills":["rust"]}'))
+    await extract(storeWithFile(pdfWithLinks(DEMO_LINES)), cli)
+    expect(sentPrompt(cli)).not.toContain(HEADING)
+    expect(sentPrompt(cli).endsWith('Jane Doe, two years of React.')).toBe(true)
+  })
+
+  it('still fills in from the text when the file cannot be read for links', async () => {
+    const cli = cliAnswering(envelope('{"skills":["rust"]}'))
+    const res = await extract(storeWithFile(Buffer.from('not a pdf at all')), cli)
+    expect(res.statusCode).toBe(200)
+    expect(sentPrompt(cli)).not.toContain(HEADING)
+    expect(res.json()).toMatchObject({ skills: ['rust'] })
+  })
+
+  it('sends the text alone for a resume uploaded before files were kept', async () => {
+    const cli = cliAnswering(envelope('{"skills":["rust"]}'))
+    await extract({ ...makeFakeStore(), originalResumePath: () => null }, cli)
+    expect(sentPrompt(cli)).not.toContain(HEADING)
   })
 })
 

@@ -1,6 +1,6 @@
 import { pdfToText } from '../resume/text.js'
-import { extractProfile } from '../resume/extract.js'
 import { answer } from '../ai/ndjson.js'
+import { readResume } from './profile-fill.js'
 import { profileBodySchema } from './schemas.js'
 
 // A resume is a few pages of text. Anything larger is not a resume.
@@ -68,14 +68,15 @@ export async function profileRoutes(app) {
     const text = await app.dashboard.getResumeText(userId)
     if (!text) return reply.code(400).send({ error: 'Upload a resume first.' })
     return answer(request, reply, async (emit) => {
-      const { experience, projects, education, ...flat } = await extractProfile(text, { ...cli, select: app.ai.select, emit })
-      const saved = await app.dashboard.upsertProfile(userId, await keepingResume(app, userId, flat))
+      const { fields, proposed, filledBasics } = await readResume(app, userId, text, { ...cli, select: app.ai.select, emit })
+      const saved = await app.dashboard.upsertProfile(userId, await keepingResume(app, userId, fields))
       // The structured entries never reach upsertProfile: they are proposals,
       // not a write, so a hand-typed job or project already on the profile
       // is never in the room to be overwritten. The person reviews each one
       // and the ones they keep are saved through the normal PUT, same as a
-      // hand edit.
-      return { ...saved, proposed: { experience: experience ?? [], projects: projects ?? [], education: education ?? [] } }
+      // hand edit. The basics are written, but only into empty fields, and
+      // filledBasics names those so the page can fold in just them.
+      return { ...saved, proposed, filledBasics }
     })
   })
 }

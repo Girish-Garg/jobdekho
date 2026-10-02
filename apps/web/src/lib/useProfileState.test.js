@@ -65,6 +65,44 @@ describe('useProfileState', () => {
     expect(result.current.proposed).toBeNull();
   });
 
+  it('adopt stages certifications, achievements and skill groups, and addProposals merges them', async () => {
+    getProfile.mockResolvedValue(EMPTY_PROFILE);
+    const { result } = renderHook(() => useProfileState());
+    await waitFor(() => expect(result.current.profile).toBeDefined());
+    const found = {
+      experience: [], projects: [], education: [],
+      certifications: [{ title: 'Cloud Practitioner', organisation: 'Demo Cloud' }],
+      achievements: [{ title: 'First place' }],
+      skillGroups: [{ name: 'Languages', items: ['Rust'] }],
+    };
+    act(() => result.current.adopt({ ...EMPTY_PROFILE, proposed: found }));
+    expect(result.current.proposed).toEqual(found);
+
+    act(() => result.current.addProposals({ ...found, achievements: [] }));
+    expect(result.current.profile.certifications).toMatchObject([{ title: 'Cloud Practitioner', organisation: 'Demo Cloud' }]);
+    expect(result.current.profile.achievements).toEqual([]);
+    expect(result.current.profile.skillGroups).toEqual([{ id: expect.any(String), name: 'Languages', items: ['Rust'] }]);
+    expect(result.current.proposed).toBeNull();
+  });
+
+  // The server filled email and name because its saved copy had neither; the
+  // name typed here but not saved yet stays, and so stays unsaved.
+  it('adopt folds in the basics the server filled without overwriting one typed here', async () => {
+    getProfile.mockResolvedValue(EMPTY_PROFILE);
+    const { result } = renderHook(() => useProfileState());
+    await waitFor(() => expect(result.current.profile).toBeDefined());
+    act(() => result.current.setProfile((p) => ({ ...p, basics: { ...p.basics, name: 'Typed here' } })));
+    act(() => result.current.adopt({
+      ...EMPTY_PROFILE,
+      basics: { ...EMPTY_PROFILE.basics, name: 'Demo Candidate', email: 'demo@example.com' },
+      filledBasics: ['name', 'email'],
+    }));
+    expect(result.current.profile.basics).toMatchObject({ name: 'Typed here', email: 'demo@example.com' });
+    expect(result.current.dirty).toBe(true);
+    act(() => result.current.discard());
+    expect(result.current.profile.basics).toMatchObject({ name: 'Demo Candidate', email: 'demo@example.com' });
+  });
+
   it('adopt leaves proposed null when extraction found nothing structured', async () => {
     getProfile.mockResolvedValue(EMPTY_PROFILE);
     const { result } = renderHook(() => useProfileState());
