@@ -10,7 +10,10 @@
    above its @tailwind lines): after the base reset, so a class beats the
    reset's bare button rule, and before the utilities, so a utility on the
    element (a different padding, a full width) still wins without an
-   !important. Motion and the dithered hover live in dither.css. */
+   !important. The states sit inside :where() so they weigh no more than
+   the class itself: a hover:text-ember on the element beats the weight's
+   own hover the same way, where .btn-ghost:hover:not(:disabled) used to
+   outweigh it. Motion and the dithered hover live in dither.css. */
 @layer components {
   .btn {
     position: relative;
@@ -51,7 +54,7 @@
     color: rgb(var(--primary));
   }
 
-  .btn-tint:hover:not(:disabled) {
+  .btn-tint:where(:hover:not(:disabled)) {
     background-color: rgb(var(--primary) / 0.15);
   }
 
@@ -61,7 +64,7 @@
     color: rgb(var(--ink));
   }
 
-  .btn-quiet:hover:not(:disabled) {
+  .btn-quiet:where(:hover:not(:disabled)) {
     border-color: rgb(var(--edge));
   }
 
@@ -69,7 +72,7 @@
     color: rgb(var(--muted));
   }
 
-  .btn-ghost:hover:not(:disabled) {
+  .btn-ghost:where(:hover:not(:disabled)) {
     color: rgb(var(--ink));
   }
 
@@ -80,23 +83,23 @@
     color: rgb(var(--paper));
   }
 
-  .btn-danger:hover:not(:disabled) {
+  .btn-danger:where(:hover:not(:disabled)) {
     opacity: 0.9;
   }
 
   /* A press gives a little, which is feedback before anything else answers. */
-  .btn:active:not(:disabled) {
+  .btn:where(:active:not(:disabled)) {
     transform: scale(0.97);
   }
 
-  .btn:disabled {
+  .btn:where(:disabled) {
     cursor: default;
     opacity: 0.55;
   }
 
   /* A faded saffron still reads as something to press, so a primary that
      cannot be pressed yet goes grey instead. */
-  .btn-primary:disabled {
+  .btn-primary:where(:disabled) {
     background-color: rgb(var(--ink) / 0.1);
     color: rgb(var(--muted));
     opacity: 1;

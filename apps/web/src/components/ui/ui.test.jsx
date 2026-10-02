@@ -182,4 +182,12 @@ describe('the stylesheets behind the building blocks', () => {
     ];
     for (const name of classes) expect(css, name).toMatch(new RegExp(`\\.${name}(?![\\w-])`));
   });
+
+  // A state outside :where() outweighs a hover: or disabled: utility on the
+  // element, so the override every building block promises would lose.
+  it('keep every state as light as the class itself', () => {
+    const rules = css.replace(/\/\*[\s\S]*?\*\//g, '');
+    const heavy = rules.match(/\.(?:btn|icon-btn|switch)[\w-]*(?::(?:hover|active|disabled|focus)|\[aria-)/g) ?? [];
+    expect(heavy).toEqual([]);
+  });
 });
