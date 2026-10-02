@@ -122,17 +122,17 @@ describe('POST /api/scrape and GET /api/scrape', () => {
 })
 
 describe('/api/scrape/settings', () => {
-  it('has both switches on by default', async () => {
+  it('has the daily refresh on and LinkedIn off by default', async () => {
     const { get } = await makeApp({ run: vi.fn() })
-    expect((await get('/api/scrape/settings')).json()).toEqual({ autoRefresh: true, linkedin: true })
+    expect((await get('/api/scrape/settings')).json()).toEqual({ autoRefresh: true, linkedin: false })
   })
 
   it('saves the switch and reads it back', async () => {
     const { get, put } = await makeApp({ run: vi.fn() })
     expect((await put({ autoRefresh: false })).statusCode).toBe(204)
-    expect((await get('/api/scrape/settings')).json()).toEqual({ autoRefresh: false, linkedin: true })
+    expect((await get('/api/scrape/settings')).json()).toEqual({ autoRefresh: false, linkedin: false })
     await put({ autoRefresh: true })
-    expect((await get('/api/scrape/settings')).json()).toEqual({ autoRefresh: true, linkedin: true })
+    expect((await get('/api/scrape/settings')).json()).toEqual({ autoRefresh: true, linkedin: false })
   })
 
   // Each switch is saved as it is flipped, so a body names only that one.
@@ -193,6 +193,7 @@ describe('LinkedIn in the server\'s refreshes', () => {
 
   it('reads LinkedIn once, then skips it inside 20 hours as a note, not a failure', async () => {
     const store = openStore(dir)
+    store.scrapeSettings.set('local', { linkedin: true })
     const { li, run } = withLinkedin(store)
     const { post, get, scrape } = await makeApp({ store, run, now: () => NOW + 5 * HOUR })
     await post()

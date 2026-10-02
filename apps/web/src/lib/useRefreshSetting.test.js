@@ -24,11 +24,16 @@ describe('useRefreshSetting', () => {
   });
 
   // A server from before the LinkedIn switch existed says nothing about it.
-  it('reads a switch the server did not mention as on', async () => {
+  // The server's own defaults: the daily refresh on, LinkedIn off.
+  it('reads a switch the server did not mention as its default', async () => {
     getScrapeSettings.mockResolvedValue({ autoRefresh: false });
     const { result } = renderHook(() => useRefreshSetting());
     await waitFor(() => expect(result.current.ready).toBe(true));
-    expect(result.current.linkedin).toBe(true);
+    expect(result.current.linkedin).toBe(false);
+    getScrapeSettings.mockResolvedValue({ linkedin: true });
+    const again = renderHook(() => useRefreshSetting()).result;
+    await waitFor(() => expect(again.current.ready).toBe(true));
+    expect(again.current.autoRefresh).toBe(true);
   });
 
   it('saves Include LinkedIn on its own as it is flipped, leaving the other switch alone', async () => {

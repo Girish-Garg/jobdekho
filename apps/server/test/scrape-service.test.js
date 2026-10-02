@@ -72,12 +72,14 @@ describe('the last completed run', () => {
 })
 
 describe('the refresh switches', () => {
-  it('are on until the person turns them off, and are kept in their own file', () => {
+  // The daily refresh is the point, so it starts on; LinkedIn does not allow
+  // automated access, so it starts off until the person turns it on.
+  it('start with the daily refresh on and LinkedIn off, and are kept in their own file', () => {
     const store = openStore(dir)
-    expect(readRefreshPref(store, 'local')).toEqual({ autoRefresh: true, linkedin: true })
+    expect(readRefreshPref(store, 'local')).toEqual({ autoRefresh: true, linkedin: false })
     saveRefreshPref(store, 'local', { autoRefresh: false })
     expect(existsSync(join(dir, FILES.scrapeSettings))).toBe(true)
-    expect(readRefreshPref(openStore(dir), 'local')).toEqual({ autoRefresh: false, linkedin: true })
+    expect(readRefreshPref(openStore(dir), 'local')).toEqual({ autoRefresh: false, linkedin: false })
   })
 
   it('saves one switch without touching the other', () => {
@@ -91,12 +93,12 @@ describe('the refresh switches', () => {
   })
 
   it('reads anything but a real boolean as the default', () => {
-    expect(normalizeRefreshPref({ autoRefresh: 'no', linkedin: 'no' })).toEqual({ autoRefresh: true, linkedin: true })
-    expect(normalizeRefreshPref(null)).toEqual({ autoRefresh: true, linkedin: true })
+    expect(normalizeRefreshPref({ autoRefresh: 'no', linkedin: 'yes' })).toEqual({ autoRefresh: true, linkedin: false })
+    expect(normalizeRefreshPref(null)).toEqual({ autoRefresh: true, linkedin: false })
   })
 
   it('are the default when there is no user to read them for', () => {
-    expect(readRefreshPref(openStore(dir), null)).toEqual({ autoRefresh: true, linkedin: true })
+    expect(readRefreshPref(openStore(dir), null)).toEqual({ autoRefresh: true, linkedin: false })
   })
 })
 
@@ -145,7 +147,7 @@ describe('createScrapeService', () => {
     expect(scrape.job.state().result).toMatchObject({ fresh: 9 })
     expect(scrape.lastRun()).toMatchObject({ fresh: 9 })
     scrape.setPref('local', { autoRefresh: false })
-    expect(scrape.getPref('local')).toEqual({ autoRefresh: false, linkedin: true })
+    expect(scrape.getPref('local')).toEqual({ autoRefresh: false, linkedin: false })
   })
 
   // Whichever process swept last, the CLI or this server, wrote the file.

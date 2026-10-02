@@ -2,16 +2,16 @@ import { useEffect, useState } from 'react';
 import { getScrapeSettings, putScrapeSettings } from '../api.js';
 import { notifyError } from './toast.js';
 
-const DEFAULTS = { autoRefresh: true, linkedin: true };
+const DEFAULTS = { autoRefresh: true, linkedin: false };
 const COULD_NOT = { autoRefresh: 'Could not save the refresh setting', linkedin: 'Could not save the LinkedIn setting' };
 
 // The refresh switches, the daily refresh and Include LinkedIn, each saved
 // on its own as it is flipped like every other setting (see
 // useProviderSetting.js). A failed save flips it back, so a switch never
-// shows a choice the server does not hold. On until read otherwise, since
-// that is the server's own default; `ready` is false until the saved values
-// arrive, so a flip cannot race the read. `saved` is 'idle', 'saving',
-// 'saved' or 'error'.
+// shows a choice the server does not hold. Each starts as the server's own
+// default, the daily refresh on and LinkedIn off; `ready` is false until the
+// saved values arrive, so a flip cannot race the read. `saved` is 'idle',
+// 'saving', 'saved' or 'error'.
 export function useRefreshSetting() {
   const [settings, setSettings] = useState(DEFAULTS);
   const [ready, setReady] = useState(false);
@@ -19,7 +19,7 @@ export function useRefreshSetting() {
 
   useEffect(() => {
     getScrapeSettings()
-      .then((s) => setSettings({ autoRefresh: s?.autoRefresh !== false, linkedin: s?.linkedin !== false }))
+      .then((s) => setSettings({ autoRefresh: s?.autoRefresh !== false, linkedin: s?.linkedin === true }))
       .catch(() => {})
       .finally(() => setReady(true));
   }, []);

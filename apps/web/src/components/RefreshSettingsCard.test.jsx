@@ -76,10 +76,14 @@ describe('Include LinkedIn', () => {
   const HOUR = 60 * 60 * 1000;
   const at = (ms) => new Date(ms).toISOString();
 
-  it('is on by default, and says plainly what reading LinkedIn risks', async () => {
+  // The server's default (see the scraper's linkedin-setting.js): a fresh
+  // install never reads LinkedIn until the person turns it on.
+  it('is off by default, and says plainly what reading LinkedIn risks', async () => {
+    getScrapeSettings.mockResolvedValue({ autoRefresh: true, linkedin: false });
     await mount();
-    expect(linkedin()).toHaveAttribute('aria-checked', 'true');
-    expect(linkedin()).toHaveAccessibleDescription(/LinkedIn does not allow automated access\..*at most once a day.*pauses for days.*Turn it off/);
+    expect(linkedin()).toHaveAttribute('aria-checked', 'false');
+    expect(linkedin()).toHaveAccessibleDescription(/^Off unless you turn it on, since LinkedIn does not allow automated access\..*at most once a day.*pauses for days/);
+    expect(screen.getByText('Off')).toBeInTheDocument();
   });
 
   it('saves the switch the moment it is flipped, and then says Off', async () => {

@@ -47,14 +47,16 @@ function fakeLinkedin(fail = () => null) {
 const realLinkedin = () => linkedin({ wait: async () => {} })
 
 describe('the Include LinkedIn setting', () => {
-  it('is on unless the person turned it off, for whoever the run is for', () => {
+  // LinkedIn does not allow automated access, so a fresh install never reads
+  // it: only a person who turned it on takes that risk.
+  it('is off unless the person turned it on, for whoever the run is for', () => {
     const db = openStore(dir)
-    expect(linkedinOn(db, 'local')).toBe(true)
-    db.scrapeSettings.set('local', { autoRefresh: true, linkedin: false })
     expect(linkedinOn(db, 'local')).toBe(false)
-    expect(linkedinOn(db, 'someone-else')).toBe(true)
-    expect(linkedinOn(db, null)).toBe(true)
-    expect([linkedinChoice('no'), linkedinChoice(undefined), linkedinChoice(false)]).toEqual([true, true, false])
+    db.scrapeSettings.set('local', { autoRefresh: true, linkedin: true })
+    expect(linkedinOn(db, 'local')).toBe(true)
+    expect(linkedinOn(db, 'someone-else')).toBe(false)
+    expect(linkedinOn(db, null)).toBe(false)
+    expect([linkedinChoice('yes'), linkedinChoice(undefined), linkedinChoice(true)]).toEqual([false, false, true])
   })
 
   it('off, sends LinkedIn no request at all and leaves the guard alone', async () => {
@@ -78,6 +80,9 @@ describe('the Include LinkedIn setting', () => {
 })
 
 describe('LinkedIn\'s guard in a scrape', () => {
+  // Off unless turned on (see linkedin-setting.js); every run here has it on.
+  beforeEach(() => openStore(dir).scrapeSettings.set('local', { linkedin: true }))
+
   it('reads a month at full size the first time, and records the read', async () => {
     const db = openStore(dir)
     const li = standIn()

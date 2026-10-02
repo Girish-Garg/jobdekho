@@ -8,7 +8,8 @@ import { linkedinChoice } from '@jobdekho/scraper/linkedin-setting.js'
 // rule this uses, so the two can never disagree about the default). Kept per
 // user, like the AI CLI preference, though there is one corpus: JobDekho's
 // one local person is the only one who could have set them. Anything but a
-// real boolean in the file reads as the default rather than as "off".
+// real boolean in the file reads as its default: the daily refresh on,
+// LinkedIn off.
 const DEFAULT_AUTO_REFRESH = true
 
 export function normalizeRefreshPref(input) {
