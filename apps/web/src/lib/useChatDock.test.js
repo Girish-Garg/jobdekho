@@ -4,6 +4,7 @@ import { useChatDock } from './useChatDock.js';
 import { readLayout, saveLayout } from './chatLayout.js';
 import { askAboutPosting } from './askAiSignal.js';
 import { startChatDraft } from './chatDraftSignal.js';
+import { openChat } from './activeChat.js';
 
 function wideWindow(wide) {
   window.matchMedia = vi.fn(() => ({ matches: wide, addEventListener() {}, removeEventListener() {} }));
@@ -54,6 +55,12 @@ describe('useChatDock', () => {
     expect(result.current.draft.text).toBe('Add a project: ');
     act(() => result.current.close());
     expect(result.current.draft).toBeNull();
+  });
+
+  it('opens when a chat is opened from outside the panel, a notice or the Resume page', () => {
+    const { result } = renderHook(() => useChatDock());
+    act(() => openChat('c-pA'));
+    expect(result.current.open).toBe(true);
   });
 
   it('opens on show without a request or a draft', () => {

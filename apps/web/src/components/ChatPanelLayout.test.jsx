@@ -3,17 +3,16 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import AiChatPanel from './AiChatPanel.jsx';
 import { announceOpenPosting } from '../lib/openPostingSignal.js';
 import { readLayout } from '../lib/chatLayout.js';
+import { fakeChats } from '../test/fixtures/chats.js';
 
 vi.mock('../api.js', () => ({
   getProviders: vi.fn(async () => []),
   getProviderPreference: vi.fn(async () => ({ provider: 'auto' })),
-  getChatPending: vi.fn(async () => ({ pending: null, failed: null })),
-  getChatHistory: vi.fn(async () => ({ turns: [] })),
-  sendChatMessage: vi.fn(),
-  startNewConversation: vi.fn(async () => ({ id: 'c-new', turns: [], filed: null })),
-  getPostingAiResults: vi.fn(async () => []),
-  runPostingAction: vi.fn(),
+  getChatPage: vi.fn(), listChats: vi.fn(), getChatsPending: vi.fn(), createChat: vi.fn(), markChatSeen: vi.fn(),
+  sendChatMessage: vi.fn(), runPostingAction: vi.fn(),
 }));
+
+import * as api from '../api.js';
 
 function windowOf({ wide, width = 1440 }) {
   window.matchMedia = vi.fn(() => ({ matches: wide, addEventListener() {}, removeEventListener() {} }));
@@ -27,6 +26,7 @@ function setup() {
 
 beforeEach(() => {
   localStorage.clear();
+  fakeChats(api);
   announceOpenPosting(null);
 });
 
@@ -47,7 +47,7 @@ describe('the chat panel\'s place on a wide window', () => {
     expect(panel.style.width).toBe('380px');
   });
 
-  it('floats over the page as an inset card, and pins again, remembering each', () => {
+  it('floats over the page as an inset card, and docks again, remembering each', () => {
     windowOf({ wide: true });
     const panel = setup();
     fireEvent.click(screen.getByRole('button', { name: 'Float over the page' }));
@@ -56,7 +56,7 @@ describe('the chat panel\'s place on a wide window', () => {
     // An inset card, the mirror of the job pane on the right.
     expect(panel.className.split(' ')).toEqual(expect.arrayContaining(['left-3', 'top-3', 'bottom-3', 'rounded-2xl']));
     expect(readLayout().pinned).toBe(false);
-    fireEvent.click(screen.getByRole('button', { name: 'Pin to the side' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Dock beside the page' }));
     expect(panel).toHaveAttribute('data-mode', 'pinned');
     expect(readLayout().pinned).toBe(true);
   });
@@ -92,6 +92,6 @@ describe('the chat panel on a narrow window', () => {
     expect(panel.className).toMatch(/\bw-full\b/);
     expect(panel.style.width).toBe('');
     expect(screen.queryByRole('separator')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Pin to the side' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Dock beside the page' })).not.toBeInTheDocument();
   });
 });

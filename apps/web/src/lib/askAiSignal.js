@@ -4,8 +4,8 @@
 // through every component in between. Shell listens so it can open the
 // panel; the panel reads the request it is handed.
 //
-// `action` is a posting action kind (see chatActionKinds.js) to start as
-// soon as the chat has the job in scope, or null to only scope it.
+// `action` is a posting action kind (see chatActionKinds.js) to start in
+// the job's own chat once it is on screen, or null to only open that chat.
 const EVENT = 'jobdekho:ask-ai';
 
 let nextId = 0;

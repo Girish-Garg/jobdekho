@@ -7,10 +7,13 @@ import { DocumentIcon, SparkleIcon } from './Icon.jsx';
 // resume tailored to the same job in one go (see lib/makeApplicationDocs.js).
 // Both take the text as it is in the box above, edits included. When the job
 // has no tailoring yet, the saffron button says it will run one first, since
-// that is an AI call of its own and takes as long as one.
-export default function CoverLetterDocs({ text, tailored, onMakeLetter, onMakeBoth }) {
+// that is an AI call of its own and takes as long as one; while another call
+// runs it waits, with why as its tooltip (`waitReason`), rather than making
+// the letter alone and saying nothing.
+export default function CoverLetterDocs({ text, tailored, waitReason = null, onMakeLetter, onMakeBoth }) {
   const [busy, setBusy] = useState(null);
   if (!onMakeLetter && !onMakeBoth) return null;
+  const waits = !tailored && Boolean(waitReason);
 
   async function run(which, make) {
     setBusy(which);
@@ -25,7 +28,7 @@ export default function CoverLetterDocs({ text, tailored, onMakeLetter, onMakeBo
     <Card variant="inset" className="flex flex-col gap-2 p-3">
       <div className="flex flex-wrap items-center gap-2">
         {onMakeBoth && (
-          <Button variant="primary" disabled={Boolean(busy)} onClick={() => run('both', () => onMakeBoth(text, tailored))}>
+          <Button variant="primary" disabled={Boolean(busy) || waits} title={waits ? waitReason : undefined} onClick={() => run('both', () => onMakeBoth(text, tailored))}>
             <SparkleIcon size={14} />
             {busy === 'both' ? 'Making them...' : tailored ? 'Make the letter and a tailored resume' : 'Tailor my resume and make both'}
           </Button>

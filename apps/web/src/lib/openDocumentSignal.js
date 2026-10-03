@@ -1,7 +1,7 @@
 // Which document is open in the Resume workspace, broadcast the way
-// openPostingSignal.js broadcasts the open posting, so the chat can send its
-// id with every question asked there and name it above the conversation.
-// Only { id, name, kind } travels: the server reads the source itself.
+// openPostingSignal.js broadcasts the open posting, so the chat can show
+// that document's own chat while it is open (see activeChat.js). Only
+// { id, name, kind } travels: the server reads the source itself.
 const EVENT = 'jobdekho:open-document';
 const REQUEST = 'jobdekho:open-document-request';
 

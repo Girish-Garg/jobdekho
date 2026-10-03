@@ -23,6 +23,15 @@ describe('Toast', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
+  it('follows its link, which also dismisses it, since following it is reading it', () => {
+    const onDismiss = vi.fn();
+    const onClick = vi.fn();
+    render(<Toast notice={{ ...NOTICE, kind: 'done', title: 'AlphaCo · Is it real? is ready', detail: '', link: { label: 'Open the chat', onClick } }} onDismiss={onDismiss} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Open the chat' }));
+    expect(onClick).toHaveBeenCalled();
+    expect(onDismiss).toHaveBeenCalledWith(1);
+  });
+
   it('dismisses with the notice\'s own id', () => {
     const onDismiss = vi.fn();
     render(<Toast notice={NOTICE} onDismiss={onDismiss} />);

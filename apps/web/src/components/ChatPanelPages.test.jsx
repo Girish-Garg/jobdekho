@@ -3,54 +3,58 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import AiChatPanel from './AiChatPanel.jsx';
 import { announceOpenPosting, onOpenPostingRequest } from '../lib/openPostingSignal.js';
 import { announceOpenDocument } from '../lib/openDocumentSignal.js';
+import { fakeChats, generalChat, turn, POSTINGS, DOCUMENTS } from '../test/fixtures/chats.js';
 
 vi.mock('../api.js', () => ({
   getProviders: vi.fn(),
   getProviderPreference: vi.fn(async () => ({ provider: 'auto' })),
-  getChatPending: vi.fn(async () => ({ pending: null, failed: null })),
-  getChatHistory: vi.fn(),
-  sendChatMessage: vi.fn(),
-  startNewConversation: vi.fn(async () => ({ id: 'c-new', turns: [], filed: null })),
-  getPostingAiResults: vi.fn(async () => []),
-  runPostingAction: vi.fn(),
+  getChatPage: vi.fn(), listChats: vi.fn(), getChatsPending: vi.fn(), createChat: vi.fn(), markChatSeen: vi.fn(),
+  clearChat: vi.fn(), deleteChat: vi.fn(), stopChat: vi.fn(), queueChatMessage: vi.fn(), changeChatItems: vi.fn(),
+  sendChatMessage: vi.fn(), runPostingAction: vi.fn(), tailorForAll: vi.fn(), lettersForEach: vi.fn(),
+  getPostingsPage: vi.fn(async () => ({ postings: [] })), listDocuments: vi.fn(async () => []),
 }));
 
-import { getProviders, getChatHistory, sendChatMessage, getPostingAiResults } from '../api.js';
+import * as api from '../api.js';
 
 const CLAUDE = { id: 'claude', label: 'Claude Code', policies: ['none', 'web'], present: true, runs: true };
-const JOB = { id: 'p9', title: 'Staff Engineer', company: 'Initech', legitimacy: 'high' };
 const FILTERS = { levels: [], workModes: [], q: '', minFit: '' };
-const TURN = {
-  question: 'which are remote?', answer: 'Two of these are remote.', provider: 'claude', createdAt: '2026-09-29T10:00:00.000Z',
+const TURN = turn('which are remote?', 'Two of these are remote.', {
   refs: [{ id: 'p1', title: 'Frontend Intern', company: 'Acme', fit: 55 }],
   actions: [{ type: 'filters', patch: { workModes: ['remote'] }, label: 'Show remote' }],
-};
+});
 
+let server;
+const panel = (page, apply) => <AiChatPanel open onClose={() => {}} context={{ filters: FILTERS, sort: 'match', page }} apply={apply} />;
 function setup(page) {
   const apply = { setFilters: vi.fn(), setSort: vi.fn(), setView: vi.fn() };
-  render(<AiChatPanel open onClose={() => {}} context={{ filters: FILTERS, sort: 'match', page }} apply={apply} />);
-  return apply;
+  return { ...render(panel(page, apply)), apply };
 }
 
 beforeEach(() => {
   vi.clearAllMocks();
-  getProviders.mockResolvedValue([CLAUDE]);
-  getChatHistory.mockResolvedValue({ turns: [] });
-  sendChatMessage.mockResolvedValue(TURN);
-  announceOpenPosting(JOB);
+  api.getProviders.mockResolvedValue([CLAUDE]);
+  server = fakeChats(api, { chats: [generalChat('g1', 'which are remote?')] });
+  announceOpenPosting(null);
+  announceOpenDocument(null);
 });
 
 describe('the chat on a page other than the feed', () => {
-  it('leaves the job in scope out, with its actions, and offers the page\'s own questions', async () => {
+  it('answers a general chat from the page it is asked on, with that page\'s own questions', async () => {
     setup('profile');
     fireEvent.click(await screen.findByRole('button', { name: 'Add a project I built' }));
-    await waitFor(() => expect(sendChatMessage).toHaveBeenCalledWith(
-      { message: 'Add a project I built', filters: FILTERS, sort: 'match', openPostingId: null, page: 'profile' },
-      { onEvent: expect.any(Function) },
+    await waitFor(() => expect(api.sendChatMessage).toHaveBeenCalledWith(
+      expect.stringMatching(/^c-general/), { message: 'Add a project I built', filters: FILTERS, sort: 'match', page: 'profile' }, { onEvent: expect.any(Function) },
     ));
-    expect(screen.queryByText('Staff Engineer')).not.toBeInTheDocument();
-    expect(screen.queryByRole('group', { name: 'Actions for this job' })).not.toBeInTheDocument();
-    expect(getPostingAiResults).not.toHaveBeenCalled();
+  });
+
+  it('keeps the job\'s chat on screen when the person moves on from the feed', async () => {
+    announceOpenPosting(POSTINGS.p9);
+    const apply = { setView: vi.fn() };
+    const { rerender } = render(panel('postings', apply));
+    expect(await screen.findByText('Initech · this job\'s chat')).toBeInTheDocument();
+    rerender(panel('profile', apply));
+    announceOpenPosting(null);
+    expect(await screen.findByText('Initech · this job\'s chat')).toBeInTheDocument();
   });
 
   it('suggests document requests on the resume page', async () => {
@@ -59,62 +63,35 @@ describe('the chat on a page other than the feed', () => {
     expect(screen.getByRole('button', { name: 'Write a cover letter' })).toBeInTheDocument();
   });
 
-  it('names the open document on the resume page and sends its id with the question', async () => {
-    announceOpenDocument({ id: 'd1', name: 'Classic resume', kind: 'resume' });
+  it('shows the open document\'s own chat on the resume page, and asks there', async () => {
     setup('resume');
-    expect(await screen.findByText('Classic resume')).toBeInTheDocument();
+    announceOpenDocument(DOCUMENTS.d1);
+    expect(await screen.findByText('Resume · this document\'s chat')).toBeInTheDocument();
     fireEvent.click(await screen.findByRole('button', { name: 'Make it fit one page' }));
-    await waitFor(() => expect(sendChatMessage).toHaveBeenCalledWith(
-      { message: 'Make it fit one page', filters: FILTERS, sort: 'match', openPostingId: null, page: 'resume', documentId: 'd1' },
-      { onEvent: expect.any(Function) },
+    await waitFor(() => expect(api.sendChatMessage).toHaveBeenCalledWith(
+      'document:d1', expect.objectContaining({ message: 'Make it fit one page', page: 'resume' }), expect.anything(),
     ));
-    announceOpenDocument(null);
-  });
-
-  it('sends no document on the resume page when none is open, so the chat can offer a new one', async () => {
-    announceOpenDocument(null);
-    setup('resume');
-    fireEvent.click(await screen.findByRole('button', { name: 'Write a cover letter' }));
-    await waitFor(() => expect(sendChatMessage).toHaveBeenCalledWith(
-      expect.objectContaining({ page: 'resume', documentId: null }),
-      expect.anything(),
-    ));
-    expect(screen.queryByText('Working on')).not.toBeInTheDocument();
   });
 
   it('takes the person to the feed when an answer\'s feed action is applied there', async () => {
-    getChatHistory.mockResolvedValue({ turns: [TURN] });
-    const apply = setup('settings');
+    server.turns.g1 = [TURN];
+    const { apply } = setup('settings');
     fireEvent.click(await screen.findByRole('button', { name: 'Show remote' }));
     expect(apply.setFilters).toHaveBeenCalledWith({ ...FILTERS, workModes: ['remote'] });
     expect(apply.setView).toHaveBeenCalledWith('postings');
   });
 
   it('takes the person to the feed when a job the answer named is clicked there, then opens it', async () => {
-    getChatHistory.mockResolvedValue({ turns: [TURN] });
+    server.turns.g1 = [TURN];
     const opened = vi.fn();
     const stop = onOpenPostingRequest(opened);
     const apply = { setFilters: vi.fn(), setSort: vi.fn(), setView: vi.fn() };
-    const panel = (page) => <AiChatPanel open onClose={() => {}} context={{ filters: FILTERS, sort: 'match', page }} apply={apply} />;
-    const { rerender } = render(panel('profile'));
+    const { rerender } = render(panel('profile', apply));
     fireEvent.click(await screen.findByRole('button', { name: /Frontend Intern/ }));
     expect(apply.setView).toHaveBeenCalledWith('postings');
     expect(opened).not.toHaveBeenCalled();
-    rerender(panel('postings'));
+    rerender(panel('postings', apply));
     await waitFor(() => expect(opened).toHaveBeenCalledWith('p1'));
     stop();
-  });
-});
-
-describe('the chat on the feed', () => {
-  it('keeps the job in scope and sends the page with the question', async () => {
-    const apply = setup('postings');
-    expect(await screen.findByText('Staff Engineer')).toBeInTheDocument();
-    fireEvent.click(await screen.findByRole('button', { name: 'How well do I fit this job?' }));
-    await waitFor(() => expect(sendChatMessage).toHaveBeenCalledWith(
-      expect.objectContaining({ openPostingId: 'p9', page: 'postings' }),
-      expect.anything(),
-    ));
-    expect(apply.setView).not.toHaveBeenCalled();
   });
 });

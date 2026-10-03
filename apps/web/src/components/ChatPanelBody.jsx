@@ -1,98 +1,77 @@
-import { useEffect, useState } from 'react';
-import { useProviders } from '../lib/useProviders.js';
-import { useAiRunner } from '../lib/useAiRunner.js';
-import { useChat } from '../lib/useChat.js';
-import { useChatWatcher } from '../lib/chatSession.js';
-import { useChatScope } from '../lib/useChatScope.js';
-import { useChatActions } from '../lib/useChatActions.js';
 import { useChatLayout } from '../lib/useChatLayout.js';
-import { useChatAnswerer } from '../lib/useChatAnswerer.js';
-import { useChatFeedLinks } from '../lib/useChatFeedLinks.js';
-import { chatCard } from '../lib/chatCard.js';
-import { useOpenDocument } from '../lib/useOpenDocument.js';
-import { historyLinks } from '../lib/historyLinks.js';
+import { useChatPanel } from '../lib/useChatPanel.js';
+import { newGeneralChat } from '../lib/useChatView.js';
 import { buildConversation } from '../lib/conversation.js';
-import { takeRequest } from '../lib/askAiSignal.js';
-import { useChatQueue } from '../lib/useChatQueue.js';
 import ChatFrame from './ChatFrame.jsx';
 import ChatHeader from './ChatHeader.jsx';
-import ChatScopeCard from './ChatScopeCard.jsx';
-import ChatDocumentScope from './ChatDocumentScope.jsx';
+import ChatItems from './ChatItems.jsx';
 import ChatMessages from './ChatMessages.jsx';
 import ChatComposer from './ChatComposer.jsx';
-import ChatHistory from './ChatHistory.jsx';
+import ChatBusyNote from './ChatBusyNote.jsx';
 
-// The actual panel, split out of AiChatPanel.jsx so its hooks - loading the
-// conversation, probing for a CLI - only ever run while the panel is open.
+// The actual panel, split out of AiChatPanel.jsx so its hooks (reading the
+// chat, probing for a CLI) only ever run while the panel is open. What it
+// draws from is wired in lib/useChatPanel.js; this is the layout: the
+// header with the switcher, the chips of what the chat holds, the
+// conversation, and the box.
 //
-// A message goes one of two ways: with a card picked as the reply target it
-// is that action's refine instruction; without one it is a question, sent
-// with the page it was asked on so the server answers from what is on
-// screen. A job is only in scope on the feed, where it is open beside the
-// list; on the Resume page the open document is, and its id goes with the
-// question. A tailored resume becomes a document there on request.
-//
-// History takes the conversation's place while it is open (see
-// ChatHistory.jsx); a question on its way keeps going meanwhile.
+// Each chat shows only what is its own: its messages, the job's results
+// asked for in it, the call running in it and the call it got no answer to.
+// A call running in another chat shows here only as the note on Send.
 export default function ChatPanelBody({ onClose, context, apply, request, draft }) {
-  const cli = useProviders();
-  const answerer = useChatAnswerer(cli.providers);
-  const page = context.page ?? 'postings';
-  const onResume = page === 'resume';
-  const layout = useChatLayout({ docked: onResume });
-  const runner = useAiRunner(cli.providers);
-  const chat = useChat(runner);
-  useChatWatcher();
-  const scope = useChatScope();
-  const openDoc = useOpenDocument();
-  const onFeed = page === 'postings';
-  const posting = onFeed ? scope.posting : null;
-  const actions = useChatActions(posting, { runner, providers: cli.providers });
-  const [target, setTarget] = useState(null);
-  const [history, setHistory] = useState(false);
-  const feedLinks = useChatFeedLinks({ onFeed, filters: context.filters, apply });
-  const card = chatCard({ posting, actions, providers: cli.providers, target, setTarget, apply });
-
-  // A reply target is one job's card; another job has no such card.
-  useEffect(() => setTarget(null), [posting?.id]);
-
-  // Words put in the box from elsewhere need the box on screen.
-  useEffect(() => { if (draft) setHistory(false); }, [draft]);
-
-  // "Ask AI about this job" from the pane, handled once however often this
-  // panel mounts (see askAiSignal.js). It is about the chat, so History
-  // makes way for it.
-  useEffect(() => {
-    if (!takeRequest(request)) return;
-    setHistory(false);
-    scope.focus(request.posting);
-    if (request.action) actions.queue(request.posting.id, request.action);
-  }, [request]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  function onSend(message) {
-    actions.clearBlocked();
-    if (target) return actions.refine(target, message);
-    const where = { filters: context.filters, sort: context.sort, openPostingId: posting?.id ?? null, page };
-    return chat.ask(message, onResume ? { ...where, documentId: openDoc?.id ?? null } : where);
-  }
-
-  const { box, missed } = useChatQueue({ chat, runner, cli, onSend });
-
-  const closeHistory = () => setHistory(false);
-  const links = historyLinks({ chat, scope, feedLinks, onFeed, apply, close: closeHistory });
-  const empty = { page, posting, loading: Boolean(posting) && actions.results === undefined, busy: runner.busy, onSend };
+  const panel = useChatPanel({ context, apply, request, draft });
+  const { cli, page, active, store, chat, view, send, links } = panel;
+  const layout = useChatLayout({ docked: page === 'resume' });
+  const posting = view?.kind === 'job' ? view.jobs[0] : null;
+  const missed = send.missed && { ...send.missed, onRecheck: cli.refresh, checking: cli.checking };
+  const empty = { page, posting, kind: view?.kind, loading: panel.loading, busy: Boolean(store.busy) || !active.id, onSend: send.box.onSend };
+  const note = send.elsewhere && (
+    <ChatBusyNote busy={send.elsewhere} view={panel.busyView} cli={panel.cliName} onOpen={() => active.pick(send.elsewhere.chatId)} />
+  );
 
   return (
     <ChatFrame layout={layout}>
-      <ChatHeader providers={cli.providers} answerer={answerer} layout={layout} history={history} onHistory={() => setHistory((now) => !now)} onNew={() => { closeHistory(); chat.startNew(); }} onClose={onClose} />
-      {history ? <ChatHistory providers={cli.providers} links={links} /> : (
-        <>
-          {posting && <ChatScopeCard posting={posting} onClear={scope.clear} />}
-          {onResume && openDoc && <ChatDocumentScope doc={openDoc} />}
-          <ChatMessages entries={buildConversation(chat.turns, actions.results ?? [])} call={runner.call} missed={chat.missed} onMissed={missed} empty={empty} card={card} onApply={feedLinks.onApply} onOpenRef={feedLinks.onOpenRef} />
-          <ChatComposer cli={cli} scoped={Boolean(posting)} runner={runner} actions={actions} target={target} onClearTarget={() => setTarget(null)} onSend={onSend} draft={draft} box={box} />
-        </>
+      <ChatHeader
+        view={view}
+        providers={cli.providers}
+        answerer={panel.answerer}
+        signal={panel.signal}
+        switcher={panel.switcher}
+        active={active}
+        layout={layout}
+        onNew={newGeneralChat}
+        onClose={onClose}
+      />
+      {view && (
+        <ChatItems
+          view={view}
+          filters={context.filters}
+          onOpenJob={links.onOpenRef}
+          onOpenDocument={links.onOpenDocument}
+          jobs={{ waitReason: panel.waitReason, onOpenChat: links.onOpenChat, onRun: (postingId, kind) => panel.job.start(postingId, kind, { askedIn: view.id }) }}
+        />
       )}
+      <ChatMessages
+        entries={buildConversation(chat?.turns ?? [], chat?.results ?? [])}
+        jobs={view?.jobs ?? []}
+        call={send.here}
+        missed={missed}
+        dropped={Boolean(chat?.dropped)}
+        empty={empty}
+        card={panel.card}
+        links={links}
+      />
+      <ChatComposer
+        cli={cli}
+        view={view}
+        results={chat?.results}
+        box={send.box}
+        job={panel.job}
+        target={panel.target}
+        onClearTarget={() => panel.setTarget(null)}
+        waitReason={panel.waitReason}
+        note={note}
+      />
     </ChatFrame>
   );
 }

@@ -1,51 +1,80 @@
 import { req } from './request.js';
 import { streamedChatPost } from '../lib/chatStream.js';
 
-// The current conversation: { id, turns }. `id` is null only for one no
-// question has been asked in since conversations had ids.
-export function getChatHistory() {
-  return req('/api/chat/history');
+// The chats (see the server's api/chats.js). An id is a real chat's, or for
+// a job's or a document's chat not made yet "job:<postingId>" or
+// "document:<documentId>", which every route resolves to the real chat once
+// there is one. The colon is encoded like any other character.
+const chatPath = (id, rest = '') => `/api/chats/${encodeURIComponent(id)}${rest}`;
+
+// A JSON POST with no body at all is refused, so an empty one goes instead.
+const post = (url, body = {}) => req(url, { method: 'POST', body: JSON.stringify(body) });
+
+// The switcher's list: [view], newest first. A chat with nothing in it is
+// never listed.
+export function listChats() {
+  return req('/api/chats').then((d) => d.chats);
 }
 
-// Resolves with the turn the server saved: { id, page, question, answer,
-// actions, refs, proposals, provider, createdAt, conversationId } (see
-// packages/store/src/chat-history.js). On the Resume page `documentId`
-// names the open document.
-export function sendChatMessage(payload, { onEvent } = {}) {
-  return streamedChatPost('/api/chat', payload, onEvent);
+// One chat as it opens: { chat, turns, dropped, results }.
+export function getChatPage(id) {
+  return req(chatPath(id, '/messages'));
 }
 
-// Stops the question being answered: { stopped }, false when there was none.
-// The question's own stream then ends with kind 'stopped'.
-export function stopChat() {
-  return req('/api/chat/stop', { method: 'POST', body: '{}' });
+// What a page that did not watch it happen needs: { busy, waiting, failed }.
+export function getChatsPending() {
+  return req('/api/chats/pending');
 }
 
-// "Start a new one": the server files the current conversation away and
-// answers the fresh one, { id, turns: [], filed }. The empty object body is
-// only because a JSON POST with no body at all is refused.
-export function startNewConversation() {
-  return req('/api/chat/conversations', { method: 'POST', body: '{}' });
+// { kind: 'general' | 'compare', jobs?, documents? }, resolving the view of
+// the chat made, or of the identical empty one already there.
+export function createChat(body) {
+  return post('/api/chats', body).then((d) => d.chat);
 }
 
-// The conversations filed away, newest first: [{ id, title, startedAt,
-// endedAt, turnCount }].
-export function listConversations() {
-  return req('/api/chat/conversations').then((d) => d.conversations);
+// { action: 'add' | 'remove', type: 'job' | 'document', id }, resolving the
+// chat's view, or a new comparison's when a job was added to a job's chat.
+export function changeChatItems(id, change) {
+  return post(chatPath(id, '/items'), change).then((d) => d.chat);
 }
 
-export function getConversation(id) {
-  return req(`/api/chat/conversations/${encodeURIComponent(id)}`);
+export function markChatSeen(id) {
+  return post(chatPath(id, '/seen')).then((d) => d.chat);
 }
 
-// Makes a filed conversation the current one again, filing the current one
-// in its place. Resolves the new current one, { id, turns }.
-export function continueConversation(id) {
-  return req(`/api/chat/conversations/${encodeURIComponent(id)}/continue`, { method: 'POST', body: '{}' });
+export function clearChat(id) {
+  return post(chatPath(id, '/clear')).then((d) => d.chat);
 }
 
-export function deleteConversation(id) {
-  return req(`/api/chat/conversations/${encodeURIComponent(id)}`, { method: 'DELETE' });
+export function deleteChat(id) {
+  return req(chatPath(id), { method: 'DELETE' });
+}
+
+// { stopped }, false unless the running call is in this chat.
+export function stopChat(id) {
+  return post(chatPath(id, '/stop'));
+}
+
+// The chat's one follow-up, sent by the server once its running answer is
+// in: { waiting }, or { started, chatId } when nothing was running after all.
+// A blank message takes it back.
+export function queueChatMessage(id, body) {
+  return post(chatPath(id, '/queue'), body);
+}
+
+// { message, page, filters, sort }, resolving the saved turn with `chatId`,
+// the chat it was saved in.
+export function sendChatMessage(id, body, { onEvent } = {}) {
+  return streamedChatPost(chatPath(id, '/messages'), body, onEvent);
+}
+
+// A comparison's own two actions, each resolving the turn its card is.
+export function tailorForAll(id, { onEvent } = {}) {
+  return streamedChatPost(chatPath(id, '/tailor-all'), {}, onEvent);
+}
+
+export function lettersForEach(id, { onEvent } = {}) {
+  return streamedChatPost(chatPath(id, '/letters-each'), {}, onEvent);
 }
 
 // Everything the AI made, newest first (see the server's chat/made-by-ai.js).
@@ -54,22 +83,12 @@ export function getMadeByAi() {
 }
 
 // The two buttons on a proposal card. The server applies the proposal it
-// saved with the turn, found by id, never anything sent here; the body is
-// an empty object only because a JSON POST with no body at all is refused.
-// Resolves { proposal, profile } or { proposal, document }.
+// saved with the turn, found by id in whichever chat offered it, never
+// anything sent here. Resolves { proposal, profile } or { proposal, document }.
 export function applyProposal(id) {
-  return req(`/api/chat/proposals/${encodeURIComponent(id)}/apply`, { method: 'POST', body: '{}' });
+  return post(`/api/chat/proposals/${encodeURIComponent(id)}/apply`);
 }
 
 export function discardProposal(id) {
-  return req(`/api/chat/proposals/${encodeURIComponent(id)}/discard`, { method: 'POST', body: '{}' });
-}
-
-// The question the server is answering right now, if any, and the last one
-// that failed with nobody watching: { pending, failed } (see the server's
-// chat/in-flight.js). What a page reloaded mid-answer reads instead of the
-// stream it no longer has. `pending.conversationId` is the conversation it
-// was asked in.
-export function getChatPending() {
-  return req('/api/chat/pending');
+  return post(`/api/chat/proposals/${encodeURIComponent(id)}/discard`);
 }

@@ -1,9 +1,9 @@
 import { relativeDay } from './time.js';
 
-// The words for one thing the AI made, as History's "Made by AI" lists it
-// (see the server's chat/made-by-ai.js): what kind of thing it is, what it
-// is called, and what it belongs to. A job a scrape has since dropped is
-// still named as a job, since what was made for it is still there.
+// The words for one thing the AI made, as the Resume page's "Made by AI"
+// lists it (see the server's chat/made-by-ai.js): what kind of thing it is,
+// what it is called, and what it belongs to. A job a scrape has since
+// dropped is still named as a job, since what was made for it is still there.
 const GONE_JOB = 'A job JobDekho no longer lists';
 
 const ACTION_WORDS = {
@@ -38,14 +38,8 @@ export function describeMade(item) {
   return {
     word: 'Profile change',
     title: item.summary,
-    detail: joined(item.current ? 'In this conversation' : 'In an earlier conversation', when),
+    detail: joined('Applied from a chat', when),
   };
-}
-
-// The job a job-bound item names, shaped as the chat's scope card reads a
-// posting, so its answers can be shown in the chat even if the job is gone.
-export function scopeFor(item) {
-  return { id: item.postingId, title: item.job?.title ?? GONE_JOB, company: item.job?.company ?? '' };
 }
 
 export const isJobItem = (item) => Boolean(ACTION_WORDS[item.kind]);

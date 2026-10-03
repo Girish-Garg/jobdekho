@@ -90,6 +90,7 @@ export default function ChatResultCard({ entry, providers, targeted, onTarget, d
             onMakeLetter={docs.onMakeLetter}
             onMakeBoth={docs.onMakeBoth}
             tailored={docs.tailored}
+            waitReason={docs.waitReason}
           />
         </div>
       )}

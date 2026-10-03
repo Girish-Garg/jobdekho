@@ -5,9 +5,9 @@
 // two features that otherwise never talk to each other, and without the
 // panel refactoring where that state lives.
 //
-// The posting itself travels, not only its id: the chat names the job it is
-// scoped to (title, company) and decides whether to offer the "is it real?"
-// check from it, and it has no feed of its own to look the id up in.
+// The posting itself travels, not only its id: the chat names the job whose
+// chat it shows (title, company), and "+ Add" offers the jobs opened lately,
+// and it has no feed of its own to look the id up in.
 const EVENT = 'jobdekho:open-posting';
 const REQUEST = 'jobdekho:open-posting-request';
 

@@ -2,35 +2,33 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act, within } from '@testing-library/react';
 import AiChatPanel from './AiChatPanel.jsx';
 import { announceOpenPosting, onOpenPostingRequest } from '../lib/openPostingSignal.js';
+import { fakeChats, generalChat, held, jobChat, turn, POSTINGS } from '../test/fixtures/chats.js';
 
 vi.mock('../api.js', () => ({
   getProviders: vi.fn(),
   getProviderPreference: vi.fn(async () => ({ provider: 'auto' })),
-  getChatPending: vi.fn(async () => ({ pending: null, failed: null })),
-  getChatHistory: vi.fn(),
-  sendChatMessage: vi.fn(),
-  startNewConversation: vi.fn(async () => ({ id: 'c-new', turns: [], filed: null })),
-  getPostingAiResults: vi.fn(async () => []),
-  runPostingAction: vi.fn(),
+  getChatPage: vi.fn(), listChats: vi.fn(), getChatsPending: vi.fn(), createChat: vi.fn(), markChatSeen: vi.fn(),
+  clearChat: vi.fn(), deleteChat: vi.fn(), stopChat: vi.fn(), queueChatMessage: vi.fn(), changeChatItems: vi.fn(),
+  sendChatMessage: vi.fn(), runPostingAction: vi.fn(), tailorForAll: vi.fn(), lettersForEach: vi.fn(),
+  getPostingsPage: vi.fn(async () => ({ postings: [] })), listDocuments: vi.fn(async () => []),
 }));
 
-import { getProviders, getProviderPreference, getChatHistory, sendChatMessage, startNewConversation, getPostingAiResults } from '../api.js';
+import * as api from '../api.js';
 
 const CLAUDE = { id: 'claude', label: 'Claude Code', install: 'https://claude.ai/code', policies: ['none', 'web'], present: true, runs: true };
 const FILTERS = { levels: [], workModes: [], q: '', minFit: '' };
-const JOB = { id: 'p9', title: 'Staff Engineer', company: 'Initech', legitimacy: 'high' };
-const TURN = {
-  question: 'which are remote?', answer: 'Two of these are remote.',
+const ANSWER = turn('which are remote?', 'Two of these are remote.', {
   actions: [{ type: 'filters', patch: { workModes: ['remote'] }, label: 'Show remote' }],
-  refs: [], provider: 'claude', createdAt: '2026-09-29T10:00:00.000Z',
-};
+});
 
+let server;
 function setup(props = {}) {
-  const apply = { setFilters: vi.fn(), setSort: vi.fn() };
+  const apply = { setFilters: vi.fn(), setSort: vi.fn(), setView: vi.fn() };
   const onClose = vi.fn();
-  const view = render(<AiChatPanel open onClose={onClose} context={{ filters: FILTERS, sort: 'match' }} apply={apply} {...props} />);
+  const view = render(<AiChatPanel open onClose={onClose} context={{ filters: FILTERS, sort: 'match', page: 'postings' }} apply={apply} {...props} />);
   return { ...view, apply, onClose };
 }
+const panel = (open) => <AiChatPanel open={open} onClose={() => {}} context={{ filters: FILTERS, sort: 'match', page: 'postings' }} apply={{}} />;
 
 async function ask(text) {
   const box = await screen.findByPlaceholderText('Ask about what is on screen');
@@ -40,121 +38,117 @@ async function ask(text) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  getProviders.mockResolvedValue([CLAUDE]);
-  getProviderPreference.mockResolvedValue({ provider: 'auto' });
-  getChatHistory.mockResolvedValue({ turns: [] });
-  getPostingAiResults.mockResolvedValue([]);
-  sendChatMessage.mockResolvedValue(TURN);
+  api.getProviders.mockResolvedValue([CLAUDE]);
+  api.getProviderPreference.mockResolvedValue({ provider: 'auto' });
+  server = fakeChats(api, { chats: [generalChat('g1', 'which are remote?')], turns: {} });
   announceOpenPosting(null);
 });
 
 describe('AiChatPanel, plain questions', () => {
   it('renders nothing when closed', () => {
-    const { container } = render(<AiChatPanel open={false} onClose={() => {}} context={{ filters: FILTERS, sort: 'match' }} apply={{}} />);
+    const { container } = render(panel(false));
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('invites a question about the feed before anything has been asked, with no job actions', async () => {
+  it('opens on a fresh general chat about the feed when there is none yet, with no job actions', async () => {
     setup();
     await screen.findByText(/Ask about the postings on screen/);
+    expect(api.createChat).toHaveBeenCalledWith({ kind: 'general' });
     expect(screen.queryByRole('group', { name: 'Actions for this job' })).not.toBeInTheDocument();
   });
 
-  it('sends an unscoped question with the filters and sort, and no posting', async () => {
+  it('opens on the newest general chat, continued from where it was left', async () => {
+    server.turns.g1 = [ANSWER];
     setup();
-    await ask('which are remote?');
+    expect(await screen.findByText('Two of these are remote.')).toBeInTheDocument();
+    expect(api.createChat).not.toHaveBeenCalled();
+  });
+
+  it('sends a question to the chat on screen with the page, the filters and the sort', async () => {
+    server.turns.g1 = [ANSWER];
+    setup();
     await screen.findByText('Two of these are remote.');
-    expect(sendChatMessage).toHaveBeenCalledWith(
-      { message: 'which are remote?', filters: FILTERS, sort: 'match', openPostingId: null, page: 'postings' },
-      { onEvent: expect.any(Function) },
-    );
+    await ask('and which pay best?');
+    await waitFor(() => expect(api.sendChatMessage).toHaveBeenCalledWith(
+      'g1', { message: 'and which pay best?', page: 'postings', filters: FILTERS, sort: 'match' }, { onEvent: expect.any(Function) },
+    ));
   });
 
   it('shows the question and a waiting card naming the CLI and its step while a call is in flight', async () => {
-    let finish;
-    sendChatMessage.mockImplementationOnce(async (_body, { onEvent }) => {
+    const answer = held();
+    api.sendChatMessage.mockImplementationOnce(async (id, body, { onEvent }) => {
       onEvent({ event: 'start', provider: 'claude', path: 'x' });
       onEvent({ event: 'progress', stage: 'send', chars: 10 });
       onEvent({ event: 'progress', stage: 'wait', elapsedMs: 5000 });
-      await new Promise((r) => { finish = r; });
-      return TURN;
+      await answer.gate;
+      return server.reply(id, turn(body.message, 'Hello.'));
     });
     setup();
     await ask('hi');
     const card = await screen.findByRole('region', { name: 'Answer in progress' });
     expect(within(card).getByText('Claude Code, thinking')).toHaveAttribute('aria-live', 'polite');
     expect(screen.getByText('hi')).toBeInTheDocument();
-    await waitFor(() => finish());
+    await act(async () => answer.release());
+    expect(await screen.findByText('Hello.')).toBeInTheDocument();
   });
 
   it('shows the answer as it is written, and who is writing it', async () => {
-    let finish;
-    sendChatMessage.mockImplementationOnce(async (_body, { onEvent }) => {
-      onEvent({ event: 'start', provider: 'claude', path: 'x' });
+    const answer = held();
+    api.sendChatMessage.mockImplementationOnce(async (id, body, { onEvent }) => {
+      onEvent({ event: 'start', provider: 'claude' });
       onEvent({ event: 'text', add: 'Two of these ' });
       onEvent({ event: 'text', add: 'are remote.' });
-      await new Promise((r) => { finish = r; });
-      return TURN;
+      await answer.gate;
+      return server.reply(id, turn(body.message, 'Two of these are remote.'));
     });
     setup();
     await ask('hi');
     const card = await screen.findByRole('region', { name: 'Answer in progress' });
     expect(within(card).getByText('Two of these are remote.')).toBeInTheDocument();
     expect(within(card).getByText('Claude Code is writing')).toBeInTheDocument();
-    await waitFor(() => finish());
+    await act(async () => answer.release());
   });
 
-  // The answer used to be thrown away with the panel: the call was held in
-  // the panel's own state, so closing it mid-answer lost the question and
-  // the answer, though the server still saved the turn.
   it('keeps the question in flight across closing and opening the panel, and shows the answer that landed meanwhile', async () => {
-    let finish;
-    sendChatMessage.mockImplementationOnce(async (_body, { onEvent }) => {
+    server.turns.g1 = [ANSWER];
+    const answer = held();
+    api.sendChatMessage.mockImplementationOnce(async (id, body, { onEvent }) => {
       onEvent({ event: 'start', provider: 'claude' });
-      await new Promise((r) => { finish = r; });
-      return TURN;
+      await answer.gate;
+      return server.reply(id, turn(body.message, 'The third is hybrid.'));
     });
-    const { rerender } = setup();
-    await ask('which are remote?');
+    const { rerender } = render(panel(true));
+    await screen.findByText('Two of these are remote.');
+    await ask('and the third?');
     await screen.findByRole('region', { name: 'Answer in progress' });
-    const closed = <AiChatPanel open={false} onClose={() => {}} context={{ filters: FILTERS, sort: 'match' }} apply={{}} />;
-    const opened = <AiChatPanel open onClose={() => {}} context={{ filters: FILTERS, sort: 'match' }} apply={{}} />;
-    rerender(closed);
-    rerender(opened);
+    rerender(panel(false));
+    rerender(panel(true));
     expect(await screen.findByRole('region', { name: 'Answer in progress' })).toBeInTheDocument();
-    expect(screen.getByText('which are remote?')).toBeInTheDocument();
-    rerender(closed);
-    await act(async () => finish());
-    rerender(opened);
-    expect(await screen.findByText('Two of these are remote.')).toBeInTheDocument();
+    expect(screen.getByText('and the third?')).toBeInTheDocument();
+    rerender(panel(false));
+    await act(async () => answer.release());
+    rerender(panel(true));
+    expect(await screen.findByText('The third is hybrid.')).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'Answer in progress' })).not.toBeInTheDocument();
-    expect(getChatHistory).toHaveBeenCalledTimes(1);
   });
 
-  it('offers the actions a turn came back with, and applies one on click', async () => {
+  it('offers the actions a turn came back with, and applies a filter or a sort on click', async () => {
+    server.turns.g1 = [ANSWER, turn('sort these', 'Sorted.', { actions: [{ type: 'sort', value: 'newest', label: 'Sort by newest first' }] })];
     const { apply } = setup();
-    await ask('which are remote?');
     fireEvent.click(await screen.findByRole('button', { name: 'Show remote' }));
     expect(apply.setFilters).toHaveBeenCalledWith({ ...FILTERS, workModes: ['remote'] });
-    expect(apply.setSort).not.toHaveBeenCalled();
-  });
-
-  it('applies a sort action through setSort, not setFilters', async () => {
-    sendChatMessage.mockResolvedValueOnce({ ...TURN, actions: [{ type: 'sort', value: 'newest', label: 'Sort by newest first' }] });
-    const { apply } = setup();
-    await ask('sort these');
-    fireEvent.click(await screen.findByRole('button', { name: 'Sort by newest first' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Sort by newest first' }));
     expect(apply.setSort).toHaveBeenCalledWith('newest');
-    expect(apply.setFilters).not.toHaveBeenCalled();
   });
 
-  it('starts a new conversation, filing the old one away and clearing the transcript on screen', async () => {
-    getChatHistory.mockResolvedValue({ turns: [TURN] });
+  it('starts a new general chat, leaving the one on screen where it is', async () => {
+    server.turns.g1 = [ANSWER];
     setup();
     await screen.findByText('Two of these are remote.');
     fireEvent.click(screen.getByRole('button', { name: 'New chat' }));
-    await waitFor(() => expect(startNewConversation).toHaveBeenCalled());
     await screen.findByText(/Ask about the postings on screen/);
+    expect(api.createChat).toHaveBeenCalledWith({ kind: 'general' });
+    expect(screen.queryByText('Two of these are remote.')).not.toBeInTheDocument();
   });
 
   it('closes on request', async () => {
@@ -163,144 +157,106 @@ describe('AiChatPanel, plain questions', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it('shows the CLI\'s own sentence, with a recheck, when the call cannot be answered', async () => {
-    sendChatMessage.mockRejectedValueOnce(Object.assign(new Error('Claude Code is not installed'), { kind: 'not_found' }));
+  it('keeps a question that got no answer in its chat, with the CLI\'s own sentence and a recheck', async () => {
+    api.sendChatMessage.mockRejectedValueOnce(Object.assign(new Error('Claude Code is not installed'), { kind: 'not_found' }));
     setup();
     await ask('hi');
-    await screen.findByText('Claude Code is not installed');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Claude Code is not installed');
     fireEvent.click(screen.getByRole('button', { name: 'Check again' }));
-    await waitFor(() => expect(getProviders).toHaveBeenCalledWith({ refresh: true }));
+    await waitFor(() => expect(api.getProviders).toHaveBeenCalledWith({ refresh: true }));
   });
 
   it('stands one install hint in for the whole panel when no CLI can answer anything', async () => {
-    getProviders.mockResolvedValue([{ ...CLAUDE, present: false, runs: false }]);
+    api.getProviders.mockResolvedValue([{ ...CLAUDE, present: false, runs: false }]);
     setup();
     await screen.findByText('The chat asks an AI CLI installed on this computer, on your own subscription or a local model.');
     expect(screen.queryByPlaceholderText('Ask about what is on screen')).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'https://claude.ai/code' })).toBeInTheDocument();
   });
 });
 
 describe('AiChatPanel, the redesigned panel', () => {
-  const AGY = { ...CLAUDE, id: 'agy', label: 'Antigravity', install: 'https://antigravity.google' };
-
   it('names the CLI that will answer, honouring the preferred one', async () => {
-    getProviders.mockResolvedValue([CLAUDE, AGY]);
-    getProviderPreference.mockResolvedValue({ provider: 'agy' });
+    api.getProviders.mockResolvedValue([CLAUDE, { ...CLAUDE, id: 'agy', label: 'Antigravity' }]);
+    api.getProviderPreference.mockResolvedValue({ provider: 'agy' });
     setup();
     expect(await screen.findByText('Antigravity on this PC')).toBeInTheDocument();
   });
 
   it('sends a suggested question on click, and shows it as the person\'s own words', async () => {
-    sendChatMessage.mockResolvedValueOnce({ ...TURN, question: 'Which of these fit me best?' });
+    server.answers['Which of these fit me best?'] = 'These two.';
     setup();
     fireEvent.click(await screen.findByRole('button', { name: 'Which of these fit me best?' }));
-    await waitFor(() => expect(sendChatMessage).toHaveBeenCalledWith(
-      expect.objectContaining({ message: 'Which of these fit me best?', page: 'postings' }),
-      { onEvent: expect.any(Function) },
-    ));
-    await screen.findByText('Two of these are remote.');
+    await screen.findByText('These two.');
     expect(screen.getByText('Which of these fit me best?')).toBeInTheDocument();
-    expect(screen.queryByRole('list', { name: 'Suggested questions' })).not.toBeInTheDocument();
   });
 
-  it('shows the question at once, then the waiting card, saying the web gets the question only, until the answer lands', async () => {
-    let finish;
-    sendChatMessage.mockImplementationOnce(async (_body, { onEvent }) => {
+  it('says the web gets the question only while it searches', async () => {
+    const answer = held();
+    api.sendChatMessage.mockImplementationOnce(async (id, body, { onEvent }) => {
       onEvent({ event: 'start', provider: 'claude' });
       onEvent({ event: 'progress', stage: 'web' });
-      await new Promise((r) => { finish = r; });
-      return TURN;
+      await answer.gate;
+      return server.reply(id, turn(body.message, 'Acme raised a Series B.'));
     });
     setup();
     await ask('is Acme funded?');
     expect(await screen.findByText('Checking the web with your question only, not your profile')).toHaveAttribute('aria-live', 'polite');
-    expect(screen.getByText('is Acme funded?')).toBeInTheDocument();
-    await waitFor(() => finish());
-    await screen.findByText('Two of these are remote.');
-    expect(screen.queryByRole('region', { name: 'Answer in progress' })).not.toBeInTheDocument();
+    await act(async () => answer.release());
   });
 
   it('draws a saved turn that also searched the web as the answer, then the web card', async () => {
-    getChatHistory.mockResolvedValue({ turns: [{ ...TURN, web: { answer: 'Acme raised a Series B.', sources: ['https://acme.example'], provider: 'claude' } }] });
+    server.turns.g1 = [{ ...ANSWER, web: { answer: 'Acme raised a Series B.', sources: ['https://acme.example'], provider: 'claude' } }];
     setup();
-    const card = await screen.findByRole('region', { name: 'From the web' });
-    expect(card).toHaveTextContent('Acme raised a Series B.');
-    expect(screen.getByText('Two of these are remote.')).toBeInTheDocument();
+    expect(await screen.findByRole('region', { name: 'From the web' })).toHaveTextContent('Acme raised a Series B.');
   });
-});
 
-describe('AiChatPanel, the jobs an answer names', () => {
-  const REFS = [
-    { id: 'p1', title: 'Frontend Intern', company: 'Acme', fit: 55 },
-    { id: 'p2', title: 'Backend Engineer', company: 'Globex', fit: null },
-  ];
-
-  it('lists them under the answer, and opens the one clicked in the pane', async () => {
-    sendChatMessage.mockResolvedValueOnce({ ...TURN, refs: REFS });
+  it('lists the jobs an answer names, and opens the one clicked in the pane', async () => {
+    server.turns.g1 = [{ ...ANSWER, refs: [{ id: 'p2', title: 'Backend Engineer', company: 'Globex', fit: null }] }];
     const opened = vi.fn();
     const stop = onOpenPostingRequest(opened);
     setup();
-    await ask('which fit me?');
-    const list = await screen.findByRole('list', { name: 'Jobs in this answer' });
-    expect(list).toHaveTextContent('Frontend Intern');
-    expect(list).toHaveTextContent('Acme');
-    expect(list).toHaveTextContent('fit 55');
-    fireEvent.click(screen.getByRole('button', { name: /Backend Engineer/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /Backend Engineer/ }));
     expect(opened).toHaveBeenCalledWith('p2');
     stop();
   });
-
-  it('shows no list for an answer that named no job, or one saved before refs existed', async () => {
-    const { refs, ...old } = TURN;
-    getChatHistory.mockResolvedValue({ turns: [old] });
-    setup();
-    await screen.findByText('Two of these are remote.');
-    expect(screen.queryByRole('list', { name: 'Jobs in this answer' })).not.toBeInTheDocument();
-  });
 });
 
-describe('AiChatPanel, scoped to a job', () => {
-  it('names the job already open in the pane and sends questions about it', async () => {
-    announceOpenPosting(JOB);
+describe('AiChatPanel, a job\'s own chat', () => {
+  it('shows the chat of the job open in the pane, empty until its first question, which goes to it', async () => {
+    announceOpenPosting(POSTINGS.p9);
     setup();
-    expect(await screen.findByText('Staff Engineer')).toBeInTheDocument();
-    expect(screen.getByText('Initech')).toBeInTheDocument();
-    await waitFor(() => expect(getPostingAiResults).toHaveBeenCalledWith('p9'));
+    expect(await screen.findByText('Initech · this job\'s chat')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Ask about this job' })).toBeInTheDocument();
     await ask('am I qualified?');
-    await waitFor(() => expect(sendChatMessage).toHaveBeenCalledWith(
-      expect.objectContaining({ message: 'am I qualified?', openPostingId: 'p9' }),
-      { onEvent: expect.any(Function) },
-    ));
+    await waitFor(() => expect(api.sendChatMessage).toHaveBeenCalledWith('job:p9', expect.objectContaining({ message: 'am I qualified?' }), expect.anything()));
   });
 
-  it('follows the job opened in the pane, and keeps it when the pane closes', async () => {
+  it('follows the pane from job to job, and goes back to the chat before when the pane closes', async () => {
+    server.turns.g1 = [ANSWER];
     setup();
-    await screen.findByText(/Ask about the postings on screen/);
-    act(() => announceOpenPosting(JOB));
-    expect(await screen.findByText('Staff Engineer')).toBeInTheDocument();
-    act(() => announceOpenPosting({ id: 'p4', title: 'Data Analyst', company: 'Hooli' }));
-    expect(await screen.findByText('Data Analyst')).toBeInTheDocument();
-    expect(screen.queryByText('Staff Engineer')).not.toBeInTheDocument();
+    await screen.findByText('Two of these are remote.');
+    act(() => announceOpenPosting(POSTINGS.pA));
+    expect(await screen.findByText('AlphaCo · this job\'s chat')).toBeInTheDocument();
+    act(() => announceOpenPosting(POSTINGS.pB));
+    expect(await screen.findByText('BetaCo · this job\'s chat')).toBeInTheDocument();
     act(() => announceOpenPosting(null));
-    expect(screen.getByText('Data Analyst')).toBeInTheDocument();
+    expect(await screen.findByText('Two of these are remote.')).toBeInTheDocument();
   });
 
-  it('goes back to questions about the feed when the scope is cleared', async () => {
-    announceOpenPosting(JOB);
+  it('stays put with the pin on, and offers the open job\'s chat instead', async () => {
+    server.turns.g1 = [ANSWER];
     setup();
-    fireEvent.click(await screen.findByRole('button', { name: 'Stop asking about this job' }));
-    expect(screen.queryByText('Staff Engineer')).not.toBeInTheDocument();
-    expect(screen.queryByRole('group', { name: 'Actions for this job' })).not.toBeInTheDocument();
-    await ask('anything remote?');
-    await waitFor(() => expect(sendChatMessage).toHaveBeenCalledWith(expect.objectContaining({ openPostingId: null }), expect.anything()));
+    await screen.findByText('Two of these are remote.');
+    fireEvent.click(screen.getByRole('button', { name: 'Keep this chat on screen' }));
+    act(() => announceOpenPosting(POSTINGS.pA));
+    fireEvent.click(await screen.findByRole('button', { name: 'Open AlphaCo\'s chat' }));
+    expect(await screen.findByText('AlphaCo · this job\'s chat')).toBeInTheDocument();
   });
 
-  it('scopes to the job the pane asked about, even with another open', async () => {
-    announceOpenPosting({ id: 'p4', title: 'Data Analyst', company: 'Hooli' });
-    const request = { id: 10_000, posting: JOB, action: null };
-    setup({ request });
-    expect(await screen.findByText('Staff Engineer')).toBeInTheDocument();
-    expect(screen.queryByText('Data Analyst')).not.toBeInTheDocument();
+  it('opens on the chat of the job the pane asked about, even with another open', async () => {
+    server.chats.push(jobChat('p9'));
+    announceOpenPosting(POSTINGS.pA);
+    setup({ request: { id: 10_000, posting: POSTINGS.p9, action: null } });
+    expect(await screen.findByText('Initech · this job\'s chat')).toBeInTheDocument();
   });
 });

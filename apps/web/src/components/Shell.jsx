@@ -1,5 +1,7 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useResumeChat } from '../lib/useResumeChat.js';
+import { useChatPage } from '../lib/useActiveChat.js';
+import { loadPending } from '../lib/chatPending.js';
 import { useSavedFilters } from '../lib/useSavedFilters.js';
 import { useChatDock } from '../lib/useChatDock.js';
 import { useGlobalKeys } from '../lib/useGlobalKeys.js';
@@ -33,6 +35,12 @@ export default function Shell() {
   const chat = useChatDock();
   const searchRef = useRef(null);
   const postings = view === 'postings';
+
+  // The chats keep up with the page and with what the server is running
+  // even while the panel is closed: the top bar's dot and the job pane's AI
+  // buttons read them, and the panel opens on the right chat.
+  useChatPage(view);
+  useEffect(() => { loadPending(); }, []);
 
   // The Resume page opens the chat for itself and puts it back on leaving
   // (see useResumeChat.js); the topbar's toggle hands it to the person.

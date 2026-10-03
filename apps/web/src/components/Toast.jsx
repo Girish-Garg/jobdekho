@@ -8,7 +8,8 @@ import IconButton from './ui/IconButton.jsx';
 // count when the host has bumped one onto it, and the recheck button only
 // 'not_found' and 'login' earn, since those are the two whose fix - install
 // it, sign into it - happens outside the browser and a re-probe is the one
-// thing JobDekho can still do to help from here.
+// thing JobDekho can still do to help from here. A notice's link (an answer
+// ready in a chat) also dismisses it: following it is reading it.
 export default function Toast({ notice, onDismiss }) {
   const [checking, setChecking] = useState(false);
   const isError = notice.kind === 'error';
@@ -38,6 +39,18 @@ export default function Toast({ notice, onDismiss }) {
         </IconButton>
       </div>
       {notice.detail && <p className="mt-1 text-sm leading-relaxed text-ink/80">{notice.detail}</p>}
+      {notice.link && (
+        <button
+          type="button"
+          onClick={() => {
+            notice.link.onClick();
+            onDismiss(notice.id);
+          }}
+          className="link mt-2 text-sm"
+        >
+          {notice.link.label}
+        </button>
+      )}
       {canRecheck(notice.action) && (
         <button
           type="button"

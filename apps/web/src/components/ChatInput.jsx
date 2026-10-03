@@ -15,27 +15,30 @@ const BOX = 'flex items-end gap-2 rounded-2xl border border-line bg-paper py-1.5
 //
 // The box stays open while an answer is on its way, so the next question can
 // be written meanwhile: sent then, it waits (`onQueue`) and goes once the
-// answer is in, shown above the box until it does. With `onStop`, the send
-// button is Stop while an answer is being written and the box is empty, and
-// Escape stops it either way.
+// answer is in, shown above the box until it does. `held` keeps Send back
+// altogether (another chat's answer is running) while typing goes on. With
+// `onStop`, the send button is Stop while an answer is being written and the
+// box is empty, and Escape stops it either way.
 //
 // The box is one line until the question is longer, then grows to six and
 // scrolls after that (see useChatBox.js, which also takes a draft put in it
-// from elsewhere). The focus ring is on the whole rounded box, which is the
-// control as the eye sees it. `placeholder` and `submitLabel` change while a
-// card is the reply target, so the box itself says the words will change it.
+// from elsewhere, and the text itself when the caller keeps it). The focus
+// ring is on the whole rounded box, which is the control as the eye sees it.
+// `placeholder` and `submitLabel` change while a card is the reply target,
+// so the box itself says the words will change it.
 export default function ChatInput({
-  busy, onSend, onQueue = null, queued = null, onUnqueue = null, onStop = null,
-  placeholder = ASK, submitLabel = 'Ask', focusKey = null, draft = null,
+  busy, held = false, onSend, onQueue = null, queued = null, onUnqueue = null, onStop = null,
+  placeholder = ASK, submitLabel = 'Ask', focusKey = null, draft = null, value: text, onValue,
 }) {
-  const { value, setValue, box } = useChatBox({ focusKey, draft });
+  const { value, setValue, box } = useChatBox({ focusKey, draft, value: text, onValue });
+  const waits = held || (busy && !onQueue);
 
   function submit() {
-    const text = value.trim();
-    if (!text || (busy && !onQueue)) return;
+    const words = value.trim();
+    if (!words || waits) return;
     setValue('');
-    if (busy) onQueue(text);
-    else onSend(text);
+    if (busy) onQueue(words);
+    else onSend(words);
   }
 
   function onKeyDown(event) {
@@ -74,7 +77,7 @@ export default function ChatInput({
           <Button
             variant="primary"
             onClick={submit}
-            disabled={!value.trim() || (busy && !onQueue)}
+            disabled={!value.trim() || waits}
             aria-label={submitLabel}
             title={submitLabel}
             className="btn-icon h-8 w-8 shrink-0"

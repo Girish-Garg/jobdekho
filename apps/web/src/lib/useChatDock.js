@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { onAskAboutPosting } from './askAiSignal.js';
 import { onChatDraft } from './chatDraftSignal.js';
+import { onOpenChat } from './openChatSignal.js';
 import { opensDocked, saveLayout } from './chatLayout.js';
 
 // Whether the chat panel is open, and the job pane's latest "Ask AI about
@@ -27,6 +28,10 @@ export function useChatDock() {
     setDraft(next);
     setOpen(true);
   }), []);
+
+  // A chat opened from outside the panel: a notice that an answer is ready,
+  // or "Show in the chat" on the Resume page (see activeChat.js).
+  useEffect(() => onOpenChat(() => setOpen(true)), []);
 
   useEffect(() => saveLayout({ open }), [open]);
 

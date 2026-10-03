@@ -81,6 +81,24 @@ describe('streamedPost', () => {
     expect(notices).toContainEqual(expect.objectContaining({ title: 'AI action' }));
   });
 
+  it('sends the chat a job action was pressed in, with or without an instruction', async () => {
+    const fetchMock = ndjson(RECORD);
+    await streamedPost('/api/postings/p1/ai/fake-check', { chatId: 'c-compare' });
+    expect(fetchMock.mock.calls[0][1].body).toBe(JSON.stringify({ chatId: 'c-compare' }));
+  });
+
+  // The chat says it where the person pressed, and a stop is their own doing.
+  it('raises no notice for a refusal while another call runs, or for a stop', async () => {
+    const notices = [];
+    const stop = onNotice((n) => notices.push(n));
+    mockResponse(JSON.stringify({ error: 'JobDekho is still working.', busy: { chatId: 'c1' } }), { 'content-type': 'application/json' }, 409);
+    await expect(streamedPost('/x', { label: 'Cover letter' })).rejects.toMatchObject({ status: 409, busy: { chatId: 'c1' } });
+    ndjson(START, { error: 'You stopped it.', kind: 'stopped' });
+    await expect(streamedPost('/x', { label: 'Cover letter' })).rejects.toMatchObject({ kind: 'stopped' });
+    stop();
+    expect(notices).toEqual([]);
+  });
+
   it('sends a refine instruction as a JSON body, content-type included only then', async () => {
     const fetchMock = ndjson(RECORD);
     await streamedPost('/api/postings/p1/ai/fake-check', { instruction: 'check the recruiter email' });

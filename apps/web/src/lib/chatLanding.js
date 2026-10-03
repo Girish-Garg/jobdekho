@@ -1,41 +1,71 @@
-import { notify } from './toast.js';
-import { addTurn, chatSession } from './chatSession.js';
+import { notify, notifyError } from './toast.js';
 import { announceMemoryChanged } from './memorySignal.js';
+import { onScreenId, openChat } from './activeChat.js';
+import { chatStore, pageOf, realId, sameChat } from './chatStore.js';
+import { loadPage, markSeen, refreshList } from './chatPages.js';
+import { readyTitle } from './chatNames.js';
 
-// Where an answer goes when it lands. A question belongs to the
-// conversation it was asked in, and the server saves its answer there
-// whatever happened meanwhile (see its api/chat.js). If the person started
-// a new conversation, or continued another, while it was on its way, the
-// answer is not the one on screen's to show: it is left where it was
-// saved, and the person is told where to find it rather than wondering
-// where it went.
-export function announceFiled() {
+// Where a call's outcome goes: into the chat it was asked in, and nowhere
+// else. The person is never moved to it. On screen it counts as seen;
+// anywhere else it marks that chat unseen, and with the panel closed a
+// notice names the chat, with a way to open it.
+export function arrived(chatId, call) {
+  if (chatStore.watched() && sameChat(onScreenId(), chatId)) {
+    markSeen(chatId);
+    return;
+  }
+  chatStore.set((s) => ({ unseen: { ...s.unseen, [realId(chatId, s)]: true } }));
+  if (chatStore.watched()) return;
   notify({
     kind: 'done',
-    title: 'The answer went to your earlier conversation',
-    detail: 'It was asked there before you switched. Open History in the chat to read it.',
+    title: readyTitle(pageOf(chatId)?.chat, call),
+    link: { label: 'Open the chat', onClick: () => openChat(chatId) },
   });
 }
 
-// `conversationId` on the turn is the one it was saved in; a session that
-// did not know its own id yet (a first question, or one saved before
-// conversations had ids) takes it from here.
-//
-// An answer that saved what the message asked to remember changed the list
-// the Profile page shows, whichever conversation the answer went to.
-export function landTurn(turn) {
-  if (turn.memory?.some((item) => item.status === 'saved')) announceMemoryChanged();
-  const current = chatSession.get().conversationId;
-  if (turn.conversationId && current && turn.conversationId !== current) {
-    announceFiled();
-    return;
+// A call this page ran, answered. `body.chatId` is where the server saved
+// it: a job's chat made by its first question, a job action's own chat, or
+// a new general chat when the one asked in was deleted meanwhile.
+export async function landAnswer(call, body) {
+  if (body?.memory?.some((item) => item.status === 'saved')) announceMemoryChanged();
+  const chatId = body?.chatId ?? realId(call.chatId);
+  if (call.chatId !== chatId && call.chatId.includes(':')) {
+    chatStore.set((s) => ({ alias: { ...s.alias, [call.chatId]: chatId } }));
   }
-  chatSession.set((s) => ({ conversationId: s.conversationId ?? turn.conversationId ?? null }));
-  addTurn(turn);
+  await Promise.all([loadPage(chatId), call.notedIn ? loadPage(call.notedIn) : null]);
+  arrived(chatId, call);
+  refreshList();
 }
 
-// The conversation on screen replaced by another: a fresh one after "Start
-// a new one", or a filed one continued from History.
-export function switchConversation({ id, turns }) {
-  chatSession.set({ conversationId: id ?? null, turns: turns ?? [], error: null });
+// What a failed call leaves for its missed card: what was asked and how,
+// how far it got, and the reason in the server's own words.
+export function missedFrom(call, err) {
+  return {
+    question: call.say,
+    text: call.text ?? '',
+    kind: err?.kind ?? null,
+    message: err?.message ?? '',
+    provider: call.provider ?? '',
+    elapsedMs: Date.now() - call.startedAt,
+    local: true,
+    call: { kind: call.kind, action: call.action, postingId: call.postingId, instruction: call.instruction, screen: call.screen, combined: call.combined },
+  };
+}
+
+// A failure stays in the chat it was asked in. A job's chat asked in by its
+// placeholder exists by now, so it is read to learn its id. With no panel to
+// show it, a question's failure is said in a notice too; an action's
+// already is (see aiCall.js), and a stop is the person's own doing.
+export async function landFailure(call, err) {
+  chatStore.set((s) => ({ failed: { ...s.failed, [realId(call.chatId, s)]: missedFrom(call, err) } }));
+  if (!chatStore.watched() && err?.kind !== 'stopped' && call.kind !== 'action') notifyError(err, 'The assistant could not answer');
+  if (!call.chatId.includes(':')) return refreshList();
+  await loadPage(call.chatId);
+  chatStore.set((s) => {
+    const real = realId(call.chatId, s);
+    if (real === call.chatId || !s.failed[call.chatId]) return {};
+    const { [call.chatId]: missed, ...rest } = s.failed;
+    return { failed: { ...rest, [real]: missed } };
+  });
+  refreshList();
 }

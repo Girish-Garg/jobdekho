@@ -10,7 +10,7 @@ import CoverLetterDocs from './CoverLetterDocs.jsx';
 // state and go only into a document made from here (see CoverLetterDocs.jsx);
 // the saved answer is never rewritten, so reopening the posting shows the
 // draft as it was written, not as it was last edited.
-export default function CoverLetterResult({ record, providers, tailored = false, onMakeLetter, onMakeBoth }) {
+export default function CoverLetterResult({ record, providers, tailored = false, waitReason = null, onMakeLetter, onMakeBoth }) {
   const { result, createdAt, provider } = record;
   const label = providers.find((p) => p.id === provider)?.label ?? provider;
   const [text, setText] = useState(result.letter);
@@ -53,7 +53,7 @@ export default function CoverLetterResult({ record, providers, tailored = false,
       />
       <p className="text-xs text-muted">Edit freely: the documents below are made from the text as it is here.</p>
 
-      <CoverLetterDocs text={text} tailored={tailored} onMakeLetter={onMakeLetter} onMakeBoth={onMakeBoth} />
+      <CoverLetterDocs text={text} tailored={tailored} waitReason={waitReason} onMakeLetter={onMakeLetter} onMakeBoth={onMakeBoth} />
 
       <div className="flex flex-wrap items-center gap-3">
         <Button variant="quiet" className="font-normal" onClick={copy}>

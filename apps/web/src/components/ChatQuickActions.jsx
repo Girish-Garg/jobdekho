@@ -2,12 +2,13 @@ import { ACTION_KINDS, ACTION_ORDER } from '../lib/chatActionKinds.js';
 import Button from './ui/Button.jsx';
 import ChatActionIcon from './ChatActionIcon.jsx';
 
-// The three things the chat can do to the job in scope, one click each.
-// A kind already answered offers to go again in words that say so, so a job
-// already checked never costs a second call because the same button was
-// clicked twice. Held back until the saved answers are known for the same
-// reason.
-export default function ChatQuickActions({ results, busy, onRun }) {
+// The three things the chat can do to its job, one click each. A kind
+// already answered in this chat offers to go again in words that say so,
+// so a job already checked never costs a second call because the same
+// button was clicked twice. Held back until the chat's answers are known
+// for the same reason, and while another call runs, with why (`waitReason`)
+// as their tooltip.
+export default function ChatQuickActions({ results, waitReason = null, onRun }) {
   const saved = new Set((results ?? []).map((record) => record.kind));
 
   return (
@@ -16,7 +17,8 @@ export default function ChatQuickActions({ results, busy, onRun }) {
         <Button
           key={kind}
           size="sm"
-          disabled={busy || results === undefined}
+          disabled={Boolean(waitReason) || results === undefined}
+          title={waitReason ?? undefined}
           onClick={() => onRun(kind)}
           className="bg-paper px-2.5 py-1.5"
         >

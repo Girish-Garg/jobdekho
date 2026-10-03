@@ -3,10 +3,9 @@ import { render, screen, within } from '@testing-library/react';
 import ChatPending from './ChatPending.jsx';
 
 const call = (over = {}) => ({
-  what: { say: 'which fit me?', noun: 'Question', doing: 'thinking' },
-  words: { noun: 'Question', doing: 'thinking' },
-  provider: 'ollama', label: 'ollama', events: [{ event: 'start', provider: 'ollama' }, { event: 'progress', stage: 'send' }],
-  startedAt: Date.now() - 65000, remote: false, ...over,
+  chatId: 'c1', kind: 'question', label: 'Answering', say: 'which fit me?', provider: 'ollama',
+  events: [{ event: 'start', provider: 'ollama' }, { event: 'progress', stage: 'send' }],
+  text: '', web: false, startedAt: Date.now() - 65000, remote: false, letter: null, ...over,
 });
 
 describe('ChatPending', () => {
@@ -38,8 +37,19 @@ describe('ChatPending', () => {
     expect(screen.getByTitle('Time since you asked')).toHaveTextContent('1:05');
   });
 
-  it('says a question from before a reload is still being answered', () => {
+  it('says a call this page only watches will land on its own', () => {
     render(<ChatPending call={call({ remote: true })} providers={[]} />);
-    expect(screen.getByText(/Asked before this page reloaded/)).toBeInTheDocument();
+    expect(screen.getByText(/It will show here when it lands, panel open or not/)).toBeInTheDocument();
+  });
+
+  it('shows what a job action does in its own words, and a refine as the change it asks for', () => {
+    render(<ChatPending call={call({ kind: 'action', action: 'cover-letter', say: 'make it shorter', changing: 'Cover letter' })} providers={[]} />);
+    expect(screen.getByText('Changing: Cover letter')).toBeInTheDocument();
+    expect(screen.getByText('ollama, writing')).toBeInTheDocument();
+  });
+
+  it('counts a comparison\'s letters as they are written', () => {
+    render(<ChatPending call={call({ kind: 'combined', say: 'Cover letter for each', letter: { index: 2, total: 3 } })} providers={[{ id: 'ollama', label: 'Ollama' }]} />);
+    expect(screen.getByText('Ollama, 2 of 3 letters')).toBeInTheDocument();
   });
 });

@@ -1,10 +1,11 @@
 // What an empty chat says and offers, so a first question is one click
-// rather than a blank box. The chat is open on every page, and the server
-// answers from the page it was asked on, so each page gets questions that
-// page can answer: the feed on screen, the job in scope (the company ones
-// are the questions that send the web a search), the profile, the documents
-// on the Resume page. On the last two a change comes back as a card to
-// apply, so the questions there are requests rather than questions.
+// rather than a blank box. A job's chat asks about its job (the company
+// ones are the questions that send the web a search), a comparison about
+// its jobs side by side, and a document's chat for changes to it. A general
+// chat follows the page, since the server answers it from the page it was
+// asked on: the feed on screen, the profile, the documents on the Resume
+// page. On the last two a change comes back as a card to apply, so the
+// questions there are requests rather than questions.
 const PAGES = {
   postings: {
     title: 'Ask about your feed',
@@ -40,7 +41,15 @@ function forJob(posting) {
   };
 }
 
-export function chatSuggestions({ page = 'postings', posting = null } = {}) {
+const COMPARE = {
+  title: 'Compare these jobs',
+  intro: 'Ask how they differ, or start with one of the actions below.',
+  questions: ['Which of these fits me best?', 'How do they compare on pay and level?', 'What does each ask for that I do not have yet?'],
+};
+
+export function chatSuggestions({ page = 'postings', posting = null, kind = null } = {}) {
   if (posting) return forJob(posting);
+  if (kind === 'compare') return COMPARE;
+  if (kind === 'document') return PAGES.resume;
   return PAGES[page] ?? PAGES.postings;
 }

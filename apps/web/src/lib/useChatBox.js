@@ -5,10 +5,16 @@ import { takeDraft } from './chatDraftSignal.js';
 // own (see ChatInput.jsx): it grows with what is typed, up to the six lines
 // its CSS allows; `focusKey` changing moves focus into it, since picking a
 // card to change is always followed by typing what to change; and a `draft`
-// put in it from elsewhere ("Add a project: ") is taken once, with the caret
-// left at its end for the person to finish the sentence.
-export function useChatBox({ focusKey = null, draft = null }) {
-  const [value, setValue] = useState('');
+// put in it from elsewhere ("Add a project: ", a missed question to edit) is
+// taken once, with the caret left at its end for the person to go on.
+//
+// The text is the box's own unless `value` and `onValue` hand it in: the
+// chat keeps each chat's draft itself (see chatDrafts.js), so switching
+// chats switches the text.
+export function useChatBox({ focusKey = null, draft = null, value: held, onValue }) {
+  const [own, setOwn] = useState('');
+  const value = held ?? own;
+  const setValue = onValue ?? setOwn;
   const box = useRef(null);
   const caretToEnd = useRef(false);
 
@@ -21,7 +27,7 @@ export function useChatBox({ focusKey = null, draft = null }) {
     caretToEnd.current = true;
     setValue(draft.text);
     box.current?.focus();
-  }, [draft]);
+  }, [draft]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useLayoutEffect(() => {
     const el = box.current;

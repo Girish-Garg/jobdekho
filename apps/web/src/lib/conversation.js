@@ -1,5 +1,5 @@
-// The panel's one stream: the plain questions and answers, and every answer
-// the posting actions gave for the job in scope, in the order they happened.
+// One chat's stream: its questions and answers, and every answer the
+// posting actions gave in it for its job, in the order they happened.
 // Each saved version of an action is its own entry, so a refine reads like a
 // reply ("make it shorter", then the shorter letter) and the conversation is
 // the version history rather than a strip of numbered buttons beside it.

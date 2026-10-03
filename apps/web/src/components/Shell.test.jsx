@@ -28,15 +28,18 @@ vi.mock('../api.js', () => ({
   getProviders: vi.fn(async () => []),
   getProviderPreference: vi.fn(async () => ({ provider: 'auto' })),
   putProviderPreference: vi.fn(async () => null),
-  getChatPending: vi.fn(async () => ({ pending: null, failed: null })),
-  getChatHistory: vi.fn(async () => ({ turns: [] })),
-  getPostingAiResults: vi.fn(async () => []),
+  getChatPage: vi.fn(), listChats: vi.fn(), getChatsPending: vi.fn(), createChat: vi.fn(), markChatSeen: vi.fn(),
+  clearChat: vi.fn(), deleteChat: vi.fn(), stopChat: vi.fn(), queueChatMessage: vi.fn(), changeChatItems: vi.fn(),
+  sendChatMessage: vi.fn(), tailorForAll: vi.fn(), lettersForEach: vi.fn(), getMadeByAi: vi.fn(async () => []),
   runPostingAction: vi.fn(() => new Promise(() => {})),
   listDocuments: vi.fn(async () => []),
   getDocumentTemplates: vi.fn(async () => []),
 }));
 
-import { getFilters, getPostings, getPostingsPage, getProviders, getPostingAiResults, runPostingAction } from '../api.js';
+import * as api from '../api.js';
+import { fakeChats } from '../test/fixtures/chats.js';
+
+const { getFilters, getPostings, getPostingsPage, getProviders, runPostingAction } = api;
 
 // The feed reads a page with its counts; these tests speak in postings, so
 // the page call answers with whatever getPostings is set to return.
@@ -48,7 +51,10 @@ getPostingsPage.mockImplementation(async (params) => {
 const open = (name) => fireEvent.click(screen.getByRole('button', { name: new RegExp(`^${name}`) }));
 const openMore = () => open('More filters');
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => {
+  vi.clearAllMocks();
+  fakeChats(api);
+});
 
 describe('Shell saved filter hydration', () => {
   it('seeds the filter bar from the saved filter on mount', async () => {
@@ -243,8 +249,8 @@ describe('Shell and the chat', () => {
     expect(screen.queryByRole('complementary', { name: 'Ask AI' })).not.toBeInTheDocument();
     await act(async () => askAboutPosting(JOB, 'fake-check'));
     expect(screen.getByRole('complementary', { name: 'Ask AI' })).toBeInTheDocument();
-    expect(screen.getByText('Staff Engineer')).toBeInTheDocument();
-    await waitFor(() => expect(getPostingAiResults).toHaveBeenCalledWith('p9'));
+    expect(await screen.findByText('Initech · this job\'s chat')).toBeInTheDocument();
+    await waitFor(() => expect(api.getChatPage).toHaveBeenCalledWith('job:p9'));
     await waitFor(() => expect(runPostingAction).toHaveBeenCalledWith('p9', 'fake-check', expect.anything()));
     expect(within(screen.getByRole('banner')).getByRole('button', { name: 'Ask AI' })).toHaveAttribute('aria-pressed', 'true');
   });

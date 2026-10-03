@@ -1,4 +1,4 @@
-// The three things the chat can do to the job it is scoped to, each the same
+// The three things the chat can do to a job it holds, each the same
 // posting action the server has always run (POST /api/postings/:id/ai/:kind,
 // see apps/server/src/actions). What differs between them for the panel:
 //

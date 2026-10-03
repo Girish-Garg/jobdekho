@@ -8,17 +8,23 @@ import { notifyError } from './toast.js';
 // it rejects the way a failed plain call does, with the server's sentence as
 // the message and `kind` attached.
 //
-// `instruction` is a refine: it rides as a JSON body rather than a query
-// string, since it is the person's own words and may run long. Left out, the
-// call stays the bodyless POST it always was, content-type included only
-// when there is a body to name. `label` names the action for the notice this
-// announces on failure - the button that started it already shows the same
+// `instruction` is a refine and `chatId` the chat a job action was pressed
+// in: both ride as a JSON body rather than a query string, since the
+// instruction is the person's own words and may run long. Left out, the call
+// stays the bodyless POST it always was, content-type included only when
+// there is a body to name. `label` names the action for the notice this
+// announces on failure: the button that started it already shows the same
 // sentence inline, so this is only for the minute or several a model can
 // take, during which the person has every reason to be looking elsewhere.
-export async function streamedPost(url, { onEvent, instruction, label } = {}) {
+function bodyOf({ instruction, chatId }) {
+  const fields = { ...(instruction ? { instruction } : {}), ...(chatId ? { chatId } : {}) };
+  return Object.keys(fields).length ? JSON.stringify(fields) : undefined;
+}
+
+export async function streamedPost(url, { onEvent, instruction, chatId, label } = {}) {
   try {
     const headers = { accept: NDJSON_TYPE };
-    const body = instruction ? JSON.stringify({ instruction }) : undefined;
+    const body = bodyOf({ instruction, chatId });
     if (body) headers['content-type'] = 'application/json';
     const res = await send(url, { method: 'POST', headers, body });
     // The 400s and the 401 are plain JSON and have already thrown inside send().
@@ -28,10 +34,12 @@ export async function streamedPost(url, { onEvent, instruction, label } = {}) {
     if (!result || result.error) throw failure(result, 'The connection dropped before the answer arrived. Try again.');
     return result;
   } catch (err) {
-    // `actionable` is safe here specifically because every failure this call
-    // can produce is an AI/ProviderError kind (see ai/errors.js) - never the
-    // LatexError vocabulary notifyError otherwise has to assume nothing about.
-    notifyError(err, label || 'AI action', { actionable: true });
+    // A refusal while another call runs is said in the chat, where the
+    // person pressed, and a stop is their own doing: neither is news.
+    // `actionable` is safe because every other failure this call can produce
+    // is an AI/ProviderError kind (see ai/errors.js), never the LatexError
+    // vocabulary notifyError otherwise has to assume nothing about.
+    if (err.status !== 409 && err.kind !== 'stopped') notifyError(err, label || 'AI action', { actionable: true });
     throw err;
   }
 }

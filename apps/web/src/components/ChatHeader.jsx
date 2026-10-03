@@ -1,59 +1,80 @@
-import ChatAvatar from './ChatAvatar.jsx';
-import IconButton from './ui/IconButton.jsx';
-import { CloseIcon, HistoryIcon, PinIcon, PinOffIcon, PlusIcon } from './Icon.jsx';
+import { usePopover } from '../lib/usePopover.js';
+import { chatHeading } from '../lib/chatNames.js';
+import { Caret } from './Dropdown.jsx';
+import ChatMark from './ChatMark.jsx';
+import ChatSignal from './ChatSignal.jsx';
+import ChatSwitcherMenu from './ChatSwitcherMenu.jsx';
+import ChatHeaderButtons from './ChatHeaderButtons.jsx';
 
-// Which CLI will answer, said before anything is asked: the person pays for
-// it on their own subscription, so it is named rather than left as "AI".
-// The dot is its state: found, still looking, or nothing that can answer.
+// Which CLI will answer: the person pays for it on their own subscription,
+// so it is named rather than left as "AI". The dot by the chat's kind is
+// its state, found, still looking, or nothing that can answer, with the
+// words in its tooltip and for a screen reader.
 function status(providers, answerer) {
-  // "on this PC" rather than "on this computer": the panel's header is narrow,
-  // and the longer words were cut off after the CLI's name.
+  // "on this PC" rather than "on this computer": the panel's header is narrow.
   if (answerer) return { text: `${answerer.label} on this PC`, dot: 'bg-applied' };
   if (!Array.isArray(providers)) return { text: 'Looking for an AI CLI on this computer...', dot: 'bg-muted breathe' };
   return { text: 'No AI CLI found on this computer', dot: 'bg-ember' };
 }
 
-// A button that is on (History open, panel pinned) is a saffron wash that
-// stays saffron under the pointer, a shade deeper, rather than turning to
-// the grey every other icon button takes.
-const ON = 'bg-primary/10 text-primary hover:bg-primary/15';
-
-function HeaderButton({ label, active = false, onClick, children }) {
-  return (
-    <IconButton label={label} title={label} size="md" square onClick={onClick} className={active ? ON : ''}>
-      {children}
-    </IconButton>
-  );
-}
-
-// The panel's title row: what it is and who answers, its history (past
-// conversations and what the AI made, see ChatHistory.jsx), a fresh start,
-// where it sits (only on a window wide enough to have a choice, and not on
-// a page that docks it, see useChatLayout.js), and the way out.
-export default function ChatHeader({ providers, answerer, layout, history = false, onHistory, onNew, onClose }) {
+// The panel's title row (picked from rendered option A): the chat's name is
+// a menu of every chat (see ChatSwitcherMenu.jsx), with a dot or a ring by
+// it while another chat has an answer waiting or running (`signal`). Under
+// it, when the page has a job or a document open whose chat is not the one
+// on screen, a link to that chat (`other`).
+export default function ChatHeader({ view, providers, answerer, signal, switcher, active, layout, onNew, onClose }) {
+  const { open, setOpen, ref } = usePopover();
+  const { title, about } = chatHeading(view);
   const now = status(providers, answerer);
+  const close = (act) => (...args) => {
+    setOpen(false);
+    act(...args);
+  };
+
   return (
-    <div className="flex shrink-0 items-center gap-3 border-b border-line px-4 py-3">
-      <ChatAvatar size="md" />
-      <div className="min-w-0 flex-1">
-        <h2 className="font-display text-md font-bold leading-tight text-ink">Ask AI</h2>
-        <p className="flex items-center gap-1.5 text-xs text-muted">
-          <span aria-hidden="true" className={`h-1.5 w-1.5 shrink-0 rounded-full ${now.dot}`} />
-          <span className="truncate">{now.text}</span>
-        </p>
+    <div ref={ref} className="relative shrink-0 border-b border-line">
+      <div className="flex items-center gap-3 px-4 py-3">
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-haspopup="dialog"
+          aria-label={`${title}, switch chats`}
+          onClick={() => setOpen(!open)}
+          className="flex min-w-0 flex-1 items-center gap-3 rounded-xl text-left"
+        >
+          <ChatMark view={view} />
+          <span className="min-w-0 flex-1">
+            <span className="flex min-w-0 items-center gap-1.5 text-ink">
+              <span className="truncate font-display text-md font-bold leading-tight" title={title}>{title}</span>
+              <Caret open={open} />
+              <ChatSignal mark={signal} label={signal === 'busy' ? 'Another chat is running' : 'Another chat has a new answer'} />
+            </span>
+            <span className="flex items-center gap-1.5 text-xs text-muted">
+              <span aria-hidden="true" title={now.text} className={`h-1.5 w-1.5 shrink-0 rounded-full ${now.dot}`} />
+              <span className="truncate">{about}</span>
+              <span className="sr-only">{now.text}</span>
+            </span>
+          </span>
+        </button>
+        <ChatHeaderButtons active={active} layout={layout} onNew={close(onNew)} onClose={onClose} />
       </div>
-      <div className="flex shrink-0 items-center gap-0.5">
-        {onHistory && (
-          <HeaderButton label={history ? 'Close history' : 'History'} active={history} onClick={onHistory}><HistoryIcon size={16} /></HeaderButton>
-        )}
-        <HeaderButton label="New chat" onClick={onNew}><PlusIcon size={16} /></HeaderButton>
-        {layout.wide && !layout.docked && (
-          <HeaderButton label={layout.pinned ? 'Float over the page' : 'Pin to the side'} active={layout.pinned} onClick={layout.togglePinned}>
-            {layout.pinned ? <PinOffIcon size={16} /> : <PinIcon size={16} />}
-          </HeaderButton>
-        )}
-        <HeaderButton label="Close the chat" onClick={onClose}><CloseIcon size={16} /></HeaderButton>
-      </div>
+      {active.other && (
+        <div className="-mt-1.5 px-4 pb-2.5 pl-16">
+          <button type="button" onClick={() => active.pick(active.other.chatId)} className="link text-xs">
+            Open {active.other.item.company || active.other.item.title || active.other.item.name}&apos;s chat
+          </button>
+        </div>
+      )}
+      {open && (
+        <ChatSwitcherMenu
+          {...switcher}
+          current={view}
+          onPick={close(switcher.onPick)}
+          onNew={close(onNew)}
+          onClear={close(switcher.onClear)}
+          onDelete={close(switcher.onDelete)}
+        />
+      )}
     </div>
   );
 }

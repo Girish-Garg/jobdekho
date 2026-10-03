@@ -1,5 +1,6 @@
 import { relativeDay } from '../lib/time.js';
 import Eyebrow from './ui/Eyebrow.jsx';
+import MadeByAiMenu from './MadeByAiMenu.jsx';
 import { DocumentIcon, MailIcon } from './Icon.jsx';
 
 const GROUPS = [
@@ -50,8 +51,9 @@ function Row({ doc, here, unsaved, onSelect }) {
 }
 
 // The left column of the Resume workspace: every document the person has,
-// resumes first, newest first within each, and the way to start another.
-// `unsaved` holds the ids of the documents with unsaved edits.
+// resumes first, newest first within each, the way to start another, and
+// at its foot everything the AI made (see MadeByAiMenu.jsx). `unsaved`
+// holds the ids of the documents with unsaved edits.
 export default function DocumentList({ documents, unsaved = [], selectedId, onSelect, newMenu }) {
   return (
     <aside aria-label="Documents" className="flex max-h-56 min-h-0 w-full shrink-0 flex-col border-b border-line bg-panel md:max-h-none md:w-64 md:border-b-0 md:border-r">
@@ -75,6 +77,9 @@ export default function DocumentList({ documents, unsaved = [], selectedId, onSe
           );
         })}
       </nav>
+      <div className="shrink-0 border-t border-line p-2">
+        <MadeByAiMenu />
+      </div>
     </aside>
   );
 }

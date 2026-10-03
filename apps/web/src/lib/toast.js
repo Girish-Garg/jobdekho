@@ -14,9 +14,11 @@ export const KINDS = ['error', 'done'];
 let nextId = 0;
 
 // `detail` is shown as written: the server's sentences are meant to be read
-// by the person, not summarised (see apps/server/src/ai/errors.js).
-export function notify({ title, detail = '', kind = 'error', action = null }) {
-  const notice = { id: (nextId += 1), title, detail, kind: KINDS.includes(kind) ? kind : 'error', action };
+// by the person, not summarised (see apps/server/src/ai/errors.js). `link`
+// is { label, onClick }, a way to what the notice is about: an answer that
+// landed in a chat nobody had open names that chat and opens it.
+export function notify({ title, detail = '', kind = 'error', action = null, link = null }) {
+  const notice = { id: (nextId += 1), title, detail, kind: KINDS.includes(kind) ? kind : 'error', action, link };
   globalThis.dispatchEvent?.(new CustomEvent(EVENT, { detail: notice }));
   return notice;
 }

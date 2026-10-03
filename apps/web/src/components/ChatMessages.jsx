@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
-import ChatTurn from './ChatTurn.jsx';
-import ChatResultEntry from './ChatResultEntry.jsx';
+import ChatEntry from './ChatEntry.jsx';
 import ChatEmptyState from './ChatEmptyState.jsx';
 import ChatPending from './ChatPending.jsx';
 import ChatMissed from './ChatMissed.jsx';
@@ -10,18 +9,18 @@ import ChatMissed from './ChatMissed.jsx';
 const FOLLOW_PX = 120;
 
 // The scrolling middle of the panel, and the only part of it that scrolls:
-// the header above and the box below stay put. Every question and every
-// action answer so far, oldest on top like a transcript (see
-// lib/conversation.js), then a question that got no answer (see
-// ChatMissed.jsx), then the call in flight.
+// the header above and the box below stay put. Everything asked in this
+// chat so far, oldest on top like a transcript (see lib/conversation.js),
+// then a call that got no answer (see ChatMissed.jsx), then the call
+// running in this chat, if it is this one. A chat past its keep says so at
+// its top (`dropped`), never silently.
 //
 // Where it scrolls to: the newest entry as it arrives, except that a card is
 // read from its top, so the newest card is brought to its top instead; and a
-// chat opening on a job lands on that job's newest card, which is how an
-// answer paid for days ago is seen rather than buried above today's turns.
-// An answer being written is followed down only while the reader is at the
-// end, never pulled from under someone who scrolled up.
-export default function ChatMessages({ entries, call, missed = null, onMissed = {}, empty, card, onApply, onOpenRef }) {
+// chat opening on a job lands on that job's newest card. An answer being
+// written is followed down only while the reader is at the end, never
+// pulled from under someone who scrolled up.
+export default function ChatMessages({ entries, jobs = [], call, missed = null, dropped = false, empty, card, links }) {
   const listRef = useRef(null);
   const endRef = useRef(null);
   const lastKey = entries.at(-1)?.key;
@@ -47,11 +46,10 @@ export default function ChatMessages({ entries, call, missed = null, onMissed = 
   return (
     <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]">
       <div className="mx-auto flex min-h-full w-full max-w-3xl flex-col gap-6 px-4 py-5">
+        {dropped && <p className="text-center text-xs text-muted">Older messages were removed</p>}
         {!entries.length && !call && !missed && <ChatEmptyState {...empty} />}
-        {entries.map((entry) => (entry.type === 'turn'
-          ? <ChatTurn key={entry.key} turn={entry.turn} providers={card.providers} onApply={onApply} onOpenRef={onOpenRef} />
-          : <ChatResultEntry key={entry.key} entry={entry} card={card} />))}
-        {missed && !call && <ChatMissed missed={missed} {...onMissed} />}
+        {entries.map((entry) => <ChatEntry key={entry.key} entry={entry} jobs={jobs} card={card} links={links} />)}
+        {missed && !call && <ChatMissed {...missed} />}
         {call && <ChatPending call={call} providers={card.providers} />}
         <div ref={endRef} />
       </div>

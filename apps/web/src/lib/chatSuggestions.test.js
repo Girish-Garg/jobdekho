@@ -28,6 +28,11 @@ describe('chatSuggestions', () => {
     expect(chatSuggestions({ page: 'settings' }).title).toBe('Ask about JobDekho');
   });
 
+  it('asks a comparison about its jobs side by side, and a document\'s chat for changes to it', () => {
+    expect(chatSuggestions({ kind: 'compare' }).title).toBe('Compare these jobs');
+    expect(chatSuggestions({ page: 'postings', kind: 'document' }).questions).toContain('Make it fit one page');
+  });
+
   it('falls back to the feed for a page it does not know', () => {
     expect(chatSuggestions({ page: 'somewhere' }).title).toBe('Ask about your feed');
   });

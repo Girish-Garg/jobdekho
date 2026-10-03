@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { describeMade, scopeFor, isJobItem } from './madeByAi.js';
+import { describeMade, isJobItem } from './madeByAi.js';
 
 const today = new Date().toISOString();
 const JOB = { title: 'Backend Engineer', company: 'Razorpay' };
@@ -18,17 +18,14 @@ describe('describeMade', () => {
     expect(describeMade({ kind: 'document', at: today, name: 'CV', documentKind: 'resume', job: null }).detail).toBe('Changed from the chat, today');
   });
 
-  it('names a profile change by its summary and the conversation it came from', () => {
-    expect(describeMade({ kind: 'profile', at: today, summary: 'Add Go', current: true }))
-      .toEqual({ word: 'Profile change', title: 'Add Go', detail: 'In this conversation, today' });
-    expect(describeMade({ kind: 'profile', at: today, summary: 'Add Go', current: false }).detail).toBe('In an earlier conversation, today');
+  it('names a profile change by its summary, applied from a chat', () => {
+    expect(describeMade({ kind: 'profile', at: today, summary: 'Add Go', chatId: 'c1' }))
+      .toEqual({ word: 'Profile change', title: 'Add Go', detail: 'Applied from a chat, today' });
   });
 });
 
-describe('scopeFor and isJobItem', () => {
-  it('shape a job-bound item as the chat\'s scope, gone or not', () => {
-    expect(scopeFor({ postingId: 'j1', job: JOB })).toEqual({ id: 'j1', title: 'Backend Engineer', company: 'Razorpay' });
-    expect(scopeFor({ postingId: 'x', job: null })).toEqual({ id: 'x', title: 'A job JobDekho no longer lists', company: '' });
+describe('isJobItem', () => {
+  it('tells what was made for a job from what was not', () => {
     expect(isJobItem({ kind: 'cover-letter' })).toBe(true);
     expect(isJobItem({ kind: 'document' })).toBe(false);
   });

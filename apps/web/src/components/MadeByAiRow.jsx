@@ -20,23 +20,19 @@ const lookOf = (item) => {
   return LOOK[item.kind] ?? LOOK.profile;
 };
 
-function Links({ item, links, onOpenConversation }) {
+// Where each row leads: a job's results to that job's own chat, where they
+// show, and a document to itself. A profile change to the chat it was
+// offered in, when that chat is still there.
+function Links({ item, links }) {
   const link = (label, act) => <Button variant="quiet" size="sm" className="px-2.5" onClick={act}>{label}</Button>;
-  if (isJobItem(item)) {
-    return (
-      <>
-        {link('Show in the chat', () => links.onShowCards(item))}
-        {item.job && link('Open the job', () => links.onOpenRef(item.postingId))}
-      </>
-    );
-  }
+  if (isJobItem(item)) return link('Show in the chat', () => links.onShowInChat(item));
   if (item.kind === 'document') return link('Open it', () => links.onOpenDocument(item.documentId));
-  return link('See where it was made', () => onOpenConversation(item));
+  return item.chatId ? link('Show in the chat', () => links.onOpenChat(item.chatId)) : null;
 }
 
 // One thing the AI made: what it is, what it is called and what it belongs
 // to, and the way back to it.
-export default function MadeByAiRow({ item, links, onOpenConversation }) {
+export default function MadeByAiRow({ item, links }) {
   const { word, title, detail } = describeMade(item);
   const { Icon, tone } = lookOf(item);
   return (
@@ -49,7 +45,7 @@ export default function MadeByAiRow({ item, links, onOpenConversation }) {
         <p className="truncate text-sm font-semibold text-ink" title={title}>{title}</p>
         <p className="truncate text-xs text-muted">{detail}</p>
         <div className="mt-2 flex flex-wrap gap-1.5">
-          <Links item={item} links={links} onOpenConversation={onOpenConversation} />
+          <Links item={item} links={links} />
         </div>
       </div>
     </li>

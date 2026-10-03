@@ -93,6 +93,29 @@ describe('ChatInput', () => {
     expect(onUnqueue).toHaveBeenCalled();
   });
 
+  // Another chat's answer runs: nothing can be sent, but typing goes on.
+  it('holds Send back while held, and keeps what is typed', () => {
+    const onSend = vi.fn();
+    render(<ChatInput busy={false} held onSend={onSend} />);
+    const box = screen.getByPlaceholderText(PLACEHOLDER);
+    fireEvent.change(box, { target: { value: 'typed meanwhile' } });
+    expect(screen.getByRole('button', { name: 'Ask' })).toBeDisabled();
+    fireEvent.keyDown(box, { key: 'Enter' });
+    expect(onSend).not.toHaveBeenCalled();
+    expect(box).toHaveValue('typed meanwhile');
+  });
+
+  it('shows and changes the text it is handed, for a chat that keeps its own draft', () => {
+    const onValue = vi.fn();
+    const { rerender } = render(<ChatInput busy={false} onSend={() => {}} value="kept" onValue={onValue} />);
+    const box = screen.getByPlaceholderText(PLACEHOLDER);
+    expect(box).toHaveValue('kept');
+    fireEvent.change(box, { target: { value: 'kept and more' } });
+    expect(onValue).toHaveBeenCalledWith('kept and more');
+    rerender(<ChatInput busy={false} onSend={() => {}} value="another chat's" onValue={onValue} />);
+    expect(box).toHaveValue('another chat\'s');
+  });
+
   it('says how to send, and how to write a second line', () => {
     render(<ChatInput busy={false} onSend={() => {}} />);
     expect(screen.getByText('Enter sends, Shift+Enter for a new line.')).toBeInTheDocument();
