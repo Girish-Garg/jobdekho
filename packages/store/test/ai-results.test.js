@@ -10,7 +10,7 @@ let store
 beforeEach(() => { dir = mkdtempSync(join(tmpdir(), 'jobdekho-store-')); store = openStore(dir) })
 afterEach(() => { rmSync(dir, { recursive: true, force: true }) })
 
-const CHECK = { postingId: 'p1', kind: 'fake-check', provider: 'claude', result: { verdict: 'genuine' } }
+const CHECK = { postingId: 'p1', kind: 'fake-check', provider: 'claude', result: { verdict: 'genuine' }, chatId: 'chat-1' }
 
 describe('ai results', () => {
   it('is null and empty before anything was saved, and writes no file for that', async () => {
@@ -23,8 +23,8 @@ describe('ai results', () => {
     const saved = await setAiResult(store, 'me', CHECK)
     expect(saved).toEqual({
       kind: 'fake-check', postingId: 'p1', provider: 'claude', createdAt: saved.createdAt,
-      result: { verdict: 'genuine' }, dropped: false,
-      versions: [{ instruction: '', provider: 'claude', createdAt: saved.createdAt, result: { verdict: 'genuine' } }],
+      result: { verdict: 'genuine' }, chatId: 'chat-1', dropped: false,
+      versions: [{ instruction: '', provider: 'claude', createdAt: saved.createdAt, result: { verdict: 'genuine' }, chatId: 'chat-1' }],
     })
     expect(saved.createdAt).toMatch(/Z$/)
     expect(await getAiResult(store, 'me', 'p1', 'fake-check')).toEqual(saved)
@@ -81,8 +81,17 @@ describe('ai results', () => {
     const refined = await setAiResult(store, 'me', { ...CHECK, result: { verdict: 'unclear' }, instruction: 'shorter' })
     expect(refined.versions).toEqual([
       { instruction: '', provider: 'claude', createdAt: '2026-09-01T00:00:00.000Z', result: { verdict: 'genuine' } },
-      { instruction: 'shorter', provider: 'claude', createdAt: refined.createdAt, result: { verdict: 'unclear' } },
+      { instruction: 'shorter', provider: 'claude', createdAt: refined.createdAt, result: { verdict: 'unclear' }, chatId: 'chat-1' },
     ])
+  })
+
+  // Each version shows only in the chat it was asked in (see chats.js).
+  it('records the chat each version was asked in, and mirrors the newest on the record', async () => {
+    await setAiResult(store, 'me', CHECK)
+    const moved = await setAiResult(store, 'me', { ...CHECK, chatId: 'chat-2' })
+    expect(moved.versions.map((v) => v.chatId)).toEqual(['chat-1', 'chat-2'])
+    expect(moved.chatId).toBe('chat-2')
+    expect((await setAiResult(store, 'me', { ...CHECK, chatId: undefined })).versions.at(-1).chatId).toBeNull()
   })
 
   it('lists every kind saved for one posting and nothing from another', async () => {

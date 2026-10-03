@@ -33,7 +33,7 @@ const MARKERS = [OPEN_POSTING, CLOSE_POSTING, OPEN_RECORD, CLOSE_RECORD]
 
 // Past this a description is boilerplate; a career record this long holds
 // many years of entries and the tail is the least relevant part.
-const MAX_DESCRIPTION = 6000
+export const MAX_DESCRIPTION = 6000
 const MAX_RECORD = 16000
 
 // Either text could carry a marker that closes its own fence early, or opens

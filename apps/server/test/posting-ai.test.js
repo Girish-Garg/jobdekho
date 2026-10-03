@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { buildApp } from '@jobdekho/server/app.js'
+import { memoryChatStore } from './fixtures/chat-store.js'
 import { readNdjson, NDJSON_TYPE } from '@jobdekho/server/ai/events.js'
 import { CLAUDE } from '@jobdekho/server/ai/providers.js'
 
@@ -45,6 +46,7 @@ const REPLY = envelope(JSON.stringify({ verdict: 'genuine', stillOpen: true, sum
 async function makeApp(store, cli = NO_CLI) {
   const app = buildApp({ config, userStore: { upsertUser: vi.fn(), getUserById: vi.fn() }, fetchProfile: vi.fn(), dashboardStore: store })
   app.decorate('cli', cli)
+  app.decorate('chatStore', memoryChatStore())
   await app.ready()
   const cookie = `session=${app.jwt.sign({ sub: 'u1', email: 'a@b.c', name: 'A', avatarUrl: null })}`
   return { app, cookie }
@@ -113,7 +115,7 @@ describe('POST /api/postings/:id/ai/:kind', () => {
     expect(call.timeoutMs).toBe(300000)
     expect(call.input).toContain('Build the board with React.')
     expect(store.setAiResult).toHaveBeenCalledWith('u1', {
-      kind: 'fake-check', postingId: 'p1', provider: 'claude', instruction: '',
+      kind: 'fake-check', postingId: 'p1', provider: 'claude', instruction: '', chatId: expect.any(String),
       result: { verdict: 'genuine', stillOpen: true, summary: 'Acme is real.', checks: [], redFlags: [] },
     })
     expect(res.json()).toMatchObject({ kind: 'fake-check', postingId: 'p1', createdAt: '2026-09-13T00:00:00.000Z' })
@@ -195,7 +197,8 @@ describe('POST /api/postings/:id/ai/:kind as NDJSON', () => {
     expect(streamed.headers['content-type']).toMatch(/application\/x-ndjson/)
     const { events, result } = readNdjson(streamed.body)
     expect(events.map((e) => e.event === 'start' ? 'start' : e.stage)).toEqual(['start', 'send', 'reply'])
-    expect(result).toEqual(plain.json())
+    // Two apps, so two job chats, each with an id of its own.
+    expect({ ...result, chatId: 'the job chat' }).toEqual({ ...plain.json(), chatId: 'the job chat' })
   })
 
   it('reports a failure as a last line with error and kind, under a 200', async () => {

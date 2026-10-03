@@ -1,52 +1,31 @@
 import { listDocuments } from '@jobdekho/store/documents.js'
-import { readDocument } from '../documents/read.js'
-import { textChangedAt } from '@jobdekho/store/document-versions.js'
 import { locatePdflatex } from '../resume/locate-latex.js'
-import { trimOpenPosting } from './postings-summary.js'
 import { savedJobs } from './saved-jobs.js'
 
 // What the chat reads on the pages other than the feed, each from the store
-// alone: the client says which page and which document, never what they
-// hold. `record` is the stored profile (null before there is one); the
-// prompt builders choose what of it the model sees (see profile-view.js).
+// alone: the client says which page, never what it holds. `record` is the
+// stored profile (null before there is one); the prompt builders choose what
+// of it the model sees (see profile-view.js). The documents and jobs a chat
+// holds come with it on every page (see chat-items-context.js).
 
 // Enough of an uploaded resume for "add the projects from my resume", well
 // short of a prompt that is mostly an old PDF.
 const MAX_RESUME_TEXT = 6000
-
-// A resume or a letter is a few thousand characters. A source past this is
-// shown cut, and a cut source is never changed (see document-proposal.js):
-// neither a rewrite nor an edit could be checked against the whole of it.
-const MAX_DOCUMENT = 40000
 
 export async function profilePageContext(dashboard, userId) {
   const [record, resumeText] = await Promise.all([dashboard.getProfile(userId), dashboard.getResumeText(userId)])
   return { record, resumeText: resumeText ? String(resumeText).slice(0, MAX_RESUME_TEXT) : null }
 }
 
-function openDocument(doc) {
-  const truncated = doc.tex.length > MAX_DOCUMENT
-  return {
-    id: doc.id, name: doc.name, kind: doc.kind, truncated, baseAt: textChangedAt(doc),
-    tex: truncated ? doc.tex.slice(0, MAX_DOCUMENT) : doc.tex,
-  }
-}
-
-// The open document's job, when it was made for one, so "fit this more to
-// the job" can be answered. It is scraped text and is fenced as such (see
-// prompt-pages.js); the LaTeX guard and the fact flags are what stand
-// between whatever it says and the document the person applies. The jobs
-// they saved or applied to come named only (see saved-jobs.js).
-export async function resumePageContext(dashboard, documents, userId, documentId) {
+// The person's documents by name, so "make a new one like my startup
+// resume" knows what there is, and the jobs they saved or applied to, named
+// only (see saved-jobs.js). The documents' own text comes with the chat.
+export async function resumePageContext(dashboard, documents, userId) {
   const record = await dashboard.getProfile(userId)
   const list = await listDocuments(documents, userId)
-  const doc = typeof documentId === 'string' && documentId ? await readDocument(documents, userId, documentId) : null
-  const posting = doc?.postingId ? trimOpenPosting(await dashboard.getPosting(userId, doc.postingId)) : null
   return {
     record,
     documents: list.map(({ id, name, kind, updatedAt, postingId }) => ({ id, name, kind, updatedAt, postingId })),
-    document: doc ? openDocument(doc) : null,
-    posting,
     jobs: await savedJobs(dashboard, userId, list),
   }
 }

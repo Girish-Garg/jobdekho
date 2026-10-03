@@ -3,6 +3,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { buildApp } from '@jobdekho/server/app.js'
+import { memoryChatStore } from './fixtures/chat-store.js'
 import { CLAUDE, AGY } from '@jobdekho/server/ai/providers.js'
 import { encodeAgyInput } from '@jobdekho/server/ai/agy.js'
 import { agentFiles } from '@jobdekho/server/ai/agy-agent.js'
@@ -66,6 +67,7 @@ const AGY_PROFILE = agyReply('{"skills":["node"],"titles":["backend"],"locations
 async function makeApp(store, cli) {
   const app = buildApp({ config, userStore: { upsertUser: vi.fn(), getUserById: vi.fn() }, fetchProfile: vi.fn(), dashboardStore: store })
   app.decorate('cli', cli)
+  app.decorate('chatStore', memoryChatStore())
   await app.ready()
   const cookie = `session=${app.jwt.sign({ sub: 'u1', email: 'a@b.c', name: 'A', avatarUrl: null })}`
   return { app, cookie }
@@ -102,7 +104,7 @@ describe('choosing the CLI for a posting action', () => {
     expect(line.message.content[0].text).toContain('JANE DOE RESUME')
     expect(line.message.content[0].text).toContain('Build the board with React')
     expect(call.input).toBe(encodeAgyInput(line.message.content[0].text))
-    expect(store.setAiResult).toHaveBeenCalledWith('u1', { kind: 'cover-letter', postingId: 'p1', provider: 'agy', result: LETTER, instruction: '' })
+    expect(store.setAiResult).toHaveBeenCalledWith('u1', { kind: 'cover-letter', postingId: 'p1', provider: 'agy', result: LETTER, instruction: '', chatId: expect.any(String) })
     expect(res.json()).toMatchObject({ kind: 'cover-letter', provider: 'agy', createdAt: '2026-09-13T00:00:00.000Z' })
   })
 

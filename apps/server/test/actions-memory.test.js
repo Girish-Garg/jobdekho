@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { buildApp } from '@jobdekho/server/app.js'
+import { memoryChatStore } from './fixtures/chat-store.js'
 import { actionMemory, memoryNote } from '@jobdekho/server/actions/memory-note.js'
 import { buildResumeTailorPrompt } from '@jobdekho/server/actions/resume-tailor-prompt.js'
 import { buildResumeTailorRefinePrompt } from '@jobdekho/server/actions/resume-tailor-refine-prompt.js'
@@ -80,6 +81,7 @@ describe('the posting AI route', () => {
     const run = vi.fn(async () => ({ stdout: JSON.stringify({ type: 'result', result: JSON.stringify(REPLIES[kind]) }), stderr: '', code: 0 }))
     const app = buildApp({ config: { sessionSecret: 'test-secret' }, dashboardStore: store() })
     app.decorate('cli', { locate: () => '/usr/local/bin/claude', run, scratch: (work) => work('/scratch') })
+    app.decorate('chatStore', memoryChatStore())
     await app.ready()
     const cookie = `session=${app.jwt.sign({ sub: 'u1', email: 'a@b.c', name: 'A', avatarUrl: null })}`
     const res = await app.inject({ method: 'POST', url: `/api/postings/p1/ai/${kind}`, headers: { cookie } })

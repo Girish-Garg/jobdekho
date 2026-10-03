@@ -77,53 +77,6 @@ describe('assembleChatContext', () => {
     expect(context.top[0]).toMatchObject({ workMode: 'remote', pay: 'Rs 24,00,000 - 45,00,000 /year' })
   })
 
-  it('carries the open posting in full, trimmed, when an id is given', async () => {
-    const open = {
-      id: 'p9', title: 'Staff Engineer', company: 'Acme', location: 'Pune', level: 'staff', workMode: 'remote',
-      stipend: 'Rs 30 LPA', degreeMin: 'bachelors', degreeRequired: true, duration: null, experience: '5+ years',
-      source: 'linkedin', postedAt: '2026-09-01T00:00:00.000Z', status: 'saved', legitimacy: 'high',
-      ghostSignals: [], descriptionText: 'x'.repeat(5000),
-    }
-    const dashboard = fakeDashboard({ open })
-    const context = await assembleChatContext(dashboard, 'u1', { filters: {}, sort: 'newest', openPostingId: 'p9' })
-    expect(dashboard.getPosting).toHaveBeenCalledWith('u1', 'p9')
-    expect(context.open.id).toBe('p9')
-    expect(context.open.description).toHaveLength(4000)
-  })
-
-  it('carries what the actions already said about the scoped posting, newest answer of each', async () => {
-    const open = { id: 'p9', title: 'Staff Engineer', company: 'Acme', ghostSignals: [] }
-    const saved = [
-      { kind: 'fake-check', postingId: 'p9', result: { verdict: 'likely_scam', summary: 'No office.', stillOpen: false, redFlags: ['asks for a fee'] } },
-      { kind: 'cover-letter', postingId: 'p9', result: { letter: 'Dear team,' } },
-      { kind: 'resume-tailor', postingId: 'p9', result: { factCheck: { flags: [{ type: 'number', value: '40%' }] }, coverage: { before: 2, after: 4, total: 6, gained: [] } } },
-    ]
-    const dashboard = fakeDashboard({ open, saved })
-    const context = await assembleChatContext(dashboard, 'u1', { filters: {}, sort: 'match', openPostingId: 'p9' })
-    expect(dashboard.listAiResults).toHaveBeenCalledWith('u1', 'p9')
-    expect(context.openResults).toEqual({
-      'fake-check': { verdict: 'likely_scam', summary: 'No office.', stillOpen: false, redFlags: ['asks for a fee'] },
-      'cover-letter': { letter: 'Dear team,' },
-      'resume-tailor': { thingsToCheck: ['40%'], coverage: { before: 2, after: 4, total: 6 } },
-    })
-  })
-
-  it('says nothing about saved answers when the scoped posting has none, or nothing is scoped', async () => {
-    const scoped = await assembleChatContext(fakeDashboard({ open: { id: 'p9' } }), 'u1', { openPostingId: 'p9' })
-    expect(scoped.openResults).toBeNull()
-    const dashboard = fakeDashboard()
-    const unscoped = await assembleChatContext(dashboard, 'u1', {})
-    expect(unscoped.openResults).toBeNull()
-    expect(dashboard.listAiResults).not.toHaveBeenCalled()
-  })
-
-  it('leaves the open posting null when nothing is open, without asking the store for one', async () => {
-    const dashboard = fakeDashboard()
-    const context = await assembleChatContext(dashboard, 'u1', { filters: {}, sort: 'newest' })
-    expect(dashboard.getPosting).not.toHaveBeenCalled()
-    expect(context.open).toBeNull()
-  })
-
   it('summarises the career record rather than sending it whole', async () => {
     const profile = {
       skills: ['react', 'node'], titles: ['Frontend Engineer'], years: 3, degree: 'bachelors',
@@ -159,7 +112,7 @@ describe('assembleChatContext', () => {
     expect(context.blocked).toEqual([])
   })
 
-  it('never lets the request body stand in for the store: filters, sort and an id only say where to look', async () => {
+  it('never lets the request body stand in for the store: filters and sort only say where to look', async () => {
     const dashboard = fakeDashboard({ postings: [row(1)] })
     // A field like `postings` the way a tampered client might send is simply
     // not part of the options this function destructures, so it is never read.
@@ -170,8 +123,9 @@ describe('assembleChatContext', () => {
 })
 
 // The store already leaves a blocked company out of every list read here;
-// what is left is to name the blocked ones, and to keep them out of the two
-// places a posting arrives by id or by name.
+// what is left is to name the blocked ones, and to keep them out of the
+// companies a question names. A chat's own jobs are kept out of it in
+// chat-items-context.js.
 describe('assembleChatContext and blocked companies', () => {
   const withBlocked = (dashboard, entries) => Object.assign(dashboard, { listBlockedCompanies: vi.fn().mockResolvedValue(entries) })
   const ACME = { key: 'acmefoundation', name: 'Acme Foundation' }
@@ -189,14 +143,5 @@ describe('assembleChatContext and blocked companies', () => {
     const context = await assembleChatContext(dashboard, 'u1', { filters: {}, sort: 'match', question: 'Is Razorpay hiring? And Acme?' })
     expect(context.named.map((n) => n.company)).toEqual(['Acme'])
     expect(dashboard.listPostingsForUser).not.toHaveBeenCalledWith('u1', expect.objectContaining({ q: 'razorpay' }))
-  })
-
-  // A job the chat was scoped to before its company was blocked.
-  it('leaves out an open posting of a blocked company, and its saved answers', async () => {
-    const open = { id: 'p9', title: 'Engineer', company: 'ACME FOUNDATION PVT LTD', ghostSignals: [] }
-    const dashboard = withBlocked(fakeDashboard({ open }), [ACME])
-    const context = await assembleChatContext(dashboard, 'u1', { filters: {}, sort: 'match', openPostingId: 'p9' })
-    expect(context.open).toBeNull()
-    expect(dashboard.listAiResults).not.toHaveBeenCalled()
   })
 })

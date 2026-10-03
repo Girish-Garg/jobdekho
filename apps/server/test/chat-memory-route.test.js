@@ -41,8 +41,10 @@ async function setup(first, found) {
   app.decorate('documentStore', store)
   await app.ready()
   const cookie = `session=${app.jwt.sign({ sub: 'u1', email: 'a@b.c', name: 'A', avatarUrl: null })}`
-  const ask = (message, page) => app.inject({ method: 'POST', url: '/api/chat', payload: JSON.stringify({ message, page }), headers: { cookie, 'content-type': 'application/json' } })
-  const history = async () => (await app.inject({ method: 'GET', url: '/api/chat/history', headers: { cookie } })).json().turns
+  const headers = { cookie, 'content-type': 'application/json' }
+  const { chat } = (await app.inject({ method: 'POST', url: '/api/chats', payload: JSON.stringify({ kind: 'general' }), headers })).json()
+  const ask = (message, page) => app.inject({ method: 'POST', url: `/api/chats/${chat.id}/messages`, payload: JSON.stringify({ message, page }), headers })
+  const history = async () => (await app.inject({ method: 'GET', url: `/api/chats/${chat.id}/messages`, headers: { cookie } })).json().turns
   return { store, cli, ask, history }
 }
 

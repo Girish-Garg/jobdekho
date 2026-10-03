@@ -21,7 +21,7 @@ describe('validateRefs', () => {
   })
 
   it('accepts the scoped posting even when it is not among the top rows, with no fit to show', () => {
-    expect(validateRefs(['p9'], { top, open })).toEqual([{ id: 'p9', title: 'Staff Engineer', company: 'Initech', fit: null }])
+    expect(validateRefs(['p9'], { top, chatJobs: [open, { id: 'gone', listed: false }] })).toEqual([{ id: 'p9', title: 'Staff Engineer', company: 'Initech', fit: null }])
   })
 
   it('never takes the words from the model: a ref is only an id', () => {

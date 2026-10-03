@@ -2,6 +2,7 @@ import { fencedFeed } from './prompt-postings.js'
 import { profileBlock } from './prompt-profile.js'
 import { historyBlock } from './prompt-history.js'
 import { buildPagePrompt } from './prompt-pages.js'
+import { documentsPrompt } from './prompt-items.js'
 import { memoryPrompt } from './memory-prompt.js'
 import { GRADE_BANDS } from '@jobdekho/core/grade.js'
 
@@ -13,7 +14,7 @@ const FIT_FLOORS = GRADE_BANDS.map(([grade, floor], i) => `${floor} for ${i === 
 // This call sees the person's career record, so like cover-letter.js and
 // resume-tailor.js it runs with no tools at all (see apps/server/src/chat/
 // run.js): the model only reads this prompt and answers.
-const INSTRUCTION = `You are the assistant built into JobDekho, a job search tool for a seeker in India. Answer the question below about the job feed and career record shown further down. Use only what is given here; never invent a posting, a number or a fact that is not present. "openPosting" is the job the person is asking about when they say "this job"; "openPostingSavedAiAnswers" is what JobDekho's own checks already said about it (whether it is real, the cover letter, the tailored resume), so answer from those rather than guessing.
+const INSTRUCTION = `You are the assistant built into JobDekho, a job search tool for a seeker in India. Answer the question below about the jobs and the career record shown further down. Use only what is given here; never invent a posting, a number or a fact that is not present. "chatJobs" are the jobs this chat is about: when there is one, it is the job the person means by "this job". Each carries "savedAiAnswers", what JobDekho's own checks already said about it (whether it is real, the cover letter, the tailored resume), so answer from those rather than guessing; one with "listed": false is one JobDekho no longer lists. "shownOnScreen", "matchingCount" and "sort", when they are there, are the feed the person is looking at.
 
 "companiesTheQuestionNames" holds, for each company the question names, its open JobDekho postings from the whole corpus, not only the screen: "openCount" is how many their boards listed in the last three weeks, "postings" the best-fitting of them. "notSeenRecently" counts postings JobDekho holds that no board has listed for longer, which have most likely closed; those postings carry "notSeenSince", the day they were last seen. Keep the two apart: never count a stale posting as an opening, and say when the only ones JobDekho has are stale. When the person asks whether a company is hiring, or about its jobs, answer from those first and name the postings you mean in "refs". A company the person names that is not listed there, and is not in "blockedCompanies", has no open postings in JobDekho; say so plainly.
 
@@ -32,9 +33,11 @@ A "block" action, {"type":"block","companies":["..."]}, hides every job from tho
 
 `
 
-// The feed's prompt is this one, unchanged; every other page has its own
-// (see prompt-pages.js), built from what that page's context holds.
+// The feed's prompt is this one; every other page has its own (see
+// prompt-pages.js), built from what that page's context holds. A chat that
+// holds documents is also told how to change them.
 export function buildChatPrompt({ message, context, history }) {
   if (context.page && context.page !== 'postings') return buildPagePrompt({ message, context, history })
-  return `${INSTRUCTION}${memoryPrompt(context.memory)}${historyBlock(history)}${profileBlock(context.profile)}${fencedFeed(context)}Question: ${message}\n`
+  return `${INSTRUCTION}${documentsPrompt(context.chatDocuments)}${memoryPrompt(context.memory)}${historyBlock(history, context.itemNames)}`
+    + `${profileBlock(context.profile)}${fencedFeed(context)}Question: ${message}\n`
 }

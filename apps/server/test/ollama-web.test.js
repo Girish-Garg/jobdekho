@@ -8,6 +8,7 @@ import { keepSeenSources } from '@jobdekho/server/ai/ollama-web-sources.js'
 import { callWithFallback } from '@jobdekho/server/ai/fallback.js'
 import { httpJson, isLoopback } from '@jobdekho/server/ai/http-json.js'
 import { buildApp } from '@jobdekho/server/app.js'
+import { memoryChatStore } from './fixtures/chat-store.js'
 
 // Ollama's web search, through the local server's own proxy to ollama.com.
 // Every Ollama here is a fake `http`: nothing reaches a model or the web.
@@ -346,6 +347,7 @@ describe('a preferred Ollama that can search', () => {
     }
     const app = buildApp({ config: { sessionSecret: 's', devUserId: 'local' }, dashboardStore: store })
     app.decorate('cli', { locate: (n) => (n === 'ollama' ? '/bin/ollama' : null), run: vi.fn(), http })
+    app.decorate('chatStore', memoryChatStore())
     await app.ready()
     const res = await app.inject({ method: 'POST', url: '/api/postings/p1/ai/fake-check' })
     expect(res.json()).toMatchObject({ provider: 'ollama', result: { verdict: 'genuine' } })

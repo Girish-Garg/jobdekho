@@ -1,5 +1,5 @@
-// What the AI actions already said about the posting the chat is scoped to,
-// so "is the letter too long?" or "why was it flagged?" can be answered from
+// What the AI actions already said about each job the chat holds, so "is
+// the letter too long?" or "why was it flagged?" can be answered from
 // the answer the person already paid for instead of the chat pretending it
 // has never seen it. Only the newest version of each, trimmed to what a
 // follow-up question needs.

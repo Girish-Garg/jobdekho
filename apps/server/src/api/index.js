@@ -5,8 +5,9 @@ import { aiProviderRoutes } from './ai-provider.js'
 import { profileRoutes } from './profile.js'
 import { postingAiRoutes } from './posting-ai.js'
 import { resumeRoutes } from './resume.js'
-import { chatRoutes } from './chat.js'
+import { chatRoutes } from './chats.js'
 import { chatProposalRoutes } from './chat-proposals.js'
+import { madeByAiRoutes } from './made-by-ai.js'
 import { memoryRoutes } from './memory.js'
 import { documentRoutes } from './documents.js'
 import { documentEditRoutes } from './document-edits.js'
@@ -20,6 +21,7 @@ import { logoRoutes } from './logos.js'
 import { applyRoutes } from './apply.js'
 import { createDetector } from '../ai/detect.js'
 import { createSelector } from '../ai/select.js'
+import { chatDeps } from '../chat/deps.js'
 
 // JobDekho has exactly one local user (see auth/session.js), so the
 // preference select.js honours is always this one person's, read fresh on
@@ -54,6 +56,8 @@ export async function apiRoutes(app) {
   // ready() so no real binary is probed or spawned.
   const detect = createDetector(app.hasDecorator('cli') ? app.cli : {})
   app.decorate('ai', { detect, select: selector(app, detect) })
+  // What the chats and the posting actions share (see chat/deps.js).
+  app.decorate('chats', chatDeps(app))
 
   await app.register(postingsRoutes)
   await app.register(blockedCompanyRoutes)
@@ -64,6 +68,7 @@ export async function apiRoutes(app) {
   await app.register(resumeRoutes)
   await app.register(chatRoutes)
   await app.register(chatProposalRoutes)
+  await app.register(madeByAiRoutes)
   await app.register(memoryRoutes)
   await app.register(documentRoutes)
   await app.register(documentEditRoutes)

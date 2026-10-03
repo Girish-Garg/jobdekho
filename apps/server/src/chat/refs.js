@@ -13,10 +13,10 @@ export function knownRows(context) {
   // So are the openings of a company the question named, looked up across
   // the whole corpus (see question-search.js).
   for (const { postings } of context?.named ?? []) for (const row of postings) if (!rows.has(row.id)) rows.set(row.id, row)
-  // The posting the chat is scoped to is in the prompt as well, often as
-  // "this job", so naming it is as legitimate as naming a row of the feed.
-  const open = context?.open
-  if (open && !rows.has(open.id)) rows.set(open.id, { ...open, fit: null })
+  // The jobs the chat holds are in the prompt as well, often as "this
+  // job", so naming one is as legitimate as naming a row of the feed. One
+  // JobDekho no longer lists may have nothing left to name it by.
+  for (const job of context?.chatJobs ?? []) if (job.title && !rows.has(job.id)) rows.set(job.id, { ...job, fit: null })
   // On the Resume page, the jobs the person saved or applied to (see
   // saved-jobs.js), so "which job?" can be answered with jobs to open.
   for (const job of context?.jobs ?? []) if (!rows.has(job.id)) rows.set(job.id, { ...job, fit: null })

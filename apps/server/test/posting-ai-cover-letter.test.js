@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { buildApp } from '@jobdekho/server/app.js'
+import { memoryChatStore } from './fixtures/chat-store.js'
 import { CLAUDE } from '@jobdekho/server/ai/providers.js'
 
 const config = { googleClientId: 'id', googleClientSecret: 'sec', sessionSecret: 'test-secret', baseUrl: 'http://localhost:3000' }
@@ -48,6 +49,7 @@ const REPLY = envelope(JSON.stringify(REPLY_BODY))
 async function makeApp(store, cli) {
   const app = buildApp({ config, userStore: { upsertUser: vi.fn(), getUserById: vi.fn() }, fetchProfile: vi.fn(), dashboardStore: store })
   app.decorate('cli', cli)
+  app.decorate('chatStore', memoryChatStore())
   await app.ready()
   const cookie = `session=${app.jwt.sign({ sub: 'u1', email: 'a@b.c', name: 'A', avatarUrl: null })}`
   return { app, cookie }
@@ -84,7 +86,7 @@ describe('POST /api/postings/:id/ai/cover-letter', () => {
     expect(call.input).toContain('JANE DOE RESUME')
     expect(call.input).toContain('Build the board with React')
     expect(store.setAiResult).toHaveBeenCalledWith('u1', {
-      kind: 'cover-letter', postingId: 'p1', provider: 'claude', result: REPLY_BODY, instruction: '',
+      kind: 'cover-letter', postingId: 'p1', provider: 'claude', result: REPLY_BODY, instruction: '', chatId: expect.any(String),
     })
     expect(res.json()).toMatchObject({ kind: 'cover-letter', postingId: 'p1', createdAt: '2026-09-13T00:00:00.000Z' })
   })

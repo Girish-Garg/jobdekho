@@ -7,10 +7,10 @@ import { documentViewFor } from '../documents/view.js'
 import { applyProfileOps } from './profile-proposal.js'
 
 // The one place a chat proposal changes anything, and only because the
-// person pressed Apply. The proposal is read by id from the saved
-// conversations, the current one or one filed away (never from the
-// request), checked again against the record or document as it is now,
-// applied whole or not at all, and marked applied.
+// person pressed Apply. The proposal is read by id from the saved chats,
+// whichever one offered it (never from the request), checked again against
+// the record or document as it is now, applied whole or not at all, and
+// marked applied.
 //
 // Resolves { status, body }: 200 with { proposal, profile } or
 // { proposal, document }; 404 for a proposal no saved turn holds; 409 when
@@ -57,7 +57,7 @@ async function applyDocument({ dashboard, documents, userId, proposal }) {
 
 export async function applyProposal({ chat, documents, dashboard, userId, proposalId }) {
   const found = await findProposal(chat, userId, proposalId)
-  if (!found) return refuse(404, 'That change is no longer in the conversation.')
+  if (!found) return refuse(404, 'That change is no longer in any chat.')
   const { proposal } = found
   if (proposal.status === 'applied') return refuse(409, 'This change was already applied.')
   if (proposal.status === 'discarded') return refuse(409, 'This change was discarded. Ask again for a fresh one.')
@@ -80,7 +80,7 @@ export async function applyProposal({ chat, documents, dashboard, userId, propos
 // change cannot be discarded, since it has already happened.
 export async function discardProposal({ chat, userId, proposalId }) {
   const found = await findProposal(chat, userId, proposalId)
-  if (!found) return refuse(404, 'That change is no longer in the conversation.')
+  if (!found) return refuse(404, 'That change is no longer in any chat.')
   if (found.proposal.status === 'applied') return refuse(409, 'This change was already applied, so it cannot be discarded.')
   if (found.proposal.status === 'refused') return refuse(409, CANNOT)
   await updateProposal(chat, userId, proposalId, { status: 'discarded' })

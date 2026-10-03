@@ -1,128 +1,177 @@
-import { describe, it, expect, vi } from 'vitest'
-import { buildApp } from '@jobdekho/server/app.js'
-import { beginQuestion, noteEvent, endQuestion, questionState, answeringIn } from '@jobdekho/server/chat/in-flight.js'
+import { describe, it, expect, afterEach } from 'vitest'
+import { createChat } from '@jobdekho/store/chats.js'
+import {
+  beginCall, busyCall, noteEvent, endCall, failuresOf, forgetFailure, stopCall, stopSignal,
+} from '@jobdekho/server/chat/in-flight.js'
+import { chatApp, heldCli, posting, until, cleanUp } from './fixtures/chat-app.js'
 
-const config = { sessionSecret: 'test-secret' }
-const REPLY = JSON.stringify({ type: 'result', result: JSON.stringify({ reply: 'Two are remote.' }) })
+afterEach(cleanUp)
 
-const dashboard = () => ({
-  listPostingsForUser: vi.fn().mockResolvedValue([]), getPosting: vi.fn().mockResolvedValue(null), setPostingStatus: vi.fn(),
-  listSources: vi.fn().mockResolvedValue([]), listCompanies: vi.fn().mockResolvedValue([]), getProfile: vi.fn().mockResolvedValue(null),
-  getResumeText: vi.fn().mockResolvedValue(null), upsertProfile: vi.fn(), deleteProfile: vi.fn(),
-  getUserFilters: vi.fn().mockResolvedValue(null), upsertUserFilters: vi.fn(), getAiResult: vi.fn().mockResolvedValue(null),
-  setAiResult: vi.fn(), listAiResults: vi.fn().mockResolvedValue([]), getProviderPref: vi.fn().mockResolvedValue(null), upsertProviderPref: vi.fn(),
+const ACME = posting('p1', 'Frontend Intern', 'Acme')
+const VERDICT = { verdict: 'genuine', stillOpen: true, summary: 'Acme is real.', checks: [], redFlags: [] }
+const answers = ({ args }) => (args.includes('WebSearch,WebFetch') ? VERDICT : { reply: 'Two are remote.' })
+
+// Two general chats of the person's own, made in the store directly: asked
+// for through the route, the second "New chat" would open the first one.
+async function twoChats(store, userId) {
+  const one = (await createChat(store, userId, { kind: 'general', title: 'New chat' })).chat
+  const two = (await createChat(store, userId, { kind: 'general', title: 'New chat' })).chat
+  return [one.id, two.id]
+}
+
+describe('the call in flight, after a reload', () => {
+  it('shows the running question in the chat it was asked in, with its CLI, and nothing once it is saved', async () => {
+    const held = heldCli()
+    const chats = await chatApp({ cli: held.cli })
+    const [a] = await twoChats(chats.store, chats.userId)
+    const answered = chats.ask(a, 'which are remote?')
+    await until(() => held.asked() === 1)
+    const { busy } = await chats.pending()
+    expect(busy).toMatchObject({ chatId: a, kind: 'question', label: 'Answering', question: 'which are remote?', provider: 'claude', web: false, title: 'New chat' })
+    expect(Date.parse(busy.startedAt)).not.toBeNaN()
+    held.release()
+    expect((await answered).statusCode).toBe(200)
+    expect(await chats.pending()).toEqual({ busy: null, waiting: {}, failed: {} })
+    expect((await chats.page(a)).turns.map((t) => t.question)).toEqual(['which are remote?'])
+  })
+
+  // A job action used to be invisible to a reloaded page.
+  it('shows a running job action in its job\'s own chat, which the action made', async () => {
+    const held = heldCli(answers)
+    const chats = await chatApp({ cli: held.cli, postings: [ACME] })
+    const checked = chats.action('p1', 'fake-check')
+    await until(() => held.asked() === 1)
+    const { busy } = await chats.pending()
+    expect(busy).toMatchObject({ kind: 'action', label: 'Is it real?', postingId: 'p1', action: 'fake-check', title: 'Frontend Intern · Acme' })
+    const { chat } = (await chats.call('GET', '/api/chats/for-job/p1')).json()
+    expect(chat).toMatchObject({ id: busy.chatId, kind: 'job', busy: true, placeholder: false })
+    held.release()
+    expect((await checked).json()).toMatchObject({ kind: 'fake-check', chatId: busy.chatId })
+    expect((await chats.pending()).busy).toBeNull()
+  })
+
+  it('keeps a failure for the chat it was asked in, never another, until that chat asks again or is cleared', async () => {
+    const held = heldCli(undefined, { failing: true })
+    const chats = await chatApp({ cli: held.cli })
+    const [a, b] = await twoChats(chats.store, chats.userId)
+    const failing = chats.ask(a, 'will fail')
+    await until(() => held.asked() === 1)
+    held.release()
+    expect((await failing).statusCode).toBeGreaterThanOrEqual(400)
+    const { failed } = await chats.pending()
+    expect(Object.keys(failed)).toEqual([a])
+    expect(failed[a]).toMatchObject({ kind: 'question', label: 'Answering', question: 'will fail', error: expect.stringContaining('could not finish') })
+    expect((await chats.pending()).failed[a]).toBeTruthy()
+    expect((await chats.list()).find((c) => c.id === a)).toMatchObject({ failed: true })
+    expect(failed[b]).toBeUndefined()
+    await chats.call('POST', `/api/chats/${a}/clear`)
+    expect((await chats.pending()).failed).toEqual({})
+  })
 })
 
-// The chat route also reads the person's memory, empty here.
-const chatStore = () => {
-  const data = {}
-  const memory = {}
-  return {
-    chatHistory: { get: (id) => data[id] ?? null, set: (id, record) => { data[id] = record } },
-    memory: { get: (id) => memory[id] ?? null, set: (id, record) => { memory[id] = record } },
-  }
-}
-
-// A CLI that answers only when the test lets it, so the question can be
-// looked at while it is still in flight.
-function heldCli(stdout = REPLY, code = 0) {
-  let release
-  const gate = new Promise((resolve) => { release = resolve })
-  const run = vi.fn(async ({ args }) => {
-    if (args[0] === '--version') return { stdout: '2.1.0', stderr: '', code: 0 }
-    await gate
-    return { stdout, stderr: code ? 'boom' : '', code }
-  })
-  const asked = () => run.mock.calls.some(([call]) => call.args[0] !== '--version')
-  return { cli: { locate: () => '/usr/local/bin/claude', run, scratch: (work) => work('/scratch') }, release, asked }
-}
-
-let users = 0
-async function makeApp(cli) {
-  const sub = `pending-user-${users += 1}`
-  const app = buildApp({ config, dashboardStore: dashboard() })
-  app.decorate('cli', cli)
-  app.decorate('chatStore', chatStore())
-  await app.ready()
-  const headers = { cookie: `session=${app.jwt.sign({ sub, email: 'a@b.c', name: 'A', avatarUrl: null })}` }
-  const ask = (message) => app.inject({ method: 'POST', url: '/api/chat', payload: { message, filters: {}, sort: 'match' }, headers })
-  const pending = async () => (await app.inject({ method: 'GET', url: '/api/chat/pending', headers })).json()
-  const history = async () => (await app.inject({ method: 'GET', url: '/api/chat/history', headers })).json()
-  return { ask, pending, history }
-}
-
-const until = async (check) => {
-  for (let i = 0; i < 50 && !(await check()); i += 1) await new Promise((resolve) => setTimeout(resolve, 10))
-}
-
-describe('the question in flight', () => {
-  it('is readable while it is answered, with the CLI answering it, and gone once saved', async () => {
-    const { cli, release, asked } = heldCli()
-    const { ask, pending, history } = await makeApp(cli)
-    const answered = ask('which are remote?')
-    await until(async () => asked())
-    const during = await pending()
-    expect(during.pending).toMatchObject({ question: 'which are remote?', provider: 'claude', web: false })
-    expect(Date.parse(during.pending.startedAt)).not.toBeNaN()
-    release()
-    expect((await answered).statusCode).toBe(200)
-    expect(await pending()).toEqual({ pending: null, failed: null })
-    expect((await history()).turns.map((t) => t.question)).toEqual(['which are remote?'])
-  })
-
-  it('refuses a second question until the first is answered', async () => {
-    const { cli, release, asked } = heldCli()
-    const { ask } = await makeApp(cli)
-    const first = ask('one')
-    await until(async () => asked())
-    const second = await ask('two')
-    expect(second.statusCode).toBe(409)
-    expect(second.json().error).toMatch(/Still answering/)
-    release()
+describe('the follow-up a busy chat keeps waiting', () => {
+  it('is kept on the server, the second replacing the first, and sent in its own chat as soon as the answer lands', async () => {
+    const held = heldCli()
+    const chats = await chatApp({ cli: held.cli })
+    const [a] = await twoChats(chats.store, chats.userId)
+    const first = chats.ask(a, 'which are remote?')
+    await until(() => held.asked() === 1)
+    expect((await chats.call('POST', `/api/chats/${a}/queue`, { message: 'and the pay?' })).json()).toEqual({ waiting: { message: 'and the pay?', at: expect.any(String) } })
+    const queued = await chats.call('POST', `/api/chats/${a}/queue`, { message: 'and the location?' })
+    expect(queued.statusCode).toBe(200)
+    expect((await chats.pending()).waiting).toEqual({ [a]: { message: 'and the location?', at: expect.any(String) } })
+    expect((await chats.list()).find((c) => c.id === a)).toMatchObject({ busy: true, waiting: true })
+    held.release()
     await first
-    expect((await ask('three')).statusCode).not.toBe(409)
+    await until(() => held.asked() === 2)
+    expect((await chats.pending())).toMatchObject({ busy: { chatId: a, question: 'and the location?' }, waiting: {} })
+    held.release()
+    await until(async () => (await chats.page(a)).turns.length === 2)
+    expect((await chats.page(a)).turns.map((t) => t.question)).toEqual(['which are remote?', 'and the location?'])
+    await until(async () => (await chats.pending()).busy === null)
   })
 
-  // A page reloaded mid-answer has no stream to hear the failure on.
-  it('keeps a failure for the next reader, once', async () => {
-    const { cli, release, asked } = heldCli('', 1)
-    const { ask, pending } = await makeApp(cli)
-    const failing = ask('will fail')
-    await until(async () => asked())
-    release()
-    expect((await failing).statusCode).toBeGreaterThanOrEqual(400)
-    const after = await pending()
-    expect(after.pending).toBeNull()
-    expect(after.failed).toMatchObject({ question: 'will fail' })
-    expect(after.failed.error).toBeTruthy()
-    expect((await pending()).failed).toBeNull()
+  it('belongs to the busy chat alone, and goes when cleared with an empty message', async () => {
+    const held = heldCli()
+    const chats = await chatApp({ cli: held.cli })
+    const [a, b] = await twoChats(chats.store, chats.userId)
+    const first = chats.ask(a, 'which are remote?')
+    await until(() => held.asked() === 1)
+    const elsewhere = await chats.call('POST', `/api/chats/${b}/queue`, { message: 'about b' })
+    expect(elsewhere.statusCode).toBe(409)
+    expect(elsewhere.json().busy).toMatchObject({ chatId: a, label: 'Answering' })
+    await chats.call('POST', `/api/chats/${a}/queue`, { message: 'and the pay?' })
+    expect((await chats.call('POST', `/api/chats/${a}/queue`, { message: '  ' })).json()).toEqual({ waiting: null })
+    expect((await chats.pending()).waiting).toEqual({})
+    held.release()
+    await first
+    expect(held.asked()).toBe(1)
+    expect((await chats.page(a)).turns).toHaveLength(1)
+  })
+
+  it('waits on a job action in the job\'s chat too, and is asked there when the action lands', async () => {
+    const held = heldCli(answers)
+    const chats = await chatApp({ cli: held.cli, postings: [ACME] })
+    const checked = chats.action('p1', 'fake-check')
+    await until(() => held.asked() === 1)
+    const queued = (await chats.call('POST', '/api/chats/job:p1/queue', { message: 'why genuine?' })).json()
+    expect(queued).toEqual({ waiting: { message: 'why genuine?', at: expect.any(String) } })
+    held.release()
+    const { chatId } = (await checked).json()
+    await until(() => held.asked() === 2)
+    expect((await chats.pending()).busy).toMatchObject({ chatId, kind: 'question', question: 'why genuine?' })
+    held.release()
+    await until(async () => (await chats.page(chatId)).turns.length === 1)
+    expect((await chats.page(chatId)).results).toHaveLength(1)
+  })
+
+  it('is asked at once when nothing is running', async () => {
+    const held = heldCli()
+    const chats = await chatApp({ cli: held.cli })
+    const [a] = await twoChats(chats.store, chats.userId)
+    const res = await chats.call('POST', `/api/chats/${a}/queue`, { message: 'which are remote?' })
+    expect(res.statusCode).toBe(202)
+    expect(res.json()).toEqual({ started: true, chatId: a })
+    await until(() => held.asked() === 1)
+    expect((await chats.pending()).busy).toMatchObject({ chatId: a, question: 'which are remote?' })
+    held.release()
+    await until(async () => (await chats.page(a)).turns.length === 1)
+  })
+
+  it('answers 404 for a chat that is not there', async () => {
+    const chats = await chatApp()
+    expect((await chats.call('POST', '/api/chats/nope/queue', { message: 'q' })).statusCode).toBe(404)
   })
 })
 
 describe('in-flight.js', () => {
-  it('follows the stream: the CLI, the stage, and a turn to the web', () => {
-    expect(beginQuestion('unit-a', 'q', 0)).toBe(true)
-    expect(beginQuestion('unit-a', 'again', 0)).toBe(false)
+  it('holds one call per person, whatever its kind, and follows the stream and a combined action\'s label', () => {
+    expect(beginCall('unit-a', { chatId: 'c1', kind: 'combined', label: 'Cover letter 1 of 2' }, 0)).toBe(true)
+    expect(beginCall('unit-a', { chatId: 'c2', kind: 'question', label: 'Answering' }, 0)).toBe(false)
     noteEvent('unit-a', { event: 'start', provider: 'agy' })
-    noteEvent('unit-a', { event: 'progress', stage: 'web' })
-    expect(questionState('unit-a').pending).toEqual({ question: 'q', startedAt: new Date(0).toISOString(), provider: 'agy', stage: 'web', web: true, text: '' })
-    endQuestion('unit-a')
-    expect(questionState('unit-a')).toEqual({ pending: null, failed: null })
+    noteEvent('unit-a', { event: 'progress', stage: 'letter', label: 'Cover letter 2 of 2' })
+    expect(busyCall('unit-a')).toEqual({
+      chatId: 'c1', kind: 'combined', label: 'Cover letter 2 of 2', startedAt: new Date(0).toISOString(), provider: 'agy', stage: 'letter', web: false, text: '',
+    })
+    expect(endCall('unit-a')).toMatchObject({ chatId: 'c1' })
+    expect(busyCall('unit-a')).toBeNull()
+    expect(failuresOf('unit-a')).toEqual({})
   })
 
-  it('names the conversation the question was asked in, while it is answered', () => {
-    beginQuestion('unit-c', 'q', 0, 'conv-1')
-    expect(questionState('unit-c').pending.conversationId).toBe('conv-1')
-    expect(answeringIn('unit-c')).toBe('conv-1')
-    endQuestion('unit-c')
-    expect(answeringIn('unit-c')).toBeNull()
-  })
-
-  it('forgets an old failure when a new question starts', () => {
-    beginQuestion('unit-b', 'first', 0)
-    endQuestion('unit-b', 'It broke.', 1000)
-    beginQuestion('unit-b', 'second', 2000)
-    expect(questionState('unit-b').failed).toBeNull()
-    endQuestion('unit-b')
+  it('keeps a failure by chat until that chat starts again or forgets it, and stops only in the running chat', () => {
+    beginCall('unit-b', { chatId: 'c1', kind: 'action', label: 'Is it real?', postingId: 'p1', action: 'fake-check' }, 0)
+    expect(stopCall('unit-b', 'c2')).toBe(false)
+    expect(stopCall('unit-b', 'c1')).toBe(true)
+    expect(stopSignal('unit-b').aborted).toBe(true)
+    endCall('unit-b', 'It broke.', 1000)
+    expect(failuresOf('unit-b')).toEqual({ c1: { kind: 'action', label: 'Is it real?', question: null, error: 'It broke.', at: new Date(1000).toISOString(), postingId: 'p1', action: 'fake-check' } })
+    beginCall('unit-b', { chatId: 'c2', kind: 'question', label: 'Answering' })
+    expect(Object.keys(failuresOf('unit-b'))).toEqual(['c1'])
+    endCall('unit-b')
+    beginCall('unit-b', { chatId: 'c1', kind: 'question', label: 'Answering' })
+    expect(failuresOf('unit-b')).toEqual({})
+    endCall('unit-b', 'Again.')
+    forgetFailure('unit-b', 'c1')
+    expect(failuresOf('unit-b')).toEqual({})
   })
 })

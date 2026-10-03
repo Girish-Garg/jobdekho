@@ -7,12 +7,12 @@ import { PROFILE_SHAPES } from '@jobdekho/server/resume/check-shapes.js'
 const record = PROFILE_SHAPES['everything filled']
 const TEX = renderTex('classic', record, {})
 const open = { id: 'd1', name: 'Classic resume', kind: 'resume', tex: TEX, truncated: false, baseAt: '2026-09-30T10:00:00.000Z' }
-const resumePage = { page: 'resume', record, documents: [{ id: 'd1' }], document: open }
+const resumePage = { page: 'resume', record, documents: [{ id: 'd1' }], chatDocuments: [open] }
 const addProject = { kind: 'profile', summary: 'Add a project', ops: [{ op: 'add', section: 'projects', entry: { title: 'CLI tool' } }] }
 const tighter = TEX.replace('margin=0.75in', 'margin=0.5in')
 
 describe('validateDocumentProposal', () => {
-  it('rewrites the open document, with the guard\'s verdict and the facts it could not find', () => {
+  it('rewrites a document the chat holds, with the guard\'s verdict and the facts it could not find', () => {
     const proposal = validateDocumentProposal({ documentId: 'd1', tex: tighter, name: 'Renamed?' }, resumePage)
     expect(proposal).toEqual({
       kind: 'document', documentId: 'd1', documentKind: 'resume', name: 'Classic resume', baseAt: open.baseAt,
@@ -31,10 +31,10 @@ describe('validateDocumentProposal', () => {
     expect(validateDocumentProposal({ documentId: 'd1', tex: `\`\`\`latex\n${tighter}\n\`\`\`` }, resumePage).tex).toBe(tighter)
   })
 
-  it('rewrites only the open document, never one it did not see, a cut one, or with the same text', () => {
+  it('rewrites only a document the chat holds, never one it did not see, a cut one, or with the same text', () => {
     expect(validateDocumentProposal({ documentId: 'd2', tex: tighter }, resumePage)).toBeNull()
-    expect(validateDocumentProposal({ documentId: 'd1', tex: tighter }, { ...resumePage, document: null })).toBeNull()
-    expect(validateDocumentProposal({ documentId: 'd1', tex: tighter }, { ...resumePage, document: { ...open, truncated: true } })).toBeNull()
+    expect(validateDocumentProposal({ documentId: 'd1', tex: tighter }, { ...resumePage, chatDocuments: [] })).toBeNull()
+    expect(validateDocumentProposal({ documentId: 'd1', tex: tighter }, { ...resumePage, chatDocuments: [{ ...open, truncated: true }] })).toBeNull()
     expect(validateDocumentProposal({ documentId: 'd1', tex: TEX }, resumePage)).toBeNull()
     expect(validateDocumentProposal({ documentId: 'd1', tex: '   ' }, resumePage)).toBeNull()
   })
@@ -82,7 +82,7 @@ describe('validateDocumentProposal with targeted edits', () => {
 
   it('offers nothing for edits that change nothing, or for a document it may not edit', () => {
     expect(validateDocumentProposal({ documentId: 'd1', edits: [{ find: margin.find, replace: margin.find }] }, resumePage)).toBeNull()
-    expect(validateDocumentProposal({ documentId: 'd1', edits: [margin] }, { ...resumePage, document: { ...open, truncated: true } })).toBeNull()
+    expect(validateDocumentProposal({ documentId: 'd1', edits: [margin] }, { ...resumePage, chatDocuments: [{ ...open, truncated: true }] })).toBeNull()
   })
 
   it('is stored refused by validateProposals, not pending', () => {
@@ -105,6 +105,12 @@ describe('validateProposals', () => {
     expect(validateProposals([addProject, doc], resumePage).map((p) => p.kind)).toEqual(['profile', 'document'])
     expect(validateProposals([addProject, doc], { page: 'postings', record })).toEqual([])
     expect(validateProposals([addProject], { page: 'settings' })).toEqual([])
+    // A chat that holds the document can change it on the feed too, but a
+    // new document is the Resume page's, and settings changes nothing.
+    const feed = { page: 'postings', chatDocuments: [open] }
+    expect(validateProposals([addProject, doc], feed).map((p) => p.kind)).toEqual(['document'])
+    expect(validateProposals([{ kind: 'document', documentId: null, tex: tighter, documentKind: 'resume' }], feed)).toEqual([])
+    expect(validateProposals([doc], { ...feed, page: 'settings' })).toEqual([])
     expect(validateProposals([addProject], {})).toEqual([])
     expect(validateProposals('not a list', resumePage)).toEqual([])
   })

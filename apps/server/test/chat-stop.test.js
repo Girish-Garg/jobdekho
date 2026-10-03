@@ -1,36 +1,19 @@
-import { describe, it, expect, vi } from 'vitest'
-import { buildApp } from '@jobdekho/server/app.js'
+import { describe, it, expect, vi, afterEach } from 'vitest'
+import { createChat } from '@jobdekho/store/chats.js'
 import { readNdjson } from '@jobdekho/server/ai/events.js'
+import { chatApp, posting, until, cleanUp } from './fixtures/chat-app.js'
 
-const config = { sessionSecret: 'test-secret' }
-
-const dashboard = () => ({
-  listPostingsForUser: vi.fn().mockResolvedValue([]), getPosting: vi.fn().mockResolvedValue(null), setPostingStatus: vi.fn(),
-  listSources: vi.fn().mockResolvedValue([]), listCompanies: vi.fn().mockResolvedValue([]), getProfile: vi.fn().mockResolvedValue(null),
-  getResumeText: vi.fn().mockResolvedValue(null), upsertProfile: vi.fn(), deleteProfile: vi.fn(),
-  getUserFilters: vi.fn().mockResolvedValue(null), upsertUserFilters: vi.fn(), getAiResult: vi.fn().mockResolvedValue(null),
-  setAiResult: vi.fn(), listAiResults: vi.fn().mockResolvedValue([]), getProviderPref: vi.fn().mockResolvedValue(null), upsertProviderPref: vi.fn(),
-})
-
-// The chat route also reads the person's memory, empty here.
-const chatStore = () => {
-  const data = {}
-  const memory = {}
-  return {
-    chatHistory: { get: (id) => data[id] ?? null, set: (id, record) => { data[id] = record } },
-    memory: { get: (id) => memory[id] ?? null, set: (id, record) => { memory[id] = record } },
-  }
-}
+afterEach(cleanUp)
 
 const delta = (text) => JSON.stringify({ type: 'stream_event', event: { type: 'content_block_delta', delta: { type: 'text_delta', text } } })
 
 // A CLI that writes the start of an answer, then waits to be stopped, the
 // way a real one is ended from spawn.js.
 function writingCli() {
-  let started = false
+  let started = 0
   const run = vi.fn(({ args, signal, onStdout }) => {
     if (args[0] === '--version') return Promise.resolve({ stdout: '2.1.0', stderr: '', code: 0 })
-    started = true
+    started += 1
     onStdout?.(`${delta('{"reply":"Both are')}\n`)
     return new Promise((resolve, reject) => {
       signal?.addEventListener('abort', () => reject(Object.assign(new Error('stopped'), { code: 'EABORTED' })))
@@ -39,47 +22,55 @@ function writingCli() {
   return { cli: { locate: () => '/usr/local/bin/claude', run, scratch: (work) => work('/scratch') }, started: () => started }
 }
 
-let users = 0
-async function makeApp(cli) {
-  const sub = `stop-user-${users += 1}`
-  const app = buildApp({ config, dashboardStore: dashboard() })
-  app.decorate('cli', cli)
-  app.decorate('chatStore', chatStore())
-  await app.ready()
-  const headers = { cookie: `session=${app.jwt.sign({ sub, email: 'a@b.c', name: 'A', avatarUrl: null })}` }
-  const call = (method, url, extra = {}) => app.inject({ method, url, headers: { ...headers, ...extra.headers }, payload: extra.payload })
-  return {
-    ask: (message, streamed) => call('POST', '/api/chat', { payload: { message, filters: {}, sort: 'match' }, headers: streamed ? { accept: 'application/x-ndjson' } : {} }),
-    stop: async () => (await call('POST', '/api/chat/stop')).json(),
-    pending: async () => (await call('GET', '/api/chat/pending')).json(),
-    history: async () => (await call('GET', '/api/chat/history')).json(),
-  }
+async function setup() {
+  const writing = writingCli()
+  const chats = await chatApp({ cli: writing.cli, postings: [posting('p1', 'Frontend Intern', 'Acme')] })
+  const chat = (await createChat(chats.store, chats.userId, { kind: 'general', title: 'New chat' })).chat
+  const other = (await createChat(chats.store, chats.userId, { kind: 'general', title: 'New chat' })).chat
+  const stop = async (id = chat.id) => (await chats.call('POST', `/api/chats/${id}/stop`)).json()
+  return { ...chats, ...writing, chat, other, stop }
 }
 
-const until = async (check) => {
-  for (let i = 0; i < 100 && !(await check()); i += 1) await new Promise((resolve) => setTimeout(resolve, 10))
-}
-
-describe('stopping a question', () => {
+describe('stopping the running answer', () => {
   it('ends the CLI, saves nothing, and reports no failure', async () => {
-    const { cli, started } = writingCli()
-    const app = await makeApp(cli)
-    const answered = app.ask('compare the top two')
-    await until(async () => started())
-    expect((await app.pending()).pending.text).toBe('Both are')
+    const app = await setup()
+    const answered = app.ask(app.chat.id, 'compare the top two')
+    await until(() => app.started() === 1)
+    expect((await app.pending()).busy.text).toBe('Both are')
     expect(await app.stop()).toEqual({ stopped: true })
     const res = await answered
     expect(res.statusCode).toBe(499)
     expect(res.json()).toMatchObject({ kind: 'stopped' })
-    expect(await app.pending()).toEqual({ pending: null, failed: null })
-    expect((await app.history()).turns).toEqual([])
+    expect(await app.pending()).toEqual({ busy: null, waiting: {}, failed: {} })
+    expect((await app.page(app.chat.id)).turns).toEqual([])
+  })
+
+  // The running answer is always in one known chat.
+  it('stops nothing from another chat', async () => {
+    const app = await setup()
+    const answered = app.ask(app.chat.id, 'compare the top two')
+    await until(() => app.started() === 1)
+    expect(await app.stop(app.other.id)).toEqual({ stopped: false })
+    expect(await app.stop('nope')).toEqual({ stopped: false })
+    expect(await app.stop()).toEqual({ stopped: true })
+    await answered
+  })
+
+  it('stops a job action too, in its job\'s chat', async () => {
+    const app = await setup()
+    const checked = app.action('p1', 'fake-check')
+    await until(() => app.started() === 1)
+    const { busy } = await app.pending()
+    expect(await app.stop('job:p1')).toEqual({ stopped: true })
+    expect((await checked).json()).toMatchObject({ kind: 'stopped' })
+    expect(busy.kind).toBe('action')
+    expect((await app.pending()).failed).toEqual({})
   })
 
   it('streams the answer as it is written, then ends the stream with the stop', async () => {
-    const { cli, started } = writingCli()
-    const app = await makeApp(cli)
-    const answered = app.ask('compare the top two', true)
-    await until(async () => started())
+    const app = await setup()
+    const answered = app.call('POST', `/api/chats/${app.chat.id}/messages`, { message: 'compare the top two' }, { accept: 'application/x-ndjson' })
+    await until(() => app.started() === 1)
     await new Promise((resolve) => setTimeout(resolve, 150))
     await app.stop()
     const { events, result } = readNdjson((await answered).body)
@@ -88,7 +79,7 @@ describe('stopping a question', () => {
   })
 
   it('says so when there is nothing to stop', async () => {
-    const app = await makeApp(writingCli().cli)
+    const app = await setup()
     expect(await app.stop()).toEqual({ stopped: false })
   })
 })

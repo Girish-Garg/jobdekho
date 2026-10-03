@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { buildApp } from '@jobdekho/server/app.js'
 import { readNdjson, NDJSON_TYPE } from '@jobdekho/server/ai/events.js'
+import { memoryChatStore } from './fixtures/chat-store.js'
 
 const config = { googleClientId: 'id', googleClientSecret: 'sec', sessionSecret: 'test-secret', baseUrl: 'http://localhost:3000' }
 
@@ -23,14 +24,15 @@ function fakeDashboard() {
   }
 }
 
-// The chat route also reads the person's memory, empty here.
+// Acme's own chat, 'job', with `turns` asked in it before, and a general
+// chat, 'general', with none. Memory is empty here.
+const AT = '2026-09-30T00:00:00.000Z'
+const chat = (id, kind, jobs) => ({ id, kind, jobs, documents: [], title: id, createdAt: AT, updatedAt: AT, seenAt: null })
 function fakeChatStore(turns = []) {
-  const data = { u1: { turns } }
-  const memory = {}
-  return {
-    chatHistory: { get: (userId) => data[userId] ?? null, set: (userId, record) => { data[userId] = record } },
-    memory: { get: (userId) => memory[userId] ?? null, set: (userId, record) => { memory[userId] = record } },
-  }
+  return memoryChatStore({
+    chats: { u1: { chats: [chat('job', 'job', ['p1']), chat('general', 'general', [])] } },
+    chatMessages: { u1: { job: { turns, dropped: false } } },
+  })
 }
 
 const envelope = (obj) => JSON.stringify({ type: 'result', result: typeof obj === 'string' ? obj : JSON.stringify(obj) })
@@ -51,17 +53,19 @@ function cli({ first = FIRST, found = FOUND } = {}) {
 }
 const prompts = (fake) => fake.run.mock.calls.map((c) => c[0]).filter((c) => c.args[0] !== '--version')
 
-async function ask({ fake = cli(), store = fakeChatStore(), headers = {} } = {}) {
+async function ask({ fake = cli(), store = fakeChatStore(), headers = {}, chatId = 'job' } = {}) {
   const app = buildApp({ config, userStore: { upsertUser: vi.fn(), getUserById: vi.fn() }, fetchProfile: vi.fn(), dashboardStore: fakeDashboard() })
   app.decorate('cli', fake)
   app.decorate('chatStore', store)
   await app.ready()
   const cookie = `session=${app.jwt.sign({ sub: 'u1', email: 'a@b.c', name: 'A', avatarUrl: null })}`
-  const payload = JSON.stringify({ message: 'Is Acme doing well as a company?', filters: {}, sort: 'match', openPostingId: 'p1' })
-  return app.inject({ method: 'POST', url: '/api/chat', payload, headers: { cookie, 'content-type': 'application/json', ...headers } })
+  const payload = JSON.stringify({ message: 'Is Acme doing well as a company?', filters: {}, sort: 'match' })
+  return app.inject({ method: 'POST', url: `/api/chats/${chatId}/messages`, payload, headers: { cookie, 'content-type': 'application/json', ...headers } })
 }
 
 describe('a chat question that needs the web', () => {
+  // A job's own chat hands the search that job's public fields, and nothing
+  // else of what the first call read.
   it('reads the record with no tools, then searches with the question and the public job alone', async () => {
     const fake = cli()
     const store = fakeChatStore([{ question: 'what fits me?', answer: 'Acme, at 55%, given your React.' }])
@@ -85,16 +89,20 @@ describe('a chat question that needs the web', () => {
     const res = await ask({ store })
     expect(res.json()).toMatchObject({
       question: 'Is Acme doing well as a company?', answer: 'You fit Acme at 55%, Jane.',
-      refs: [{ id: 'p1', title: 'Frontend Intern', company: 'Acme', fit: 55 }], actions: [{ type: 'sort', value: 'newest' }],
+      // The chat's own job, which no feed row scored here.
+      refs: [{ id: 'p1', title: 'Frontend Intern', company: 'Acme', fit: null }], actions: [{ type: 'sort', value: 'newest' }],
       provider: 'claude',
       web: { answer: 'Acme raised a Series B in 2026.', sources: ['https://news.example/acme'], provider: 'claude' },
     })
-    expect(store.chatHistory.get('u1').turns[0]).toEqual(res.json())
+    const { chatId, ...turn } = res.json()
+    expect(chatId).toBe('job')
+    expect(store.chatMessages.get('u1').job.turns[0]).toEqual(turn)
   })
 
+  // A general chat's: the jobs a question names come from the feed's corpus.
   it('puts every opening of a company the question names in front of the first call', async () => {
     const fake = cli()
-    await ask({ fake })
+    await ask({ fake, chatId: 'general' })
     const [first] = prompts(fake)
     expect(first.input).toContain('"companiesTheQuestionNames":[{"company":"Acme","openCount":1,"notSeenRecently":0,"postings":[{"id":"p1"')
   })

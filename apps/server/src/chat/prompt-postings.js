@@ -19,14 +19,14 @@ function clean(value) {
 // third-party text, so it is fenced and named as data to read, never
 // instructions to follow, whatever it says - the same rule
 // fake-check-prompt.js states for the one other prompt in this codebase that
-// hands a model scraped text.
+// hands a model scraped text. Only a general chat has a feed: a chat about
+// its own jobs has no matching count, sort or screen, and leaves them out.
 export function fencedFeed(context) {
   const body = clean({
     matchingCount: context.postingCount,
     sort: context.sort,
     shownOnScreen: context.top,
-    openPosting: context.open ?? null,
-    openPostingSavedAiAnswers: context.openResults ?? null,
+    chatJobs: context.chatJobs ?? [],
     companiesTheQuestionNames: context.named ?? [],
     blockedCompanies: context.blocked ?? [],
   })

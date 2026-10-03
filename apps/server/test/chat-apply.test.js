@@ -37,8 +37,10 @@ async function setup(reply) {
   const post = (url, body) => app.inject({
     method: 'POST', url, headers: { cookie, ...(body ? { 'content-type': 'application/json' } : {}) }, ...(body ? { payload: JSON.stringify(body) } : {}),
   })
-  const propose = async (page = 'profile') => (await post('/api/chat', { message: 'go', page, documentId: doc.id })).json().proposals[0]
-  return { app, store, doc, post, propose }
+  // Asked in the document's own chat, which its first question makes.
+  const propose = async (page = 'profile') => (await post(`/api/chats/document:${doc.id}/messages`, { message: 'go', page })).json().proposals[0]
+  const savedTurns = () => Object.values(store.chatMessages.get('u1'))[0].turns
+  return { app, store, doc, post, propose, savedTurns }
 }
 
 const addProject = () => ({
@@ -50,7 +52,7 @@ const TIGHTER = TEX.replace('Jane Doe', '\\small Jane Doe')
 
 describe('applying a profile proposal', () => {
   it('applies only on Apply, from the saved proposal, keeping the uploaded resume', async () => {
-    const { store, post, propose } = await setup(addProject)
+    const { store, post, propose, savedTurns } = await setup(addProject)
     const proposal = await propose()
     expect((await getProfile(store, 'u1')).projects).toHaveLength(1)
     const res = await post(`/api/chat/proposals/${proposal.id}/apply`, { ops: [{ op: 'remove', section: 'projects', id: 'p1' }] })
@@ -60,8 +62,7 @@ describe('applying a profile proposal', () => {
     expect(profile.projects.map((p) => p.title)).toEqual(['CLI tool', 'Job tracker'])
     expect(await getResumeText(store, 'u1')).toBe('JANE RESUME TEXT')
     expect((await getProfile(store, 'u1')).resumeName).toBe('cv.pdf')
-    const history = store.chatHistory.get('u1').turns
-    expect(history[0].proposals[0]).toMatchObject({ status: 'applied' })
+    expect(savedTurns()[0].proposals[0]).toMatchObject({ status: 'applied' })
   })
 
   it('applies once: a second Apply, or a Discard after it, is refused', async () => {
@@ -88,11 +89,11 @@ describe('applying a profile proposal', () => {
 
 describe('discarding and unknown proposals', () => {
   it('discards, repeatably, and never applies a discarded one', async () => {
-    const { post, propose, store } = await setup(addProject)
+    const { post, propose, store, savedTurns } = await setup(addProject)
     const { id } = await propose()
     expect((await post(`/api/chat/proposals/${id}/discard`)).statusCode).toBe(204)
     expect((await post(`/api/chat/proposals/${id}/discard`)).statusCode).toBe(204)
-    expect(store.chatHistory.get('u1').turns[0].proposals[0].status).toBe('discarded')
+    expect(savedTurns()[0].proposals[0].status).toBe('discarded')
     expect((await post(`/api/chat/proposals/${id}/apply`)).statusCode).toBe(409)
     expect((await getProfile(store, 'u1')).projects).toHaveLength(1)
   })

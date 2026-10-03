@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { buildApp } from '@jobdekho/server/app.js'
+import { memoryChatStore } from './fixtures/chat-store.js'
 import { agyRan, agyReply } from './fixtures/agy-stream.js'
 
 // End-to-end proof that a saved preference (packages/store/src/ai-provider-pref.js)
@@ -44,6 +45,7 @@ function bothInstalled() {
 async function writeCoverLetter(providerPref) {
   const app = buildApp({ config, dashboardStore: makeFakeStore(providerPref) })
   app.decorate('cli', bothInstalled())
+  app.decorate('chatStore', memoryChatStore())
   await app.ready()
   return app.inject({ method: 'POST', url: '/api/postings/p1/ai/cover-letter' })
 }
@@ -85,6 +87,7 @@ async function runAs(kind, providerPref, cli) {
   const store = makeFakeStore(providerPref)
   const app = buildApp({ config, dashboardStore: store })
   app.decorate('cli', cli)
+  app.decorate('chatStore', memoryChatStore())
   await app.ready()
   return app.inject({ method: 'POST', url: `/api/postings/p1/ai/${kind}` })
 }

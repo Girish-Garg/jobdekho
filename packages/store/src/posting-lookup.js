@@ -26,6 +26,15 @@ export async function getPosting(store, userId, id) {
   }
 }
 
+// Each id the corpus still holds, named and marked closed or not (see
+// corpus-closure.js), for a list that shows jobs as chips: one map lookup
+// per id, no windowing.
+export function postingCards(store, ids) {
+  const byId = store.corpus.byId()
+  const held = ids.filter((id) => byId.has(id)).map((id) => [id, byId.get(id)])
+  return new Map(held.map(([id, row]) => [id, { title: row.title, company: row.company, closed: Boolean(row.closedAt) }]))
+}
+
 // Just the title and company of each id the corpus still holds, for a list
 // that names jobs rather than opening one: no windowing, one map lookup per
 // id. An id a scrape has since dropped is simply absent from the answer.

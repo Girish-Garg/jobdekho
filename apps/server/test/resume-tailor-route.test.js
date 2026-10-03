@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { buildApp } from '@jobdekho/server/app.js'
+import { memoryChatStore } from './fixtures/chat-store.js'
 import { CLAUDE } from '@jobdekho/server/ai/providers.js'
 import { PROFILE, PLAN, JD } from './fixtures/tailored-resume.js'
 
@@ -47,6 +48,7 @@ const reply = (plan) => envelope(JSON.stringify(plan))
 async function tailor(store, cli, body) {
   const app = buildApp({ config, userStore: { upsertUser: vi.fn(), getUserById: vi.fn() }, fetchProfile: vi.fn(), dashboardStore: store })
   app.decorate('cli', cli)
+  app.decorate('chatStore', memoryChatStore())
   await app.ready()
   const cookie = `session=${app.jwt.sign({ sub: 'u1', email: 'a@b.c', name: 'A', avatarUrl: null })}`
   const payload = body ? JSON.stringify(body) : undefined

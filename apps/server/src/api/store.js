@@ -2,7 +2,7 @@ import { listPostingsForUser, setPostingStatus, listSources } from '@jobdekho/st
 import { listCompanies, listCompanyCounts } from '@jobdekho/store/companies.js'
 import { getUserFilters, upsertUserFilters } from '@jobdekho/store/dashboard-prefs.js'
 import { getProfile, getResumeText, upsertProfile, deleteProfile } from '@jobdekho/store/profiles.js'
-import { getPosting } from '@jobdekho/store/posting-lookup.js'
+import { getPosting, postingCards } from '@jobdekho/store/posting-lookup.js'
 import { getAiResult, setAiResult, listAiResults } from '@jobdekho/store/ai-results.js'
 import { getProviderPref, upsertProviderPref } from '@jobdekho/store/ai-provider-pref.js'
 import { listBlockedCompanies, blockCompany, unblockCompany } from '@jobdekho/store/blocked-companies.js'
@@ -15,6 +15,10 @@ export function createDashboardStore(db) {
     listPostingsForUser: (userId, opts) => listPostingsForUser(db, userId, opts),
     // One posting with its full description, for the AI actions.
     getPosting: (userId, id) => getPosting(db, userId, id),
+    // Just the names of many, and whether each was closed, for the chat list
+    // (see chat/chat-view.js), which would otherwise window the corpus once
+    // per chat.
+    postingCards: (_userId, ids) => postingCards(db, ids),
     setPostingStatus: (userId, id, status) => setPostingStatus(db, userId, id, status),
     listSources: () => listSources(db),
     listCompanies: () => listCompanies(db),

@@ -4,7 +4,7 @@ import { validateDocumentProposal } from './document-proposal.js'
 import { text } from './profile-op-values.js'
 
 // The changes a chat turn offers, validated and stored with the turn (see
-// packages/store/src/chat-history.js). The model proposes; the server
+// packages/store/src/chat-messages.js). The model proposes; the server
 // checks every proposal against the person's own records here, stores it as
 // 'pending', and nothing changes until the person presses Apply (see
 // apply-proposal.js), which reads the proposal back from the saved turn and
@@ -17,16 +17,19 @@ import { text } from './profile-op-values.js'
 // says why, and it can never be applied.
 //
 // A page may only propose what its context showed the model: the profile
-// and resume pages carry the whole record, so either can change it; only
-// the resume page carries a document's source, so only it can rewrite one.
-// The feed and settings pages propose nothing.
+// and resume pages carry the whole record, so either can change it. A
+// document the chat holds can be changed on any page but settings, which
+// shows nothing of the person; a new document only on the resume page, the
+// one that lists them all.
 const MAX_PROPOSALS = 3
 const MAX_SUMMARY = 160
 const PROFILE_PAGES = new Set(['profile', 'resume'])
 
+const documentAllowed = (item, page) => (item.documentId == null ? page === 'resume' : page !== 'settings')
+
 function validateOne(item, context) {
   if (item?.kind === 'profile' && PROFILE_PAGES.has(context.page)) return validateProfileProposal(item, context.record)
-  if (item?.kind === 'document' && context.page === 'resume') return validateDocumentProposal(item, context)
+  if (item?.kind === 'document' && documentAllowed(item, context.page)) return validateDocumentProposal(item, context)
   return null
 }
 

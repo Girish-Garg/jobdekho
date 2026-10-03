@@ -471,8 +471,9 @@ names, and `JOBDEKHO_DATA_DIR` (`./data` by default) when running from source. T
 | `ai-results.json` | Saved AI answers per posting: cover letters, checks, tailorings, with their recent versions. | No, each one cost a real AI call. |
 | `ai-provider.json` | Which AI you picked in Settings > AI CLI, and the model for each. | No. |
 | `documents.json` | Your resumes and cover letters as LaTeX, each with its last 20 versions. | No. |
-| `chat-history.json` | The current chat conversation. | Yes, if you do not need it. |
-| `chat-archive.json` | Earlier conversations, filed away when you started a new one. | Yes, if you do not need them. |
+| `chats.json` | Your chats: one per job and per document, comparisons and general chats, with what each holds. | Yes, if you do not need them; saved AI answers and documents stay. |
+| `chat-messages.json` | Each chat's messages, the newest 200 of each. | Yes, if you do not need them. |
+| `chat-history.json`, `chat-archive.json`, `*.pre-threads.json` | The chat files from before chats, read once when they moved into `chats.json`, with copies of them and of `ai-results.json` as they were then. | Yes. |
 | `scrape-settings.json` | Whether the running server refreshes postings on its own once a day, and whether refreshes read LinkedIn. | Yes; it falls back to the defaults (the daily refresh on, LinkedIn off). |
 | `blocked-companies.json` | The companies you blocked, when, and whether their own careers pages are still read. | Yes, if you want every one of them back. |
 | `resume-selection.json` | Which template and entries the older resume builder renders. | No. |

@@ -1,59 +1,63 @@
-// The question each person's chat is answering right now, held in memory for
-// as long as the answer takes. The browser that asked watches its own
-// stream, but a page reloaded mid-answer has no stream to watch: it asks
-// here instead, so the question it sent is still on screen with how long it
-// has been going, and the answer appears when it lands. It also keeps a
-// person to one question at a time, as the panel does, since a second CLI
-// starting beside the first is the sign-in race errors.js calls busy.
+// The one AI call each person has running, whatever started it, held in
+// memory for as long as it takes. Concurrent CLI runs fight over one
+// sign-in (the race errors.js calls busy), so a second call is refused, not
+// started beside the first: a question, a job action, a combined action or
+// a document edit, in any chat.
 //
-// A failure is kept until a browser reads it once, so a question that failed
-// while nobody was watching says so instead of silently vanishing. Nothing
-// here is written to disk: a restart ends every call anyway.
+//   { chatId, kind: 'question' | 'action' | 'combined' | 'edit', label, startedAt,
+//     provider, stage, web, text, question?, postingId?, action? }
 //
-// Each question also has a switch that stops it (see stopQuestion), and the
-// answer as far as it has been written, so a reloaded page shows that too.
+// The browser that asked watches its own stream, but a page reloaded
+// mid-answer has none: it reads this instead, so the thinking card shows
+// again in the chat it belongs to, with how long it has been going and the
+// answer so far. A failure is kept for the chat it was asked in, until that
+// chat asks again or is cleared, so it lands as a missed card there and
+// never in another chat. Nothing here is written to disk: a restart ends
+// every call anyway.
+export const CALL_KINDS = ['question', 'action', 'combined', 'edit']
+
 const running = new Map()
-const failed = new Map()
 const switches = new Map()
+const failed = new Map()
 
 const iso = (ms) => new Date(ms).toISOString()
+const failuresIn = (userId) => failed.get(userId) ?? failed.set(userId, new Map()).get(userId)
 
 // The reply is clamped to this when it lands (see parse.js), so the text so
 // far never needs to be longer.
 const MAX_TEXT = 4000
 
-// False when this person already has a question in flight. The question
-// belongs to the conversation it was asked in, `conversationId`, which may
-// be filed away before the answer lands; a page reloaded meanwhile compares
-// it with the current conversation to say where the answer went.
-export function beginQuestion(userId, question, now = Date.now(), conversationId = null) {
+// False when this person already has a call running, anywhere.
+export function beginCall(userId, { chatId, kind, label, ...detail }, now = Date.now()) {
   if (running.has(userId)) return false
-  failed.delete(userId)
-  const entry = { question, startedAt: iso(now), provider: null, stage: 'start', web: false, text: '' }
-  running.set(userId, conversationId ? { ...entry, conversationId } : entry)
+  failuresIn(userId).delete(chatId)
+  running.set(userId, { chatId, kind, label, startedAt: iso(now), provider: null, stage: 'start', web: false, text: '', ...detail })
   switches.set(userId, new AbortController())
   return true
 }
 
-// What the call listens to for a stop, and the stop itself: false when
-// there was nothing to stop. The call then ends with kind 'stopped', which
-// is not a failure to report (see endQuestion's caller in api/chat.js).
+export function busyCall(userId) {
+  const entry = running.get(userId)
+  return entry ? { ...entry } : null
+}
+
+// What the call listens to for a stop. A stop ends it with kind 'stopped',
+// which is not a failure to report.
 export const stopSignal = (userId) => switches.get(userId)?.signal ?? null
 
-export function stopQuestion(userId) {
+// Stops the running call when it is in `chatId`: false when nothing runs
+// there. The running call is always in one known chat.
+export function stopCall(userId, chatId) {
+  const entry = running.get(userId)
   const control = switches.get(userId)
-  if (!control || control.signal.aborted) return false
+  if (!entry || entry.chatId !== chatId || !control || control.signal.aborted) return false
   control.abort()
   return true
 }
 
-// The conversation a question is being answered in right now, if any, so
-// it is not deleted from under the answer.
-export const answeringIn = (userId) => running.get(userId)?.conversationId ?? null
-
 // What the stream says, kept so a watcher that is not the stream sees the
-// same: which CLI is answering, where it has got to, and whether the
-// question went on to the web.
+// same: which CLI is answering, where it has got to, whether the question
+// went on to the web, and a combined action's own progress label.
 export function noteEvent(userId, event) {
   const entry = running.get(userId)
   if (!entry || !event) return
@@ -61,19 +65,24 @@ export function noteEvent(userId, event) {
   if (event.event === 'text') entry.text = (event.text ?? `${entry.text}${event.add ?? ''}`).slice(0, MAX_TEXT)
   if (event.stage) entry.stage = event.stage
   if (event.stage === 'web') entry.web = true
+  if (typeof event.label === 'string') entry.label = event.label
 }
 
-// `error` is the sentence the person should read, or null for an answer.
-export function endQuestion(userId, error = null, now = Date.now()) {
-  const entry = running.get(userId)
+// `error` is the sentence the person should read, or null for an answer or
+// a stop. Resolves the call that ended, or null when none was running.
+export function endCall(userId, error = null, now = Date.now()) {
+  const entry = running.get(userId) ?? null
   running.delete(userId)
   switches.delete(userId)
-  if (entry && error) failed.set(userId, { question: entry.question, error, at: iso(now) })
+  if (entry && error) {
+    const { chatId, kind, label, question = null, postingId, action } = entry
+    failuresIn(userId).set(chatId, { kind, label, question, error, at: iso(now), ...(postingId ? { postingId, action } : {}) })
+  }
+  return entry
 }
 
-export function questionState(userId) {
-  const failure = failed.get(userId) ?? null
-  failed.delete(userId)
-  const entry = running.get(userId)
-  return { pending: entry ? { ...entry } : null, failed: failure }
-}
+// Every chat's missed call, by chat id.
+export const failuresOf = (userId) => Object.fromEntries(failuresIn(userId))
+
+// A cleared or deleted chat keeps no missed card.
+export const forgetFailure = (userId, chatId) => failuresIn(userId).delete(chatId)

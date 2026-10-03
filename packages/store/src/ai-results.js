@@ -7,15 +7,16 @@ import { toIso } from './timestamp.js'
 // call, and both are worth keeping, so each becomes another version instead
 // of replacing the one before it.
 //
-//   { kind, postingId, provider, createdAt, result, versions, dropped }
+//   { kind, postingId, provider, createdAt, result, chatId, versions, dropped }
 //
-// `provider`, `createdAt` and `result` always mirror the newest entry in
-// `versions`, so code that only ever knew the one-answer shape still reads
-// this correctly. Each version is { instruction, provider, createdAt,
-// result }; `instruction` is '' for a first run or a plain rerun, and the
-// person's own words for a refine. `result` is whatever shape the action's
-// parse() produced; this file does not read it. Keyed by posting then kind
-// so the file stays readable by hand.
+// `provider`, `createdAt`, `result` and `chatId` always mirror the newest
+// entry in `versions`, so code that only ever knew the one-answer shape
+// still reads this correctly. Each version is { instruction, provider,
+// createdAt, result, chatId }; `instruction` is '' for a first run or a
+// plain rerun, and the person's own words for a refine. `chatId` is the
+// chat it was asked in (see chats.js), the only chat that shows it.
+// `result` is whatever shape the action's parse() produced; this file does
+// not read it. Keyed by posting then kind so the file stays readable by hand.
 const keyOf = (postingId, kind) => `${postingId}:${kind}`
 
 // Kept short enough that a person iterating for a while does not carry every
@@ -24,8 +25,10 @@ const MAX_VERSIONS = 10
 
 // A record saved before versions existed has only its one answer. Reading it
 // as a one-entry history is the whole of its migration: nothing is rewritten
-// on disk until the next run saves a new version anyway.
-function withVersions(record) {
+// on disk until the next run saves a new version anyway. A version from
+// before chats has no `chatId` until the move into chats gives it one (see
+// threads-jobs.js).
+export function withVersions(record) {
   if (!record || record.versions) return record
   const { provider, createdAt, result } = record
   return { ...record, versions: [{ instruction: '', provider, createdAt, result }], dropped: false }
@@ -38,18 +41,19 @@ export async function getAiResult(store, userId, postingId, kind) {
 // Appends one version rather than overwriting, so the previous answer is
 // still there in the chat's conversation and for the next refine to build on.
 // `instruction` is '' for a first run or a plain rerun; the caller passes it
-// only when this call followed the person's own words. Caps the history at
+// only when this call followed the person's own words. `chatId` is the chat
+// the answer belongs to, the job's own chat. Caps the history at
 // MAX_VERSIONS, dropping the oldest; `dropped` records that this happened at
 // least once, so the UI can say so without counting anything itself.
-export async function setAiResult(store, userId, { postingId, kind, provider, result, instruction = '' }) {
+export async function setAiResult(store, userId, { postingId, kind, provider, result, instruction = '', chatId = null }) {
   const mine = store.aiResults.get(userId) ?? {}
   const key = keyOf(postingId, kind)
   const existing = withVersions(mine[key])
   const createdAt = toIso(new Date())
-  const grown = [...(existing?.versions ?? []), { instruction, provider, createdAt, result }]
+  const grown = [...(existing?.versions ?? []), { instruction, provider, createdAt, result, chatId }]
   const dropped = Boolean(existing?.dropped) || grown.length > MAX_VERSIONS
   const versions = grown.slice(-MAX_VERSIONS)
-  const record = { kind, postingId, provider, createdAt, result, versions, dropped }
+  const record = { kind, postingId, provider, createdAt, result, chatId, versions, dropped }
   store.aiResults.set(userId, { ...mine, [key]: record })
   return record
 }

@@ -33,21 +33,23 @@ async function seeded() {
       doc('chat-changed', { versions: [{ tex: 'x', at: at(1), by: 'template' }, { tex: 'y', at: at(7), by: 'ai' }, { tex: 'z', at: at(9), by: 'you' }] }),
     ],
   })
-  store.chatHistory.set('u1', { id: 'now', startedAt: at(1), turns: [{ question: 'q', proposals: [change('p1', 'applied', 8), change('p2', 'pending')] }] })
-  store.chatArchive.set('u1', { conversations: [{ id: 'old', title: 'q', startedAt: at(1), endedAt: at(2), turns: [{ question: 'q', proposals: [change('p3', 'applied', 2), change('p4', 'discarded')] }] }] })
+  store.chatMessages.set('u1', {
+    now: { turns: [{ question: 'q', proposals: [change('p1', 'applied', 8), change('p2', 'pending')] }], dropped: false },
+    old: { turns: [{ question: 'q', proposals: [change('p3', 'applied', 2), change('p4', 'discarded')] }], dropped: false },
+  })
   return store
 }
 
 describe('what the AI made', () => {
-  it('lists every answer, document and applied profile change, newest first, each naming its job or conversation', async () => {
+  it('lists every answer, document and applied profile change, newest first, each naming its job or chat', async () => {
     const store = await seeded()
     expect(await madeByAi({ store, documents: store, userId: 'u1' })).toEqual([
-      { kind: 'profile', at: at(8), summary: 'Change p1', conversationId: 'now', current: true },
+      { kind: 'profile', at: at(8), summary: 'Change p1', chatId: 'now' },
       { kind: 'document', at: at(7), documentId: 'chat-changed', name: 'chat-changed', documentKind: 'resume', postingId: null, job: null },
       { kind: 'document', at: at(6), documentId: 'for-a-job', name: 'for-a-job', documentKind: 'resume', postingId: 'j1', job: { title: 'Backend Engineer', company: 'Razorpay' } },
       { kind: 'fake-check', at: at(5), postingId: 'j1', job: { title: 'Backend Engineer', company: 'Razorpay' }, versions: 2 },
       { kind: 'cover-letter', at: at(4), postingId: 'gone', job: null, versions: 1 },
-      { kind: 'profile', at: at(2), summary: 'Change p3', conversationId: 'old', current: false },
+      { kind: 'profile', at: at(2), summary: 'Change p3', chatId: 'old' },
     ])
   })
 
