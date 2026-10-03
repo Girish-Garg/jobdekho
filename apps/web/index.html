@@ -4,10 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!-- The PNG first for browsers without SVG icons; the SVG last, so a
-         browser that takes both prefers it: it stays sharp at every size. -->
-    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+         browser that takes both prefers it: it stays sharp at every size.
+         Each address carries the first 8 hex of its file's SHA-256: browsers
+         keep a favicon by its address long after the file changes, so a new
+         icon needs a new address to be seen (favicon.test.js keeps them in
+         step). -->
+    <link rel="icon" href="/favicon-32.png?v=5e767349" type="image/png" sizes="32x32" />
+    <link rel="icon" href="/favicon.svg?v=f649b619" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=9a09c608" />
     <meta name="theme-color" content="rgb(255 248 236)" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="rgb(16 17 20)" media="(prefers-color-scheme: dark)" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
