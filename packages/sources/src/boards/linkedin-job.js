@@ -1,6 +1,6 @@
 import { load } from 'cheerio'
 import { stripHtml } from '../html.js'
-import { internLevel } from '../providers/employment-type.js'
+import { internLevel, jobType } from '../providers/employment-type.js'
 
 // The guest view of one posting: what a logged-out visitor sees on opening a
 // card, from the same no-session family of endpoints as the search.
@@ -29,9 +29,10 @@ function offsiteUrl($) {
 
 // The list under the body: Seniority level, Employment type, Job function,
 // Industries. Only the employment type is used. It is the explicit contract
-// type docs/adding-sources.md trusts, like Lever's commitment; Seniority
-// level is a recruiter's picker, and it said Internship for a posting whose
-// employment type was Temporary.
+// type docs/adding-sources.md trusts, like Lever's commitment, and it says
+// Internship as plainly as Full-time; Seniority level is a recruiter's
+// picker, and it said Internship for a posting whose employment type was
+// Temporary.
 function employmentType($) {
   let type = ''
   $('.description__job-criteria-item').each((_, el) => {
@@ -49,9 +50,11 @@ export function parseLinkedinJob(html) {
   const $ = load(html)
   const body = $('.show-more-less-html__markup').first().html() || ''
   const url = offsiteUrl($)
+  const employment = employmentType($)
   return {
     description: stripHtml(body),
-    ...internLevel(employmentType($)),
+    ...internLevel(employment),
+    ...jobType(employment),
     ...(url ? { url } : {}),
   }
 }

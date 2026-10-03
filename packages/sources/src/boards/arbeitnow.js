@@ -1,6 +1,6 @@
 import { stripHtml } from '../html.js'
 import { toIso } from '../iso-date.js'
-import { internLevel } from '../providers/employment-type.js'
+import { internLevel, jobType } from '../providers/employment-type.js'
 
 // Public JSON, no key. Heavily European, so most rows are dropped downstream by
 // the location rule. Kept because its worldwide-remote listings are real and it
@@ -30,6 +30,7 @@ export function toRaw(j) {
     // unscaled value silently dates every posting to 1970.
     postedAt: toIso(j.created_at ? j.created_at * 1000 : null),
     ...internLevel(...jobTypes),
+    ...jobType(...jobTypes),
   }
 }
 

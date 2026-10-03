@@ -172,7 +172,7 @@ describe('runScrape and blocked companies', () => {
     }
     return { asked, http }
   }
-  const BOARD = (slug) => `https://boards-api.greenhouse.io/v1/boards/${slug}/jobs?content=true`
+  const BOARD = (slug) => `https://boards-api.greenhouse.io/v1/boards/${slug}/jobs?content=true&pay_transparency=true`
 
   it('never reads a blocked company\'s own careers page when told to stop, and still reads the rest', async () => {
     const db = openStore(dir)

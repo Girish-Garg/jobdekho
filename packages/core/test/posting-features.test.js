@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { postingFeatures, featuresOf, FEATURES_VERSION } from '@jobdekho/core/posting-features.js'
+import { postingFeatures, featuresOf, withTitleLevel, FEATURES_VERSION } from '@jobdekho/core/posting-features.js'
 
 describe('postingFeatures', () => {
   it('records each skill at the best place it was named', () => {
@@ -49,5 +49,24 @@ describe('featuresOf', () => {
     expect(featuresOf({ title: 'React Developer', features: { v: 0, skills: {} } }).skills).toEqual({ react: 'title' })
     expect(featuresOf({ title: 'Dev', descriptionText: 'Requirements: - Python.' }).skills).toEqual({ python: 'req' })
     expect(featuresOf({ title: 'Dev', descriptionSnippet: 'Requirements: - Python.' }).skills).toEqual({ python: 'req' })
+  })
+})
+
+// A stored row's skills were read from a body it may no longer hold, so a
+// change to the title rules re-reads only what came from the title.
+describe('withTitleLevel', () => {
+  const stored = (over) => ({ v: FEATURES_VERSION, skills: { go: 'req' }, band: null, from: null, titleLevel: null, ...over })
+
+  it('reads the title again by the shared rules, keeping the skills', () => {
+    expect(withTitleLevel(stored({ band: [1, 4], from: 'title', titleLevel: 'mid' }), 'Graduate Engineer Trainee'))
+      .toEqual(stored({ band: [0, 2], from: 'title', titleLevel: 'entry' }))
+    expect(withTitleLevel(stored(), 'IN_Senior Associate_Azure')).toEqual(stored({ band: [4, 8], from: 'title', titleLevel: 'senior' }))
+    expect(withTitleLevel(stored({ band: [7, 15], from: 'title', titleLevel: 'staff' }), 'C++ Engineer 4-7 yrs')).toEqual(stored())
+  })
+
+  it('keeps years the text or the board stated, updating only the title level', () => {
+    expect(withTitleLevel(stored({ band: [3, 7], from: 'years', titleLevel: null }), 'Senior Engineer'))
+      .toEqual(stored({ band: [3, 7], from: 'years', titleLevel: 'senior' }))
+    expect(withTitleLevel(null, 'Engineer')).toBeNull()
   })
 })

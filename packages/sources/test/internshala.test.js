@@ -59,6 +59,13 @@ describe('parseInternshala', () => {
     expect(parseInternshala(html, 'job')[0].tags).toEqual(['job'])
   })
 
+  // A posting from the jobs list is a job: core never infers an internship
+  // from its text, as it never did for Unstop's.
+  it('files each posting under the list it came from', () => {
+    expect(parseInternshala(html, 'job')[0].type).toBe('job')
+    expect(parseInternshala(html)[0].type).toBe('internship')
+  })
+
   // About half of Internshala's cards are work-from-home and carry a home icon
   // rather than a map pin, which previously left their location blank.
   it('reads work-from-home as a location', () => {

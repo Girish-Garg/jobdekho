@@ -20,6 +20,27 @@ describe('refreshed', () => {
   it('still keeps the text a bare card would wipe', () => {
     expect(refreshed(stored, { ...stored, descriptionText: null }).descriptionText).toBe('Full text')
   })
+
+  // The tags were read from the text, which a bare card never had: they are
+  // read again from the kept text, with the card's newer title.
+  it('tags a bare sighting again from the kept text', () => {
+    const kept = { ...stored, source: 'linkedin', descriptionText: 'Workplace type: Hybrid\n- 3+ years of Go', level: null, workMode: null }
+    const next = refreshed(kept, { ...kept, title: 'Senior Engineer', descriptionText: null, level: null, workMode: null, levelTag: null })
+    expect(next).toMatchObject({ descriptionText: kept.descriptionText, level: 'senior', workMode: 'hybrid', workModeTag: { from: 'text' } })
+  })
+
+  // LinkedIn's employment type comes with its page, never with a card.
+  it('keeps the parts of the board a bare card leaves out', () => {
+    const kept = { ...stored, source: 'linkedin', board: { type: 'job', employment: 'Full-time', workMode: null } }
+    const next = refreshed(kept, { ...kept, descriptionText: null, board: { type: null, employment: null, workMode: 'remote' } })
+    expect(next.board).toEqual({ type: 'job', employment: 'Full-time', workMode: 'remote' })
+    expect(next.typeTag).toMatchObject({ value: 'job', evidence: 'Employment type: Full-time' })
+  })
+
+  it('takes the new tags from a sighting that brings its own text', () => {
+    const next = refreshed(stored, { ...stored, descriptionText: 'New text', level: 'staff', levelTag: { value: 'staff' }, tagsVersion: 2 })
+    expect(next).toMatchObject({ level: 'staff', levelTag: { value: 'staff' }, tagsVersion: 2 })
+  })
 })
 
 // A posting a source listed but skipped as already stored was still seen:

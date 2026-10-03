@@ -29,20 +29,23 @@ const ASKING = new Set(['req', 'resp', 'intro', 'other', 'nice'])
 // job at a company that calls it senior. Requirement lines win over the
 // rest, and of several the highest floor stands, since "2+ years of React"
 // sits beside "5+ years overall" and the second is the real bar.
+// `words` is the line the floor was read from, for a fact's evidence; the
+// stored features leave it out (see posting-features.js).
 export function yearsAsked({ title, units = [], experienceYears = null }) {
   const found = []
   for (const u of units) {
     if (!ASKING.has(u.section)) continue
     const y = yearsIn(u.text)
-    if (y && y[0] <= 20) found.push({ y, req: u.section === 'req' })
+    if (y && y[0] <= 20) found.push({ y, req: u.section === 'req', words: u.text })
   }
   const inTitle = yearsIn(title)
-  if (inTitle) found.push({ y: inTitle, req: true })
+  if (inTitle) found.push({ y: inTitle, req: true, words: title })
   const tl = titleLevel(title)
   const pool = found.some((f) => f.req) ? found.filter((f) => f.req) : found
   if (pool.length) {
-    const min = Math.max(...pool.map((f) => f.y[0]))
-    return { band: [min, Math.max(min, ...pool.map((f) => f.y[1]))], from: 'years', titleLevel: tl?.level ?? null }
+    const floor = pool.reduce((best, f) => (f.y[0] > best.y[0] ? f : best))
+    const min = floor.y[0]
+    return { band: [min, Math.max(min, ...pool.map((f) => f.y[1]))], from: 'years', titleLevel: tl?.level ?? null, words: floor.words }
   }
   if (Number.isFinite(experienceYears)) return { band: [experienceYears, experienceYears + 3], from: 'board', titleLevel: tl?.level ?? null }
   if (tl) return { band: tl.band, from: 'title', titleLevel: tl.level }

@@ -1,4 +1,4 @@
-import { internLevel } from '../providers/employment-type.js'
+import { internLevel, jobType as jobTypeOf } from '../providers/employment-type.js'
 
 // The JSON behind Instahyre's logged-out search page: no session, no key.
 // docs/adding-sources.md once ruled the site out as login-walled; applying is,
@@ -52,6 +52,7 @@ export function toRaw(j, jobType = 'full_time') {
     postedAt: null,
     logoUrl: j.employer?.profile_image_src || null,
     ...internLevel(jobType),
+    ...jobTypeOf(jobType),
   }
 }
 

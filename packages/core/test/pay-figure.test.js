@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { payFigure } from '@jobdekho/core/pay-figure.js'
+import { payFigure, payFigures } from '@jobdekho/core/pay-figure.js'
+
+describe('payFigures', () => {
+  it('reads every figure of a range, each with its unit', () => {
+    expect(payFigures('$80k - $150k')).toEqual([{ value: 80000, annual: false }, { value: 150000, annual: false }])
+    expect(payFigures('12 - 15 L')).toEqual([{ value: 1200000, annual: true }, { value: 1500000, annual: true }])
+    expect(payFigures('Competitive')).toEqual([])
+  })
+})
 
 describe('payFigure', () => {
   it('scales a figure by the unit written beside it', () => {

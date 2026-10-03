@@ -30,6 +30,13 @@ describe('remotive adapter', () => {
   it('marks an internship from the job type', () => {
     expect(remotiveRaw({ id: 1, job_type: 'internship' }).level).toBe('internship')
     expect(remotiveRaw({ id: 1, job_type: 'full_time' }).level).toBeUndefined()
+    expect(remotiveRaw({ id: 1, job_type: 'full_time' }).type).toBe('job')
+  })
+
+  // A remote-only board: its location says where a person may work from,
+  // not whether the job is remote.
+  it('marks every listing remote', () => {
+    expect(remotiveRaw({ id: 1, candidate_required_location: 'USA Only' }).workMode).toBe('remote')
   })
 })
 
@@ -53,6 +60,17 @@ describe('remoteok adapter', () => {
 
   it('formats a salary range', () => {
     expect(parseRemoteOk(payload)[0].stipend).toBe('$70k - $110k /year')
+  })
+
+  // Amounts this small are placeholders; rounded they read "$0k - $0k".
+  it('states no pay for a placeholder salary', () => {
+    const placeholder = [{ ...payload[1], salary_min: 1, salary_max: 400 }]
+    expect(parseRemoteOk(placeholder)[0].stipend).toBeNull()
+    expect(parseRemoteOk([{ ...payload[1], salary_min: 0, salary_max: 90000 }])[0].stipend).toBe('$90k /year')
+  })
+
+  it('marks every listing remote', () => {
+    expect(parseRemoteOk(payload)[0].workMode).toBe('remote')
   })
 
   it('tolerates a non-array payload', () => {

@@ -41,6 +41,15 @@ describe('parseLinkedinJob', () => {
     expect(parseLinkedinJob(withEmploymentType('Full-time')).level).toBeUndefined()
   })
 
+  // A full-time posting is filed as a job, so core never infers an
+  // internship from its text; the employment type is the evidence.
+  it('files a full-time posting as a job, in LinkedIn\'s words', () => {
+    expect(parseLinkedinJob(withEmploymentType('Full-time'))).toMatchObject({ type: 'job', employment: 'Full-time' })
+    expect(parseLinkedinJob(view)).toMatchObject({ level: 'internship', employment: 'Internship' })
+    expect(parseLinkedinJob(view).type).toBeUndefined()
+    expect(parseLinkedinJob(withEmploymentType('Contract')).type).toBeUndefined()
+  })
+
   // Seen live: Seniority level Internship on a posting whose employment type
   // was Temporary. The picker is not trusted, so the title decides instead.
   it('ignores the seniority picker', () => {

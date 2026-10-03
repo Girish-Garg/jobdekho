@@ -28,14 +28,18 @@ function borrowedUnit(text, figures) {
   return /\bcrores?\b/i.test(text) ? 'crore' : null
 }
 
-// { value, annual } for the first figure (the low end of a range, the only
-// amount actually promised), or null when the text holds no number.
-export function payFigure(text) {
+// Every figure in a pay text, as { value, annual }, each read as the first
+// one is: "$80k - $150k" is two figures and "12 - 15 L" two lakh figures.
+export function payFigures(text) {
   const clean = String(text || '').replace(/,/g, '')
   const figures = [...clean.matchAll(FIGURE)]
-  if (!figures.length) return null
-  const [first] = figures
-  const number = Number(first[1])
-  const unit = unitOf(first[2]) ?? (number < 1000 ? borrowedUnit(clean, figures) : null)
-  return { value: number * (unit ? SCALE[unit] : 1), annual: ANNUAL_UNITS.has(unit) }
+  return figures.map((f) => {
+    const number = Number(f[1])
+    const unit = unitOf(f[2]) ?? (number < 1000 ? borrowedUnit(clean, figures) : null)
+    return { value: number * (unit ? SCALE[unit] : 1), annual: ANNUAL_UNITS.has(unit) }
+  })
 }
+
+// { value, annual } for the first figure (the low end of a range, the only
+// amount actually promised), or null when the text holds no number.
+export const payFigure = (text) => payFigures(text)[0] ?? null

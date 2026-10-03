@@ -19,6 +19,13 @@ export function descriptionFromSections(sections) {
 const detailUrl = (slug, id) =>
   `https://api.smartrecruiters.com/v1/companies/${slug}/postings/${id}`
 
+// One posting's body, read on its own: what a run would have fetched had
+// its cap not been reached first (see the server's describe route).
+export async function describeOne(http, slug, id) {
+  const res = await http(detailUrl(slug, id))
+  return { description: descriptionFromSections((await res.json()).jobAd?.sections) }
+}
+
 // The body is a second call per posting, and nearly all of what a board costs:
 // Bosch lists over 500 India postings, and every one of them was read again on
 // every run. Only postings the store has no body for, and that the relevance

@@ -47,14 +47,17 @@ describe('matchesSearch', () => {
 })
 
 describe('postingPredicate', () => {
-  it('reads null level, work mode and degree as the old defaults', () => {
+  // An unstated level is kept under every level filter (the feed marks it),
+  // and an unstated mode only under Onsite.
+  it('keeps an unstated level under any level filter, and an unstated mode only under Onsite', () => {
     const row = { id: 'a', source: 's', title: 'T', tags: [], descriptionSnippet: '', level: null, workMode: null, degreeMin: null, lastSeenAt: null }
     const passes = (opts) => postingPredicate(opts, () => null)(row)
     expect(passes({ levels: ['mid'] })).toBe(true)
-    expect(passes({ levels: ['senior'] })).toBe(false)
+    expect(passes({ levels: ['senior'] })).toBe(true)
     expect(passes({ workModes: ['onsite'] })).toBe(true)
     expect(passes({ workModes: ['remote'] })).toBe(false)
     expect(passes({ maxDegree: 'bachelors' })).toBe(true)
+    expect(postingPredicate({ levels: ['senior'] }, () => null)({ ...row, level: 'entry' })).toBe(false)
   })
 
   // A closed posting is only still stored because the person saved, applied

@@ -5,8 +5,15 @@ import { refreshed, markSeen } from './corpus-merge.js'
 import { applyClosure } from './corpus-closure.js'
 import { withFeatures } from './corpus-features.js'
 
+// The tags and what they rest on (see core's tagging.js), stored as
+// normalize() made them; absent on rows from before they existed, which the
+// corpus tags again as it loads (see corpus.js).
+const TAG_FIELDS = ['board', 'levelTag', 'typeTag', 'workModeTag', 'payTag', 'caution', 'fewDetails', 'adKey', 'tagsVersion']
+
 export function toRow(p) {
-  const level = p.level ?? 'mid'
+  // An unstated level is unknown, never "mid": filling it in showed a fifth
+  // of postings as Mid on no evidence at all.
+  const level = p.level ?? null
   return {
     id: p.id, source: p.source, externalId: p.externalId, title: p.title,
     company: p.company,
@@ -21,7 +28,8 @@ export function toRow(p) {
     postedAt: toIso(p.postedAt),
     stipend: p.stipend ?? null, duration: p.duration ?? null, experience: p.experience ?? null,
     level, degreeMin: p.degreeMin ?? 'none', degreeRequired: p.degreeRequired ?? false,
-    workMode: p.workMode ?? 'onsite',
+    // Unknown when nothing states it: an unstated mode is not an office.
+    workMode: p.workMode ?? null,
     stipendMin: p.stipendMin ?? null,
     // Absent on sources core hasn't classified yet, or on rows built before
     // this field existed, so it has to default rather than throw.
@@ -35,6 +43,7 @@ export function toRow(p) {
     ...(p.closesAt ? { closesAt: toIso(p.closesAt) } : {}),
     lastSeenAt: toIso(new Date()),
     type: p.type ?? (level === 'internship' ? 'internship' : 'job'),
+    ...Object.fromEntries(TAG_FIELDS.filter((key) => p[key] !== undefined).map((key) => [key, p[key]])),
   }
 }
 

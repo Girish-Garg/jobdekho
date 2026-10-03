@@ -98,12 +98,40 @@ describe('groups', () => {
     expect([lead.id, lead.groupCount]).toEqual(['a', 2])
   })
 
-  it('flags a role blasted across five boards from the distinct source count', async () => {
-    const boards = ['linkedin', 'instahyre', 'naukri', 'indeed', 'adzuna']
-    const store = seeded(boards.map((source, i) => row({ id: `b${i}`, source, groupKey: 'k' })))
-    const [lead] = await listPostingsForUser(store, 'me', {})
-    expect(lead.ghostSignals).toContain('listed on 5 job boards')
-    expect(lead.groupSourceCount).toBeUndefined()
+  // One ad under three company names is the stipend mill the study found;
+  // the same role on five boards is only reach, never a red flag.
+  it('flags one ad posted under three company names, and not one role on many boards', async () => {
+    const mill = ['Vortenza', 'Devryxa', 'Zenithbyte'].map((company, i) => row({ id: `m${i}`, source: 'linkedin', company, adKey: 'same', caution: [] }))
+    const blast = ['linkedin', 'instahyre', 'unstop', 'remotive', 'arbeitnow'].map((source, i) => row({ id: `b${i}`, source, groupKey: 'k', caution: [] }))
+    const store = seeded([...mill, ...blast])
+    const page = await listPostingsForUser(store, 'me', { group: false })
+    const m0 = page.find((p) => p.id === 'm0')
+    expect(m0.caution).toEqual([{ code: 'shared-ad', reason: 'The same ad appears under 3 company names', evidence: 'Vortenza, Devryxa, Zenithbyte' }])
+    expect(m0).toMatchObject({ legitimacy: 'low', ghostSignals: ['The same ad appears under 3 company names'] })
+    expect(page.find((p) => p.id === 'b0')).toMatchObject({ caution: [], legitimacy: 'high', ghostSignals: [] })
+    expect(m0.groupSourceCount).toBeUndefined()
+  })
+})
+
+// A level filter keeps the postings that state no level, after the
+// confirmed ones and marked, so nothing real is hidden by it.
+describe('postings that state no level', () => {
+  it('come after the confirmed ones under a level filter, marked, with their count', async () => {
+    const store = seeded([
+      row({ id: 'u-new', level: null, postedAt: ago(0) }), row({ id: 's-old', level: 'senior', postedAt: ago(5) }),
+      row({ id: 'e', level: 'entry', postedAt: ago(1) }), row({ id: 'u-old', level: null, postedAt: ago(3) }),
+    ])
+    const out = await listPostingsForUser(store, 'me', { levels: ['senior'], sort: 'newest', withCounts: true })
+    expect(ids(out.postings)).toEqual(['s-old', 'u-new', 'u-old'])
+    expect(out.postings.map((p) => p.levelNotStated ?? false)).toEqual([false, true, true])
+    expect(out).toMatchObject({ total: 3, levelNotStatedTotal: 2 })
+  })
+
+  it('are neither marked nor counted apart without a level filter', async () => {
+    const store = seeded([row({ id: 'u', level: null }), row({ id: 's', level: 'senior' })])
+    const out = await listPostingsForUser(store, 'me', { withCounts: true })
+    expect(out.postings.every((p) => !('levelNotStated' in p))).toBe(true)
+    expect(out).not.toHaveProperty('levelNotStatedTotal')
   })
 })
 
@@ -178,14 +206,22 @@ describe('ranking', () => {
   it('never returns descriptionText or query scaffolding, ranked or not', async () => {
     // Stored features are the fit's working; the card gets `why` instead.
     const features = { v: 1, skills: { python: 'intro' }, band: null, from: null, titleLevel: null }
-    const store = seeded([row({ id: 'a', groupKey: 'k', features })])
+    const tagInputs = { board: { type: null, employment: null, workMode: null }, adKey: 'k1', tagsVersion: 2 }
+    const store = seeded([row({ id: 'a', groupKey: 'k', features, ...tagInputs })])
     for (const opts of [{}, { sort: 'match', profile: PROFILE }]) {
       const [p] = await listPostingsForUser(store, 'me', opts)
-      for (const key of ['descriptionText', 'groupRank', 'groupSourceCount', 'externalId', 'groupKey', 'currency', 'features']) {
+      for (const key of ['descriptionText', 'groupRank', 'groupSourceCount', 'externalId', 'groupKey', 'currency', 'features', 'board', 'adKey', 'tagsVersion']) {
         expect(p).not.toHaveProperty(key)
       }
       expect(p.descriptionSnippet).toBe('Build things.')
     }
+  })
+
+  // The pay in its one short form, dollars as dollars.
+  it('gives each posting its pay label', async () => {
+    const store = seeded([row({ id: 'r', stipend: '₹ 10,000 /month' }), row({ id: 'd', stipend: '$80k - $150k', currency: 'USD' }), row({ id: 'n', stipend: null })])
+    const page = await listPostingsForUser(store, 'me', {})
+    expect(Object.fromEntries(page.map((p) => [p.id, p.payLabel]))).toEqual({ r: '₹10k/mo', d: '$80k to $150k/yr', n: null })
   })
 })
 
@@ -274,6 +310,18 @@ describe('counts beside the page', () => {
     const out = await listPostingsForUser(store, 'me', { sort: 'newest', limit: 1, withCounts: true })
     expect(out.postings).toHaveLength(1)
     expect(out).toMatchObject({ total: 4, newToday: 2 })
+  })
+
+  // New means the board's own date is within a day; first found today but
+  // posted earlier is "found today".
+  it('splits new from found today, by the board date', async () => {
+    const store = seeded([
+      row({ id: 'posted', firstSeenAt: ago(0), postedAt: ago(0) }), row({ id: 'found', firstSeenAt: ago(0), postedAt: ago(9) }),
+      row({ id: 'undated', firstSeenAt: ago(0), postedAt: null }), row({ id: 'old', firstSeenAt: ago(3), postedAt: ago(3) }),
+    ])
+    const out = await listPostingsForUser(store, 'me', { withCounts: true })
+    expect(out).toMatchObject({ newToday: 3, postedToday: 1, foundToday: 2 })
+    expect(Object.fromEntries(out.postings.map((p) => [p.id, p.newness]))).toEqual({ posted: 'new', found: 'found-today', undated: 'found-today', old: null })
   })
 
   it('stays a plain list for callers that did not ask for counts', async () => {

@@ -3,6 +3,7 @@ import { sectionize } from './jd-sections.js'
 import { yearsAsked } from './years-asked.js'
 import { companyPattern } from './company-words.js'
 import { SECTION_WEIGHT } from './jd-weights.js'
+import { titleLevel } from './title-level.js'
 
 // What the fit needs from a posting, read once from its FULL description at
 // scrape time (normalize.js stores only the first 4000 characters, and big
@@ -48,6 +49,18 @@ export function postingFeatures({ title = '', description = '', tags = [], compa
   for (const h of findSkills(blank(joined, own))) note(h.id, units[unitAt(starts, h.index)].section)
   const asked = yearsAsked({ title, units, experienceYears })
   return { v: FEATURES_VERSION, skills, band: asked.band, from: asked.from, titleLevel: asked.titleLevel }
+}
+
+// Stored features with their title part read again by today's title rules
+// (title-rules.js), when those changed and the skills did not: the skills
+// were read from the full body, which a stored row may no longer hold, so
+// they are kept. Years the text or the board stated still outrank the title.
+export function withTitleLevel(features, title) {
+  if (!features) return features
+  const found = titleLevel(title)
+  const titleLevelNow = found?.level ?? null
+  if (features.from === 'years' || features.from === 'board') return { ...features, titleLevel: titleLevelNow }
+  return { ...features, band: found?.band ?? null, from: found ? 'title' : null, titleLevel: titleLevelNow }
 }
 
 // A stored row's features, or ones read now from the text it kept, for rows

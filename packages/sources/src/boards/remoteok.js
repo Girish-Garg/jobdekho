@@ -3,9 +3,12 @@ import { toIso } from '../iso-date.js'
 
 const URL = 'https://remoteok.com/api'
 
+// Amounts under a thousand dollars a year are placeholders, which rounded
+// to "$0k - $0k /year" and read as unpaid.
 function salary(j) {
-  const lo = j.salary_min
-  const hi = j.salary_max
+  const real = (n) => (Number(n) >= 1000 ? Number(n) : 0)
+  const lo = real(j.salary_min)
+  const hi = real(j.salary_max)
   if (!lo && !hi) return null
   const fmt = (n) => `$${Math.round(n / 1000)}k`
   return lo && hi && lo !== hi ? `${fmt(lo)} - ${fmt(hi)} /year` : fmt(lo || hi) + ' /year'
@@ -22,6 +25,8 @@ export function toRaw(j) {
     tags: j.tags || [],
     postedAt: toIso(j.date),
     stipend: salary(j),
+    // Every listing on this board is remote; its location says where from.
+    workMode: 'remote',
   }
 }
 

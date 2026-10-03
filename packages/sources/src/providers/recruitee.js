@@ -1,5 +1,5 @@
 import { stripHtml } from '../html.js'
-import { internLevel } from './employment-type.js'
+import { internLevel, jobType } from './employment-type.js'
 import { toIso } from '../iso-date.js'
 
 function place(j) {
@@ -34,6 +34,7 @@ export function recruitee({ slug }) {
         tags: [j.department, j.category_code, ...(j.tags || [])].filter(Boolean),
         postedAt: toIso(j.published_at || j.created_at),
         ...internLevel(j.employment_type_code, j.experience_code),
+        ...jobType(j.employment_type_code),
       }))
     },
   }

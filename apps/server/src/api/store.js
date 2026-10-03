@@ -7,10 +7,15 @@ import { getAiResult, setAiResult, listAiResults } from '@jobdekho/store/ai-resu
 import { getProviderPref, upsertProviderPref } from '@jobdekho/store/ai-provider-pref.js'
 import { listBlockedCompanies, blockCompany, unblockCompany } from '@jobdekho/store/blocked-companies.js'
 import { listMemory } from '@jobdekho/store/memory.js'
+import { createDescriber } from '@jobdekho/scraper/describe-turn.js'
 import { join } from 'node:path'
 import { saveOriginal, deleteOriginal, findOriginal } from '../resume/original.js'
+import { describeAndSave } from './describe-posting.js'
 
-export function createDashboardStore(db) {
+// `describe` is for tests; the real one is made the first time a posting
+// is described, so building a store reaches for no network at all.
+export function createDashboardStore(db, { describe = null } = {}) {
+  let describer = describe
   return {
     listPostingsForUser: (userId, opts) => listPostingsForUser(db, userId, opts),
     // One posting with its full description, for the AI actions.
@@ -19,6 +24,8 @@ export function createDashboardStore(db) {
     // (see chat/chat-view.js), which would otherwise window the corpus once
     // per chat.
     postingCards: (_userId, ids) => postingCards(db, ids),
+    // Fetches a posting's missing description once (see describe-posting.js).
+    describePosting: (userId, id) => describeAndSave(db, describer ??= createDescriber(db), userId, id),
     setPostingStatus: (userId, id, status) => setPostingStatus(db, userId, id, status),
     listSources: () => listSources(db),
     listCompanies: () => listCompanies(db),

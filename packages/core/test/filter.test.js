@@ -16,8 +16,16 @@ describe('filter', () => {
   it('keeps a relevant internship', () => {
     expect(filter(base, rules)).toBe(true)
   })
-  it('drops non-internship roles when internshipOnly', () => {
-    expect(filter({ ...base, title: 'Software Engineer' }, rules)).toBe(false)
+  it('drops roles that state another level when internshipOnly', () => {
+    expect(filter({ ...base, title: 'Software Engineer', level: 'mid' }, rules)).toBe(false)
+    expect(filter({ ...base, title: 'Senior Software Engineer' }, { ...rules, excludeKeywords: [] })).toBe(false)
+  })
+
+  // Nothing real is hidden by a level filter: the feed lists such postings
+  // after the confirmed ones, marked.
+  it('keeps a role that states no level at all', () => {
+    expect(filter({ ...base, title: 'Software Engineer', level: null }, rules)).toBe(true)
+    expect(filter({ ...base, title: 'Software Engineer' }, rules)).toBe(true)
   })
   it('drops excluded keywords', () => {
     expect(filter({ ...base, title: 'Senior Software Intern' }, rules)).toBe(false)
@@ -124,6 +132,14 @@ describe('filter saved rules', () => {
     expect(filter(p, { ...open, workModes: ['onsite', 'remote'] })).toBe(true)
     expect(filter({ ...p, workMode: undefined }, { ...open, workModes: ['onsite'] })).toBe(true)
     expect(filter(p, { ...open, workModes: [] })).toBe(true)
+  })
+
+  // An unstated mode shows no chip, but Remote and Hybrid take only what
+  // says so.
+  it('keeps an unstated mode out of a Remote or Hybrid filter', () => {
+    expect(filter({ ...p, workMode: null }, { ...open, workModes: ['remote'] })).toBe(false)
+    expect(filter({ ...p, workMode: null }, { ...open, workModes: ['hybrid'] })).toBe(false)
+    expect(filter({ ...p, workMode: null }, { ...open, workModes: ['onsite'] })).toBe(true)
   })
 
   it('fails a pay floor when the pay is below it or unstated', () => {

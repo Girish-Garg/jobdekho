@@ -23,7 +23,7 @@ const LEAD = /^[-*•▪●\u2013\u2014]\s*/
 export const units = (text) => String(text || '').replace(RESIDUE, ' ').replace(/[^\S\n]+/g, ' ')
   .split(EDGE).map((u) => u.trim().replace(LEAD, '')).filter((u) => u.length > 1)
 
-function headingOf(unit) {
+export function headingOf(unit) {
   const u = unit.replace(/^[^A-Za-z]+/, '')
   for (const [section, re] of HEADINGS) {
     if (re.test(u)) return { section, weak: WEAK.test(u) && u.split(/\s+/).length > 8 }

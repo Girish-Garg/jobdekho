@@ -22,14 +22,22 @@ describe('toRow', () => {
     expect(toRow({ ...base }).lastSeenAt).toMatch(/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/)
   })
 
-  it('fills the defaults the NOT NULL columns used to supply', () => {
+  // An unstated level is unknown and an unstated mode is no office: neither
+  // is filled in.
+  it('fills the defaults the NOT NULL columns used to supply, but no level or mode', () => {
     const r = toRow({ id: 'a', source: 's', externalId: '1', title: 'T', company: 'C', url: 'u' })
     expect(r).toMatchObject({
       location: '', descriptionSnippet: '', descriptionText: null, tags: [],
-      level: 'mid', degreeMin: 'none', degreeRequired: false, workMode: 'onsite', type: 'job',
+      level: null, degreeMin: 'none', degreeRequired: false, workMode: null, type: 'job',
       stipend: null, stipendMin: null, currency: null, groupKey: null,
     })
     expect('firstSeenAt' in r).toBe(false)
+  })
+
+  it('keeps the tags and what they rest on, and adds none a row never had', () => {
+    const tags = { board: { type: 'job', employment: 'Full-time', workMode: null }, levelTag: { value: 'senior' }, caution: [], fewDetails: false, adKey: 'k', tagsVersion: 2 }
+    expect(toRow({ ...base, ...tags })).toMatchObject(tags)
+    expect('levelTag' in toRow(base)).toBe(false)
   })
 
   it('derives type from level unless the caller supplies one', () => {
