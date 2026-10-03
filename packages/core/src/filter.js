@@ -5,21 +5,26 @@ import { measuresOk } from './measure-rules.js'
 
 // An empty or missing list means "no preference", so every level passes.
 // `internshipOnly` is the pre-taxonomy spelling of `levels: ['internship']`.
-function wantedLevels(rules) {
+export function wantedLevels(rules) {
   if (rules.levels?.length) return rules.levels
   if (rules.internshipOnly) return ['internship']
   return null
 }
 
-// A posting that states no level (null) passes a level rule rather than
-// being hidden: nothing real is lost to a filter, and the feed lists such
-// postings after the confirmed ones, marked (see the store's
-// level-unstated.js). One never classified at all is read here.
+// A posting that states no level passes a seniority filter rather than
+// being hidden, listed after the confirmed ones and marked (see the store's
+// level-unstated.js). An Internship-only filter takes the confirmed ones
+// alone: internships say so in the title or the board's filing (99% are
+// caught), so one that states no level is almost never an internship, and
+// keeping them buried the internships under hundreds of other jobs.
+export const keepsUnstated = (wanted) => Boolean(wanted?.some((level) => level !== 'internship'))
+
+// One never classified at all is read here.
 function levelOk(posting, rules) {
   const wanted = wantedLevels(rules)
   if (!wanted) return true
   const level = posting.level === undefined ? classifyLevel(posting.title, posting.descriptionSnippet) : posting.level
-  return level == null || wanted.includes(level)
+  return level == null ? keepsUnstated(wanted) : wanted.includes(level)
 }
 
 // maxDegree is the highest degree the seeker holds: a master's holder still

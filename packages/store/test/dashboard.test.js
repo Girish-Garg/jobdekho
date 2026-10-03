@@ -127,6 +127,13 @@ describe('postings that state no level', () => {
     expect(out).toMatchObject({ total: 3, levelNotStatedTotal: 2 })
   })
 
+  it('are left out of an Internship-only filter, which marks and counts none', async () => {
+    const store = seeded([row({ id: 'u', level: null }), row({ id: 'i', level: 'internship' })])
+    const out = await listPostingsForUser(store, 'me', { levels: ['internship'], withCounts: true })
+    expect(ids(out.postings)).toEqual(['i'])
+    expect(out).not.toHaveProperty('levelNotStatedTotal')
+  })
+
   it('are neither marked nor counted apart without a level filter', async () => {
     const store = seeded([row({ id: 'u', level: null }), row({ id: 's', level: 'senior' })])
     const out = await listPostingsForUser(store, 'me', { withCounts: true })

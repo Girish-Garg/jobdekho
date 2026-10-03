@@ -21,11 +21,16 @@ describe('filter', () => {
     expect(filter({ ...base, title: 'Senior Software Engineer' }, { ...rules, excludeKeywords: [] })).toBe(false)
   })
 
-  // Nothing real is hidden by a level filter: the feed lists such postings
-  // after the confirmed ones, marked.
-  it('keeps a role that states no level at all', () => {
-    expect(filter({ ...base, title: 'Software Engineer', level: null }, rules)).toBe(true)
-    expect(filter({ ...base, title: 'Software Engineer' }, rules)).toBe(true)
+  // Internships say so in the title or the board's filing, so a role that
+  // states no level is almost never one: the Internship filter takes only
+  // the confirmed ones. A seniority filter keeps the unstated ones, which the
+  // feed lists after the confirmed ones, marked.
+  it('keeps a role that states no level under a seniority filter, not under Internship', () => {
+    expect(filter({ ...base, title: 'Software Engineer', level: null }, rules)).toBe(false)
+    expect(filter({ ...base, title: 'Software Engineer' }, rules)).toBe(false)
+    const seniority = { ...rules, internshipOnly: false, levels: ['entry'] }
+    expect(filter({ ...base, title: 'Software Engineer', level: null }, seniority)).toBe(true)
+    expect(filter({ ...base, title: 'Software Engineer', level: null }, { ...seniority, levels: ['internship', 'entry'] })).toBe(true)
   })
   it('drops excluded keywords', () => {
     expect(filter({ ...base, title: 'Senior Software Intern' }, rules)).toBe(false)
