@@ -36,8 +36,9 @@ export default function PostingTags({ posting, dominantWorkMode = null, align = 
 
   return (
     <span className={`flex flex-wrap items-center gap-1.5 ${align === 'start' ? 'justify-start' : 'justify-end'}`}>
-      {/* A missing level reads as Mid, the same fallback levelLabel uses. */}
-      <Chip tone="line" className={`${HAIRLINE} text-ink/80`}>{levelLabel(posting.level)}</Chip>
+      {/* No chip when the posting does not say its level: a guessed "Mid"
+          read as a fact, and the owner chose no tag over a wrong one. */}
+      {posting.level && <Chip tone="line" className={`${HAIRLINE} text-ink/80`}>{levelLabel(posting.level)}</Chip>}
       {mode && <Chip tone="line" className={HAIRLINE}>{mode}</Chip>}
       {yc && <Chip tone="line" className={`${HAIRLINE} text-muted`} title={`Y Combinator, batch ${yc.slice(3)}`}>YC</Chip>}
       {doubtful && <Chip tone="line" className={`${CHIP} border-ember/40 bg-ember/10 text-ember`}>Caution</Chip>}

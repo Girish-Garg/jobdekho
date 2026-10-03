@@ -159,9 +159,11 @@ describe('PostingCard level label', () => {
     }
   });
 
-  it('falls back to Mid when the level is missing', () => {
-    render(<PostingCard posting={{ ...base, level: undefined }} onOpen={() => {}} />);
-    expect(screen.getByText('Mid')).toBeInTheDocument();
+  // A posting that does not say its level gets no level chip: a guessed
+  // "Mid" read as a fact, and the owner chose no tag over a wrong one.
+  it('shows no level when the posting does not say it', () => {
+    render(<PostingCard posting={{ ...base, level: null }} onOpen={() => {}} />);
+    expect(screen.queryByText('Mid')).not.toBeInTheDocument();
   });
 });
 
