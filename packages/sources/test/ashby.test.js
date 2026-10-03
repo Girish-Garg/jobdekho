@@ -75,11 +75,40 @@ describe('ashby adapter', () => {
     expect(r.postedAt).toBeNull()
   })
 
-  // type is derived from level in core/normalize.js.
-  it('does not hardcode type, and leaves level to core for a full-time role', async () => {
+  // A full-time role is filed as a job, in the board's own words, which
+  // keeps core from inferring an internship from its text; the level is
+  // still core's to read.
+  it('marks a full-time role as a job and leaves its level to core', async () => {
     const [r] = await ashby({ slug: 'acme' }).fetch(http)
-    expect(r.type).toBeUndefined()
+    expect(r).toMatchObject({ type: 'job', employment: 'FullTime' })
     expect(r.level).toBeUndefined()
+  })
+
+  it('reads the workplace type, and a remote flag where there is none', async () => {
+    const one = (job) => async () => ({ json: async () => ({ jobs: [{ id: 'w', title: 'X', ...job }] }) })
+    expect((await ashby({ slug: 'acme' }).fetch(one({ workplaceType: 'Hybrid' })))[0].workMode).toBe('hybrid')
+    expect((await ashby({ slug: 'acme' }).fetch(one({ workplaceType: 'OnSite' })))[0].workMode).toBe('onsite')
+    expect((await ashby({ slug: 'acme' }).fetch(one({ workplaceType: null, isRemote: true })))[0].workMode).toBe('remote')
+    expect((await ashby({ slug: 'acme' }).fetch(one({})))[0].workMode).toBeUndefined()
+  })
+
+  // includeCompensation=true: the salary component, with its currency first,
+  // so a dollar range is never read as rupees.
+  it('asks for compensation and keeps the salary as pay text', async () => {
+    const asked = []
+    const comp = { summaryComponents: [
+      { compensationType: 'EquityPercentage', interval: 'NONE', currencyCode: null, minValue: null, maxValue: null },
+      { compensationType: 'Salary', interval: '1 YEAR', currencyCode: 'USD', minValue: 200000, maxValue: 270000 },
+    ] }
+    const withPay = async (url) => {
+      asked.push(url)
+      return { json: async () => ({ jobs: [{ id: 'p', title: 'PM', compensation: comp }] }) }
+    }
+    const [r] = await ashby({ slug: 'acme' }).fetch(withPay)
+    expect(asked[0]).toContain('includeCompensation=true')
+    expect(r.stipend).toBe('USD 200,000 - 270,000 /year')
+    const [none] = await ashby({ slug: 'acme' }).fetch(http)
+    expect(none.stipend).toBeUndefined()
   })
 
   it('sets level when Ashby reports an internship', async () => {

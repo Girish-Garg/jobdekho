@@ -30,11 +30,14 @@ const ANNUAL_FROM = 100000
 // and millions mean a year ("1.2 Cr", "₹2.2M"), foreign boards quote annual
 // salaries without saying so, and a bare rupee figure is monthly below a lakh.
 // The hourly check comes before all of it: an hourly rate is neither.
+// A zero that is not "unpaid" is a board's placeholder: RemoteOK rounds an
+// unset salary to "$0k - $0k", which read as unpaid and sank to the bottom
+// of every pay sort.
 export function stipendMonthly(text) {
   if (!text) return null
   if (/unpaid|no stipend/i.test(text)) return 0
   const figure = payFigure(text)
-  if (!figure) return null
+  if (!figure || figure.value === 0) return null
   const currency = detectCurrency(text)
   const rate = INR_PER[currency]
   if (HOURLY.test(text)) return Math.round(figure.value * HOURS_PER_MONTH * rate)

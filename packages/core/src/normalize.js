@@ -1,22 +1,21 @@
 import { makeId, makeGroupKey } from './posting.js'
-import { stipendMonthly, experienceYears, durationMonths } from './measures.js'
-import { detectCurrency } from './currency.js'
-import { classifyLevel } from './level.js'
+import { experienceYears, durationMonths } from './measures.js'
 import { classifyDegree } from './degree.js'
-import { classifyWorkMode } from './work-mode.js'
 import { tidyLines, oneLine, clipText } from './text-layout.js'
 import { logoUrl } from './logo.js'
 import { postingFeatures } from './posting-features.js'
+import { boardOf } from './board-fields.js'
+import { tagsFor } from './tagging.js'
 
 const SNIPPET_MAX = 280
 
 // The snippet is what a card and the overlay show, so it stays short. The
-// ranking needs far more than an opening paragraph: skills are named in the
-// requirements, which sit well past 280 characters, and matching against the
-// snippet alone meant only 3% of postings matched a skill at all. This is the
-// text the scorer reads. The feed never sends it; the pane fetches it for the
-// one posting a person opens (GET /api/postings/:id).
-const TEXT_MAX = 4000
+// stored text is the whole description: a cut at 4000 characters clipped
+// 53% of them, often before the requirements and the pay. The cap, five
+// times that cut, is only for runaway pages (a whole careers site pasted
+// into one ad). The feed never sends this text; the pane fetches it for the
+// one posting a person opens.
+export const TEXT_MAX = 20000
 
 export function normalize(raw, source) {
   // A missing externalId used to stringify to "undefined", so every such row
@@ -29,13 +28,12 @@ export function normalize(raw, source) {
   const title = (raw.title || '').trim()
   const location = (raw.location || '').trim()
   const tags = raw.tags || []
-  // Classify against the full body: degree requirements usually sit far past
-  // the snippet cutoff. Only the truncated form is stored.
+  // Tags, degree and features are read from the full body, before any cap.
   const description = tidyLines(raw.description)
-  const level = raw.level || classifyLevel(title, description)
   const { degreeMin, degreeRequired } = classifyDegree(title, description)
   const company = (raw.company || '').trim()
   const years = experienceYears(raw.experience)
+  const board = boardOf(raw)
   return {
     id: makeId(source, externalId),
     groupKey: makeGroupKey(title, company),
@@ -51,27 +49,23 @@ export function normalize(raw, source) {
     descriptionText: clipText(description, TEXT_MAX),
     tags,
     postedAt: raw.postedAt || null,
-    stipend: raw.stipend ?? null,
     duration: raw.duration ?? null,
     experience: raw.experience ?? null,
-    // Parsed alongside the text they came from, so the database can filter and
-    // sort on them instead of the browser scanning whatever page it has loaded.
-    stipendMin: stipendMonthly(raw.stipend),
-    // stipendMin is already converted to monthly INR; the currency records what
-    // the source actually quoted, so the original figure stays explainable.
-    currency: raw.stipend == null ? null : detectCurrency(raw.stipend),
     durationMonths: durationMonths(raw.duration),
     experienceYears: years,
     // What the fit needs (skills by section, years asked), read here from the
-    // full body for the same reason as level and degree: big ads spend the
-    // first 4000 characters on company copy, and the requirements come after.
+    // full body for the same reason as the tags.
     features: postingFeatures({ title, description, tags, company, experienceYears: years }),
-    level,
     degreeMin,
     degreeRequired,
-    workMode: raw.workMode || classifyWorkMode(location, tags),
-    // The adapter's own word wins: unstop marks internships via `type` without
-    // ever setting `level`, and deriving type from level alone filed them as jobs.
-    type: raw.type || (level === 'internship' ? 'internship' : 'job'),
+    // What the board itself declared, kept so a later version of the rules
+    // can tag this posting again from the same evidence (see retag.js).
+    board,
+    // level, type, workMode and pay, each with the tag that says why, and
+    // the red flags (see tagging.js).
+    ...tagsFor({
+      title, description, company, source, board, location, tags,
+      experience: raw.experience ?? null, experienceYears: years, stipend: raw.stipend ?? null,
+    }),
   }
 }

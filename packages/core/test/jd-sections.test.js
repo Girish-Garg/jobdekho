@@ -64,4 +64,22 @@ describe('sectionize', () => {
   it('reads "You might be a good fit if you" as requirements', () => {
     expect(sections('You might be a good fit if you: - Know Go.')[1][0]).toBe('req')
   })
+
+  // Headings stored ads use often, which once left their content read as
+  // company copy.
+  it('reads the headings the study found missing', () => {
+    for (const heading of ['Role Description', 'Role Summary', 'Job Responsibilities', 'Core Responsibilities', 'Job Overview', 'About the Job']) {
+      expect(sections(`${heading}\nBuild APIs.`)[1][0]).toBe('resp')
+    }
+    for (const heading of ['Minimum Requirements', 'Educational Requirements', 'Technical Requirements', 'Educational/Technical Requirements', 'Mandatory Skills', 'Education']) {
+      expect(sections(`${heading}\nB.Tech in CS.`)[1][0]).toBe('req')
+    }
+    expect(sections('How to apply\nSend your CV.')[1][0]).toBe('apply')
+  })
+
+  // "Education in Go" opens a bullet, not a section.
+  it('does not let a long bullet starting "Education" end the section it is in', () => {
+    const got = sections('Responsibilities: - Build APIs. - Education outreach programmes for our customers across India every quarter.')
+    expect(got.at(-1)[0]).toBe('resp')
+  })
 })

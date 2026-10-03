@@ -43,6 +43,8 @@ describe('instahyre toRaw', () => {
       tags: ['CSS', 'Data Structures', 'JavaScript', 'React.js'],
       postedAt: null,
       logoUrl: null,
+      type: 'job',
+      employment: 'full_time',
     })
   })
 
@@ -59,7 +61,9 @@ describe('instahyre toRaw', () => {
   // was fetched under does.
   it('marks internships from the slice, not the object', () => {
     expect(toRaw(fixture.objects[0], 'internship').level).toBe('internship')
+    expect(toRaw(fixture.objects[0], 'internship').type).toBeUndefined()
     expect(toRaw(fixture.objects[0], 'full_time').level).toBeUndefined()
+    expect(toRaw(fixture.objects[0], 'full_time').type).toBe('job')
     expect(toRaw(fixture.objects[0]).level).toBeUndefined()
   })
 

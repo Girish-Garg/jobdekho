@@ -1,10 +1,23 @@
 import { stripHtml } from '../html.js'
 import { toIso } from '../iso-date.js'
 import { fetchUnlessUnchanged } from '../conditional.js'
+import { payRange } from './board-pay.js'
 
 // content=true is required: with content=false every posting arrives with an
-// empty body and the degree classifier has nothing to read.
-const url = (slug) => `https://boards-api.greenhouse.io/v1/boards/${slug}/jobs?content=true`
+// empty body and the degree classifier has nothing to read. pay_transparency
+// adds each posting's published pay ranges to the same one reply, so pay
+// costs no request per posting.
+const url = (slug) => `https://boards-api.greenhouse.io/v1/boards/${slug}/jobs?content=true&pay_transparency=true`
+
+// A posting can carry a range per region; an Indian one, when there is one,
+// is the range that applies here.
+function pay(j) {
+  const ranges = j.pay_input_ranges || []
+  const range = ranges.find((r) => r?.currency_type === 'INR') || ranges[0]
+  if (!range) return {}
+  const text = payRange({ min: range.min_cents / 100, max: range.max_cents / 100, currency: range.currency_type, period: range.title || 'year' })
+  return text ? { stipend: text } : {}
+}
 
 // A board's slug is not its name ("razorpaysoftwareprivatelimited",
 // "arcesiumllc"), so a config entry may give `company`; without one the slug,
@@ -38,6 +51,7 @@ export function greenhouse({ slug, company }) {
         postedAt: toIso(j.first_published || j.updated_at),
         // The board's own closing date, when it set one.
         closesAt: toIso(j.application_deadline),
+        ...pay(j),
       }))
     },
   }

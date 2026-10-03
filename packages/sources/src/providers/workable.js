@@ -1,5 +1,5 @@
 import { stripHtml } from '../html.js'
-import { internLevel } from './employment-type.js'
+import { internLevel, jobType } from './employment-type.js'
 import { toIso } from '../iso-date.js'
 
 // details=true is what fills description in. Without it the widget returns
@@ -41,6 +41,7 @@ export function workable({ slug }) {
         tags: [j.department, j.function, j.employment_type].filter(Boolean),
         postedAt: toIso(j.published_on || j.created_at),
         ...internLevel(j.employment_type, j.experience),
+        ...jobType(j.employment_type),
       }))
     },
   }

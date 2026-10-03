@@ -1,3 +1,5 @@
+import { tagRow } from '@jobdekho/core/retag.js'
+
 // How a posting seen again updates the stored one, and how one a source
 // listed without sending in full still counts as seen.
 
@@ -10,6 +12,8 @@ const REFRESHABLE = [
   'stipend', 'duration', 'experience', 'postedAt',
   'level', 'degreeMin', 'degreeRequired', 'workMode', 'type',
   'stipendMin', 'currency', 'durationMonths', 'experienceYears', 'groupKey', 'logoUrl', 'features',
+  // The tags' evidence and what the board declared (see core's tagging.js).
+  'board', 'levelTag', 'typeTag', 'workModeTag', 'payTag', 'caution', 'fewDetails', 'adKey', 'tagsVersion',
   // A deadline a board moves, or stops publishing (see corpus-closure.js).
   'closesAt',
   // Bumping this on every conflict is what makes staleness detectable: a row
@@ -21,13 +25,25 @@ const REFRESHABLE = [
 // description is fetched once, see boards/linkedin.js) carries no text, and
 // copying that over would wipe the description fetched on an earlier run,
 // with what was read from it. Those stay until a sighting brings text again.
-const READ_FROM_TEXT = ['descriptionSnippet', 'descriptionText', 'level', 'degreeMin', 'degreeRequired', 'type', 'features']
+const READ_FROM_TEXT = ['descriptionSnippet', 'descriptionText', 'degreeMin', 'degreeRequired', 'features']
 
 // A sighting without a logo (a card whose image had not loaded, a board that
 // shows none today) says nothing about the company's logo, so the one already
 // stored stays.
 const KEEP_WHEN_MISSING = ['logoUrl']
 
+// What the board declared arrives in parts: LinkedIn's employment type comes
+// with the posting's page, never with the card seen again later, so a part
+// the card leaves out is kept.
+function boardOf(existing, row) {
+  const before = existing.board ?? {}
+  const now = row.board ?? {}
+  return { type: now.type ?? before.type ?? null, employment: now.employment ?? before.employment ?? null, workMode: now.workMode ?? before.workMode ?? null }
+}
+
+// After a bare sighting the tags are read again from the kept text with the
+// card's newer title, place and board fields, rather than copied from a
+// card that never had the text they were read from.
 export function refreshed(existing, row) {
   const out = { ...existing }
   const bare = !row.descriptionText && Boolean(existing.descriptionText)
@@ -36,7 +52,7 @@ export function refreshed(existing, row) {
     if (KEEP_WHEN_MISSING.includes(column) && row[column] == null) continue
     out[column] = row[column]
   }
-  return out
+  return bare ? tagRow({ ...out, board: boardOf(existing, row) }) : out
 }
 
 // Postings a source listed but did not send, because the store already held

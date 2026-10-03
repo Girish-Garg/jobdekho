@@ -11,11 +11,15 @@ function wantedLevels(rules) {
   return null
 }
 
+// A posting that states no level (null) passes a level rule rather than
+// being hidden: nothing real is lost to a filter, and the feed lists such
+// postings after the confirmed ones, marked (see the store's
+// level-unstated.js). One never classified at all is read here.
 function levelOk(posting, rules) {
   const wanted = wantedLevels(rules)
   if (!wanted) return true
-  const level = posting.level || classifyLevel(posting.title, posting.descriptionSnippet)
-  return wanted.includes(level)
+  const level = posting.level === undefined ? classifyLevel(posting.title, posting.descriptionSnippet) : posting.level
+  return level == null || wanted.includes(level)
 }
 
 // maxDegree is the highest degree the seeker holds: a master's holder still
@@ -25,8 +29,9 @@ function degreeOk(posting, rules) {
   return degreeRank(posting.degreeMin || 'none') <= degreeRank(rules.maxDegree)
 }
 
-// Rows predating the taxonomy carry no work mode and read as onsite, matching
-// NULL_WORK_MODE in packages/db/src/posting-filters.js.
+// An unstated work mode is no chip and no claim, but a filter still has to
+// place it: most postings that name only a city are office jobs, so it
+// passes an Onsite filter, while Remote and Hybrid take only what says so.
 function workModeOk(posting, rules) {
   if (!rules.workModes?.length) return true
   return rules.workModes.includes(posting.workMode || 'onsite')

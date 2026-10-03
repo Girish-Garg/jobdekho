@@ -59,12 +59,26 @@ describe('lever adapter', () => {
     expect(raw.level).toBe('internship')
   })
 
-  it('leaves level unset for a full-time commitment', async () => {
+  // A full-time commitment files the posting as a job: core then never makes
+  // it an internship from its text.
+  it('leaves level unset for a full-time commitment, and files it as a job', async () => {
     const fullTime = async () => ({
       json: async () => [{ id: 'a', text: 'Engineer', categories: { commitment: 'Full-time' } }],
     })
     const [raw] = await lever({ slug: 'acme' }).fetch(fullTime)
     expect(raw.level).toBeUndefined()
+    expect(raw).toMatchObject({ type: 'job', employment: 'Full-time' })
     expect(raw.postedAt).toBeNull()
+  })
+
+  it('reads the salary range and the workplace type the posting shows', async () => {
+    const one = (job) => async () => ({ json: async () => [{ id: 'a', text: 'Engineer', ...job }] })
+    const [paid] = await lever({ slug: 'acme' }).fetch(one({
+      salaryRange: { currency: 'INR', interval: 'per-year-salary', min: 1800000, max: 2400000 }, workplaceType: 'hybrid',
+    }))
+    expect(paid).toMatchObject({ stipend: 'INR 1,800,000 - 2,400,000 /year', workMode: 'hybrid' })
+    const [plain] = await lever({ slug: 'acme' }).fetch(one({ workplaceType: 'unspecified' }))
+    expect(plain.stipend).toBeUndefined()
+    expect(plain.workMode).toBeUndefined()
   })
 })

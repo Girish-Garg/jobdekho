@@ -1,4 +1,4 @@
-import { internLevel } from './employment-type.js'
+import { internLevel, jobType } from './employment-type.js'
 import { toIso } from '../iso-date.js'
 import { descriptionFromSections, fillDescriptions } from './smartrecruiters-detail.js'
 
@@ -68,6 +68,7 @@ export function smartrecruiters({ slug }) {
         tags: [j.department?.label, j.function?.label, j.typeOfEmployment?.label].filter(Boolean),
         postedAt: toIso(j.releasedDate),
         ...internLevel(j.typeOfEmployment?.id, j.experienceLevel?.id),
+        ...jobType(j.typeOfEmployment?.label || j.typeOfEmployment?.id),
       }))
       // the list endpoint is metadata only, so the body has to come from a
       // second call per posting, made only for new postings worth keeping

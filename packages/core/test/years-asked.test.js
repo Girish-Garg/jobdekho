@@ -49,12 +49,14 @@ describe('yearsAsked', () => {
   // it senior.
   it('prefers the years in the text over the title words', () => {
     const got = yearsAsked({ title: 'Senior Engineer', units: units(['req', '3+ years of experience']) })
-    expect(got).toEqual({ band: [3, 7], from: 'years', titleLevel: 'senior' })
+    expect(got).toEqual({ band: [3, 7], from: 'years', titleLevel: 'senior', words: '3+ years of experience' })
   })
 
-  it('takes the highest floor among the requirement lines', () => {
+  // The line the floor came from is a fact's evidence.
+  it('takes the highest floor among the requirement lines, and names its line', () => {
     const got = yearsAsked({ title: 'Engineer', units: units(['req', '2+ years of React'], ['req', '5+ years overall']) })
     expect(got.band[0]).toBe(5)
+    expect(got.words).toBe('5+ years overall')
   })
 
   it('never reads years out of the about-us copy', () => {

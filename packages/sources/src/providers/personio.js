@@ -1,5 +1,5 @@
 import { stripHtml } from '../html.js'
-import { internLevel } from './employment-type.js'
+import { internLevel, jobType } from './employment-type.js'
 import { toIso } from '../iso-date.js'
 
 const host = (slug) => `https://${slug}.jobs.personio.de`
@@ -45,6 +45,7 @@ export function personio({ slug }) {
         tags: [j.department, j.category || j.recruitingCategory, j.schedule].filter(Boolean),
         postedAt: toIso(j.createdAt || j.created_at),
         ...internLevel(j.employment_type, j.employmentType, j.seniority),
+        ...jobType(j.employment_type, j.employmentType),
       }))
     },
   }

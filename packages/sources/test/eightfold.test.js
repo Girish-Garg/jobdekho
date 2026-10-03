@@ -139,7 +139,9 @@ describe('eightfold PCSX sites', () => {
     }
     const out = await run(fakeEightfold({ detail: internDetail }))
     expect(out.map((r) => r.level)).toEqual([undefined, 'internship', undefined])
-    for (const r of out) expect(r.type).toBeUndefined()
+    // Microsoft's "Full-Time" files the others as jobs, never internships.
+    expect(out.map((r) => r.type)).toEqual(['job', undefined, 'job'])
+    expect(out[0].employment).toBe('Full-Time')
   })
 
   it('builds the public URL from the listed path when the detail gives none', async () => {

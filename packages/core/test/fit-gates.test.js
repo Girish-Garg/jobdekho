@@ -19,6 +19,15 @@ describe('fitGates', () => {
     expect(gates.level).toEqual({ value: 1, why: null })
   })
 
+  // A posting that states no level is not mid and not an internship: no
+  // gate may close on it.
+  it('never gates on an unknown level or type', () => {
+    const unknown = fitGates(row({ type: 'job', level: null }), { band: null, from: null, titleLevel: null }, fitContext({ years: 6 }))
+    expect(unknown.type).toEqual({ value: 1, why: null })
+    expect(unknown.level.value).toBe(0.85)
+    expect(fitGates(row({ type: undefined, level: undefined }), features, ctx).type.value).toBe(1)
+  })
+
   it('keeps internships open to someone with no work yet', () => {
     const fresher = fitContext({ years: 0 })
     expect(fitGates(row({ type: 'internship' }), features, fresher).type.value).toBe(1)

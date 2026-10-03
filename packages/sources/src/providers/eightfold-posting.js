@@ -1,5 +1,5 @@
 import { stripHtml } from '../html.js'
-import { internLevel } from './employment-type.js'
+import { internLevel, jobType } from './employment-type.js'
 
 // Detail calls are nearly all of what a board costs, so a run spends at most
 // this many per company; the rest wait for the next run rather than going
@@ -42,5 +42,6 @@ export function toPosting(row, info, { company }) {
     tags: [row.department, row.workMode].filter(Boolean),
     postedAt: row.postedAt,
     ...internLevel(...(info?.employmentType || [])),
+    ...jobType(...(info?.employmentType || [])),
   }
 }

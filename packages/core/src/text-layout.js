@@ -19,6 +19,32 @@ export function oneLine(text) {
   return String(text || '').replace(/\s+/g, ' ').trim()
 }
 
+// The sentence a match sits in, cut at a line or a sentence end, for a tag's
+// evidence: a person checks a tag against the words that made it. A
+// sentence ends before a capital, never at an abbreviation: "a fee of Rs.
+// 1,500" is one sentence.
+const SENTENCE_END = /[.!?]+\s+(?=[A-Z"'(‘“])/g
+const ABBREVIATION = /\b(?:rs|no|mr|ms|mrs|dr|sr|jr|st|vs|etc|approx|min|max|incl|dept|inc|ltd|co|e\.g|i\.e)\.$/i
+
+export function sentenceAt(text, index) {
+  const lineStart = text.lastIndexOf('\n', Math.max(0, index - 1)) + 1
+  const lineEnd = text.indexOf('\n', index)
+  const line = text.slice(lineStart, lineEnd < 0 ? text.length : lineEnd)
+  const at = index - lineStart
+  let start = 0
+  let end = line.length
+  for (const m of line.matchAll(SENTENCE_END)) {
+    const stop = m.index + m[0].trimEnd().length
+    if (ABBREVIATION.test(line.slice(0, stop))) continue
+    if (stop <= at) start = m.index + m[0].length
+    else {
+      end = stop
+      break
+    }
+  }
+  return line.slice(start, end).trim()
+}
+
 const flatLength = (text) => oneLine(text.replace(/^- /gm, '')).length
 
 // The stored body's budget was set on flat text. Spent on line breaks and

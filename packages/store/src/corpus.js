@@ -1,3 +1,4 @@
+import { retagged } from '@jobdekho/core/retag.js'
 import { cachedFile } from './cached-file.js'
 import { parseNdjson, toNdjson } from './ndjson.js'
 
@@ -17,9 +18,14 @@ function indexed(rows) {
   return { rows: [...byId.values()], byId }
 }
 
+// Rows tagged under an older version of the rules are tagged again as they
+// load, once, from the text they kept (see core's retag.js), the way the
+// fit's features are read again (corpus-features.js); the next write keeps
+// them. Not written back here: a scrape in another process may be writing
+// the same file, and its write already carries the new tags.
 export function openCorpus(path) {
   const file = cachedFile(path, {
-    parse: (text) => indexed(parseNdjson(text)),
+    parse: (text) => indexed(parseNdjson(text).map(retagged)),
     serialize: (loaded) => toNdjson(loaded.rows),
     empty: () => indexed([]),
   })

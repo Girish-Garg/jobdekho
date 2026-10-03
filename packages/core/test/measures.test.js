@@ -36,6 +36,14 @@ describe('stipendMonthly', () => {
     expect(stipendMonthly('$8,000 /month')).toBe(680000)
   })
 
+  // RemoteOK rounds an unset salary to "$0k - $0k"; read as unpaid it sank
+  // to the bottom of every pay sort.
+  it('reads a zero that does not say unpaid as no pay stated', () => {
+    expect(stipendMonthly('$0k - $0k /year')).toBeNull()
+    expect(stipendMonthly('₹ 0 /month')).toBeNull()
+    expect(stipendMonthly('Unpaid (₹ 0)')).toBe(0)
+  })
+
   // Explicitly unpaid is a real answer; a missing figure is not.
   it('separates unpaid from unknown', () => {
     expect(stipendMonthly('Unpaid')).toBe(0)

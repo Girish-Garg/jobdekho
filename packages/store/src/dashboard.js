@@ -6,6 +6,7 @@ import { withGroupWindows } from './posting-groups.js'
 import { scoreRows, canRank } from './posting-score.js'
 import { fitContextFor } from './fit-inputs.js'
 import { withFit, withGhost } from './posting-fit.js'
+import { levelFilterOn, unstatedLast, markUnstated, unstatedTotal } from './level-unstated.js'
 
 export function applyStatusFilter(rows, status) {
   const normalized = rows.map((r) => ({ ...r, status: r.status ?? null }))
@@ -44,26 +45,31 @@ export function feedMatches(store, userId, opts = {}) {
 }
 
 // With counts, also `blockedPicks`: the picked companies the person has
-// blocked, which this feed will never show (see blocked-companies.js).
+// blocked, which this feed will never show (see blocked-companies.js), and
+// under a level filter `levelNotStatedTotal` (see level-unstated.js).
 export async function listPostingsForUser(store, userId, opts = {}) {
   const { limit, offset } = clampPage(opts)
   const { rows: gated, ranks, statusOf, blocked } = feedMatches(store, userId, opts)
   const sort = opts.sort === 'match' && !ranks ? 'newest' : opts.sort
-  const page = gated.sort(orderFor(sort, { ranked: ranks })).slice(offset, offset + limit)
+  const levelOn = levelFilterOn(opts)
+  const corpus = store.corpus.rows()
+  const page = gated.sort(unstatedLast(orderFor(sort, { ranked: ranks }), levelOn)).slice(offset, offset + limit)
   const postings = applyStatusFilter(page.map((row) => {
     const seen = { ...row, status: statusOf(row.id) }
-    return toPosting(ranks ? withFit(seen) : withGhost(seen))
+    return markUnstated(toPosting(ranks ? withFit(seen, corpus) : withGhost(seen, corpus)), levelOn)
   }), opts.status)
   if (!opts.withCounts) return postings
-  return { postings, ...countsOf(gated, ranks), blockedPicks: blockedAmong(blocked, opts.companies) }
+  return { postings, ...countsOf(gated, ranks), ...unstatedTotal(gated, levelOn), blockedPicks: blockedAmong(blocked, opts.companies) }
 }
 
 // groupRank and groupSourceCount are query scaffolding: one picked the row
 // that leads its group, the other fed the ghost signals, and neither is a
 // field a card shows. externalId, groupKey and currency were never part of
-// the feed's row either, and features are what the fit read, already
-// explained by why. No window value means a group of one.
-const SCAFFOLDING = ['groupRank', 'groupSourceCount', 'externalId', 'groupKey', 'currency', 'features']
+// the feed's row either (payLabel says the pay), features are what the fit
+// read, already explained by why, and board, adKey and tagsVersion are what
+// the tags were read from, already said by each tag's evidence. No window
+// value means a group of one.
+const SCAFFOLDING = ['groupRank', 'groupSourceCount', 'externalId', 'groupKey', 'currency', 'features', 'board', 'adKey', 'tagsVersion']
 
 function toPosting(row) {
   const out = { ...row, groupCount: Number(row.groupCount ?? 1), matchScore: Number(row.matchScore ?? 0) }

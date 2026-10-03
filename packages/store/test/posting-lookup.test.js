@@ -52,19 +52,64 @@ describe('getPosting', () => {
     expect(await getPosting(store, 'me', 'p1')).not.toHaveProperty('features')
   })
 
-  it('computes the blast signal over the whole corpus, so it agrees with the card', async () => {
-    const sources = ['internshala', 'naukri', 'linkedin', 'lever', 'ashby']
+  it('counts the group over the whole corpus, so it agrees with the card', async () => {
+    const sources = ['internshala', 'unstop', 'linkedin', 'lever', 'ashby']
     const store = seeded(sources.map((source, i) => row({ id: `p${i}`, source })))
     const posting = await getPosting(store, 'me', 'p0')
-    expect(posting.ghostSignals).toContain('listed on 5 job boards')
     expect(posting.groupCount).toBe(5)
+    expect(posting.caution).toEqual([])
   })
 
-  it('reports the signals a doubtful posting shows on its card', async () => {
-    const store = seeded([row({ stipend: null, descriptionText: 'Apply now.', postedAt: ago(120) })])
+  // No pay, a short text and an old date once made Infosys, EY and Google
+  // read as Caution.
+  it('raises no Caution for a posting with no red flag', async () => {
+    const store = seeded([row({ stipend: null, descriptionText: 'Apply now.', postedAt: ago(120), caution: [], fewDetails: true })])
     const posting = await getPosting(store, 'me', 'p1')
-    expect(posting.ghostSignals).toEqual(['no pay stated', 'very short job description', 'posted 4 months ago'])
-    expect(posting.legitimacy).toBe('suspicious')
+    expect(posting).toMatchObject({ caution: [], legitimacy: 'high', ghostSignals: [], fewDetails: true })
+  })
+
+  it('states its red flags, the corpus-wide one included', async () => {
+    const fee = { code: 'fee', reason: 'Asks applicants to pay a ₹1,500 registration fee', evidence: 'x' }
+    const store = seeded([
+      row({ id: 'm1', source: 'linkedin', company: 'Vortenza', adKey: 'same', caution: [fee] }),
+      row({ id: 'm2', source: 'linkedin', company: 'Devryxa', adKey: 'same' }),
+      row({ id: 'm3', source: 'greenhouse:zen', company: 'Zenithbyte', adKey: 'same' }),
+    ])
+    const posting = await getPosting(store, 'me', 'm1')
+    expect(posting.caution.map((c) => c.code)).toEqual(['fee', 'shared-ad'])
+    expect(posting.legitimacy).toBe('low')
+    expect(posting.ghostSignals[1]).toBe('The same ad appears under 3 company names')
+    // A company's own careers site is never flagged.
+    expect((await getPosting(store, 'me', 'm3')).caution).toEqual([])
+  })
+
+  it('lays the description out in sections, with the facts it states', async () => {
+    const text = 'Requirements:\n- 3-5 years of Go\nWhat you will do\n- Build APIs\nAcme is an equal opportunity employer.'
+    const workModeTag = { value: 'hybrid', from: 'text', evidence: 'Says "Workplace type: Hybrid"', version: 2 }
+    const store = seeded([row({ descriptionText: text, workModeTag, stipend: null, payTag: null })])
+    const posting = await getPosting(store, 'me', 'p1')
+    expect(posting.sections.map((s) => [s.kind, s.boilerplate])).toEqual([['duties', false], ['requirements', false], ['other', true]])
+    expect(posting.facts).toEqual({
+      years: { min: 3, max: 5, from: 'text', evidence: 'Says "3-5 years of Go"' },
+      pay: null,
+      workMode: { value: 'hybrid', from: 'text', evidence: 'Says "Workplace type: Hybrid"' },
+    })
+    expect(posting.workModeTag).toEqual(workModeTag)
+  })
+
+  // A sentence the company repeats across its own postings is its template.
+  it('folds the company template text it repeats in three postings', async () => {
+    const about = 'About Acme\nAcme builds payment rails for small shops across India.'
+    const rows = [1, 2, 3].map((n) => row({ id: `a${n}`, descriptionText: `${about}\nResponsibilities\n- Task number ${n} for the team` }))
+    const posting = await getPosting(seeded(rows), 'me', 'a1')
+    expect(posting.sections.find((s) => s.kind === 'about')).toMatchObject({ heading: 'About Acme', boilerplate: true })
+    expect(posting.sections.find((s) => s.kind === 'duties').boilerplate).toBe(false)
+  })
+
+  it('leaves out what the tags were read from', async () => {
+    const store = seeded([row({ board: { type: 'job' }, adKey: 'k', tagsVersion: 2 })])
+    const posting = await getPosting(store, 'me', 'p1')
+    for (const key of ['board', 'adKey', 'tagsVersion', 'features']) expect(posting).not.toHaveProperty(key)
   })
 })
 

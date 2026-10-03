@@ -1,6 +1,6 @@
 import { stripHtml } from '../html.js'
 import { toIso } from '../iso-date.js'
-import { internLevel } from '../providers/employment-type.js'
+import { internLevel, jobType } from '../providers/employment-type.js'
 
 // Public JSON, no key. Remote-only inventory, which suits the filter: it keeps
 // genuinely global-remote roles and drops the ones locked to a foreign region.
@@ -21,7 +21,10 @@ export function toRaw(j) {
     tags: j.tags || [],
     postedAt: toIso(j.publication_date),
     stipend: j.salary || null,
+    // Every listing on this board is remote; its location says where from.
+    workMode: 'remote',
     ...internLevel(j.job_type),
+    ...jobType(j.job_type),
   }
 }
 

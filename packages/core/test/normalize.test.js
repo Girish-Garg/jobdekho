@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { normalize } from '@jobdekho/core/normalize.js'
+import { normalize, TEXT_MAX } from '@jobdekho/core/normalize.js'
 
 describe('normalize', () => {
   const raw = {
@@ -80,14 +80,41 @@ describe('normalize', () => {
     const p = normalize({ externalId: '1', title: 'T', company: 'C', url: 'u', description: 'About us\n\n- Ship\n- Learn' }, 's')
     expect(p.descriptionSnippet).toBe('About us - Ship - Learn')
   })
-  // Big ads spend the stored 4000 characters on company copy; the fit's
-  // features are read from the whole body before it is clipped.
-  it('reads the fit features from the full body past the stored cut', () => {
+  // The 4000-character cut clipped 53% of descriptions, often before the
+  // requirements and the pay.
+  it('stores the whole description, well past the old cut', () => {
     const description = `About us\n${'We build things. '.repeat(300)}\nRequirements:\n- Go and Kubernetes\n- 3+ years of experience`
     const p = normalize({ externalId: '1', title: 'Engineer', company: 'C', url: 'u', description }, 's')
+    expect(p.descriptionText).toContain('Kubernetes')
+    expect(p.descriptionText.length).toBeGreaterThan(5000)
+  })
+
+  // Only a runaway page meets the cap; the fit's features and the tags are
+  // read from the whole body before it.
+  it('caps a runaway page, reading features and tags from all of it', () => {
+    const description = `About us\n${'We build things. '.repeat(1500)}\nRequirements:\n- Go and Kubernetes\n- 3+ years of experience`
+    const p = normalize({ externalId: '1', title: 'Engineer', company: 'C', url: 'u', description }, 's')
+    expect(p.descriptionText.length).toBeLessThanOrEqual(TEXT_MAX + 1000)
     expect(p.descriptionText).not.toContain('Kubernetes')
     expect(p.features.skills).toEqual({ go: 'req', kubernetes: 'req' })
     expect(p.features.band).toEqual([3, 7])
+    expect(p.levelTag).toMatchObject({ value: 'mid', from: 'text', evidence: 'Asks for 3+ years' })
+  })
+
+  it('keeps what the board declared and tags each field with its evidence', () => {
+    const p = normalize({ externalId: '1', title: 'Data Analyst', company: 'C', url: 'u', type: 'job', employment: 'Full-time', workMode: 'hybrid', description: 'This is a paid internship for analysts.' }, 'linkedin')
+    expect(p.board).toEqual({ type: 'job', employment: 'Full-time', workMode: 'hybrid' })
+    // A board-declared job is never made an internship from its text.
+    expect(p.level).toBeNull()
+    expect(p.typeTag).toMatchObject({ value: 'job', from: 'board', evidence: 'Employment type: Full-time' })
+    expect(p.workModeTag).toMatchObject({ value: 'hybrid', from: 'board' })
+  })
+
+  it('leaves the level and work mode unknown when nothing states them', () => {
+    const p = normalize({ externalId: '1', title: 'Software Engineer', company: 'C', url: 'u', location: 'Pune' }, 's')
+    expect(p.level).toBeNull()
+    expect(p.workMode).toBeNull()
+    expect(p.type).toBe('job')
   })
 
   it('reads the board experience field into the years asked', () => {

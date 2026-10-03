@@ -51,7 +51,10 @@ export function parseInternshala(html, type = 'internship') {
       description: iconText(card, '.ic-16-assignment'),
       tags: [type],
       // The listing category is authoritative here. Internshala titles are bare
-      // skill names ("React Native Development"), so inference cannot see it.
+      // skill names ("React Native Development"), so inference cannot see it,
+      // and a posting from the jobs list is a job, never made an internship
+      // by inference from its text, as Unstop's already were.
+      type,
       ...(type === 'internship' ? { level: 'internship' } : {}),
       postedAt: parsePostedAt(iconText(card, '.ic-16-reschedule')),
       stipend: iconText(card, '.ic-16-money') || null,

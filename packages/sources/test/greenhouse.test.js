@@ -43,6 +43,24 @@ describe('greenhouse adapter', () => {
     expect(seen).not.toContain('content=false')
   })
 
+  // The list itself carries each posting's pay ranges when asked, so pay
+  // costs no request per posting.
+  it('asks for pay transparency and keeps the Indian range where there is one', async () => {
+    let seen = ''
+    const ranges = [
+      { min_cents: 12000000, max_cents: 15000000, currency_type: 'USD', title: 'US base salary' },
+      { min_cents: 275530000, max_cents: 275530000, currency_type: 'INR', title: 'Annual base salary range (excluding equity and bonus):' },
+    ]
+    const spy = async (url) => {
+      seen = url
+      return { json: async () => ({ jobs: [{ ...fixture.jobs[0], pay_input_ranges: ranges }] }) }
+    }
+    const [raw] = await greenhouse({ slug: 'acme' }).fetch(spy)
+    expect(seen).toContain('pay_transparency=true')
+    expect(raw.stipend).toBe('INR 2,755,300 /year')
+    expect((await greenhouse({ slug: 'acme' }).fetch(http))[0].stipend).toBeUndefined()
+  })
+
   it('carries the stripped body through for degree detection', async () => {
     const [raw] = await greenhouse({ slug: 'acme' }).fetch(http)
     expect(raw.description).toContain('B.Tech')

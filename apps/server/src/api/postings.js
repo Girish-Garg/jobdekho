@@ -35,11 +35,23 @@ export async function postingsRoutes(app) {
 
   // One posting whole, for the pane a person opens it in. The feed withholds
   // descriptionText (see store/posting-fit.js), and a job read only as its
-  // 280-character snippet is two lines cut off mid-sentence.
+  // 280-character snippet is two lines cut off mid-sentence. With it come
+  // the sections, the facts and every tag's evidence the pane lays the job
+  // out by (see store/posting-lookup.js).
   app.get('/api/postings/:id', { preHandler: app.requireAuth }, async (request, reply) => {
     const posting = await app.dashboard.getPosting(request.user.sub, request.params.id)
     if (!posting) return reply.code(404).send({ error: 'no such posting' })
     return { posting }
+  })
+
+  // A posting opened with no description yet: its page is read once, the
+  // text stored and the posting tagged again (see describe-posting.js).
+  // LinkedIn switched off in Settings, a guard pause or a board that gave
+  // nothing each come back as { error } with a sentence saying so.
+  app.post('/api/postings/:id/describe', { preHandler: app.requireAuth }, async (request, reply) => {
+    const result = await app.dashboard.describePosting(request.user.sub, request.params.id)
+    if (result.error) return reply.code(result.status).send({ error: result.error })
+    return { posting: result.posting, described: result.described }
   })
 
   app.get('/api/sources', { preHandler: app.requireAuth }, async () => ({
