@@ -14,14 +14,16 @@ const KEEPS = 'Its messages go; saved letters, checks and documents stay.';
 // reached from here, an older general chat continued simply by opening it,
 // so there is no second list of past conversations to go looking in. The
 // list scrolls and its foot stays, so a new chat is never a scroll away.
-// `signalOf(view)` is { busy, unseen } for a row.
+// Its lower edge fades, since a list cut at a row's edge reads as the whole
+// list; the empty strip under the last row keeps that row clear of the fade
+// once scrolled to the end. `signalOf(view)` is { busy, unseen } for a row.
 export default function ChatSwitcherMenu({ groups, current, signalOf, onPick, onNew, onClear, onDelete }) {
   const [clearing, setClearing] = useState(false);
   const clearable = current && !current.placeholder;
 
   return (
-    <Card variant="pop" role="dialog" aria-label="Your chats" className="pop-in absolute left-2 right-2 top-full z-40 mt-1 flex max-h-[min(70vh,34rem)] flex-col p-2">
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+    <Card variant="pop" role="dialog" aria-label="Your chats" className="pop-in absolute left-2 right-2 top-full z-40 mt-1 flex max-h-[min(80vh,44rem)] flex-col p-2">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-6 [mask-image:linear-gradient(to_bottom,black_calc(100%_-_1.5rem),transparent)]">
         {groups.map((group) => (
           <section key={group.key} aria-label={group.title} className="mb-1.5 border-b border-line pb-1.5 last:mb-0 last:border-b-0">
             <Eyebrow as="h3" className="px-2 pb-1 pt-2">{group.title}</Eyebrow>
