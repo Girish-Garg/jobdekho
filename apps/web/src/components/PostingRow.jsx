@@ -25,9 +25,9 @@ const TRACKS =
 const SELECTED = 'bg-select before:absolute before:inset-y-2.5 before:left-0 before:w-0.5 before:rounded-full before:bg-primary';
 
 export default function PostingRow({
-  posting, selected, flashUndo, dominantWorkMode, onOpen, onSelect, onStatus, onUndo,
+  posting, selected, open = false, flashUndo, dominantWorkMode, onOpen, onSelect, onStatus, onUndo,
 }) {
-  const showActions = selected || flashUndo;
+  const showActions = open || flashUndo;
   const pay = payText(posting);
   const meta = [posting.company, posting.location || 'Location not listed', ageText(posting), ...detailNotes(posting)];
 
@@ -66,13 +66,16 @@ export default function PostingRow({
         )}
       </span>
       {/* The trailing cell carries the score, and the actions take its place
-          while the row is hovered, focused or selected: the same width serves
-          both, and nothing is on screen that a person cannot yet act on. */}
+          while the row is hovered, holds keyboard focus or is open in the
+          pane: the same width serves both, and nothing is on screen that a
+          person cannot yet act on. Keyboard focus only, as on a card (see
+          PostingCardFoot.jsx), and not the j and k highlight, or they stayed
+          out on a row whose job had been put away. */}
       <span role="gridcell" className="relative flex h-7 items-center justify-end">
-        <span className={`flex items-center ${showActions ? 'invisible' : 'group-hover:invisible group-focus-within:invisible'}`}>
+        <span className={`flex items-center ${showActions ? 'invisible' : 'group-hover:invisible group-focus-visible:invisible group-has-[:focus-visible]:invisible'}`}>
           <FitMeter fit={posting.fit} grade={posting.grade} breakdown={posting.breakdown} />
         </span>
-        <span className={`absolute inset-y-0 right-0 flex items-center ${showActions ? '' : 'invisible group-hover:visible group-focus-within:visible'}`}>
+        <span className={`absolute inset-y-0 right-0 flex items-center ${showActions ? '' : 'invisible group-hover:visible group-focus-visible:visible group-has-[:focus-visible]:visible'}`}>
           <RowActions posting={posting} flashUndo={flashUndo} onStatus={onStatus} onUndo={onUndo} />
         </span>
       </span>

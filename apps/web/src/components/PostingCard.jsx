@@ -17,11 +17,14 @@ import Chip from './ui/Chip.jsx';
 // quick actions sit above that button as buttons of their own: a button
 // cannot hold buttons, and a card with nothing to do on it but open felt
 // inert. The tags sit above it too, so their evidence can be pointed at, and
-// a press on them still opens the job. Hover lights the card with the
-// dithered spotlight (dither.css) rather than lifting it, so nothing on the
-// page shifts under the pointer; it also raises the card, so a tip under a
-// chip is not covered by the card below.
-export default function PostingCard({ posting, selected = false, flashUndo = false, onOpen, onStatus, onUndo }) {
+// a press on them still opens the job; they sit above the foot as well, or
+// the tip under a chip was drawn beneath the quick actions and the pay. The
+// quick actions stay out while this job is `open` in the pane (see
+// PostingCardFoot.jsx). Hover lights the card with the dithered spotlight
+// (dither.css) rather than lifting it, so nothing on the page shifts under
+// the pointer; it also raises the card, so a tip under a chip is not covered
+// by the card below.
+export default function PostingCard({ posting, selected = false, open = false, flashUndo = false, onOpen, onStatus, onUndo }) {
   const openRef = useRef(null);
   const others = (posting.groupCount || 1) - 1;
   const place = `${posting.location || 'Location not listed'}${others > 0 ? ` +${others}` : ''}`;
@@ -61,11 +64,11 @@ export default function PostingCard({ posting, selected = false, flashUndo = fal
 
       <span className="line-clamp-2 font-display text-base font-bold leading-snug tracking-tight text-ink">{posting.title}</span>
 
-      <span className="relative z-10" onClick={openHere}>
+      <span className="relative z-20" onClick={openHere}>
         <PostingTags posting={posting} align="start" />
       </span>
 
-      <PostingCardFoot posting={posting} pinned={selected || flashUndo} onOpen={openHere} onStatus={onStatus} onUndo={onUndo} flashUndo={flashUndo} />
+      <PostingCardFoot posting={posting} pinned={open || flashUndo} onOpen={openHere} onStatus={onStatus} onUndo={onUndo} flashUndo={flashUndo} />
     </Card>
   );
 }

@@ -64,6 +64,7 @@ export default function PostingsView({
           viewMode={viewMode}
           filters={filters}
           selectedId={selectedId}
+          openId={pane.opened?.id ?? null}
           flashId={triage.flashId}
           onOpen={openFromClick}
           onSelect={setSelectedId}

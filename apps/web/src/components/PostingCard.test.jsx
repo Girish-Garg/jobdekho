@@ -269,4 +269,26 @@ describe('PostingCard actions placement', () => {
     expect(cell).not.toContainElement(screen.getByText('₹20k/mo'));
     expect(screen.getByLabelText('New today').closest('.relative')).not.toBe(cell);
   });
+
+  // A focused card is not reason enough: a pane closed with a click puts focus
+  // back on the card, and the actions stayed out on the job just put away.
+  it('pins the actions out only while the job is open in the pane', () => {
+    const { rerender } = render(<PostingCard posting={base} selected onOpen={() => {}} onStatus={() => {}} />);
+    const holder = () => screen.getByRole('button', { name: 'Save' }).closest('.absolute');
+    expect(holder().className).toContain('opacity-0');
+    expect(holder().className).toContain('group-has-[:focus-visible]:opacity-100');
+    expect(holder().className).not.toContain('focus-within');
+    rerender(<PostingCard posting={base} open onOpen={() => {}} onStatus={() => {}} />);
+    expect(holder().className).not.toContain('opacity-0');
+  });
+
+  // The foot's actions and pay are a layer over the stretched open button;
+  // the tags' layer has to be above theirs, or a chip's tip opened under them.
+  it('lays the tags above the foot, so a tip is not drawn under the actions', () => {
+    render(<PostingCard posting={{ ...base, payLabel: '₹20k/mo' }} onOpen={() => {}} onStatus={() => {}} />);
+    const layer = (el) => Number(el.closest('[class*=" z-"]').className.match(/(?:^| )z-([0-9]+)/)[1]);
+    const tags = layer(screen.getByText('Internship'));
+    expect(tags).toBeGreaterThan(layer(screen.getByRole('button', { name: 'Save' })));
+    expect(tags).toBeGreaterThan(layer(screen.getByText('₹20k/mo')));
+  });
 });

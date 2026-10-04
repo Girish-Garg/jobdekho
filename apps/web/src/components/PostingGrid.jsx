@@ -13,7 +13,7 @@ const COLS = 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3';
 // or dismisses (with its undo) from under the pointer, as a row does. The
 // bands and the "Level not stated" divider head the cards the way they
 // divide the list (see FeedMarks.jsx).
-export default function PostingGrid({ postings, bands = null, notStated = null, selectedId, flashId, onOpen, onStatus, onUndo }) {
+export default function PostingGrid({ postings, bands = null, notStated = null, selectedId, openId = null, flashId, onOpen, onStatus, onUndo }) {
   const containerRef = useRef(null);
   const marks = feedMarks(postings, bands, notStated);
 
@@ -31,6 +31,7 @@ export default function PostingGrid({ postings, bands = null, notStated = null, 
           <PostingCard
             posting={posting}
             selected={posting.id === selectedId}
+            open={posting.id === openId}
             flashUndo={posting.id === flashId}
             onOpen={onOpen}
             onStatus={onStatus}

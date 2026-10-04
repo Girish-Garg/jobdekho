@@ -94,17 +94,27 @@ describe('PostingRow work mode', () => {
 });
 
 describe('PostingRow triage actions', () => {
-  it('are hidden until the row is hovered, focused or selected', () => {
+  it('are hidden until the row is hovered or holds keyboard focus', () => {
     render(<PostingRow posting={base} {...handlers} />);
     const holder = screen.getByRole('button', { name: 'Save' }).closest('.absolute');
     expect(holder.className).toContain('invisible');
     expect(holder.className).toContain('group-hover:visible');
+    expect(holder.className).toContain('group-has-[:focus-visible]:visible');
+    expect(holder.className).not.toContain('focus-within');
   });
 
-  it('are shown outright on the selected row', () => {
-    render(<PostingRow posting={base} selected {...handlers} />);
+  it('are shown outright on the row whose job is open in the pane', () => {
+    render(<PostingRow posting={base} open {...handlers} />);
     const holder = screen.getByRole('button', { name: 'Save' }).closest('.absolute');
     expect(holder.className).not.toContain('invisible');
+  });
+
+  // The j and k highlight outlives the pane, and actions left out on it read
+  // as a job still open.
+  it('stay hidden on a row that is only selected', () => {
+    render(<PostingRow posting={base} selected {...handlers} />);
+    const holder = screen.getByRole('button', { name: 'Save' }).closest('.absolute');
+    expect(holder.className).toContain('invisible');
   });
 
   it('names a set status on the row, with aria-pressed on the active button', () => {

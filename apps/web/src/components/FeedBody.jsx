@@ -11,7 +11,7 @@ import { SearchIcon } from './Icon.jsx';
 // many jobs in each grade, and how many that do not say their level under a
 // seniority filter (see FeedMarks.jsx).
 export default function FeedBody({
-  loading, rows, bands = null, notStated = null, viewMode, filters, selectedId, flashId, onOpen, onSelect, onStatus, onUndo,
+  loading, rows, bands = null, notStated = null, viewMode, filters, selectedId, openId = null, flashId, onOpen, onSelect, onStatus, onUndo,
 }) {
   if (loading) return <FeedSkeleton mode={viewMode} />;
 
@@ -31,6 +31,7 @@ export default function FeedBody({
         bands={bands}
         notStated={notStated}
         selectedId={selectedId}
+        openId={openId}
         flashId={flashId}
         onOpen={onOpen}
         onStatus={onStatus}
@@ -45,6 +46,7 @@ export default function FeedBody({
       bands={bands}
       notStated={notStated}
       selectedId={selectedId}
+      openId={openId}
       flashId={flashId}
       onOpen={onOpen}
       onSelect={onSelect}

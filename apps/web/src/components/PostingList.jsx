@@ -28,7 +28,7 @@ function dominantWorkMode(postings) {
 // The list does not clip its rows, or the evidence tips of its last row
 // would be cut off at its edge, so its first and last rows round their own
 // corners instead.
-export default function PostingList({ postings, bands = null, notStated = null, selectedId, flashId, onOpen, onSelect, onStatus, onUndo }) {
+export default function PostingList({ postings, bands = null, notStated = null, selectedId, openId = null, flashId, onOpen, onSelect, onStatus, onUndo }) {
   const containerRef = useRef(null);
   const dominant = dominantWorkMode(postings);
   const marks = feedMarks(postings, bands, notStated);
@@ -45,6 +45,7 @@ export default function PostingList({ postings, bands = null, notStated = null, 
           <PostingRow
             posting={posting}
             selected={posting.id === selectedId}
+            open={posting.id === openId}
             flashUndo={posting.id === flashId}
             dominantWorkMode={dominant}
             onOpen={onOpen}
