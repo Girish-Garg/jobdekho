@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { MODEL_VERSIONS } from './version.js'
 
 // The shipped weights, as scripts/model/compact.js writes them:
@@ -33,13 +33,16 @@ const loaded = new Map()
 // The shipped model by name ('level' or 'sections'), read once and kept.
 // null when its file is missing, unreadable or of another version than the
 // code expects: tagging then goes on without estimates rather than failing,
-// and never mixes a stale model's numbers with this code's thresholds.
+// and never mixes a stale model's numbers with this code's thresholds. A
+// model the package does not ship (the level model, see the model card)
+// has no file at all, and costs one look for it.
 export function shippedModel(name) {
   if (loaded.has(name)) return loaded.get(name)
+  const file = new URL(`./weights/${name}.json`, import.meta.url)
   let model = null
   try {
-    const json = JSON.parse(readFileSync(new URL(`./weights/${name}.json`, import.meta.url), 'utf8'))
-    if (json.version === MODEL_VERSIONS[name]) model = decodeModel(json)
+    const json = existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : null
+    if (json?.version === MODEL_VERSIONS[name]) model = decodeModel(json)
   } catch {
     model = null
   }

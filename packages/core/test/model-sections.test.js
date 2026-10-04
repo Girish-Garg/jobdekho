@@ -2,12 +2,13 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { decodeModel } from '@jobdekho/core/model/weights.js'
 import { estimateSections, scoreLines } from '@jobdekho/core/model/section-estimate.js'
-import { modelSections, sortableLines } from '@jobdekho/core/model/model-sections.js'
+import { modelSections, sortedSections, sortableLines } from '@jobdekho/core/model/model-sections.js'
 
-// A hand-made model (fixtures/model-sections.json): "build" means duties,
-// "degree" and "knowledge" requirements, "insurance" pay, and "founded"
-// about, which has no threshold and so is never shown.
+// A hand-made model (fixtures/model-sections.json, version 9): "build" means
+// duties, "degree" and "knowledge" requirements, "insurance" pay, and
+// "founded" about, which has no threshold and so is never shown.
 const model = decodeModel(JSON.parse(readFileSync(new URL('./fixtures/model-sections.json', import.meta.url), 'utf8')))
+const passed = { sections: { version: 9, passed: true, samples: 236, errors: 1, lowerBound: 0.9801, reviewedAt: '2026-10-06' } }
 
 const AD = [
   'We are hiring a backend engineer to join us.',
@@ -38,29 +39,47 @@ describe('sortableLines', () => {
   })
 })
 
-describe('modelSections', () => {
-  it('lays the sorted lines out in reading order after the opening summary', () => {
-    const got = modelSections(AD, { model })
+describe('sortedSections', () => {
+  // The pane names every section after the first by its kind and reads the
+  // first as the opening, so the unsorted lines must open the posting.
+  it('opens with the lines it left unsorted, then the sorted ones in reading order', () => {
+    const got = sortedSections(AD, { model })
     expect(got.map((s) => [s.kind, s.lines, s.boilerplate])).toEqual([
-      ['other', ['We are hiring a backend engineer to join us.'], false],
+      ['other', ['We are hiring a backend engineer to join us.', 'Acme was founded in 2010.'], false],
       ['duties', ['- Build APIs in Go', '- Build data pipelines'], false],
       ['requirements', ['- Degree in computer science'], false],
       ['nice', ['- Knowledge of Kafka is a plus'], false],
       ['pay', ['- Health insurance for your family'], false],
-      ['other', ['Acme was founded in 2010.'], false],
       ['other', ['We are an equal opportunity employer and hire without regard to race.'], true],
     ])
     for (const section of got) expect(section).toMatchObject({ heading: null, from: 'model', version: 9 })
   })
 
   it('folds company template text the way headed sections do', () => {
-    const got = modelSections(AD, { model, isTemplate: (line) => line.startsWith('- Health') })
+    const got = sortedSections(AD, { model, isTemplate: (line) => /^- Health|founded/.test(line) })
     expect(got.find((s) => s.kind === 'pay')).toMatchObject({ boilerplate: true })
+    expect(got[0].lines).toEqual(['We are hiring a backend engineer to join us.'])
+    expect(got.filter((s) => s.kind === 'other' && s.boilerplate).flatMap((s) => s.lines))
+      .toEqual(['Acme was founded in 2010.', 'We are an equal opportunity employer and hire without regard to race.'])
   })
 
-  it('keeps the plain layout when the model places too little', () => {
-    expect(modelSections('Join us.\nWe are friendly.\n- Build APIs', { model })).toBeNull()
-    expect(modelSections('- Build APIs\n- Build tools', { model })).toBeNull()
-    expect(modelSections(AD, { model: null })).toBeNull()
+  it('keeps the plain layout when the model places too little, or everything', () => {
+    expect(sortedSections('Join us.\nWe are friendly.\n- Build APIs', { model })).toBeNull()
+    expect(sortedSections('- Build APIs\n- Build tools\n- Degree in maths', { model })).toBeNull()
+    expect(sortedSections(AD, { model: null })).toBeNull()
+  })
+})
+
+describe('modelSections', () => {
+  it('shows the sorting once the owner’s audit of this very version passed', () => {
+    expect(modelSections(AD, { model, audits: passed })).toEqual(sortedSections(AD, { model }))
+  })
+
+  it('stays off without an audit, after a failed one, or for an older version', () => {
+    expect(modelSections(AD, { model, audits: {} })).toBeNull()
+    expect(modelSections(AD, { model, audits: { sections: { ...passed.sections, passed: false, lowerBound: 0.97 } } })).toBeNull()
+    expect(modelSections(AD, { model, audits: { sections: { ...passed.sections, version: 8 } } })).toBeNull()
+    expect(modelSections(AD, { model, audits: { sections: { ...passed.sections, lowerBound: 0.979 } } })).toBeNull()
+    expect(modelSections(AD, { model: null, audits: passed })).toBeNull()
   })
 })

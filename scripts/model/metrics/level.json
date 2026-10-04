@@ -16,6 +16,7 @@
         "added": 4200
       }
     ],
+    "tagsVersion": 2,
     "postings": 10128,
     "trainedOn": 6156,
     "companies": 649,
@@ -377,5 +378,6 @@
       "right": 59
     }
   ],
+  "shipped": false,
   "weightsBytes": 1159013
 }

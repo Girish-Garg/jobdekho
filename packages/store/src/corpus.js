@@ -22,10 +22,11 @@ function indexed(rows) {
 // load, once, from the text they kept (see core's retag.js), the way the
 // fit's features are read again (corpus-features.js); the next write keeps
 // them. Not written back here: a scrape in another process may be writing
-// the same file, and its write already carries the new tags.
+// the same file, and its write already carries the new tags. retagged is
+// called with the row alone, since map would pass its index on as a model.
 export function openCorpus(path) {
   const file = cachedFile(path, {
-    parse: (text) => indexed(parseNdjson(text).map(retagged)),
+    parse: (text) => indexed(parseNdjson(text).map((row) => retagged(row))),
     serialize: (loaded) => toNdjson(loaded.rows),
     empty: () => indexed([]),
   })

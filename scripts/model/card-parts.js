@@ -10,12 +10,14 @@ export function filesLine(files) {
   return files.map((f) => `${f.file} saved ${f.date} (${count(f.rows)} rows, ${count(f.added)} not in an earlier file)`).join('; ')
 }
 
+// A finished review, as core's model/audit.json keeps it.
 export function audit(record) {
   if (!record) return '- Audit: not yet audited.'
   const verdict = record.passed ? 'passes' : 'does not pass'
+  const precision = record.samples ? (record.samples - record.errors) / record.samples : null
   return [
-    `- Audit: the owner checked ${count(record.checked)} outputs on ${record.date} (version ${record.version}):`,
-    `  ${count(record.wrong)} wrong, precision ${pct(record.precision)}, one-sided 95% lower bound ${pct(record.lowerBound, 2)}.`,
+    `- Audit: the owner checked ${count(record.samples)} outputs on ${record.reviewedAt} (version ${record.version}):`,
+    `  ${count(record.errors)} wrong, precision ${pct(precision)}, one-sided 95% lower bound ${pct(record.lowerBound, 2)}.`,
     `  The 98% claim ${verdict}.`,
   ].join('\n')
 }

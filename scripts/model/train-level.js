@@ -1,5 +1,7 @@
 import { LEVELS } from '@jobdekho/core/level.js'
+import { TAGS_VERSION } from '@jobdekho/core/tag.js'
 import { MODEL_VERSIONS } from '@jobdekho/core/model/version.js'
+import { HIDES_FOR_TAGS_VERSION } from '@jobdekho/core/model/level-features.js'
 import { levelExamples, MIN_WORDS } from './level-data.js'
 import { outOfFold, fitTrained } from './cross-validate.js'
 import { fitTemperature } from './calibrate.js'
@@ -23,7 +25,12 @@ const countBy = (list, key) => Object.fromEntries(Object.entries(list.reduce((m,
 
 // Trains the level model on the postings step 1 placed, measures it on
 // companies it never saw, and returns { weights, metrics } to be written.
+// Only on tags read by rules whose words it hides: otherwise it would be
+// graded on reading back the very words that decided the tags.
 export function trainLevel(postings, files) {
+  if (TAGS_VERSION !== HIDES_FOR_TAGS_VERSION) {
+    throw new Error(`The level model hides what step 1 read at tag version ${HIDES_FOR_TAGS_VERSION}, and the tags are at ${TAGS_VERSION}: hide what the newer rules read (core's model/level-features.js) before training it again.`)
+  }
   const { known, unknown } = levelExamples(postings)
   const oof = outOfFold(known, LEVEL_SPEC)
   const temperature = fitTemperature(oof, known.map((e) => e.y))
@@ -38,6 +45,7 @@ export function trainLevel(postings, files) {
     version: LEVEL_SPEC.version,
     data: {
       files,
+      tagsVersion: TAGS_VERSION,
       postings: postings.length,
       trainedOn: known.length,
       companies: new Set(known.map((e) => e.companyKey)).size,

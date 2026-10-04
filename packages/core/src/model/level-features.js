@@ -29,6 +29,12 @@ const PROGRAMME = /\b(?:interns?|internships?|apprentices?|apprenticeships?|trai
 
 export const hiddenUnit = (text) => YEARS.test(text) || PROGRAMME.test(text)
 
+// The step 1 rules these lists hide: tag version 2's. Tag version 3 also
+// reads levels stated in words (level-stated.js), which are not hidden yet,
+// so the level model is not trained on tags read by those rules until they
+// are (scripts/model/train-level.js refuses to).
+export const HIDES_FOR_TAGS_VERSION = 2
+
 export const titleWords = (title) => content(String(title || '').replace(/_/g, ' ').replace(TITLE_MARKERS, ' '))
 
 // How much of its own text a posting has; the model says nothing about a

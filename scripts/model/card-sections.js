@@ -6,9 +6,11 @@ export function sectionsCard(m, record) {
   const a = m.alternative
   const d = m.data
   const u = m.unheaded
+  const on = record?.passed ? 'shipped, and on in the app: the owner\'s audit of this version passed' : 'shipped, but off in the app until the owner\'s audit of this version passes'
   return `## Section model
 
-- What it does: for a posting whose text has no heading step 1 reads (its sections are null), it sorts each sentence or bullet into duties, requirements, pay, about or other; a requirement marked optional ("is a plus") becomes nice to have by step 1's own rule. A line goes to a section only when the model clears that section's threshold; every other line stays "other", in the posting's order. The sections are marked from: 'model'.
+- Status: ${on}.
+- What it does: for a posting whose text has no heading step 1 reads (its sections are null), it sorts each sentence or bullet into duties, requirements, pay, about or other; a requirement marked optional ("is a plus") becomes nice to have by step 1's own rule. A line goes to a section only when the model clears that section's threshold. The lines it leaves unsorted open the posting, in its order, and the sorted sections follow, each marked from: 'model'.
 - Version: ${m.version}
 - Weights: ${count(m.training.kept)} features, ${(m.weightsBytes / 1024).toFixed(0)} KB.
 - Trained on: ${count(d.trainedOn)} lines from ${count(d.headedPostings)} postings whose headings step 1 understood, from ${count(d.companies)} companies (${filesLine(d.files)}). Lines: ${Object.entries(d.lines).map(([k, v]) => `${k} ${count(v)}`).join(', ')}.
@@ -16,7 +18,7 @@ export function sectionsCard(m, record) {
 - Features: the line's words and word pairs, its first word, length, whether it is a list item, its place in the posting, and the words of the lines before and after it. The headings themselves are left out.
 - Split: by company, ${m.split.folds} folds (seed ${m.split.seed}); every number below is out of fold, on the compacted weights as shipped.
 - Calibration: temperature ${m.temperature}.
-- Thresholds: one per section, chosen as for the level model (fixed grid, strict to lenient, at least ${m.minSupport} lines covered).
+- Thresholds: one per section, the most lenient point of a fixed grid, walked from strict to lenient, before held-out precision first drops under the target (at least ${m.minSupport} lines covered).
 
 ### At the shipped target, ${pct(c.target)} precision
 
@@ -24,7 +26,7 @@ Held out: ${count(c.heldOut.covered)} of ${count(m.heldOut.lines)} lines placed 
 
 ${table(['Section', 'Threshold', 'Held out placed', 'Precision'], groupRows(c.byKind))}
 
-On the postings it is for, the ${count(u.postings)} with at least 300 characters and no heading: ${count(u.sorted)} get model sections (${pct(u.sortedShare)}); ${count(u.placedLines)} of their ${count(u.lines)} lines are placed (${pct(u.placedShare)}): ${Object.entries(u.placed).map(([k, v]) => `${k} ${count(v)}`).join(', ')}. The rest stay "other".
+On the postings it is for, the ${count(u.postings)} with at least 300 characters and no heading: ${count(u.sorted)} get model sections (${pct(u.sortedShare)}); ${count(u.placedLines)} of their ${count(u.lines)} lines are placed (${pct(u.placedShare)}): ${Object.entries(u.placed).map(([k, v]) => `${k} ${count(v)}`).join(', ')}. The rest open the posting unsorted, or fold as company text. These are what the app will show once the audit passes.
 
 ### Trade-off
 

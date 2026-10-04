@@ -5,7 +5,6 @@ import { join } from 'node:path'
 import { openCorpus } from '@jobdekho/store/corpus.js'
 import { parseNdjson, toNdjson } from '@jobdekho/store/ndjson.js'
 import { TAGS_VERSION } from '@jobdekho/core/tag.js'
-import { LEVEL_MODEL_VERSION } from '@jobdekho/core/model/version.js'
 
 let dir
 beforeEach(() => { dir = mkdtempSync(join(tmpdir(), 'jobdekho-store-')) })
@@ -13,8 +12,6 @@ afterEach(() => { rmSync(dir, { recursive: true, force: true }) })
 
 const asMap = (rows) => new Map(rows.map((row) => [row.id, row]))
 const rows = [{ id: 'a', title: 'A' }, { id: 'b', title: 'B' }]
-// A row tagged by today's rules and estimated by today's level model.
-const CURRENT = { tagsVersion: TAGS_VERSION, modelVersion: LEVEL_MODEL_VERSION }
 
 describe('ndjson', () => {
   it('round-trips rows one per line and tolerates blank lines', () => {
@@ -32,7 +29,7 @@ describe('ndjson', () => {
 describe('openCorpus', () => {
   it('round-trips rows through the file', () => {
     const path = join(dir, 'postings.ndjson')
-    const tagged = rows.map((row) => ({ ...row, ...CURRENT }))
+    const tagged = rows.map((row) => ({ ...row, tagsVersion: TAGS_VERSION }))
     openCorpus(path).save(asMap(tagged))
     const again = openCorpus(path)
     expect(again.rows()).toEqual(tagged)
@@ -44,12 +41,12 @@ describe('openCorpus', () => {
   it('tags rows from an older version as it loads them', () => {
     const path = join(dir, 'postings.ndjson')
     const old = { id: 'o', source: 'linkedin', title: 'Senior Data Engineer', descriptionText: 'Workplace type: Hybrid', level: 'mid', workMode: 'onsite' }
-    writeFileSync(path, toNdjson([old, { id: 'n', title: 'Kept', ...CURRENT }]))
+    writeFileSync(path, toNdjson([old, { id: 'n', title: 'Kept', tagsVersion: TAGS_VERSION }]))
     const corpus = openCorpus(path)
     expect(corpus.byId().get('o')).toMatchObject({
       level: 'senior', levelTag: { from: 'title' }, workMode: 'hybrid', workModeTag: { from: 'text' }, tagsVersion: TAGS_VERSION,
     })
-    expect(corpus.byId().get('n')).toEqual({ id: 'n', title: 'Kept', ...CURRENT })
+    expect(corpus.byId().get('n')).toEqual({ id: 'n', title: 'Kept', tagsVersion: TAGS_VERSION })
     corpus.save(corpus.byId())
     expect(parseNdjson(readFileSync(path, 'utf8'))[0].tagsVersion).toBe(TAGS_VERSION)
   })
@@ -81,7 +78,7 @@ describe('openCorpus', () => {
 
   it('ignores a temp file a crashed writer left beside it', () => {
     const path = join(dir, 'postings.ndjson')
-    const tagged = rows.map((row) => ({ ...row, ...CURRENT }))
+    const tagged = rows.map((row) => ({ ...row, tagsVersion: TAGS_VERSION }))
     openCorpus(path).save(asMap(tagged))
     writeFileSync(join(dir, '.postings.ndjson.999-dead.tmp'), '{"id":"torn","ti')
     expect(openCorpus(path).rows()).toEqual(tagged)
@@ -90,9 +87,9 @@ describe('openCorpus', () => {
 
   it('keeps the last row when a hand-edited file repeats an id', () => {
     const path = join(dir, 'postings.ndjson')
-    writeFileSync(path, toNdjson([{ id: 'a', title: 'old', ...CURRENT }, { id: 'a', title: 'new', ...CURRENT }]))
+    writeFileSync(path, `{"id":"a","title":"old","tagsVersion":${TAGS_VERSION}}\n{"id":"a","title":"new","tagsVersion":${TAGS_VERSION}}\n`)
     const corpus = openCorpus(path)
-    expect(corpus.rows()).toEqual([{ id: 'a', title: 'new', ...CURRENT }])
+    expect(corpus.rows()).toEqual([{ id: 'a', title: 'new', tagsVersion: TAGS_VERSION }])
     expect(corpus.byId().size).toBe(1)
   })
 })

@@ -47,11 +47,13 @@ const EEO = /equal (?:employment )?opportunit|without regard to|\beeo\b|affirmat
 // asks or does: a requirement a company repeats in every ad is still one.
 const FOLDABLE = new Set(['pay', 'apply', 'about', 'other'])
 
+// 'eeo', 'template' or null: why a line of a section of this kind folds.
+export const foldFlag = (line, kind, isTemplate) => (EEO.test(line) ? 'eeo' : FOLDABLE.has(kind) && isTemplate(line) ? 'template' : null)
+
 function runs(section, isTemplate) {
-  const flag = (line) => (EEO.test(line) ? 'eeo' : FOLDABLE.has(section.kind) && isTemplate(line) ? 'template' : null)
   const out = []
   for (const line of section.lines) {
-    const kind = flag(line)
+    const kind = foldFlag(line, section.kind, isTemplate)
     const last = out.at(-1)
     if (last && last.flag === kind) last.lines.push(line)
     else out.push({ flag: kind, lines: [line] })

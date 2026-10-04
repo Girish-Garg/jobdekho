@@ -225,17 +225,18 @@
   ],
   "unheaded": {
     "postings": 2186,
-    "sorted": 1531,
-    "sortedShare": 0.7004,
-    "lines": 34463,
-    "placedLines": 8557,
-    "placedShare": 0.2483,
+    "sorted": 1524,
+    "sortedShare": 0.6972,
+    "lines": 34415,
+    "placedLines": 8509,
+    "placedShare": 0.2472,
     "placed": {
-      "requirements": 1062,
-      "duties": 5326,
+      "requirements": 1061,
+      "duties": 5279,
       "about": 2079,
       "nice": 90
     }
   },
+  "shipped": true,
   "weightsBytes": 1565563
 }

@@ -1,5 +1,5 @@
 import { softmax } from '@jobdekho/core/model/linear.js'
-import { modelSections } from '@jobdekho/core/model/model-sections.js'
+import { sortedSections } from '@jobdekho/core/model/model-sections.js'
 import { postingSections } from '@jobdekho/core/jd-layout.js'
 import { chooseThresholds, crossFoldCheck, precisionAt } from './thresholds.js'
 import { foldSplits } from './cross-validate.js'
@@ -42,15 +42,15 @@ function atTarget(items, target, options) {
   }
 }
 
-// What the shipped model does to the postings it is for: those whose text
-// has no heading step 1 reads.
+// What the shipped model does to the postings it is for, those whose text
+// has no heading step 1 reads, once its audit lets the pane show it.
 export function unheadedReport(postings, model) {
   const texts = postings.filter((p) => p.description.length >= 300 && !postingSections(p.description, { company: p.company }))
   let sorted = 0
   let lines = 0
   const placed = {}
   for (const p of texts) {
-    const sections = modelSections(p.description, { model })
+    const sections = sortedSections(p.description, { model })
     if (!sections) continue
     sorted += 1
     for (const s of sections) {

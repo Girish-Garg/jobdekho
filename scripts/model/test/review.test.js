@@ -1,7 +1,40 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { mkdtempSync, rmSync, readFileSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { lowerBound, upperTail, auditResult } from '../review/stats.js'
 import { allocate, drawSample } from '../review/samples.js'
-import { progress } from '../review/result.js'
+import { progress, auditRecord, finish, savedAudit } from '../review/result.js'
+import { auditPassed } from '@jobdekho/core/model/audit.js'
+
+let dir
+beforeEach(() => { dir = mkdtempSync(join(tmpdir(), 'jobdekho-review-')) })
+afterEach(() => { rmSync(dir, { recursive: true, force: true }) })
+
+describe('a finished review', () => {
+  const at = new Date('2026-10-06T10:00:00Z')
+
+  it('leaves the record core reads, with its bound rounded down', () => {
+    const record = auditRecord(1, [...Array(235).fill('right'), 'wrong'], at)
+    expect(record).toEqual({ version: 1, passed: true, samples: 236, errors: 1, lowerBound: 0.98, reviewedAt: '2026-10-06' })
+    expect(auditPassed({ sections: record }, { name: 'sections', version: 1 })).toBe(true)
+    const failed = auditRecord(1, [...Array(148).fill('right'), 'wrong', 'wrong'], at)
+    expect(failed).toMatchObject({ passed: false, samples: 150, errors: 2 })
+    expect(auditPassed({ sections: failed }, { name: 'sections', version: 1 })).toBe(false)
+  })
+
+  it('writes its record beside the other models’ and reads it back for its version only', () => {
+    const file = pathToFileURL(join(dir, 'audit.json'))
+    writeFileSync(file, JSON.stringify({ level: { version: 1, passed: false } }))
+    const samples = [{ id: 'a' }, { id: 'b' }]
+    const record = finish('sections', 3, samples, { a: { verdict: 'right' }, b: { verdict: 'right' } }, { file, card: false })
+    expect(JSON.parse(readFileSync(file, 'utf8'))).toEqual({ level: { version: 1, passed: false }, sections: record })
+    expect(record).toMatchObject({ version: 3, passed: false, samples: 2, errors: 0 })
+    expect(savedAudit('sections', 3, file)).toEqual(record)
+    expect(savedAudit('sections', 4, file)).toBeNull()
+  })
+})
 
 describe('the Clopper-Pearson lower bound', () => {
   // The audit sizes the owner's claim rests on: 98% with 95% confidence.
