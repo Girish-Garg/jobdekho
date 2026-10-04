@@ -49,7 +49,7 @@ describe('tagRow and retagged', () => {
   it('tags an old row from its text and the list it came from', () => {
     const got = retagged(stored)
     expect(got).toMatchObject({ level: 'internship', type: 'internship', workMode: null, tagsVersion: TAGS_VERSION })
-    expect(got.board).toEqual({ type: 'internship', employment: null, workMode: null })
+    expect(got.board).toEqual({ type: 'internship', employment: null, workMode: null, seniority: null })
     expect(got.payTag).toMatchObject({ from: 'board', value: '₹ 10,000 /month' })
     // The fit's title reading follows the shared title rules.
     expect(got.features).toMatchObject({ band: null, from: null, titleLevel: null, skills: {} })

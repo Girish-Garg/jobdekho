@@ -103,7 +103,7 @@ describe('normalize', () => {
 
   it('keeps what the board declared and tags each field with its evidence', () => {
     const p = normalize({ externalId: '1', title: 'Data Analyst', company: 'C', url: 'u', type: 'job', employment: 'Full-time', workMode: 'hybrid', description: 'This is a paid internship for analysts.' }, 'linkedin')
-    expect(p.board).toEqual({ type: 'job', employment: 'Full-time', workMode: 'hybrid' })
+    expect(p.board).toEqual({ type: 'job', employment: 'Full-time', workMode: 'hybrid', seniority: null })
     // A board-declared job is never made an internship from its text.
     expect(p.level).toBeNull()
     expect(p.typeTag).toMatchObject({ value: 'job', from: 'board', evidence: 'Employment type: Full-time' })

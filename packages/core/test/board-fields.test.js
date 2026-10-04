@@ -5,13 +5,13 @@ import { tag } from '@jobdekho/core/tag.js'
 
 describe('boardOf', () => {
   it('keeps what the adapter says the board declared', () => {
-    expect(boardOf({ level: 'internship', employment: 'Intern' })).toEqual({ type: 'internship', employment: 'Intern', workMode: null })
-    expect(boardOf({ type: 'job', employment: 'Full-time', workMode: 'hybrid' })).toEqual({ type: 'job', employment: 'Full-time', workMode: 'hybrid' })
+    expect(boardOf({ level: 'internship', employment: 'Intern' })).toEqual({ type: 'internship', employment: 'Intern', workMode: null, seniority: null })
+    expect(boardOf({ type: 'job', employment: 'Full-time', workMode: 'hybrid' })).toEqual({ type: 'job', employment: 'Full-time', workMode: 'hybrid', seniority: null })
   })
 
   it('keeps nothing it cannot read', () => {
-    expect(boardOf({ type: 'contract', employment: '  ', workMode: 'office' })).toEqual({ type: null, employment: null, workMode: null })
-    expect(boardOf(undefined)).toEqual({ type: null, employment: null, workMode: null })
+    expect(boardOf({ type: 'contract', employment: '  ', workMode: 'office' })).toEqual({ type: null, employment: null, workMode: null, seniority: null })
+    expect(boardOf(undefined)).toEqual({ type: null, employment: null, workMode: null, seniority: null })
   })
 })
 
@@ -28,7 +28,7 @@ describe('storedBoard', () => {
 
   it('takes a kept board as it is, and says nothing for other old rows', () => {
     expect(storedBoard({ source: 'linkedin', board: { type: 'job', employment: 'Full-time', workMode: null } }).employment).toBe('Full-time')
-    expect(storedBoard({ source: 'greenhouse:stripe', tags: ['internship'] })).toEqual({ type: null, employment: null, workMode: null })
+    expect(storedBoard({ source: 'greenhouse:stripe', tags: ['internship'] })).toEqual({ type: null, employment: null, workMode: null, seniority: null })
   })
 })
 

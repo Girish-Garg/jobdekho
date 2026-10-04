@@ -816,6 +816,11 @@ assessment of the rest:
   is public JSON. Free text is ignored, so it is filtered by job function id (the taxonomy is at
   `/api/v1/job_function/`), and more than three ids in one request is a 400. The payload has
   no description and no date, and the company sits under `employer.company_name`.
+  Instahyre files every job under its own experience levels (internship, entry_level,
+  associate, mid_senior, senior). The internship and entry level slices are small, so they
+  are read whole each run, and a job in neither is filed above entry level
+  (`board.seniority`, see `boards/instahyre-slices.js`). That filing outranks a title
+  that reads as entry: an "SDE 1" asking 6 to 9 years was shown as Entry.
 - **Hirect** - chat-first and mobile-first. There is no meaningful public web board to scrape.
   Skip it.
 - **Naukri** - by far the largest Indian job board, and deliberately not implemented. Its job

@@ -82,14 +82,58 @@ describe('instahyre adapter', () => {
     return { urls, http }
   }
 
-  it('sweeps three function groups across three slices in 12 requests', async () => {
+  it('sweeps three function groups across three slices, each until a short page', async () => {
     const { urls, http } = capture()
     const rows = await instahyre().fetch(http)
-    expect(urls).toHaveLength(12)
-    expect(rows).toHaveLength(12)
+    expect(urls).toHaveLength(9)
     expect(urls.filter((u) => u.includes('job_type=2'))).toHaveLength(3)
     expect(urls.filter((u) => u.includes('experience_level=entry_level'))).toHaveLength(3)
-    expect(urls.filter((u) => u.includes('offset=35'))).toHaveLength(3)
+    // The same job listed nine times comes back once.
+    expect(rows).toHaveLength(1)
+  })
+
+  // A full page means there may be more: the small slices read on until a
+  // short one, the general slice stops at two pages.
+  it('reads the small slices to their end and the general slice two pages deep', async () => {
+    const urls = []
+    const page = (n) => Array.from({ length: n }, (_, i) => ({ id: `${urls.length}-${i}`, title: 'Dev' }))
+    const http = async (url) => {
+      urls.push(url)
+      const offset = Number(url.match(/offset=(\d+)/)[1])
+      return { json: async () => ({ objects: page(url.includes('job_type=2') || offset >= 70 ? 3 : 35) }) }
+    }
+    await instahyre().fetch(http)
+    const entry = urls.filter((u) => u.includes('entry_level'))
+    const general = urls.filter((u) => u.includes('job_type=1') && !u.includes('entry_level'))
+    expect(entry.filter((u) => u.includes('offset=70'))).toHaveLength(3)
+    expect(general.filter((u) => u.includes('offset=70'))).toHaveLength(0)
+    expect(general).toHaveLength(6)
+  })
+
+  // Instahyre's own filing of the experience asked: a job in the entry level
+  // slice is entry level, one in neither small slice is above it.
+  it('labels a job by the slices it was found in', async () => {
+    const http = async (url) => {
+      const ids = url.includes('job_type=2') ? ['i'] : url.includes('entry_level') ? ['e'] : ['e', 'g']
+      return { json: async () => ({ objects: ids.map((id) => ({ id, title: 'SDE 1' })) }) }
+    }
+    const rows = Object.fromEntries((await instahyre().fetch(http)).map((r) => [r.externalId, r]))
+    expect(rows.e.seniority).toBe('entry')
+    expect(rows.g.seniority).toBe('above-entry')
+    expect(rows.i.seniority).toBeUndefined()
+    expect(rows.i.level).toBe('internship')
+  })
+
+  // A job on an entry level page that never came back would be called above
+  // entry wrongly, so a slice not read whole says nothing about any job.
+  it('calls nothing above entry when a small slice was not read whole', async () => {
+    const http = async (url) => {
+      if (url.includes('entry_level') && url.includes('job_functions=9')) throw new Error('HTTP 500')
+      return { json: async () => ({ objects: [{ id: url.includes('entry_level') ? 'e' : 'g', title: 'SDE 1' }] }) }
+    }
+    const rows = Object.fromEntries((await instahyre().fetch(http)).map((r) => [r.externalId, r]))
+    expect(rows.e.seniority).toBe('entry')
+    expect(rows.g.seniority).toBeUndefined()
   })
 
   // The server answers 400 to a fourth job_functions value and to the
@@ -118,9 +162,9 @@ describe('instahyre adapter', () => {
 
   it('keeps the pages that worked when one page fails', async () => {
     const http = async (url) => {
-      if (url.includes('offset=35')) throw new Error('HTTP 500')
-      return { json: async () => fixture }
+      if (url.includes('job_type=2')) throw new Error('HTTP 500')
+      return { json: async () => ({ objects: [{ id: url.includes('entry_level') ? 'e' : 'g', title: 'Dev' }] }) }
     }
-    expect(await instahyre().fetch(http)).toHaveLength(9)
+    expect((await instahyre().fetch(http)).map((r) => r.externalId).sort()).toEqual(['e', 'g'])
   })
 })

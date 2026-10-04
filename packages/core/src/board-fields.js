@@ -4,17 +4,23 @@ import { WORK_MODES } from './work-mode.js'
 // that tagging it again later starts from the same evidence:
 //
 //   { type: 'internship' | 'job' | null, employment: string | null,
-//     workMode: 'remote' | 'hybrid' | 'onsite' | null }
+//     workMode: 'remote' | 'hybrid' | 'onsite' | null,
+//     seniority: 'entry' | 'above-entry' | null }
 //
 // `type` is how the board filed it (a list of internships, an employment
 // type of Intern or Full-time); `employment` is the board's own words for
-// that, when it gave any.
+// that, when it gave any. `seniority` is how the board filed the experience
+// it asks, where it files every job (Instahyre's experience levels, see the
+// sources' boards/instahyre-slices.js).
+const SENIORITY = ['entry', 'above-entry']
+
 export function boardOf(raw) {
   const type = raw?.level === 'internship' ? 'internship' : ['internship', 'job'].includes(raw?.type) ? raw.type : null
   return {
     type,
     employment: typeof raw?.employment === 'string' && raw.employment.trim() ? raw.employment.trim() : null,
     workMode: WORK_MODES.includes(raw?.workMode) ? raw.workMode : null,
+    seniority: SENIORITY.includes(raw?.seniority) ? raw.seniority : null,
   }
 }
 
@@ -34,7 +40,7 @@ const LISTED = {
 export function storedBoard(row) {
   if (row?.board) return boardOf({ ...row.board, level: null })
   const listed = LISTED[sourceOf(row)]
-  return { type: listed ? listed(row) : null, employment: null, workMode: null }
+  return { type: listed ? listed(row) : null, employment: null, workMode: null, seniority: null }
 }
 
 const NAMES = { internshala: 'Internshala', unstop: 'Unstop', instahyre: 'Instahyre', linkedin: 'LinkedIn' }
@@ -48,4 +54,9 @@ export function boardTypeEvidence(board, source) {
   if (board.employment) return `Employment type: ${spelled(board.employment)}`
   const name = NAMES[String(source || '').split(':')[0]] ?? 'The board'
   return board.type === 'internship' ? `${name} lists it as an internship` : `${name} lists it as a job`
+}
+
+export function boardSeniorityEvidence(board, source) {
+  const name = NAMES[String(source || '').split(':')[0]] ?? 'The board'
+  return board.seniority === 'entry' ? `${name} lists it as entry level` : `${name} lists it above entry level`
 }

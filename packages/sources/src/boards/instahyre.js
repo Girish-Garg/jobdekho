@@ -1,4 +1,5 @@
 import { internLevel, jobType as jobTypeOf } from '../providers/employment-type.js'
+import { SLICES, readSlice, seniorityOf } from './instahyre-slices.js'
 
 // The JSON behind Instahyre's logged-out search page: no session, no key.
 // docs/adding-sources.md once ruled the site out as login-walled; applying is,
@@ -16,24 +17,8 @@ const FUNCTION_GROUPS = [
 
 // The payload carries no employment type, so job_type on the query is the
 // platform's own word for it, spelled the way its meta.job_type_counts spells
-// it. Internships (about 60 board-wide) and entry level roles (about 500) are
-// slices small enough that one page holds the tech share of each. The general
-// slice samples a 13,000 row board with no date to sort by, so two pages is
-// where it stops. 3 groups x (1 + 1 + 2) pages is 12 requests per run.
-const SLICES = [
-  { jobType: 'internship', filter: 'job_type=2', pages: 1 },
-  { jobType: 'full_time', filter: 'job_type=1&experience_level=entry_level', pages: 1 },
-  { jobType: 'full_time', filter: 'job_type=1', pages: 2 },
-]
-// Asking for more still returns 35, so paging assumes exactly that.
-const LIMIT = 35
-
-const url = (group, filter, page) =>
-  `https://www.instahyre.com/api/v1/job_search?${filter}` +
-  group.map((id) => `&job_functions=${id}`).join('') +
-  `&limit=${LIMIT}&offset=${page * LIMIT}`
-
-export function toRaw(j, jobType = 'full_time') {
+// it. Which slices are read, and how far, is in instahyre-slices.js.
+export function toRaw(j, jobType = 'full_time', seniority = null) {
   const keywords = Array.isArray(j.keywords) ? j.keywords : []
   return {
     externalId: String(j.id),
@@ -53,27 +38,32 @@ export function toRaw(j, jobType = 'full_time') {
     logoUrl: j.employer?.profile_image_src || null,
     ...internLevel(jobType),
     ...jobTypeOf(jobType),
+    // Instahyre's own filing of the experience it asks (instahyre-slices.js),
+    // which core's level rules believe over a title.
+    ...(seniority ? { seniority } : {}),
   }
 }
 
+// A job comes back once however many slices and groups list it, with
+// every slice it was in, which is what says how Instahyre files it.
 export function instahyre() {
   return {
     name: 'instahyre',
     async fetch(http) {
-      const out = []
+      const jobs = new Map()
+      let whole = true
       for (const group of FUNCTION_GROUPS) {
-        for (const { jobType, filter, pages } of SLICES) {
-          for (let page = 0; page < pages; page++) {
-            try {
-              const res = await http(url(group, filter, page))
-              out.push(...((await res.json()).objects || []).map((j) => toRaw(j, jobType)))
-            } catch {
-              // One bad page should not lose the pages that did come back.
-            }
+        for (const slice of SLICES) {
+          const read = await readSlice(http, group, slice)
+          if (slice.whole && !read.whole) whole = false
+          for (const j of read.objects) {
+            const job = jobs.get(j.id) ?? { j, jobType: slice.jobType, keys: new Set() }
+            job.keys.add(slice.key)
+            jobs.set(j.id, job)
           }
         }
       }
-      return out
+      return [...jobs.values()].map(({ j, jobType, keys }) => toRaw(j, jobType, seniorityOf(keys, whole)))
     },
   }
 }

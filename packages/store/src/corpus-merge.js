@@ -34,12 +34,14 @@ const READ_FROM_TEXT = ['descriptionSnippet', 'descriptionText', 'degreeMin', 'd
 const KEEP_WHEN_MISSING = ['logoUrl']
 
 // What the board declared arrives in parts: LinkedIn's employment type comes
-// with the posting's page, never with the card seen again later, so a part
-// the card leaves out is kept.
+// with the posting's page, never with the card seen again later, and
+// Instahyre's filing of the experience asked only with a run that read its
+// small slices whole. A part a sighting leaves out is kept.
 function boardOf(existing, row) {
   const before = existing.board ?? {}
   const now = row.board ?? {}
-  return { type: now.type ?? before.type ?? null, employment: now.employment ?? before.employment ?? null, workMode: now.workMode ?? before.workMode ?? null }
+  const part = (key) => now[key] ?? before[key] ?? null
+  return { type: part('type'), employment: part('employment'), workMode: part('workMode'), seniority: part('seniority') }
 }
 
 // After a bare sighting the tags are read again from the kept text with the
@@ -53,7 +55,10 @@ export function refreshed(existing, row) {
     if (KEEP_WHEN_MISSING.includes(column) && row[column] == null) continue
     out[column] = row[column]
   }
-  return bare ? tagRow({ ...out, board: boardOf(existing, row) }) : out
+  // A sighting that could not say how the board files the experience asked
+  // keeps the filing it had, and the tags read from it.
+  const unsaid = !row.board?.seniority && Boolean(existing.board?.seniority)
+  return bare || unsaid ? tagRow({ ...out, board: boardOf(existing, row) }) : out
 }
 
 // Postings a source listed but did not send, because the store already held

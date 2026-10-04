@@ -1,4 +1,4 @@
-import { classifyLevel } from './level.js'
+import { classifyLevel, levelRank } from './level.js'
 import { degreeRank } from './degree.js'
 import { locationOk } from './location.js'
 import { measuresOk } from './measure-rules.js'
@@ -19,12 +19,16 @@ export function wantedLevels(rules) {
 // keeping them buried the internships under hundreds of other jobs.
 export const keepsUnstated = (wanted) => Boolean(wanted?.some((level) => level !== 'internship'))
 
-// One never classified at all is read here.
+// One never classified at all is read here. One the board files above entry
+// level (core's board-fields.js) stays out of a search for internships or
+// entry roles, though it states no level of its own.
 function levelOk(posting, rules) {
   const wanted = wantedLevels(rules)
   if (!wanted) return true
   const level = posting.level === undefined ? classifyLevel(posting.title, posting.descriptionSnippet) : posting.level
-  return level == null ? keepsUnstated(wanted) : wanted.includes(level)
+  if (level != null) return wanted.includes(level)
+  if (posting.board?.seniority === 'above-entry' && !wanted.some((w) => levelRank(w) > levelRank('entry'))) return false
+  return keepsUnstated(wanted)
 }
 
 // maxDegree is the highest degree the seeker holds: a master's holder still

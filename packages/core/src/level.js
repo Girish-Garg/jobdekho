@@ -2,7 +2,7 @@ import { tag, quote } from './tag.js'
 import { titleSays, titleEvidence, spaced } from './title-rules.js'
 import { programmeIn } from './programme.js'
 import { yearsLevel, monthsAsked, levelForYears } from './level-years.js'
-import { boardTypeEvidence } from './board-fields.js'
+import { boardTypeEvidence, boardSeniorityEvidence } from './board-fields.js'
 import { statedLevel } from './level-stated.js'
 
 // Seniority ladder, lowest to highest. Index order drives range comparisons.
@@ -12,6 +12,12 @@ export const LEVELS = ['internship', 'entry', 'mid', 'senior', 'staff', 'executi
 // job unless the description says this one is a fixed-term internship,
 // apprenticeship or traineeship.
 const ASKS_TEXT = new Set(['trainee', 'programme'])
+
+// A board that files the job above entry level is believed over a title that
+// reads as entry or internship: Instahyre's "SDE 1" asking 6 to 9 years was
+// shown as Entry. A title that says more senior still stands.
+const keptTitle = (found, board) =>
+  (found && board?.seniority === 'above-entry' && levelRank(found.level) <= levelRank('entry') ? null : found)
 
 // The level a posting states, as a tag (see tag.js), or null when nothing
 // says. Nothing stated means unknown, never Mid: a default showed a fifth
@@ -25,13 +31,14 @@ const ASKS_TEXT = new Set(['trainee', 'programme'])
 // states in words (level-stated.js).
 export function levelTag({ title = '', description = '', company = '', source = '', board = null, experience = null, experienceYears = null } = {}) {
   if (board?.type === 'internship') return tag('internship', 'board', boardTypeEvidence(board, source))
-  const found = titleSays(title, company)
+  const found = keptTitle(titleSays(title, company), board)
   if (found && !ASKS_TEXT.has(found.rule)) return tag(found.level, 'title', titleEvidence(found))
   // A board that filed the posting as a job (a list of jobs, a Full-time
   // employment type) is never made an internship by inference.
-  const programme = board?.type === 'job' ? null : programmeIn(description, company)
+  const programme = board?.type === 'job' || board?.seniority === 'above-entry' ? null : programmeIn(description, company)
   if (programme) return tag('internship', 'text', `Says "${quote(programme.match)}"`)
   if (found) return tag('entry', 'title', titleEvidence(found))
+  if (board?.seniority === 'entry') return tag('entry', 'board', boardSeniorityEvidence(board, source))
   // Some boards put the range in the title itself: "Firmware Engineer(5-7 years)".
   const inTitle = yearsLevel(spaced(title))
   if (inTitle) return tag(inTitle.level, 'title', `Title ${inTitle.evidence.replace(/^Asks/, 'asks')}`)

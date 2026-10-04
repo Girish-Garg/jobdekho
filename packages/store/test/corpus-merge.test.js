@@ -33,8 +33,17 @@ describe('refreshed', () => {
   it('keeps the parts of the board a bare card leaves out', () => {
     const kept = { ...stored, source: 'linkedin', board: { type: 'job', employment: 'Full-time', workMode: null } }
     const next = refreshed(kept, { ...kept, descriptionText: null, board: { type: null, employment: null, workMode: 'remote' } })
-    expect(next.board).toEqual({ type: 'job', employment: 'Full-time', workMode: 'remote' })
+    expect(next.board).toEqual({ type: 'job', employment: 'Full-time', workMode: 'remote', seniority: null })
     expect(next.typeTag).toMatchObject({ value: 'job', evidence: 'Employment type: Full-time' })
+  })
+
+  // Instahyre's filing comes only with a run that read its small slices
+  // whole; a run that could not says nothing, and the job is not Entry again.
+  it('keeps how the board filed the experience when a sighting cannot say', () => {
+    const kept = { ...stored, source: 'instahyre', title: 'SDE 1', descriptionText: '', level: null, levelTag: null, board: { type: 'job', employment: 'full_time', workMode: null, seniority: 'above-entry' } }
+    const next = refreshed(kept, { ...kept, level: 'entry', levelTag: { value: 'entry' }, board: { type: 'job', employment: 'full_time', workMode: null, seniority: null } })
+    expect(next.board.seniority).toBe('above-entry')
+    expect(next.level).toBeNull()
   })
 
   it('takes the new tags from a sighting that brings its own text', () => {
