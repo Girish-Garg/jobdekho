@@ -23,7 +23,7 @@ export function tagRow(row) {
     experienceYears: row.experienceYears ?? null,
     stipend: row.payTag?.from === 'text' ? null : row.stipend ?? null,
   })
-  return { ...row, board, ...tagged, features: withTitleLevel(row.features, row.title) }
+  return { ...row, board, ...tagged, features: withTitleLevel(row.features, row.title, row.company ?? '') }
 }
 
 // Only rows tagged under an older version of the rules, or estimated by an

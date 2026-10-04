@@ -1,3 +1,5 @@
+import { graduateProgramme } from './graduate-programmes.js'
+
 // What a title alone says about seniority. One rule set serves the level
 // chip (level.js) and the fit (title-level.js): kept apart, the two read 59
 // stored titles differently, so a card could say Entry while its fit card
@@ -18,7 +20,8 @@ const STAFF = /\b(staff|principal|distinguished|fellow|architect)\b/i
 // "SSE" is how Indian boards shorten Senior Software Engineer.
 const SENIOR_WORD = /\b(senior|snr|sr|sse)\b/i
 const SENIOR_ROLE = /\b(lead|manager|supervisor)\b/i
-const ENTRY = /\b(graduate|new ?grad|freshers?|fresh graduates?|junior|jr|associate|entry[ -]level|campus|rotational|early career)\b/i
+// Cisco's starting title is "Software Engineer (Grade 4 / College Grad)".
+const ENTRY = /\b(graduate|new ?grad|(?:college|university) grads?|freshers?|fresh graduates?|junior|jr|associate|entry[ -]level|campus|rotational|early career)\b/i
 // GitLab and UPS name the middle rung Intermediate; Infosys writes "Mid Level".
 const MID = /\b(intermediate|mid[ -]level)\b/i
 
@@ -72,18 +75,22 @@ const first = (title, rules) => {
 
 // { level, rule, word } or null, most specific first. An explicit "senior"
 // outranks a role word, so "Associate Product Manager" stays entry. rule
-// 'trainee' is entry unless the description states a programme.
-export function titleSays(title) {
+// 'trainee' is entry unless the description states a programme. A
+// company's own name for its graduate programme is read last, and only
+// for that company (graduate-programmes.js).
+export function titleSays(title, company = '') {
   const t = spaced(title)
   return first(t, [[INTERNSHIP, 'internship', 'internship']])
     || bankRank(t)
     || first(t, [[EXECUTIVE, 'executive', 'executive'], [STAFF, 'staff', 'staff'], [SENIOR_WORD, 'senior', 'senior'],
       [TRAINEE, 'entry', 'trainee'], [ENTRY, 'entry', 'entry'], [MID, 'mid', 'mid'], [SENIOR_ROLE, 'senior', 'senior-role']])
     || rankOf(t)
+    || graduateProgramme(t, company)
 }
 
 const PHRASE = {
   'bank-vp': (word) => `Title says ${word}, a bank rank`,
   rank: (word) => `Title rank ${word}`,
+  programme: (word) => `Title says ${word}, the company's graduate programme`,
 }
 export const titleEvidence = (found) => (PHRASE[found.rule] ?? ((word) => `Title says ${word}`))(found.word)

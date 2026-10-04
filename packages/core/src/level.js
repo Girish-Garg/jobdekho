@@ -8,6 +8,11 @@ import { statedLevel } from './level-stated.js'
 // Seniority ladder, lowest to highest. Index order drives range comparisons.
 export const LEVELS = ['internship', 'entry', 'mid', 'senior', 'staff', 'executive']
 
+// A Trainee title, or a company's graduate programme, is a full-time first
+// job unless the description says this one is a fixed-term internship,
+// apprenticeship or traineeship.
+const ASKS_TEXT = new Set(['trainee', 'programme'])
+
 // The level a posting states, as a tag (see tag.js), or null when nothing
 // says. Nothing stated means unknown, never Mid: a default showed a fifth
 // of postings as Mid on no evidence, and the feed lists unknown ones under
@@ -20,8 +25,8 @@ export const LEVELS = ['internship', 'entry', 'mid', 'senior', 'staff', 'executi
 // states in words (level-stated.js).
 export function levelTag({ title = '', description = '', company = '', source = '', board = null, experience = null, experienceYears = null } = {}) {
   if (board?.type === 'internship') return tag('internship', 'board', boardTypeEvidence(board, source))
-  const found = titleSays(title)
-  if (found && found.rule !== 'trainee') return tag(found.level, 'title', titleEvidence(found))
+  const found = titleSays(title, company)
+  if (found && !ASKS_TEXT.has(found.rule)) return tag(found.level, 'title', titleEvidence(found))
   // A board that filed the posting as a job (a list of jobs, a Full-time
   // employment type) is never made an internship by inference.
   const programme = board?.type === 'job' ? null : programmeIn(description, company)

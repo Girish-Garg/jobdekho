@@ -47,7 +47,7 @@ export function postingFeatures({ title = '', description = '', tags = [], compa
     joined += `${SECTION_WEIGHT[u.section] ? u.text : ' '.repeat(u.text.length)}\n`
   }
   for (const h of findSkills(blank(joined, own))) note(h.id, units[unitAt(starts, h.index)].section)
-  const asked = yearsAsked({ title, units, experienceYears })
+  const asked = yearsAsked({ title, company, units, experienceYears })
   return { v: FEATURES_VERSION, skills, band: asked.band, from: asked.from, titleLevel: asked.titleLevel }
 }
 
@@ -55,9 +55,9 @@ export function postingFeatures({ title = '', description = '', tags = [], compa
 // (title-rules.js), when those changed and the skills did not: the skills
 // were read from the full body, which a stored row may no longer hold, so
 // they are kept. Years the text or the board stated still outrank the title.
-export function withTitleLevel(features, title) {
+export function withTitleLevel(features, title, company = '') {
   if (!features) return features
-  const found = titleLevel(title)
+  const found = titleLevel(title, company)
   const titleLevelNow = found?.level ?? null
   if (features.from === 'years' || features.from === 'board') return { ...features, titleLevel: titleLevelNow }
   return { ...features, band: found?.band ?? null, from: found ? 'title' : null, titleLevel: titleLevelNow }
