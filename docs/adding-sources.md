@@ -325,6 +325,17 @@ date would wipe the stored one.
   is the schema.org JobPosting on the ad's own English page (`/en/` before the ad's path; robots.txt
   allows every path), read for up to 40 new wanted postings. The list is the whole of India, so the
   adapter is `complete`. The company is Mercedes-Benz; the hiring entity is the first tag.
+- **kpit.js** reads `www.kpit.com/job-listing/?show_all=1`, the site's own server-rendered list of
+  every open job (94 on 2026-10-04; robots.txt keeps crawlers out of `/wp-*` alone), and keeps a
+  job when one of its cities is in India by the office map the page's filter panel carries (52).
+  The site's own `country=India` filter is not used: it drops every job listed in two cities, 23 of
+  the 52. Each job's record is TalentOjo's public `talentojo.kpit.com/service/jobs/{id}`, the call
+  its apply page makes (the host has no robots.txt), read for up to 40 new wanted postings; the
+  recruiters it names are not kept. Most listed jobs were opened months ago, past the run's age
+  cut, so each record's date is kept in the source memo and handed to the filter with the row,
+  which turns such a job down without asking for its record again. A posting's own link is the
+  apply page, drawn by script, so the closed-posting check reads the record instead (410 or 404, or
+  a status other than Published, is gone).
 
 Microsoft and EY are read through their platforms (Eightfold and SuccessFactors) rather than an
 adapter of their own. Some careers sites cannot be read without getting around a block, so they
@@ -879,7 +890,7 @@ Postings card lists both, and a resting source shows in the run as skipped.
   the job's id behind (Greenhouse sends a closed job to `/board?error=true`), or a page that says
   so (Apple's "this role does not exist or is no longer available") closes it; a live page counts
   as a sighting; an error, a timeout or a 429 changes nothing. Workday is checked through its job
-  API, which answers 404. Some postings are never checked: LinkedIn and Adzuna (robots.txt
+  API, which answers 404, and KPIT through its TalentOjo job record. Some postings are never checked: LinkedIn and Adzuna (robots.txt
   disallows their links), Instahyre and Remotive (a Cloudflare challenge answers), Ashby and
   Unstop (their pages read the same open or closed).
 - A closed posting is deleted unless the person saved, applied to or otherwise used it; those stay

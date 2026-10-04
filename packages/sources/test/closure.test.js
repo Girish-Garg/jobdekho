@@ -66,6 +66,14 @@ describe('checkTarget', () => {
     expect(checkTarget(row)).toBe('https://nvidia.wd5.myworkdayjobs.com/wday/cxs/nvidia/NVIDIAExternalCareerSite/job/India-Bengaluru/Senior-Engineer_JR1')
   })
 
+  // The apply page is drawn by script with the job after the #, which is
+  // never sent, so the job record it reads is checked instead.
+  it("checks a KPIT posting through its TalentOjo job record", () => {
+    const url = 'https://talentojo.kpit.com/tojo/app/job-apply/#/Career%20Portal/82118'
+    expect(checkTarget({ source: 'kpit', url })).toBe('https://talentojo.kpit.com/service/jobs/82118')
+    expect(checkTarget({ source: 'kpit', url: 'https://talentojo.kpit.com/tojo/app/job-apply/' })).toBeNull()
+  })
+
   it('checks nothing where robots.txt, a challenge or a script-drawn page leaves nothing to learn', () => {
     for (const source of ['linkedin', 'adzuna:in', 'instahyre', 'remotive', 'ashby:acme', 'unstop']) {
       expect(checkTarget({ source, url: 'https://example.com/job/12345' })).toBeNull()
@@ -91,6 +99,15 @@ describe('verdict', () => {
   it('reads Apple\'s 200 page that says the role is gone as gone, and an open page as live', () => {
     expect(verdict({ target: 'https://jobs.apple.com/en-in/details/200000001', status: 200, body: fixture('apple-role-gone.html') })).toBe('gone')
     expect(verdict({ target: 'https://internshala.com/internship/detail/java-development-internship-at-acme1790682829', status: 200, body: fixture('internshala-open.html') })).toBe('live')
+  })
+
+  // KPIT's apply page reads 410 or 404 as gone, and a record whose status is
+  // no longer Published as closed.
+  it("reads a KPIT job record that is gone, or no longer Published, as gone", () => {
+    const target = 'https://talentojo.kpit.com/service/jobs/82118'
+    expect(verdict({ target, status: 410 })).toBe('gone')
+    expect(verdict({ target, status: 200, body: '{"job":{"id":"82118","title":"Trainee","status":"Closed"}}' })).toBe('gone')
+    expect(verdict({ target, status: 200, body: '{"job":{"id":"82118","title":"Trainee","status":"Published"}}' })).toBe('live')
   })
 
   it('learns nothing from a server error, a block or a refusal', () => {

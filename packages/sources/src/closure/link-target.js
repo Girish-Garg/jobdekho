@@ -20,6 +20,14 @@ function workdayApi(url) {
   return site && at >= 0 ? `${site.detailBase}${url.pathname.slice(at)}` : null
 }
 
+// KPIT's apply page is drawn by script, with the job in the part after #,
+// which is never sent; the job record that page reads is what can say the
+// job is gone (see closed-signs.js).
+function kpitRecord(url) {
+  const id = url.hash.match(/\/Career(?:%20| )Portal\/(\d+)$/)?.[1]
+  return id ? `https://talentojo.kpit.com/service/jobs/${id}` : null
+}
+
 export function checkTarget(row) {
   const source = String(row?.source ?? '')
   if (NEVER.some((re) => re.test(source))) return null
@@ -30,5 +38,6 @@ export function checkTarget(row) {
     return null
   }
   if (!/^https?:$/.test(url.protocol) || url.hostname === 'news.ycombinator.com') return null
+  if (source === 'kpit') return kpitRecord(url)
   return source.startsWith('workday:') ? workdayApi(url) : url.href
 }

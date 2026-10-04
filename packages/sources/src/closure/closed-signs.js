@@ -11,8 +11,12 @@
 const GONE = new Set([404, 410])
 
 // Pages that answer 200 for a job that is gone, and the words that say so.
+// KPIT's TalentOjo job record answers 410 or 404 for a job that is gone, and
+// its apply page also reads a record whose status is no longer "Published"
+// as closed.
 const PAGE_SAYS = [
   [/(^|\.)jobs\.apple\.com$/, /this role does not exist or is no longer available/i],
+  [/^talentojo\.kpit\.com$/, /"status"\s*:\s*"(?!Published")[^"]*"/],
 ]
 
 // The part of a job link that names the job: a UUID (Lever, Ashby), else the
