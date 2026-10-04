@@ -1,4 +1,5 @@
-import { HEADINGS, WEAK, NICE_CUE, ABOUT_CUE, YOU_CUE } from './jd-headings.js'
+import { HEADINGS, WEAK, ABOUT_CUE, YOU_CUE } from './jd-headings.js'
+import { optionalLine } from './jd-optional.js'
 import { companyPattern } from './company-words.js'
 
 // Cuts a job ad into units (sentences, bullets, inline headings) and labels
@@ -53,7 +54,9 @@ export function sectionize(text, company = '') {
     if (head && !head.weak) current = section = head.section
     else if (head && ['intro', 'other', 'about'].includes(current)) section = head.section
     if (section === 'intro' && aboutCompany(unit, own)) section = 'about'
-    if (['req', 'resp', 'intro', 'other'].includes(section) && NICE_CUE.test(unit)) section = 'nice'
+    // A line its own words make optional is a nice-to-have wherever it
+    // sits (jd-optional.js).
+    if (['req', 'resp', 'intro', 'other'].includes(section) && optionalLine(unit)) section = 'nice'
     return { text: unit, section }
   })
 }

@@ -1,6 +1,7 @@
 import { estimateLevel } from '@jobdekho/core/model/level-estimate.js'
 import { scoreLines } from '@jobdekho/core/model/section-estimate.js'
-import { sortableLines, placedKinds, sortedSections } from '@jobdekho/core/model/model-sections.js'
+import { placedKinds, sortedSections } from '@jobdekho/core/model/model-sections.js'
+import { sortableUnits } from '@jobdekho/core/model/section-lines.js'
 import { postingSections } from '@jobdekho/core/jd-layout.js'
 import { shippedModel } from '@jobdekho/core/model/weights.js'
 
@@ -30,9 +31,9 @@ function sectionOutputs(postings) {
   for (const p of postings) {
     if (!p.description || postingSections(p.description, { company: p.company })) continue
     if (!sortedSections(p.description, { model })) continue
-    const lines = sortableLines(p.description)
+    const { lines, under } = sortableUnits(p.description)
     const scored = scoreLines(lines, model)
-    placedKinds(lines, model).forEach((kind, i) => {
+    placedKinds(lines, model, under).forEach((kind, i) => {
       if (kind === 'other') return
       const { confidence, words } = scored[i]
       out.push({ id: `sections:${p.id}:${i}`, ...posting(p), group: kind, output: kind, confidence, words, evidence: `Placed by: ${words.map((w) => `'${w}'`).join(', ')}`, line: lines[i].replace(/^- /, '') })

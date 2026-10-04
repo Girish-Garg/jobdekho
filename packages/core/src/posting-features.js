@@ -16,7 +16,7 @@ import { titleLevel } from './title-level.js'
 // intro, other, nice); the scorer turns it into a weight, so weights can
 // change without reading every ad again. Bump FEATURES_VERSION whenever what
 // is read changes: rows carrying an older version are read again.
-export const FEATURES_VERSION = 1
+export const FEATURES_VERSION = 2
 
 // The company's own name is blanked, same length so offsets still line up:
 // "MongoDB Atlas" in a MongoDB ad is the product, not a requirement.

@@ -1,9 +1,10 @@
-import { units } from './tokens.js'
 import { estimateSections } from './section-estimate.js'
 import { shippedModel } from './weights.js'
 import { auditPassed, shippedAudits } from './audit.js'
-import { headingLine, inReadingOrder, foldFlag } from '../jd-layout.js'
-import { NICE_CUE } from '../jd-headings.js'
+import { sortableUnits } from './section-lines.js'
+import { neverPlaced } from './section-guards.js'
+import { inReadingOrder, foldFlag } from '../jd-layout.js'
+import { optionalLine } from '../jd-optional.js'
 
 // Sections for a description no heading organises (core's postingSections
 // returned null), sorted line by line by the small section model:
@@ -27,28 +28,27 @@ const MIN_LINES = 3
 const MIN_PLACED = 2
 
 // The lines the model sorts, in order, a list item starting "- ".
-export function sortableLines(text) {
-  const lines = []
-  for (const unit of units(text)) {
-    const head = headingLine(unit.text)
-    if (head && head.kind !== 'other') continue
-    lines.push(unit.bullet ? `- ${unit.text}` : unit.text)
-  }
-  return lines
-}
+export const sortableLines = (text) => sortableUnits(text).lines
 
-// Each line's section as shown. A requirement marked optional ("is a
-// plus") is a nice-to-have wherever it sits, core's rule (jd-headings.js).
-export const placedKinds = (lines, model) => estimateSections(lines, model)
-  .map((kind, i) => (kind === 'requirements' && NICE_CUE.test(lines[i]) ? 'nice' : kind))
+// Each line's section as shown, `under` saying what the heading over each
+// line says of it (section-lines.js). A line no section holds is never
+// placed (section-guards.js). Under a nice-to-have heading a requirement
+// is a nice-to-have, and a duty is left unsorted; anywhere else, one whose
+// own words make all of it optional is a nice-to-have, core's rule
+// (jd-optional.js).
+export const placedKinds = (lines, model, under = []) => estimateSections(lines, model).map((kind, i) => {
+  if (kind === 'other' || neverPlaced(lines, i)) return 'other'
+  if (under[i] === 'nice') return kind === 'requirements' ? 'nice' : kind === 'duties' ? 'other' : kind
+  return kind === 'requirements' && optionalLine(lines[i]) ? 'nice' : kind
+})
 
 // The sorting itself, audited or not: what the review page and the
 // training's measurements look at.
 export function sortedSections(text, { isTemplate = () => false, model } = {}) {
   if (!model) return null
-  const lines = sortableLines(text)
+  const { lines, under } = sortableUnits(text)
   if (lines.length < MIN_LINES) return null
-  const kinds = placedKinds(lines, model)
+  const kinds = placedKinds(lines, model, under)
   const placed = kinds.filter((kind) => kind !== 'other').length
   if (placed < MIN_PLACED || placed === lines.length) return null
   const opening = []
