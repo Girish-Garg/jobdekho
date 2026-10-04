@@ -341,8 +341,10 @@ Microsoft and EY are read through their platforms (Eightfold and SuccessFactors)
 adapter of their own. Some careers sites cannot be read without getting around a block, so they
 stay out: TCS (an Akamai 403 on every page), Cognizant (Cloudflare answers 403 to Node's own fetch, though not to curl), Flipkart and Ola (TurboHire, whose API needs a token
 minted per visitor), Tech Mahindra and Reliance Jio (ASP.NET postbacks tied to a page session),
-ICICI Bank (a bearer token on every call) and IBM (an AWS WAF challenge). For a new bespoke source,
-copy `boards/`.
+ICICI Bank (a bearer token on every call), IBM (an AWS WAF challenge) and MathWorks (its own careers
+site at `mathworks.com/company/jobs/opportunities/search`, which robots.txt allows, answered its
+India search, `?location[]=IN`, with an Akamai "Access Denied" 403 on 2026-10-04). For a new
+bespoke source, copy `boards/`.
 
 Two sub-cases, very different in price:
 
