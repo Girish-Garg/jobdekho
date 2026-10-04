@@ -31,7 +31,7 @@ function labelOf(head) {
 }
 
 // A short line step 1 does not take for a heading but a reader would
-// ("Desired Qualifications:", "Who You'll Work With") ends the section
+// ("Additional Information:", "Who You'll Work With") ends the section
 // above it: what follows is not that section's.
 const UNKNOWN_HEADING = (line) => line.split(/\s+/).length <= 7 && !/[.;,]$/.test(line) && (/:$/.test(line) || /^[A-Z][^.!?]*$/.test(line))
 

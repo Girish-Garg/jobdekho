@@ -64,6 +64,18 @@ describe('postingSections', () => {
     expect(got[0].lines).toEqual(['Experience with Kafka and Redis'])
   })
 
+  // NVIDIA heads its must-haves "What we need to see" and its nice-to-haves
+  // "Ways to stand out from the crowd": unread, both were laid out under
+  // the duties above them.
+  it('lays out the requirement headings the lists once missed', () => {
+    const got = postingSections("What you'll be doing:\n- Build compilers\nWhat we need to see:\n- 8+ years of C++\nWays to stand out from the crowd:\n- Experience with CUDA", {})
+    expect(kinds(got)).toEqual([
+      ['duties', "What you'll be doing", false],
+      ['requirements', 'What we need to see', false],
+      ['nice', 'Ways to stand out from the crowd', false],
+    ])
+  })
+
   // A posting with no headings keeps the layout it has.
   it('is null for a text with no heading at all', () => {
     expect(postingSections('Build APIs in Go.\nShip weekly.')).toBeNull()
