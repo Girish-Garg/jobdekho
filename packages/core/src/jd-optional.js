@@ -9,8 +9,11 @@
 // the line, moved 7 of 40 such lines checked on the owner's postings.
 
 // Words that mark something wished for rather than asked. "Preferably"
-// leans on the words after it, so it only ever opens a line.
-const CUE = String.raw`nice[-\u2011 ]to[-\u2011 ]haves?|good[-\u2011 ]to[-\u2011 ]haves?|an? (?:big |huge |great |definite |real |nice |added |additional )?(?:plus|bonus)|added advantages?|would be (?:an? )?(?:plus|great|nice|advantage)|(?:highly |strongly |very |much )?(?:preferred|desirable|advantageous)|optional|not required`
+// leans on the words after it, so it only ever opens a line. "Is an
+// advantage", "desired" and "is beneficial" close as many lines on the
+// owner's postings (81, 28 and 29 under requirement or duty headings),
+// which the section model would otherwise show as requirements.
+const CUE = String.raw`nice[-\u2011 ]to[-\u2011 ]haves?|good[-\u2011 ]to[-\u2011 ]haves?|an? (?:big |huge |great |definite |real |nice |added |additional |distinct |strong )?(?:plus|bonus|advantage)|added advantages?|would be (?:an? )?(?:plus|great|nice|good|advantage)|(?:highly |strongly |very |much )?(?:preferred|desirable|advantageous)|(?<!\b(?:as|the|if) )(?:highly |strongly )?desired|(?:is|are|be) (?:highly |very |extremely |also )?(?:beneficial|helpful)|optional|not required`
 const NOT_NEEDED = String.raw`not (?:required|mandatory|necessary|essential|a must|a requirement)`
 
 const LEAD = /^(?:preferred|preferably|desirable|optional(?:ly)?|bonus|plus(?=\s*:|\s+points?)|nice[-\u2011 ]to[-\u2011 ]haves?|good[-\u2011 ]to[-\u2011 ]haves?|(?:an? )?added advantage|advantageous|not required|(?:it(?:['’]s| is| would be| will be)|would be|will be) (?:an? (?:big |huge |great |definite |added )?(?:plus|bonus|advantage)|great|nice))\b/i

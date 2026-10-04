@@ -14,6 +14,14 @@ describe('optionalLine', () => {
     }
   })
 
+  it('reads "is an advantage", "desired" and "is beneficial" as closing cues too', () => {
+    for (const line of ['Exposure to cloud platforms (Azure/AWS) is an advantage.', 'Experience with ERPs such as SAP, Oracle, etc. desired', 'Basic knowledge of SQL is beneficial.', 'Experience with Perl or Tcl would be good.']) {
+      expect(optionalLine(line)).toBe(true)
+    }
+    expect(optionalLine('Customize dashboards as desired')).toBe(false)
+    expect(optionalLine('Operating Systems: Linux experience; Windows Server is beneficial.')).toBe(false)
+  })
+
   // The owner's pre-check of the section model found these must-haves
   // moved to nice by a cue that qualified only part of the line.
   it('leaves a must-have with an optional part where it is', () => {
