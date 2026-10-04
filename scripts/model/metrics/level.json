@@ -1,0 +1,383 @@
+{
+  "model": "level",
+  "version": 1,
+  "data": {
+    "files": [
+      {
+        "file": "postings.ndjson",
+        "date": "2026-10-03",
+        "rows": 6482,
+        "added": 6482
+      },
+      {
+        "file": "postings.ndjson",
+        "date": "2026-10-02",
+        "rows": 4827,
+        "added": 4200
+      }
+    ],
+    "tagsVersion": 2,
+    "postings": 10128,
+    "trainedOn": 6156,
+    "companies": 649,
+    "levels": {
+      "senior": 2988,
+      "staff": 1074,
+      "mid": 1058,
+      "entry": 466,
+      "internship": 460,
+      "executive": 110
+    },
+    "levelFrom": {
+      "title": 3920,
+      "text": 1488,
+      "board": 748
+    },
+    "unknown": 1317,
+    "unknownWithText": 576
+  },
+  "split": {
+    "by": "company",
+    "folds": 5,
+    "seed": 20261004
+  },
+  "training": {
+    "epochs": 15,
+    "rate": 0.2,
+    "l2": 0.0003,
+    "seed": 20261004,
+    "minCount": 10,
+    "pruneBelow": 0.03,
+    "minWords": 60,
+    "vocabulary": 33459,
+    "kept": 24390
+  },
+  "temperature": 1.1088,
+  "minSupport": 50,
+  "heldOut": {
+    "postings": 6156,
+    "titleSaidNothing": 2226
+  },
+  "unknown": {
+    "postings": 1317,
+    "withText": 576
+  },
+  "globalThresholds": [
+    {
+      "threshold": 0.9,
+      "heldOutCoverage": 0.1455,
+      "precision": 0.9397,
+      "wrong": 54,
+      "unknownCovered": 199,
+      "unknownCoverage": 0.1511,
+      "unknownByPair": {
+        "mid-senior": 118,
+        "senior-staff": 81
+      },
+      "unknownAtTrainedCompanies": 199
+    },
+    {
+      "threshold": 0.95,
+      "heldOutCoverage": 0.0632,
+      "precision": 0.982,
+      "wrong": 7,
+      "unknownCovered": 89,
+      "unknownCoverage": 0.0676,
+      "unknownByPair": {
+        "mid-senior": 54,
+        "senior-staff": 35
+      },
+      "unknownAtTrainedCompanies": 89
+    },
+    {
+      "threshold": 0.97,
+      "heldOutCoverage": 0.0377,
+      "precision": 0.9957,
+      "wrong": 1,
+      "unknownCovered": 51,
+      "unknownCoverage": 0.0387,
+      "unknownByPair": {
+        "mid-senior": 26,
+        "senior-staff": 25
+      },
+      "unknownAtTrainedCompanies": 51
+    },
+    {
+      "threshold": 0.98,
+      "heldOutCoverage": 0.0281,
+      "precision": 0.9942,
+      "wrong": 1,
+      "unknownCovered": 26,
+      "unknownCoverage": 0.0197,
+      "unknownByPair": {
+        "mid-senior": 12,
+        "senior-staff": 14
+      },
+      "unknownAtTrainedCompanies": 26
+    },
+    {
+      "threshold": 0.99,
+      "heldOutCoverage": 0.0172,
+      "precision": 1,
+      "wrong": 0,
+      "unknownCovered": 8,
+      "unknownCoverage": 0.0061,
+      "unknownByPair": {
+        "mid-senior": 3,
+        "senior-staff": 5
+      },
+      "unknownAtTrainedCompanies": 8
+    },
+    {
+      "threshold": 0.995,
+      "heldOutCoverage": 0.0096,
+      "precision": 1,
+      "wrong": 0,
+      "unknownCovered": 4,
+      "unknownCoverage": 0.003,
+      "unknownByPair": {
+        "mid-senior": 1,
+        "senior-staff": 3
+      },
+      "unknownAtTrainedCompanies": 4
+    }
+  ],
+  "chosen": {
+    "target": 0.995,
+    "thresholds": {
+      "internship-entry": 0.9,
+      "entry-mid": null,
+      "mid-senior": null,
+      "senior-staff": null,
+      "staff-executive": null
+    },
+    "heldOut": {
+      "covered": 321,
+      "right": 320,
+      "precision": 0.9969,
+      "coverage": 0.0521
+    },
+    "heldOutTitleSaidNothing": {
+      "covered": 300,
+      "right": 300,
+      "precision": 1
+    },
+    "thresholdsChosenWithoutTheTestFold": {
+      "covered": 339,
+      "right": 337,
+      "precision": 0.9941002949852508
+    },
+    "byPair": {
+      "internship-entry": {
+        "threshold": 0.9,
+        "covered": 321,
+        "right": 320,
+        "precision": 0.9969,
+        "unknown": 0
+      },
+      "entry-mid": {
+        "threshold": null,
+        "covered": 0,
+        "right": 0,
+        "precision": null,
+        "unknown": 0
+      },
+      "mid-senior": {
+        "threshold": null,
+        "covered": 0,
+        "right": 0,
+        "precision": null,
+        "unknown": 0
+      },
+      "senior-staff": {
+        "threshold": null,
+        "covered": 0,
+        "right": 0,
+        "precision": null,
+        "unknown": 0
+      },
+      "staff-executive": {
+        "threshold": null,
+        "covered": 0,
+        "right": 0,
+        "precision": null,
+        "unknown": 0
+      }
+    },
+    "unknown": {
+      "covered": 0
+    }
+  },
+  "alternative": {
+    "target": 0.98,
+    "thresholds": {
+      "internship-entry": 0.8,
+      "entry-mid": null,
+      "mid-senior": null,
+      "senior-staff": null,
+      "staff-executive": null
+    },
+    "heldOut": {
+      "covered": 398,
+      "right": 394,
+      "precision": 0.9899,
+      "coverage": 0.0647
+    },
+    "heldOutTitleSaidNothing": {
+      "covered": 359,
+      "right": 357,
+      "precision": 0.9944
+    },
+    "thresholdsChosenWithoutTheTestFold": {
+      "covered": 419,
+      "right": 409,
+      "precision": 0.9761336515513126
+    },
+    "byPair": {
+      "internship-entry": {
+        "threshold": 0.8,
+        "covered": 398,
+        "right": 394,
+        "precision": 0.9899,
+        "unknown": 0
+      },
+      "entry-mid": {
+        "threshold": null,
+        "covered": 0,
+        "right": 0,
+        "precision": null,
+        "unknown": 0
+      },
+      "mid-senior": {
+        "threshold": null,
+        "covered": 0,
+        "right": 0,
+        "precision": null,
+        "unknown": 0
+      },
+      "senior-staff": {
+        "threshold": null,
+        "covered": 0,
+        "right": 0,
+        "precision": null,
+        "unknown": 0
+      },
+      "staff-executive": {
+        "threshold": null,
+        "covered": 0,
+        "right": 0,
+        "precision": null,
+        "unknown": 0
+      }
+    },
+    "unknown": {
+      "covered": 0
+    }
+  },
+  "lowerTargets": [
+    {
+      "target": 0.95,
+      "thresholds": {
+        "internship-entry": 0.7,
+        "entry-mid": null,
+        "mid-senior": null,
+        "senior-staff": 0.95,
+        "staff-executive": null
+      },
+      "heldOut": {
+        "covered": 581,
+        "right": 560,
+        "precision": 0.9639,
+        "coverage": 0.0944
+      },
+      "unknown": {
+        "covered": 36
+      }
+    },
+    {
+      "target": 0.9,
+      "thresholds": {
+        "internship-entry": 0.6,
+        "entry-mid": null,
+        "mid-senior": null,
+        "senior-staff": 0.75,
+        "staff-executive": null
+      },
+      "heldOut": {
+        "covered": 2047,
+        "right": 1859,
+        "precision": 0.9082,
+        "coverage": 0.3325
+      },
+      "unknown": {
+        "covered": 177
+      }
+    }
+  ],
+  "likeliestLevel": [
+    {
+      "threshold": 0.9,
+      "coverage": 0.0588,
+      "exact": 0.9337,
+      "withinOne": 0.9862
+    },
+    {
+      "threshold": 0.95,
+      "coverage": 0.0318,
+      "exact": 1,
+      "withinOne": 1
+    }
+  ],
+  "reliability": [
+    {
+      "from": 0.5,
+      "to": 0.7,
+      "n": 2079,
+      "right": 1550
+    },
+    {
+      "from": 0.7,
+      "to": 0.8,
+      "n": 1425,
+      "right": 1205
+    },
+    {
+      "from": 0.8,
+      "to": 0.9,
+      "n": 1337,
+      "right": 1188
+    },
+    {
+      "from": 0.9,
+      "to": 0.95,
+      "n": 507,
+      "right": 460
+    },
+    {
+      "from": 0.95,
+      "to": 0.98,
+      "n": 216,
+      "right": 210
+    },
+    {
+      "from": 0.98,
+      "to": 0.99,
+      "n": 67,
+      "right": 66
+    },
+    {
+      "from": 0.99,
+      "to": 0.995,
+      "n": 47,
+      "right": 47
+    },
+    {
+      "from": 0.995,
+      "to": 1,
+      "n": 59,
+      "right": 59
+    }
+  ],
+  "shipped": false,
+  "weightsBytes": 1159013
+}

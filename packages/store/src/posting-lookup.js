@@ -2,6 +2,7 @@ import { ghostSignals, legitimacy } from '@jobdekho/core/ghost.js'
 import { payLabel } from '@jobdekho/core/pay-label.js'
 import { newness } from '@jobdekho/core/newness.js'
 import { postingSections } from '@jobdekho/core/jd-layout.js'
+import { modelSections } from '@jobdekho/core/model/model-sections.js'
 import { postingFacts } from '@jobdekho/core/posting-facts.js'
 import { withGroupWindows } from './posting-groups.js'
 import { cautionFor } from './shared-ads.js'
@@ -11,7 +12,9 @@ import { templateOf } from './company-template.js'
 // the feed row plus the full description the feed withholds, and what the
 // pane lays it out by:
 //
-//   sections   [{ kind, heading, lines, boilerplate }] or null (core's jd-layout.js)
+//   sections   [{ kind, heading, lines, boilerplate }] or null (core's jd-layout.js);
+//              for a text with no heading, the small model's sorting, each
+//              section marked from: 'model' (core's model/model-sections.js)
 //   facts      { years, pay, workMode }, each with its evidence (core's posting-facts.js)
 //   caution    [{ code, reason, evidence }], the corpus-wide flags included
 //
@@ -28,9 +31,12 @@ export async function getPosting(store, userId, id) {
   const rows = store.corpus.rows()
   // What the fit and the tags were read from is the feed's working, not part
   // of the job; each tag's evidence already says it.
-  const { features, board, adKey, tagsVersion, ...row } = stored
+  const { features, board, adKey, tagsVersion, modelVersion, ...row } = stored
   const windowed = withGroupWindows(rows).find((r) => r.id === id) ?? row
   const caution = cautionFor(stored, rows)
+  // Sections are made as the posting opens, never stored, so a newer
+  // section model sorts every posting the next time it is opened.
+  const isTemplate = templateOf(rows, row.company)
   return {
     ...row,
     status: store.statuses.get(userId)?.[id] ?? null,
@@ -40,7 +46,7 @@ export async function getPosting(store, userId, id) {
     ghostSignals: ghostSignals({ caution }),
     payLabel: payLabel(row.stipend, row.currency ?? undefined),
     newness: newness(row),
-    sections: postingSections(row.descriptionText, { company: row.company, isTemplate: templateOf(rows, row.company) }),
+    sections: postingSections(row.descriptionText, { company: row.company, isTemplate }) ?? modelSections(row.descriptionText, { isTemplate }),
     facts: postingFacts(stored),
   }
 }

@@ -8,7 +8,7 @@ import { withFeatures } from './corpus-features.js'
 // The tags and what they rest on (see core's tagging.js), stored as
 // normalize() made them; absent on rows from before they existed, which the
 // corpus tags again as it loads (see corpus.js).
-const TAG_FIELDS = ['board', 'levelTag', 'typeTag', 'workModeTag', 'payTag', 'caution', 'fewDetails', 'adKey', 'tagsVersion']
+const TAG_FIELDS = ['board', 'levelTag', 'typeTag', 'workModeTag', 'payTag', 'caution', 'fewDetails', 'adKey', 'tagsVersion', 'levelEstimate', 'modelVersion']
 
 export function toRow(p) {
   // An unstated level is unknown, never "mid": filling it in showed a fifth
