@@ -1,0 +1,214 @@
+{
+  "LanguageCode": "EN",
+  "SearchParameters": {
+    "Sort": [
+      {
+        "Criterion": "PublicationStartDate",
+        "Direction": "DESC"
+      }
+    ]
+  },
+  "SearchResult": {
+    "SearchResultCount": 6,
+    "SearchResultCountAll": 6,
+    "SearchResultItems": [
+      {
+        "MatchedObjectId": "240590",
+        "MatchedObjectDescriptor": {
+          "ID": "240590",
+          "PositionID": "mer00048zv",
+          "PositionTitle": "Data & AI Engineer",
+          "PositionURI": "https://jobs.mercedes-benz.com/data-ai-engineer-240590-MER00048ZV",
+          "ApplyURI": [
+            "https://tas-DAIMLER.taleo.net/careersection/ex/jobapply.ftl?job=MER00048ZV&lang=en"
+          ],
+          "PublicationChannel": [
+            {
+              "StartDate": "2026-10-01"
+            }
+          ],
+          "JobCategory": [
+            {
+              "Name": "Supply Chain Management"
+            }
+          ],
+          "ParentOrganizationName": "Mercedes-Benz Research and Development India Private Limited",
+          "PositionLocation": [
+            {
+              "Country": "390",
+              "CountryCode": "IN",
+              "CityName": "Bangalore"
+            }
+          ],
+          "PublicationStartDate": "2026-10-01"
+        },
+        "RelevanceRank": 1
+      },
+      {
+        "MatchedObjectId": "240586",
+        "MatchedObjectDescriptor": {
+          "ID": "240586",
+          "PositionID": "mer00048zv",
+          "PositionTitle": "Data & AI Engineer",
+          "PositionURI": "https://jobs.mercedes-benz.com/data-ai-engineer-240586-MER00048ZV",
+          "ApplyURI": [
+            "https://tas-DAIMLER.taleo.net/careersection/ex/jobapply.ftl?job=MER00048ZV&lang=en"
+          ],
+          "PublicationChannel": [
+            {
+              "StartDate": "2026-10-01"
+            }
+          ],
+          "JobCategory": [
+            {
+              "Name": "Supply Chain Management"
+            }
+          ],
+          "ParentOrganizationName": "Mercedes-Benz Research and Development India Private Limited",
+          "PositionLocation": [
+            {
+              "Country": "390",
+              "CountryCode": "IN",
+              "CityName": "Bangalore"
+            }
+          ],
+          "PublicationStartDate": "2026-10-01"
+        },
+        "RelevanceRank": 2
+      },
+      {
+        "MatchedObjectId": "239655",
+        "MatchedObjectDescriptor": {
+          "ID": "239655",
+          "PositionID": "mer00040r3",
+          "PositionTitle": "Junior Software Developer (Python and Node.js)",
+          "PositionURI": "https://jobs.mercedes-benz.com/junior-software-developer-python-and-node-js--239655-MER00040R3",
+          "ApplyURI": [
+            "https://tas-DAIMLER.taleo.net/careersection/ex/jobapply.ftl?job=MER00040R3&lang=en"
+          ],
+          "PublicationChannel": [
+            {
+              "StartDate": "2026-09-24"
+            }
+          ],
+          "JobCategory": [
+            {
+              "Name": "IT/Telecommunications"
+            }
+          ],
+          "ParentOrganizationName": "Mercedes-Benz Research and Development India Private Limited",
+          "PositionLocation": [
+            {
+              "Country": "390",
+              "CountryCode": "IN",
+              "CityName": "Bengaluru"
+            }
+          ],
+          "PublicationStartDate": "2026-09-24"
+        },
+        "RelevanceRank": 3
+      },
+      {
+        "MatchedObjectId": "239271",
+        "MatchedObjectDescriptor": {
+          "ID": "239271",
+          "PositionID": "mer00048n6",
+          "PositionTitle": "ADAS Appl SW Algo developer - VAL Driving",
+          "PositionURI": "https://jobs.mercedes-benz.com/adas-appl-sw-algo-developer---val-driving-239271-MER00048N6",
+          "ApplyURI": [
+            "https://tas-DAIMLER.taleo.net/careersection/ex/jobapply.ftl?job=MER00048N6&lang=en"
+          ],
+          "PublicationChannel": [
+            {
+              "StartDate": "2026-09-22"
+            }
+          ],
+          "JobCategory": [
+            {
+              "Name": "Research and Development incl. Design"
+            }
+          ],
+          "ParentOrganizationName": "Mercedes-Benz Research and Development India Private Limited",
+          "PositionLocation": [
+            {
+              "Country": "390",
+              "CountryCode": "IN",
+              "CityName": "Bengaluru"
+            },
+            {
+              "Country": "390",
+              "CountryCode": "IN",
+              "CityName": "Bangalore"
+            }
+          ],
+          "PublicationStartDate": "2026-09-22"
+        },
+        "RelevanceRank": 4
+      },
+      {
+        "MatchedObjectId": "238772",
+        "MatchedObjectDescriptor": {
+          "ID": "238772",
+          "PositionID": "mer000484t",
+          "PositionTitle": "Finance Controlling",
+          "PositionURI": "https://jobs.mercedes-benz.com/finance-controlling-238772-MER000484T",
+          "ApplyURI": [
+            "https://tas-DAIMLER.taleo.net/careersection/ex/jobapply.ftl?job=MER000484T&lang=en"
+          ],
+          "PublicationChannel": [
+            {
+              "StartDate": "2026-09-18"
+            }
+          ],
+          "JobCategory": [
+            {
+              "Name": "Finance/Controlling"
+            }
+          ],
+          "ParentOrganizationName": "Mercedes-Benz Research and Development India Private Limited",
+          "PositionLocation": [
+            {
+              "Country": "390",
+              "CountryCode": "IN",
+              "CityName": "Bangalore"
+            }
+          ],
+          "PublicationStartDate": "2026-09-18"
+        },
+        "RelevanceRank": 5
+      },
+      {
+        "MatchedObjectId": "190787",
+        "MatchedObjectDescriptor": {
+          "ID": "190787",
+          "PositionID": "mer0003rzv",
+          "PositionTitle": "Financial Accounting Specialist",
+          "PositionURI": "https://jobs.mercedes-benz.com/financial-accounting-specialist--190787-MER0003RZV",
+          "ApplyURI": [
+            "https://tas-DAIMLER.taleo.net/careersection/ex/jobapply.ftl?job=MER0003RZV&lang=en"
+          ],
+          "PublicationChannel": [
+            {
+              "StartDate": "2026-08-11"
+            }
+          ],
+          "JobCategory": [
+            {
+              "Name": "Finance/Controlling"
+            }
+          ],
+          "ParentOrganizationName": "Mercedes-Benz Financial Services India Private Limited",
+          "PositionLocation": [
+            {
+              "Country": "390",
+              "CountryCode": "IN",
+              "CityName": "Pune"
+            }
+          ],
+          "PublicationStartDate": "2026-08-11"
+        },
+        "RelevanceRank": 6
+      }
+    ]
+  }
+}

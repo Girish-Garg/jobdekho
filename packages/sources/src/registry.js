@@ -20,6 +20,7 @@ import { mphasis } from './companies/mphasis.js'
 import { hdfcbank } from './companies/hdfcbank.js'
 import { coforge } from './companies/coforge.js'
 import { cyient } from './companies/cyient.js'
+import { mercedesbenz } from './companies/mercedesbenz.js'
 import { internshala } from './boards/internshala.js'
 import { unstop } from './boards/unstop.js'
 import { adzuna } from './boards/adzuna.js'
@@ -37,7 +38,7 @@ const PROVIDERS = {
 }
 // A company's own careers site, where it runs one no platform above covers.
 const COMPANIES = {
-  amazon, google, infosys, apple, swiggy, ltimindtree, mphasis, hdfcbank, coforge, cyient,
+  amazon, google, infosys, apple, swiggy, ltimindtree, mphasis, hdfcbank, coforge, cyient, mercedesbenz,
 }
 // adzuna is registered but intentionally not in config/companies.json: it needs
 // API credentials, and listing it before those exist would log a failed source

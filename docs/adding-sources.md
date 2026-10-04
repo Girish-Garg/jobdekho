@@ -316,6 +316,15 @@ date would wipe the stored one.
   set to India: 10 postings a page, up to 12 pages, bodies included. Zwayam cuts
   `mediumDescription` at 300 characters, so the adapter takes whichever description field holds
   the most text.
+- **mercedesbenz.js** reads the Mercedes-Benz Group's job board, which is mostly Mercedes-Benz
+  Research and Development India (MBRDI) in India. `jobs.mercedes-benz.com` is a script-drawn
+  page; its search is one GET to `jobs.api.mercedes-benz.com/search?data={...}` (the API host has
+  no robots.txt), with the board's own country filter, `PositionLocation.Country` 390, which is
+  India. One request of up to 500 ads, newest first, reads all of India: 221 ads of 74
+  requisitions on 2026-10-04, each requisition published as several ads and kept once. The body
+  is the schema.org JobPosting on the ad's own English page (`/en/` before the ad's path; robots.txt
+  allows every path), read for up to 40 new wanted postings. The list is the whole of India, so the
+  adapter is `complete`. The company is Mercedes-Benz; the hiring entity is the first tag.
 
 Microsoft and EY are read through their platforms (Eightfold and SuccessFactors) rather than an
 adapter of their own. Some careers sites cannot be read without getting around a block, so they
