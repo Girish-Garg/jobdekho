@@ -1,14 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import PostingCard from './PostingCard.jsx';
-import { isNewToday } from '../lib/time.js';
-import { compactPay } from '../lib/compactPay.js';
-
-const now = new Date('2026-06-28T12:00:00Z').getTime();
 
 // Relative to the run, not a fixed date: PostingCard reads the ambient clock,
-// so a hardcoded firstSeenAt would stop being "fresh" the day after it was
-// written.
+// so a hardcoded date would stop being "fresh" the day after it was written.
 const hoursAgo = (h) => new Date(Date.now() - h * 3600 * 1000).toISOString();
 
 const base = {
@@ -19,7 +14,9 @@ const base = {
   location: 'Remote',
   url: 'https://example.com/p1',
   descriptionSnippet: 'Build the board.',
+  postedAt: hoursAgo(6),
   firstSeenAt: hoursAgo(6),
+  newness: 'new',
   status: null,
   level: 'internship',
   degreeMin: 'none',
@@ -47,10 +44,27 @@ describe('PostingCard', () => {
     expect(onOpen).toHaveBeenCalledWith(base, card);
   });
 
-  // In the same compact form the rows use, so a card and a row agree.
-  it('shows the pay, compact, when the posting has one', () => {
-    render(<PostingCard posting={{ ...base, stipend: 'Rs 20,000' }} onOpen={() => {}} />);
-    expect(screen.getByText(compactPay('Rs 20,000'))).toBeInTheDocument();
+  // In the server's one short form, the one the rows and the pane use, so
+  // a card and the pane cannot disagree; its evidence on hover.
+  it('shows the pay label, with where it came from', () => {
+    render(<PostingCard posting={{ ...base, stipend: '₹ 20,000 /month', payLabel: '₹20k/mo', payTag: { value: '₹ 20,000 /month', from: 'board', evidence: 'Pay field: ₹ 20,000 /month' } }} onOpen={() => {}} />);
+    expect(screen.getByText('₹20k/mo')).toHaveAccessibleDescription('Pay field: ₹ 20,000 /month');
+    expect(screen.queryByText('₹ 20,000 /month')).not.toBeInTheDocument();
+  });
+
+  // The chips sit above the stretched button so they can be pointed at; a
+  // press on them still opens the job like the rest of the card.
+  it('opens the job from a press on its tags', () => {
+    const onOpen = vi.fn();
+    render(<PostingCard posting={{ ...base, level: 'senior', levelTag: { value: 'senior', from: 'title', evidence: 'Title says Senior' } }} onOpen={onOpen} />);
+    fireEvent.click(screen.getByText('Senior'));
+    expect(onOpen).toHaveBeenCalledWith(expect.objectContaining({ id: 'p1' }), screen.getByRole('button', { name: /Frontend Intern, Acme/ }));
+  });
+
+  it('ends the place line with Found today and Few details where they apply', () => {
+    render(<PostingCard posting={{ ...base, postedAt: hoursAgo(24 * 8), newness: 'found-today', fewDetails: true }} onOpen={() => {}} />);
+    expect(screen.getByText('Remote · Found today · Few details')).toBeInTheDocument();
+    expect(screen.queryByLabelText('New today')).not.toBeInTheDocument();
   });
 
   // The description is the field that turned every tile into grey text, so it
@@ -73,7 +87,7 @@ describe('PostingCard new-today mark', () => {
   });
 
   it('hides the marker once the posting is over a day old', () => {
-    render(<PostingCard posting={{ ...base, firstSeenAt: hoursAgo(30) }} onOpen={() => {}} />);
+    render(<PostingCard posting={{ ...base, postedAt: hoursAgo(30), firstSeenAt: hoursAgo(30), newness: null }} onOpen={() => {}} />);
     expect(screen.queryByLabelText('New today')).not.toBeInTheDocument();
   });
 
@@ -111,31 +125,34 @@ describe('PostingCard fit score', () => {
   });
 });
 
-describe('PostingCard legitimacy warning', () => {
-  it('flags a low-legitimacy posting', () => {
-    render(<PostingCard posting={{ ...base, legitimacy: 'low' }} onOpen={() => {}} />);
-    expect(screen.getByText('Caution')).toBeInTheDocument();
+const FEE = [{ code: 'fee', reason: 'Asks applicants to pay a ₹1,500 registration fee', evidence: 'Pay Rs 1500 to register.' }];
+
+describe('PostingCard caution', () => {
+  it('flags a posting that states a red flag', () => {
+    render(<PostingCard posting={{ ...base, caution: FEE }} onOpen={() => {}} />);
+    expect(screen.getByRole('button', { name: 'Caution' })).toBeInTheDocument();
   });
 
-  it('flags a suspicious posting', () => {
-    render(<PostingCard posting={{ ...base, legitimacy: 'suspicious' }} onOpen={() => {}} />);
-    expect(screen.getByText('Caution')).toBeInTheDocument();
-  });
-
-  // Most postings are fine, so high and medium show nothing at all: a badge on
-  // every card would be noise, and this one accuses a posting of wasting time.
-  it('says nothing for high or medium legitimacy', () => {
-    for (const legitimacy of ['high', 'medium']) {
-      const { unmount } = render(<PostingCard posting={{ ...base, legitimacy }} onOpen={() => {}} />);
+  // Most postings are fine, so a badge on every card would be noise, and
+  // this one accuses a posting of wasting time: only a stated red flag
+  // earns it, never a low legitimacy alone.
+  it('says nothing without a caution, whatever its legitimacy says', () => {
+    for (const legitimacy of ['high', 'low', 'suspicious']) {
+      const { unmount } = render(<PostingCard posting={{ ...base, legitimacy, caution: [] }} onOpen={() => {}} />);
       expect(screen.queryByText('Caution')).not.toBeInTheDocument();
       unmount();
     }
   });
 
-  // The same colour the job pane's caution card uses for the same evidence.
-  it('marks the caution in ember, the colour of warnings', () => {
-    render(<PostingCard posting={{ ...base, legitimacy: 'suspicious' }} onOpen={() => {}} />);
-    expect(screen.getByText('Caution').className).toContain('text-ember');
+  // The same colour the job pane's caution card uses for the same evidence,
+  // and a press on it is for its reasons, not for opening the job.
+  it('marks the caution in ember, and opens its reasons rather than the job', () => {
+    const onOpen = vi.fn();
+    render(<PostingCard posting={{ ...base, caution: FEE }} onOpen={onOpen} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Caution' }));
+    expect(screen.getByRole('button', { name: 'Caution' }).className).toContain('text-ember');
+    expect(screen.getByText('Asks applicants to pay a ₹1,500 registration fee')).toBeInTheDocument();
+    expect(onOpen).not.toHaveBeenCalled();
   });
 });
 
@@ -178,15 +195,15 @@ describe('PostingCard work mode', () => {
     expect(screen.getByText('Hybrid')).toBeInTheDocument();
   });
 
-  // Onsite is also what an un-classified posting reads as, so putting it on the
-  // card would label most of the grid with something it does not know.
-  it('says nothing for onsite or for a posting with no work mode', () => {
-    const { unmount } = render(<PostingCard posting={{ ...base, workMode: 'onsite' }} onOpen={() => {}} />);
-    expect(screen.queryByText(/Onsite/)).not.toBeInTheDocument();
+  // A posting that does not say its mode has none, so a stated Onsite is a
+  // fact worth a chip; an unknown mode shows nothing.
+  it('names a stated onsite job, and nothing for a posting with no work mode', () => {
+    const { unmount } = render(<PostingCard posting={{ ...base, workMode: 'onsite', workModeTag: { value: 'onsite', from: 'board', evidence: 'Board tag: onsite' } }} onOpen={() => {}} />);
+    expect(screen.getByText('Onsite')).toHaveAccessibleDescription('Board tag: onsite');
     unmount();
 
     render(<PostingCard posting={base} onOpen={() => {}} />);
-    expect(screen.queryByText(/\//)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Onsite|\//)).not.toBeInTheDocument();
   });
 });
 
@@ -206,14 +223,6 @@ describe('PostingCard selection', () => {
     expect(cardOf()).not.toHaveClass('bg-select');
     rerender(<PostingCard posting={base} selected onOpen={() => {}} />);
     expect(cardOf()).toHaveClass('bg-select');
-  });
-});
-
-describe('isNewToday', () => {
-  it('is true within 24h and false beyond', () => {
-    expect(isNewToday('2026-06-28T06:00:00Z', now)).toBe(true);
-    expect(isNewToday('2026-06-26T06:00:00Z', now)).toBe(false);
-    expect(isNewToday(null, now)).toBe(false);
   });
 });
 
@@ -250,12 +259,14 @@ describe('PostingCard quick actions', () => {
 });
 
 // Up by the company name the actions covered the New badge and long names;
-// in the footer they take the pay's place, the way a row's take its score's.
+// in the footer they take the score's place, the way a row's do, so the pay
+// stays on screen with its evidence one hover away.
 describe('PostingCard actions placement', () => {
-  it('keeps the actions in the footer, beside the pay, and the New badge free', () => {
-    render(<PostingCard posting={{ ...base, stipend: '20,000 /month' }} selected onOpen={() => {}} onStatus={() => {}} />);
+  it('keeps the actions in the footer, in the score place, the pay and the New badge free', () => {
+    render(<PostingCard posting={{ ...base, fit: 70, grade: 'B', payLabel: '₹20k/mo' }} selected onOpen={() => {}} onStatus={() => {}} />);
     const cell = screen.getByRole('button', { name: 'Save' }).closest('.relative');
-    expect(cell.textContent).toContain('20');
+    expect(cell).toContainElement(screen.getByLabelText('Fit 70, grade B'));
+    expect(cell).not.toContainElement(screen.getByText('₹20k/mo'));
     expect(screen.getByLabelText('New today').closest('.relative')).not.toBe(cell);
   });
 });

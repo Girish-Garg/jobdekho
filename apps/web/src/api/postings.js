@@ -31,6 +31,14 @@ export function getPosting(id) {
   return req(`/api/postings/${encodeURIComponent(id)}`).then((d) => d.posting);
 }
 
+// A posting opened with no description: the server reads its page once,
+// politely, and tags it again from the text. { posting, described }, the
+// posting shaped as getPosting gives it. Not announced: the pane says in
+// place why a description could not be fetched (see DescribeNote.jsx).
+export function describePosting(id) {
+  return req(`/api/postings/${encodeURIComponent(id)}/describe`, { method: 'POST' });
+}
+
 export function getSources() {
   return announced(req('/api/sources'), 'Sources').then((d) => d.sources);
 }

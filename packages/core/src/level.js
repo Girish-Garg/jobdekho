@@ -3,6 +3,7 @@ import { titleSays, titleEvidence, spaced } from './title-rules.js'
 import { programmeIn } from './programme.js'
 import { yearsLevel, monthsAsked, levelForYears } from './level-years.js'
 import { boardTypeEvidence } from './board-fields.js'
+import { statedLevel } from './level-stated.js'
 
 // Seniority ladder, lowest to highest. Index order drives range comparisons.
 export const LEVELS = ['internship', 'entry', 'mid', 'senior', 'staff', 'executive']
@@ -14,8 +15,9 @@ export const LEVELS = ['internship', 'entry', 'mid', 'senior', 'staff', 'executi
 //
 // Evidence is tried in a fixed order and the first that applies decides:
 // the board's filing, the title, an explicit statement in the description,
-// and last the board's experience field, which recruiters fill from a picker
-// and so only speaks when the text gives no years.
+// the board's experience field, which recruiters fill from a picker and so
+// only speaks when the text gives no years, and last what the description
+// states in words (level-stated.js).
 export function levelTag({ title = '', description = '', company = '', source = '', board = null, experience = null, experienceYears = null } = {}) {
   if (board?.type === 'internship') return tag('internship', 'board', boardTypeEvidence(board, source))
   const found = titleSays(title)
@@ -33,7 +35,8 @@ export function levelTag({ title = '', description = '', company = '', source = 
   if (Number.isFinite(experienceYears)) {
     return tag(levelForYears(experienceYears), 'board', `Experience field: ${experience ?? `${experienceYears} years`}`)
   }
-  return null
+  const stated = statedLevel(description, company)
+  return stated ? tag(stated.level, 'text', stated.evidence) : null
 }
 
 // The value alone: a level, or null when the posting does not say.

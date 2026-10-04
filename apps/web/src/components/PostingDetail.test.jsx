@@ -14,9 +14,9 @@ vi.mock('../api.js', () => ({
 const posting = {
   id: 'p1', source: 'internshala', company: 'Acme', title: 'Frontend Intern', location: 'Remote',
   url: 'https://example.com/p1', descriptionSnippet: 'Build the board.', status: null, level: 'internship',
-  legitimacy: 'high', ghostSignals: [],
+  legitimacy: 'high', ghostSignals: [], caution: [],
 };
-const SIGNALS = ['no pay stated', 'very short job description', 'posted 4 months ago'];
+const FEE = [{ code: 'fee', reason: 'Asks applicants to pay a ₹1,500 registration fee', evidence: 'Pay Rs 1500 to register.' }];
 
 const setup = (over = {}) => render(<PostingDetail posting={{ ...posting, ...over }} onClose={() => {}} onStatus={() => {}} />);
 
@@ -68,30 +68,32 @@ describe('PostingDetail and AI', () => {
     expect(asked).toHaveBeenLastCalledWith(expect.objectContaining({ action: 'fake-check' }));
   });
 
-  it('asks whether a doubtful job is real instead, beside the evidence, and starts that check', () => {
-    setup({ legitimacy: 'suspicious', ghostSignals: SIGNALS });
+  it('leads with whether a job with a caution is real, beside its reasons, and starts that check', () => {
+    setup({ legitimacy: 'low', ghostSignals: [FEE[0].reason], caution: FEE });
+    const card = screen.getByRole('region', { name: 'Caution' });
     const button = screen.getByRole('button', { name: 'Check whether this job is real' });
-    expect(screen.getByRole('region', { name: 'Caution' })).toContainElement(button);
+    expect(card).toContainElement(button);
+    expect(card).toHaveTextContent('Asks applicants to pay a ₹1,500 registration fee');
+    expect(screen.queryByText('Worth a second look')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Ask AI about this job' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Is it real?' })).not.toBeInTheDocument();
     fireEvent.click(button);
     expect(asked).toHaveBeenCalledWith(expect.objectContaining({ action: 'fake-check' }));
   });
 
-  it('treats low legitimacy the same way', () => {
-    setup({ legitimacy: 'low', ghostSignals: ['no pay stated', 'posted 5 months ago'] });
-    expect(screen.getByRole('button', { name: 'Check whether this job is real' })).toBeInTheDocument();
+  // No pay and a short text are not doubts: without a stated red flag there
+  // is no Caution card and no lead check.
+  it('keeps the ordinary controls and no Caution card for a posting with no caution', () => {
+    setup({ legitimacy: 'low', ghostSignals: ['no pay stated'], caution: [] });
+    expect(screen.queryByRole('region', { name: 'Caution' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ask AI about this job' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Is it real?' })).toBeInTheDocument();
   });
 
-  it('keeps a single caution signal where it was, with the ordinary control further down', () => {
-    setup({ legitimacy: 'medium', ghostSignals: ['no pay stated'] });
-    const button = screen.getByRole('button', { name: 'Ask AI about this job' });
-    expect(screen.getByRole('region', { name: 'Caution' })).not.toContainElement(button);
-  });
-
-  it('still offers the check for a doubtful job that came with no listed signals', () => {
-    setup({ legitimacy: 'suspicious', ghostSignals: [] });
-    expect(screen.getByRole('button', { name: 'Check whether this job is real' })).toBeInTheDocument();
+  it('notes a thin posting quietly in grey, with no caution', () => {
+    setup({ fewDetails: true });
+    expect(screen.getByText('Few details.')).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Caution' })).not.toBeInTheDocument();
   });
 
   it('still shows the facts and the posting link', () => {

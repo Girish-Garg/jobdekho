@@ -19,7 +19,9 @@ const posting = {
   location: 'Remote',
   url: 'https://example.com/p1',
   descriptionSnippet: 'Build the board.',
-  stipend: 'Rs 20,000',
+  stipend: '₹ 20,000 /month',
+  payLabel: '₹20k/mo',
+  payTag: { value: '₹ 20,000 /month', from: 'board', evidence: 'Pay field: ₹ 20,000 /month' },
   duration: '6 Months',
   experience: 'Fresher',
   postedAt: new Date().toISOString(),
@@ -67,8 +69,22 @@ describe('PostingDialog detail', () => {
     expect(screen.getByText('6 Months')).toBeInTheDocument();
     expect(screen.getByText("Bachelor's (required)")).toBeInTheDocument();
     expect(screen.getByText('Internshala')).toBeInTheDocument();
-    expect(screen.getByText('Rs 20,000')).toBeInTheDocument();
+    expect(screen.getByText('₹20k/mo')).toHaveAccessibleDescription('Pay field: ₹ 20,000 /month');
     expect(screen.getByText('Remote')).toBeInTheDocument();
+  });
+
+  // One pay format everywhere: the pane once printed "400000" beside a card
+  // that read "₹4L/yr" for the same job.
+  it('shows the pay in the same short form as the feed, never the raw figure', () => {
+    setup({ stipend: '400000', payLabel: '₹4L/yr', payTag: { value: '400000', from: 'text', evidence: 'Says "CTC 400000 per annum"' } });
+    expect(screen.getByText('₹4L/yr')).toBeInTheDocument();
+    expect(screen.queryByText('400000')).not.toBeInTheDocument();
+  });
+
+  it('dates a job by when it was found when its board gives no date', () => {
+    setup({ postedAt: null });
+    expect(screen.getByText('Found')).toBeInTheDocument();
+    expect(screen.queryByText('Posted')).not.toBeInTheDocument();
   });
 
   it('softens the degree line when the degree is preferred rather than required', () => {

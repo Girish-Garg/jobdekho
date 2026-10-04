@@ -7,7 +7,7 @@
 // to 5 years"). Bump TAGS_VERSION whenever a rule changes what it decides:
 // stored postings carrying an older version are tagged again, once, from the
 // text they kept (see the store's corpus.js).
-export const TAGS_VERSION = 2
+export const TAGS_VERSION = 3
 
 export const tag = (value, from, evidence) => ({ value, from, evidence, version: TAGS_VERSION })
 

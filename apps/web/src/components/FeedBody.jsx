@@ -7,8 +7,11 @@ import { SearchIcon } from './Icon.jsx';
 
 // The area under the header: a skeleton, a reason nothing matched, or the
 // rows/cards themselves - never more than one of the three at once.
+// `bands` and `notStated` are the whole feed's counts for the dividers: how
+// many jobs in each grade, and how many that do not say their level under a
+// seniority filter (see FeedMarks.jsx).
 export default function FeedBody({
-  loading, rows, bands = null, viewMode, filters, selectedId, flashId, onOpen, onSelect, onStatus, onUndo,
+  loading, rows, bands = null, notStated = null, viewMode, filters, selectedId, flashId, onOpen, onSelect, onStatus, onUndo,
 }) {
   if (loading) return <FeedSkeleton mode={viewMode} />;
 
@@ -26,6 +29,7 @@ export default function FeedBody({
       <PostingGrid
         postings={rows}
         bands={bands}
+        notStated={notStated}
         selectedId={selectedId}
         flashId={flashId}
         onOpen={onOpen}
@@ -39,6 +43,7 @@ export default function FeedBody({
     <PostingList
       postings={rows}
       bands={bands}
+      notStated={notStated}
       selectedId={selectedId}
       flashId={flashId}
       onOpen={onOpen}

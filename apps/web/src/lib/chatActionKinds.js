@@ -42,7 +42,9 @@ export const CHAT_POLICY = 'none';
 export const CHAT_INTRO = 'The chat asks an AI CLI installed on this computer, on your own subscription or a local model.';
 
 // A posting the feed already warns about is one the person is asking "is
-// this real?" about, so that is what the pane offers to start with.
+// this real?" about, so that is what the pane offers to start with. The
+// warning is Caution: a red flag the posting itself states (the server's
+// `caution`), never a thin text or a missing pay, which are not doubts.
 export function isDoubtful(posting) {
-  return posting?.legitimacy === 'low' || posting?.legitimacy === 'suspicious';
+  return Array.isArray(posting?.caution) && posting.caution.length > 0;
 }

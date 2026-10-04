@@ -22,7 +22,8 @@ const WIDE_QUERY = '(min-width: 1100px)';
 export default function PostingsView({
   filters, setFilters, sort = 'match', setSort, viewMode = 'list', setViewMode, onOpenProfile, onOpenSettings,
 }) {
-  const { rows, loading, more, loadMore, onStatus, total, newToday, bands, blockedPicks } = usePostingsFeed(filters, sort);
+  const feed = usePostingsFeed(filters, sort);
+  const { rows, loading, more, loadMore, onStatus, bands, notStated, blockedPicks } = feed;
   const triage = useTriage(rows, onStatus);
   const isWide = useMediaQuery(WIDE_QUERY);
   const pane = useOpenPosting(rows);
@@ -47,7 +48,7 @@ export default function PostingsView({
       <div className="mx-auto w-full min-w-0 max-w-[84rem]">
         <FeedTop
           filters={filters} setFilters={setFilters} sort={sort} setSort={setSort} viewMode={viewMode} setViewMode={setViewMode}
-          shown={rows.length} total={total} fresh={newToday} onOpenSettings={onOpenSettings}
+          shown={rows.length} total={feed.total} fresh={{ posted: feed.postedToday, found: feed.foundToday }} onOpenSettings={onOpenSettings}
           companyLogo={rows.find((row) => row.logoUrl)?.id ?? null}
         />
         {unranked && (
@@ -59,6 +60,7 @@ export default function PostingsView({
           loading={loading}
           rows={rows}
           bands={bands}
+          notStated={notStated}
           viewMode={viewMode}
           filters={filters}
           selectedId={selectedId}
@@ -84,6 +86,7 @@ export default function PostingsView({
         onStatus={(id, value) => { pane.patchOutside(id, value); triage.setStatus(id, value); }}
         onCompany={(name) => setFilters({ ...filters, companies: [name] })}
         onBlock={onBlock}
+        onOpenSettings={onOpenSettings}
       />
     </section>
   );

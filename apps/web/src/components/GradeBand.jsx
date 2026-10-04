@@ -4,7 +4,9 @@ import { gradeTone } from '../lib/gradeTone.js';
 // Where one grade's jobs begin in the feed: the letter in its tone, what it
 // means in a word or two, and how many jobs the whole feed holds in it (not
 // just those loaded so far). `as` is 'row' inside the list's grid and
-// 'heading' across the card grid, which reads it as a section heading.
+// 'heading' across the card grid, which reads it as a section heading. The
+// list lets its rows' tips spill out of it, so a band that opens the list
+// rounds its own top corners.
 export default function GradeBand({ grade, count, as = 'row' }) {
   const tone = gradeTone(grade);
   const face = (
@@ -19,7 +21,7 @@ export default function GradeBand({ grade, count, as = 'row' }) {
     return <h3 className="col-span-full flex items-center gap-2 pt-2 text-xs first:pt-0">{face}</h3>;
   }
   return (
-    <div role="row" className="border-b border-line bg-select/40 px-4 py-2">
+    <div role="row" className="border-b border-line bg-select/40 px-4 py-2 first:rounded-t-[11px]">
       <span role="columnheader" className="flex items-center gap-2 text-xs">{face}</span>
     </div>
   );
