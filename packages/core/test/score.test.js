@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { scorePosting, fitContext, canRank, CONTENT_WEIGHTS } from '@jobdekho/core/score.js'
+import { FEATURES_VERSION } from '@jobdekho/core/posting-features.js'
 
 const profile = { skills: ['React', 'Node', 'Python'], years: 2, degree: 'bachelors' }
 const posting = (over) => ({
@@ -104,7 +105,7 @@ describe('scorePosting', () => {
   // Features are read at scrape time from the full body; the scorer must use
   // them rather than the clipped text the row kept.
   it('uses the features a row carries', () => {
-    const features = { v: 1, skills: { python: 'req' }, band: null, from: null, titleLevel: null }
+    const features = { v: FEATURES_VERSION, skills: { python: 'req' }, band: null, from: null, titleLevel: null }
     const got = score({ title: 'Developer', descriptionText: 'no skills here', features })
     expect(got.why.has.map((h) => h.skill)).toEqual(['Python'])
   })
