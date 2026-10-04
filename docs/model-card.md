@@ -13,47 +13,47 @@ JobDekho has two small word models. They run on the person's own computer in pla
 ## Section model
 
 - Status: shipped, but off in the app until the owner's audit of this version passes.
-- What it does: for a posting whose text has no heading step 1 reads (its sections are null), it sorts each sentence or bullet into duties, requirements, pay, about or other; a requirement marked optional ("is a plus") becomes nice to have by step 1's own rule. A line goes to a section only when the model clears that section's threshold. The lines it leaves unsorted open the posting, in its order, and the sorted sections follow, each marked from: 'model'.
-- Version: 1
-- Weights: 37,952 features, 1529 KB.
-- Trained on: 56,457 lines from 3,152 postings whose headings step 1 understood, from 272 companies (postings.ndjson saved 2026-10-03 (6,482 rows, 6,482 not in an earlier file); postings.ndjson saved 2026-10-02 (4,827 rows, 4,200 not in an earlier file)). Lines: duties 24,254, requirements 21,697, pay 2,494, about 7,451, other 561.
+- What it does: for a posting whose text has no heading step 1 reads (its sections are null), it sorts each sentence or bullet into duties, requirements, pay, about or other. A line goes to a section only when the model clears that section's threshold, and only when it is section content: equal-opportunity and legal notices, heading-shaped lines and pieces broken off a sentence are never placed. A heading inside the text still counts, known to step 1 or not: under a nice-to-have heading a requirement becomes nice to have and a duty is left unsorted. Anywhere else a requirement becomes nice to have only when its own words make all of it optional ("Kafka is a plus"; not "Bachelor's degree, Master's preferred"), step 1's own rule. The lines it leaves unsorted open the posting, in its order, and the sorted sections follow, each marked from: 'model'.
+- Version: 2
+- Weights: 37,383 features, 1506 KB.
+- Trained on: 55,681 lines from 3,056 postings whose headings step 1 understood, from 250 companies (postings.ndjson saved 2026-10-03 (6,482 rows, 6,482 not in an earlier file)). Lines: duties 23,368, requirements 22,485, pay 1,915, about 7,352, other 561.
 - Labels: a line takes the section its heading names, and only under a heading specific enough to trust ("Responsibilities", "Qualifications", "Benefits", "About us"; not "Job Description" or "The Role", which head everything). Nice to have counts as requirements, since only its heading tells them apart. A line asking for years or a degree counts as a requirement wherever it sits; a line opening with a duty ("Design...", "Collaborate...") under any other heading is left out, in training and testing alike, since its heading is more likely wrong than the line. Duties and requirements come only from postings that head both. "How to apply" headed too few lines to learn.
 - Features: the line's words and word pairs, its first word, length, whether it is a list item, its place in the posting, and the words of the lines before and after it. The headings themselves are left out.
 - Split: by company, 5 folds (seed 20261004); every number below is out of fold, on the compacted weights as shipped.
-- Calibration: temperature 1.2961.
+- Calibration: temperature 1.2711.
 - Thresholds: one per section, the most lenient point of a fixed grid, walked from strict to lenient, before held-out precision first drops under the target (at least 50 lines covered).
 
 ### At the shipped target, 99.5% precision
 
-Held out: 17,188 of 56,457 lines placed (30.4%), 99.54% in the section their heading named. With each fold's thresholds chosen on the other folds: 99.44% of 16,242. The misses that remain at the top are mostly lines whose heading was wrong, not the model; the precision is measured against headings all the same.
+Held out: 16,984 of 55,681 lines placed (30.5%), 99.55% in the section their heading named. With each fold's thresholds chosen on the other folds: 99.46% of 16,040. The misses that remain at the top are mostly lines whose heading was wrong, not the model; the precision is measured against headings all the same.
 
 | Section | Threshold | Held out placed | Precision |
 |---|---|---|---|
-| duties | 0.98 | 11,548 | 99.6% |
-| requirements | 0.993 | 4,821 | 99.5% |
-| pay | never shown | 0 | n/a |
-| about | 0.95 | 819 | 99.6% |
+| duties | 0.98 | 12,026 | 99.5% |
+| requirements | 0.996 | 4,748 | 99.6% |
+| pay | 0.93 | 77 | 100.0% |
+| about | 0.985 | 133 | 100.0% |
 
-On the postings it is for, the 2,186 with at least 300 characters and no heading: 1,524 get model sections (69.7%); 8,509 of their 34,415 lines are placed (24.7%): requirements 1,061, duties 5,279, about 2,079, nice 90. The rest open the posting unsorted, or fold as company text. These are what the app will show once the audit passes.
+On the postings it is for, the 325 with at least 300 characters and no heading: 194 get model sections (59.7%); 1,407 of their 6,208 lines are placed (22.7%): duties 1,124, about 13, requirements 255, nice 15. The rest open the posting unsorted, or fold as company text. These are what the app will show once the audit passes.
 
 ### Trade-off
 
-At a 98% target: 31,074 held-out lines placed (55.0%), 98.36% precise (97.92% with thresholds chosen on the other folds).
+At a 98% target: 34,570 held-out lines placed (62.1%), 98.22% precise (97.99% with thresholds chosen on the other folds).
 
 | Section | Threshold | Held out placed | Precision |
 |---|---|---|---|
-| duties | 0.9 | 18,398 | 98.5% |
-| requirements | 0.95 | 11,604 | 98.1% |
-| pay | 0.95 | 53 | 98.1% |
-| about | 0.94 | 1,019 | 98.9% |
+| duties | 0.9 | 18,250 | 98.4% |
+| requirements | 0.93 | 14,835 | 98.0% |
+| pay | 0.93 | 77 | 100.0% |
+| about | 0.93 | 1,408 | 98.2% |
 
 | One threshold for all | Lines placed | Precision | Wrong |
 |---|---|---|---|
-| 0.9 | 61.3% | 97.81% | 758 |
-| 0.95 | 49.9% | 98.74% | 354 |
-| 0.98 | 35.4% | 99.34% | 131 |
-| 0.99 | 25.2% | 99.59% | 59 |
-| 0.995 | 16.2% | 99.81% | 17 |
+| 0.9 | 65.6% | 97.96% | 745 |
+| 0.95 | 54.9% | 98.67% | 405 |
+| 0.98 | 40.4% | 99.26% | 166 |
+| 0.99 | 29.9% | 99.50% | 84 |
+| 0.995 | 20.4% | 99.72% | 32 |
 
 - Audit: not yet audited.
 

@@ -47,11 +47,6 @@ export const HEADINGS = [
 // in.
 export const WEAK = /^(?:experience|you will|you['’\s]?ll|you have|you are|in this role|the role|culture|skills|education)\b(?!\s*:)/i
 
-// A word marking something optional, anywhere in a line. The rules read a
-// line as optional only when such a word governs all of it (jd-optional.js);
-// the section model's placement still reads this.
-export const NICE_CUE = /\b(?:nice to have|good to have|bonus|is a plus|are a plus|a big plus|a plus\b|added advantage|preferred|preferably|desirable|would be (?:a )?(?:plus|great|nice|advantage)|advantageous|not required|optional)\b/i
-
 // Company copy before any heading: "we are", "founded", "backed by". Only
 // when it does not also speak to the reader, which is the role talking.
 export const ABOUT_CUE = /\b(?:we are|we['’]re|our (?:mission|customers|clients|platform|company|team)|founded|headquartered|leading provider|is a (?:leading|global|fast)|backed by|series [a-d]\b)/i

@@ -1,6 +1,6 @@
 {
   "model": "sections",
-  "version": 1,
+  "version": 2,
   "data": {
     "files": [
       {
@@ -8,23 +8,17 @@
         "date": "2026-10-03",
         "rows": 6482,
         "added": 6482
-      },
-      {
-        "file": "postings.ndjson",
-        "date": "2026-10-02",
-        "rows": 4827,
-        "added": 4200
       }
     ],
-    "postings": 10128,
-    "headedPostings": 3152,
-    "trainedOn": 56457,
-    "companies": 272,
+    "postings": 6105,
+    "headedPostings": 3056,
+    "trainedOn": 55681,
+    "companies": 250,
     "lines": {
-      "duties": 24254,
-      "requirements": 21697,
-      "pay": 2494,
-      "about": 7451,
+      "duties": 23368,
+      "requirements": 22485,
+      "pay": 1915,
+      "about": 7352,
       "other": 561
     }
   },
@@ -40,89 +34,89 @@
     "seed": 20261004,
     "minCount": 5,
     "pruneBelow": 0.02,
-    "vocabulary": 37952,
-    "kept": 37952
+    "vocabulary": 37383,
+    "kept": 37383
   },
-  "temperature": 1.2961,
+  "temperature": 1.2711,
   "minSupport": 50,
   "heldOut": {
-    "lines": 56457
+    "lines": 55681
   },
   "globalThresholds": [
     {
       "threshold": 0.9,
-      "coverage": 0.6126,
-      "precision": 0.9781,
-      "wrong": 758
+      "coverage": 0.6564,
+      "precision": 0.9796,
+      "wrong": 745
     },
     {
       "threshold": 0.95,
-      "coverage": 0.4993,
-      "precision": 0.9874,
-      "wrong": 354
+      "coverage": 0.5488,
+      "precision": 0.9867,
+      "wrong": 405
     },
     {
       "threshold": 0.98,
-      "coverage": 0.3542,
-      "precision": 0.9934,
-      "wrong": 131
+      "coverage": 0.4035,
+      "precision": 0.9926,
+      "wrong": 166
     },
     {
       "threshold": 0.99,
-      "coverage": 0.2519,
-      "precision": 0.9959,
-      "wrong": 59
+      "coverage": 0.2993,
+      "precision": 0.995,
+      "wrong": 84
     },
     {
       "threshold": 0.995,
-      "coverage": 0.1621,
-      "precision": 0.9981,
-      "wrong": 17
+      "coverage": 0.2043,
+      "precision": 0.9972,
+      "wrong": 32
     }
   ],
   "chosen": {
     "target": 0.995,
     "thresholds": {
       "duties": 0.98,
-      "requirements": 0.993,
-      "pay": null,
-      "about": 0.95
+      "requirements": 0.996,
+      "pay": 0.93,
+      "about": 0.985
     },
     "heldOut": {
-      "covered": 17188,
-      "right": 17109,
-      "precision": 0.9954,
-      "coverage": 0.3044
+      "covered": 16984,
+      "right": 16907,
+      "precision": 0.9955,
+      "coverage": 0.305
     },
     "thresholdsChosenWithoutTheTestFold": {
-      "covered": 16242,
-      "right": 16151,
-      "precision": 0.9943972417190001
+      "covered": 16040,
+      "right": 15953,
+      "precision": 0.9945760598503741
     },
     "byKind": {
       "duties": {
         "threshold": 0.98,
-        "covered": 11548,
-        "right": 11496,
-        "precision": 0.9955
+        "covered": 12026,
+        "right": 11969,
+        "precision": 0.9953
       },
       "requirements": {
-        "threshold": 0.993,
-        "covered": 4821,
-        "right": 4797,
-        "precision": 0.995
+        "threshold": 0.996,
+        "covered": 4748,
+        "right": 4728,
+        "precision": 0.9958
       },
       "pay": {
-        "threshold": null,
-        "covered": 0,
-        "right": 0,
-        "precision": null
+        "threshold": 0.93,
+        "covered": 77,
+        "right": 77,
+        "precision": 1
       },
       "about": {
-        "threshold": 0.95,
-        "covered": 819,
-        "right": 816,
-        "precision": 0.9963
+        "threshold": 0.985,
+        "covered": 133,
+        "right": 133,
+        "precision": 1
       }
     }
   },
@@ -130,113 +124,113 @@
     "target": 0.98,
     "thresholds": {
       "duties": 0.9,
-      "requirements": 0.95,
-      "pay": 0.95,
-      "about": 0.94
+      "requirements": 0.93,
+      "pay": 0.93,
+      "about": 0.93
     },
     "heldOut": {
-      "covered": 31074,
-      "right": 30564,
-      "precision": 0.9836,
-      "coverage": 0.5504
+      "covered": 34570,
+      "right": 33954,
+      "precision": 0.9822,
+      "coverage": 0.6209
     },
     "thresholdsChosenWithoutTheTestFold": {
-      "covered": 31714,
-      "right": 31055,
-      "precision": 0.97922053351832
+      "covered": 34352,
+      "right": 33663,
+      "precision": 0.9799429436422916
     },
     "byKind": {
       "duties": {
         "threshold": 0.9,
-        "covered": 18398,
-        "right": 18120,
-        "precision": 0.9849
+        "covered": 18250,
+        "right": 17955,
+        "precision": 0.9838
       },
       "requirements": {
-        "threshold": 0.95,
-        "covered": 11604,
-        "right": 11384,
-        "precision": 0.981
+        "threshold": 0.93,
+        "covered": 14835,
+        "right": 14540,
+        "precision": 0.9801
       },
       "pay": {
-        "threshold": 0.95,
-        "covered": 53,
-        "right": 52,
-        "precision": 0.9811
+        "threshold": 0.93,
+        "covered": 77,
+        "right": 77,
+        "precision": 1
       },
       "about": {
-        "threshold": 0.94,
-        "covered": 1019,
-        "right": 1008,
-        "precision": 0.9892
+        "threshold": 0.93,
+        "covered": 1408,
+        "right": 1382,
+        "precision": 0.9815
       }
     }
   },
-  "accuracy": 0.8623,
+  "accuracy": 0.8793,
   "reliability": [
     {
       "from": 0.5,
       "to": 0.7,
-      "n": 7323,
-      "right": 4445
+      "n": 6085,
+      "right": 3649
     },
     {
       "from": 0.7,
       "to": 0.8,
-      "n": 4403,
-      "right": 3365
+      "n": 3817,
+      "right": 2939
     },
     {
       "from": 0.8,
       "to": 0.9,
-      "n": 6377,
-      "right": 5480
+      "n": 5972,
+      "right": 5185
     },
     {
       "from": 0.9,
       "to": 0.95,
-      "n": 6394,
-      "right": 5990
+      "n": 5994,
+      "right": 5654
     },
     {
       "from": 0.95,
       "to": 0.98,
-      "n": 8194,
-      "right": 7971
+      "n": 8089,
+      "right": 7850
     },
     {
       "from": 0.98,
       "to": 0.99,
-      "n": 5777,
-      "right": 5705
+      "n": 5802,
+      "right": 5720
     },
     {
       "from": 0.99,
       "to": 0.995,
-      "n": 5066,
-      "right": 5024
+      "n": 5290,
+      "right": 5238
     },
     {
       "from": 0.995,
       "to": 1,
-      "n": 9153,
-      "right": 9136
+      "n": 11375,
+      "right": 11343
     }
   ],
   "unheaded": {
-    "postings": 2186,
-    "sorted": 1524,
-    "sortedShare": 0.6972,
-    "lines": 34415,
-    "placedLines": 8509,
-    "placedShare": 0.2472,
+    "postings": 325,
+    "sorted": 194,
+    "sortedShare": 0.5969,
+    "lines": 6208,
+    "placedLines": 1407,
+    "placedShare": 0.2266,
     "placed": {
-      "requirements": 1061,
-      "duties": 5279,
-      "about": 2079,
-      "nice": 90
+      "duties": 1124,
+      "about": 13,
+      "requirements": 255,
+      "nice": 15
     }
   },
   "shipped": true,
-  "weightsBytes": 1565563
+  "weightsBytes": 1542380
 }

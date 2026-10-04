@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { decodeModel } from '@jobdekho/core/model/weights.js'
 import { estimateSections, scoreLines } from '@jobdekho/core/model/section-estimate.js'
-import { modelSections, sortedSections, sortableLines } from '@jobdekho/core/model/model-sections.js'
+import { modelSections, sortedSections, sortableLines, placedKinds } from '@jobdekho/core/model/model-sections.js'
+import { sortableUnits } from '@jobdekho/core/model/section-lines.js'
 
 // A hand-made model (fixtures/model-sections.json, version 9): "build" means
 // duties, "degree" and "knowledge" requirements, "insurance" pay, and
@@ -36,6 +37,51 @@ describe('estimateSections', () => {
 describe('sortableLines', () => {
   it('cuts a flattened body into lines and leaves its headings out', () => {
     expect(sortableLines('Key Responsibilities • Build APIs • Write tests. Requirements: • Go')).toEqual(['- Build APIs', '- Write tests.', '- Go'])
+  })
+})
+
+describe('placedKinds', () => {
+  // The first version's pre-check: requirement lines under a nice-to-have
+  // heading the rules did not know were shown as requirements.
+  it('reads the headings over its lines, known to the rules or not', () => {
+    const text = [
+      'We are hiring a backend engineer to join us.',
+      'You will be successful in this role if you have:',
+      '- Knowledge of Kafka',
+      'Things that would make you stand out:',
+      '- Knowledge of Rust',
+      '- Build a compiler',
+      'Nice to have:',
+      '- Degree in physics',
+    ].join('\n')
+    const { lines, under } = sortableUnits(text)
+    const kinds = placedKinds(lines, model, under)
+    expect(lines.map((line, i) => [line, kinds[i]])).toEqual([
+      ['We are hiring a backend engineer to join us.', 'other'],
+      ['You will be successful in this role if you have:', 'other'],
+      ['- Knowledge of Kafka', 'requirements'],
+      ['Things that would make you stand out:', 'other'],
+      ['- Knowledge of Rust', 'nice'],
+      ['- Build a compiler', 'other'],
+      ['- Degree in physics', 'nice'],
+    ])
+  })
+
+  it('makes a requirement nice only when a cue governs all of it', () => {
+    const lines = ['- Degree in physics (Master’s degree preferred)', '- Knowledge of Kafka is a plus', '- Knowledge of Go, preferably Kafka Streams']
+    expect(placedKinds(lines, model)).toEqual(['requirements', 'nice', 'requirements'])
+  })
+
+  it('never places notices, headings or a piece broken off a sentence', () => {
+    const lines = [
+      'Acme is hiring a seasoned engineer for its Cloud Development',
+      '- Knowledge team.',
+      'Knowledge Base',
+      'Acme does not charge candidates any recruitment fees for a degree.',
+      'Acme is an equal opportunity employer that values every degree.',
+      '- Knowledge of Kafka and Kafka Streams',
+    ]
+    expect(placedKinds(lines, model)).toEqual(['other', 'other', 'other', 'other', 'other', 'requirements'])
   })
 })
 
