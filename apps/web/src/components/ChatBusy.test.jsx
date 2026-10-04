@@ -104,4 +104,25 @@ describe('the job pane\'s AI buttons', () => {
     expect(asked).toHaveBeenCalledWith(expect.objectContaining({ action: 'cover-letter' }));
     stop();
   });
+
+  // With only a tooltip to say so, the card looked the same busy or not.
+  it('say outright in the card what runs and where, with a way to go and watch it', () => {
+    render(<AskAiButton posting={{ ...POSTINGS.pB, legitimacy: 'high' }} />);
+    expect(screen.queryByRole('status')).toBeNull();
+    act(() => chatStore.set({ busy: { chatId: 'c-pA', kind: 'action', label: 'Is it real?', postingId: 'pA', title: 'Job A Engineer · AlphaCo' } }));
+    expect(screen.getByRole('status')).toHaveTextContent("Is it real? is running in AlphaCo's chat. These wait until it's done.");
+    fireEvent.click(within(screen.getByRole('status')).getByRole('button', { name: "AlphaCo's chat" }));
+    expect(onScreenId()).toBe('c-pA');
+    act(() => chatStore.set({ busy: null }));
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
+  it('name a call about this very job as that', () => {
+    render(<AskAiButton posting={{ ...POSTINGS.pA, legitimacy: 'high' }} />);
+    act(() => chatStore.set({ busy: { chatId: 'job:pA', kind: 'action', label: 'Is it real?', postingId: 'pA', title: 'Job A Engineer · AlphaCo' } }));
+    expect(screen.getByRole('status')).toHaveTextContent('Is it real? is running on this job.');
+    fireEvent.click(within(screen.getByRole('status')).getByRole('button', { name: 'Watch it' }));
+    expect(onScreenId()).toBe('job:pA');
+    act(() => chatStore.set({ busy: null }));
+  });
 });
