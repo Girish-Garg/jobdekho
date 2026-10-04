@@ -31,7 +31,7 @@ const ASKING = new Set(['req', 'resp', 'intro', 'other', 'nice'])
 // sits beside "5+ years overall" and the second is the real bar.
 // `words` is the line the floor was read from, for a fact's evidence; the
 // stored features leave it out (see posting-features.js).
-export function yearsAsked({ title, units = [], experienceYears = null }) {
+export function yearsAsked({ title, company = '', units = [], experienceYears = null }) {
   const found = []
   for (const u of units) {
     if (!ASKING.has(u.section)) continue
@@ -40,7 +40,7 @@ export function yearsAsked({ title, units = [], experienceYears = null }) {
   }
   const inTitle = yearsIn(title)
   if (inTitle) found.push({ y: inTitle, req: true, words: title })
-  const tl = titleLevel(title)
+  const tl = titleLevel(title, company)
   const pool = found.some((f) => f.req) ? found.filter((f) => f.req) : found
   if (pool.length) {
     const floor = pool.reduce((best, f) => (f.y[0] > best.y[0] ? f : best))

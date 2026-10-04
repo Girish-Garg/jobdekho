@@ -187,7 +187,8 @@ source, `npm run scrape` in a terminal does the same. A scrape checks around
   Greenhouse, Lever, Ashby, SmartRecruiters, Workable, Recruitee, Workday,
   SuccessFactors, Oracle, Eightfold and Avature;
 - companies' own careers sites: Amazon, Google, Infosys, Apple, Swiggy,
-  LTIMindtree, Mphasis, HDFC Bank, Coforge and Cyient;
+  LTIMindtree, Mphasis, HDFC Bank, Coforge, Cyient, Mercedes-Benz (its
+  R&D centre in India) and KPIT;
 - Indian job boards: Internshala, Unstop, Instahyre, and LinkedIn's public
   job search for India (off until you turn it on, see below);
 - remote boards: Remotive, RemoteOK, and Arbeitnow.

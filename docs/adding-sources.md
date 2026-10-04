@@ -316,13 +316,35 @@ date would wipe the stored one.
   set to India: 10 postings a page, up to 12 pages, bodies included. Zwayam cuts
   `mediumDescription` at 300 characters, so the adapter takes whichever description field holds
   the most text.
+- **mercedesbenz.js** reads the Mercedes-Benz Group's job board, which is mostly Mercedes-Benz
+  Research and Development India (MBRDI) in India. `jobs.mercedes-benz.com` is a script-drawn
+  page; its search is one GET to `jobs.api.mercedes-benz.com/search?data={...}` (the API host has
+  no robots.txt), with the board's own country filter, `PositionLocation.Country` 390, which is
+  India. One request of up to 500 ads, newest first, reads all of India: 221 ads of 74
+  requisitions on 2026-10-04, each requisition published as several ads and kept once. The body
+  is the schema.org JobPosting on the ad's own English page (`/en/` before the ad's path; robots.txt
+  allows every path), read for up to 40 new wanted postings. The list is the whole of India, so the
+  adapter is `complete`. The company is Mercedes-Benz; the hiring entity is the first tag.
+- **kpit.js** reads `www.kpit.com/job-listing/?show_all=1`, the site's own server-rendered list of
+  every open job (94 on 2026-10-04; robots.txt keeps crawlers out of `/wp-*` alone), and keeps a
+  job when one of its cities is in India by the office map the page's filter panel carries (52).
+  The site's own `country=India` filter is not used: it drops every job listed in two cities, 23 of
+  the 52. Each job's record is TalentOjo's public `talentojo.kpit.com/service/jobs/{id}`, the call
+  its apply page makes (the host has no robots.txt), read for up to 40 new wanted postings; the
+  recruiters it names are not kept. Most listed jobs were opened months ago, past the run's age
+  cut, so each record's date is kept in the source memo and handed to the filter with the row,
+  which turns such a job down without asking for its record again. A posting's own link is the
+  apply page, drawn by script, so the closed-posting check reads the record instead (410 or 404, or
+  a status other than Published, is gone).
 
 Microsoft and EY are read through their platforms (Eightfold and SuccessFactors) rather than an
 adapter of their own. Some careers sites cannot be read without getting around a block, so they
 stay out: TCS (an Akamai 403 on every page), Cognizant (Cloudflare answers 403 to Node's own fetch, though not to curl), Flipkart and Ola (TurboHire, whose API needs a token
 minted per visitor), Tech Mahindra and Reliance Jio (ASP.NET postbacks tied to a page session),
-ICICI Bank (a bearer token on every call) and IBM (an AWS WAF challenge). For a new bespoke source,
-copy `boards/`.
+ICICI Bank (a bearer token on every call), IBM (an AWS WAF challenge) and MathWorks (its own careers
+site at `mathworks.com/company/jobs/opportunities/search`, which robots.txt allows, answered its
+India search, `?location[]=IN`, with an Akamai "Access Denied" 403 on 2026-10-04). For a new
+bespoke source, copy `boards/`.
 
 Two sub-cases, very different in price:
 
@@ -870,7 +892,7 @@ Postings card lists both, and a resting source shows in the run as skipped.
   the job's id behind (Greenhouse sends a closed job to `/board?error=true`), or a page that says
   so (Apple's "this role does not exist or is no longer available") closes it; a live page counts
   as a sighting; an error, a timeout or a 429 changes nothing. Workday is checked through its job
-  API, which answers 404. Some postings are never checked: LinkedIn and Adzuna (robots.txt
+  API, which answers 404, and KPIT through its TalentOjo job record. Some postings are never checked: LinkedIn and Adzuna (robots.txt
   disallows their links), Instahyre and Remotive (a Cloudflare challenge answers), Ashby and
   Unstop (their pages read the same open or closed).
 - A closed posting is deleted unless the person saved, applied to or otherwise used it; those stay

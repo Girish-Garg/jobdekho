@@ -14,7 +14,7 @@ import { quote } from './tag.js'
 // floor among the requirement lines, never a founding date.
 function yearsFact(row) {
   const units = sectionize(row.descriptionText || '', row.company)
-  const asked = yearsAsked({ title: row.title || '', units, experienceYears: row.experienceYears ?? null })
+  const asked = yearsAsked({ title: row.title || '', company: row.company || '', units, experienceYears: row.experienceYears ?? null })
   if (!asked.band || asked.from === 'title') return null
   const [min] = asked.band
   if (asked.from === 'board') return { min, max: null, from: 'board', evidence: `Experience field: ${row.experience}` }

@@ -10,8 +10,9 @@ export const LEVEL_YEARS = {
   internship: [0, 0], entry: [0, 2], mid: [1, 4], senior: [4, 8], staff: [7, 15], executive: [10, 30],
 }
 
-// { level, band } or null.
-export function titleLevel(title) {
-  const found = titleSays(title)
+// { level, band } or null. The company is the chip's too: a graduate
+// programme's name counts only in its own company's titles.
+export function titleLevel(title, company = '') {
+  const found = titleSays(title, company)
   return found ? { level: found.level, band: LEVEL_YEARS[found.level] } : null
 }

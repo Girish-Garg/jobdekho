@@ -1,0 +1,54 @@
+{
+  "job": {
+    "id": "82118",
+    "organization_id": "133",
+    "code": "Technical Author (Mechanical Engineering)",
+    "title": "Trainee",
+    "display_title": null,
+    "job_role": [
+      "Engineer"
+    ],
+    "min_experience": 0,
+    "max_experience": 0,
+    "no_of_positions": 10,
+    "country": "India",
+    "state": "",
+    "location": [
+      "Coimbatore"
+    ],
+    "type": "Full Time",
+    "type_id": null,
+    "pa_id": null,
+    "shift_timing": "General Shift (8:30 AM- 5:30 PM)",
+    "required_skills": "Mechanical,Product / Domain Knowledge,Customer Relationship Management,Communication Skills (Verbal & Written),Problem-Solving & Troubleshooting,Time Management & Multitasking",
+    "additional_skills": "CAD tools like Creo / Catia / Teamcenter / Pro-e etc.,Knowledge of XML and SGML",
+    "description": "<div style=\"mso-element: para-border-div; border: none; border-top: solid #BBBBBB 1.0pt; mso-border-top-alt: solid #BBBBBB .5pt; padding: 4.0pt 0in 0in 0in;\">\n<p class=\"MsoNormal\"><strong><span style=\"font-size: 10.0pt; line-height: 115%; font-family: 'Work Sans';\">Roles Included</span></strong></p>\n<p class=\"MsoNormal\"><span style=\"font-size: 10.0pt; line-height: 115%; font-family: 'Work Sans';\">Role 1 &ndash; Technical Illustrator</span></p>\n<p class=\"MsoNormal\"><span style=\"font-size: 10.0pt; line-height: 115%; font-family: 'Work Sans';\">Role 2 &ndash; Parts Catalogue Author</span></p>\n<p class=\"MsoNormal\"><span style=\"font-size: 10.0pt; line-height: 115%; font-family: 'Work Sans';\">Role 3 &ndash; Technical Author</span></p>\n<p class=\"MsoNormal\"><span style=\"font-size: 10.0pt; line-height: 115%; font-family: 'Work Sans';\"><strong>Role 1: Technical Illustrator</strong></span></p>\n<p class=\"MsoNormal\"><strong><span style=\"font-size: 10.0pt; line-height: 115%; font-family: 'Work Sans';\">Job Summary</span></strong></p>\n<ul>\n<li><span style=\"font-size: 10.0pt; line-height: 115%; font-family: 'Work Sans';\">Illustrate technical drawings using set standards</span></li>\n<li><span style=\"font-size: 10.0pt; line-height: 115%; font-family: 'Work Sans';\">Coordinate with authors to complete deliverables</span></li>\n<li><span style=\"font-size: 10.0pt; line-height: 115%; font-family: 'Work Sans';\">Coordinate with different teams to gather inputs</span></li>\n</ul>\n<p class=\"MsoNormal\"><strong><span style=\"font-size: 10.0pt; line-height: 115%; font-family: 'Work Sans';\">Key Competencies</span></strong></p>\n<ul>\n<li><span style=\"font-size: 10.0pt; line-height: 115%; font-family: 'Work Sans';\">Effective communication with team members and stakeholders</span></li>\n<li><span style=\"font-size: 10.0pt; line-height: 115%; font-family: 'Work Sans';\">Ability to work under tight deadlines with minimal supervision</span></li>\n<li><span style=\"font-size: 10.0pt; line-height: 115%; font-family: 'Work Sans';\">Strong eye for design and detail</span></li>\n<li><span style=\"font-size: 10.0pt; line-height: 115%; font-family: 'Work Sans';\">Ability to learn new tools quickly</span></li>\n</ul>\n<p class=\"MsoNormal\"><strong><span style=\"font-size: 10.0pt; line-height: 115%; font-family: 'Work Sans';\">Roles and Responsibilities</span></strong></p>\n<ul>\n<li><span style=\"font-size: 10.0pt; line-height: 115%; font-family: 'Work Sans';\">Lay out and draw illustrations for technical manuals&mdash;Operating manual, Service/Maintenance manual, Installation instructions, Service Bulletins, Quick Reference Guides</span></li>\n<li><span style=\"font-size: 10.0pt; line-height: 115%; font-family: 'Work Sans';\">Part shading/gradient fills to emphasize details</span></li>\n</ul>\n<p class=\"MsoNormal\"><strong><span style=\"font-size: 10.0pt; line-height: 115%; font-family: 'Work Sans';\">Other Details</span></strong></p>\n<ul>\n<li><span style=\"font-size: 10.0pt; line-height: 115%; font-family: 'Work Sans';\">Location: Coimbatore</span></li>\n<li><span style=\"font-family: 'Work Sans'; font-size: 10pt;\">Position Type: Full-Time</span></li>\n<li><span style=\"font-family: 'Work Sans'; font-size: 10pt;\">CTC: 3.2 LPA&nbsp;</span></li>\n<li><span style=\"font-family: 'Work Sans'; font-size: 10pt;\">Eligibility Criteria: 60% throughout academic career</span></li>\n<li><span style=\"font-size: 10.0pt; line-height: 115%; font-family: 'Work Sans';\">Qualification: 2025/2026 graduates with B.E./B.Tech in Mechanical, Automotive, or Aeronautical Engineering</span>&nbsp;</li>\n</ul>\n<p><em>Please note there is a service agreement of 2 years</em></p>\n<p><strong>Registration Link</strong>&nbsp;<a href=\"https://app.joinsuperset.com/join/#/signup/student/jobprofiles/7cefc520-f883-4672-8a9b-7c94498eed1c\">Click to Apply</a></p>\n<p class=\"MsoNormal\" style=\"text-align: left;\">&nbsp;</p>\n</div>",
+    "services_deliverables": "",
+    "comments": null,
+    "qualification": [
+      "B.Tech/B.E"
+    ],
+    "qualification_specialization": [
+      "Mechanical"
+    ],
+    "certification": null,
+    "min_salary": null,
+    "max_salary": null,
+    "travel_required": null,
+    "expected_joining_date": "2026/06/11",
+    "status": "Published",
+    "created_at": "2026/06/11",
+    "updated_at": "2026-08-20 06:33:45 UTC",
+    "resume_upload_limit_exhausted": false,
+    "irrelevant_rejections_limit_exceeded": false,
+    "has_offered_candidates": false,
+    "is_from_uk_eu": false,
+    "campus_degree": "B.Tech",
+    "campus_stream": "Off-Campus"
+  },
+  "organization": {
+    "id": 133,
+    "name": "KPIT",
+    "url": "https://www.kpit.com"
+  }
+}

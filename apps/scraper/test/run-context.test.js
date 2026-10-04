@@ -40,6 +40,19 @@ describe('createRunContext', () => {
     expect(run.context.wanted('linkedin', card('Real Co', 'Chef'))).toBe(false)
   })
 
+  // The pipeline drops a posting dated past the age cut on arrival, so a
+  // list row that already says so is not worth its detail request. A row
+  // with no date is not judged by one.
+  it('calls a card its list dates past the age cut unwanted', () => {
+    const db = fakeDb()
+    const rules = { includeKeywords: ['software'], excludeKeywords: [], locations: [] }
+    const run = createRunContext({ db, rules, memo: openMemo(db, rules), now: () => NOW })
+    const card = (postedAt) => ({ externalId: '1', title: 'Software Engineer', company: 'Acme', url: 'u', location: 'Pune', postedAt })
+    expect(run.context.wanted('kpit', card(iso(NOW - 61 * DAY)))).toBe(false)
+    expect(run.context.wanted('kpit', card(iso(NOW - 59 * DAY)))).toBe(true)
+    expect(run.context.wanted('kpit', card(null))).toBe(true)
+  })
+
   // A 304 answers for the read the ETag came from: what that read listed is
   // seen again; what it had already stopped listing stays missing.
   it('on an unchanged board, sees again what its last full read listed, and nothing it had missed', () => {

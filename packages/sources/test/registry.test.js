@@ -5,6 +5,7 @@ import { parseSite } from '@jobdekho/sources/providers/workday-site.js'
 import { parseSite as successfactorsSite } from '@jobdekho/sources/providers/successfactors-site.js'
 import { parseSite as eightfoldSite } from '@jobdekho/sources/providers/eightfold-site.js'
 import { parseSite as avatureSite } from '@jobdekho/sources/providers/avature-site.js'
+import { compactKey } from '@jobdekho/core/company-key.js'
 
 const config = JSON.parse(readFileSync(new URL('../../../config/companies.json', import.meta.url)))
 
@@ -42,6 +43,15 @@ describe('buildAdapters', () => {
   it('builds no company adapter for Microsoft or EY, and one for Google', () => {
     expect(buildAdapters({ companies: ['microsoft', 'ey'] })).toEqual([])
     expect(buildAdapters({ companies: ['google'] }).map((a) => a.name)).toEqual(['google'])
+  })
+
+  // Named so a block on the company's postings ("Mercedes-Benz", "KPIT")
+  // also stops its careers site (apps/scraper/src/careers-source.js).
+  it('builds the Mercedes-Benz and KPIT careers sites, and config lists both', () => {
+    expect(buildAdapters({ companies: ['mercedesbenz', 'kpit'] }).map((a) => a.name)).toEqual(['mercedesbenz', 'kpit'])
+    expect(config.companies).toEqual(expect.arrayContaining(['mercedesbenz', 'kpit']))
+    expect(compactKey('Mercedes-Benz')).toBe('mercedesbenz')
+    expect(compactKey('KPIT Technologies')).toBe('kpit')
   })
 })
 
