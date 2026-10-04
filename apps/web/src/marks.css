@@ -72,6 +72,16 @@
     @apply absolute inset-x-0 -top-1.5 h-1.5;
   }
 
+  /* Opened above the value, where there is no room under it (see
+     lib/tipPlace.js); the bridge moves under the tip with it. */
+  .tip-up {
+    @apply bottom-full top-auto mb-1.5 mt-0;
+  }
+
+  .tip-up::before {
+    @apply -bottom-1.5 top-auto;
+  }
+
   .tip-host:hover > .tip {
     @apply visible opacity-100;
     transition-delay: 150ms;
