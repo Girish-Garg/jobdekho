@@ -10,8 +10,9 @@ import { ArrowRightIcon, SparkleIcon, ShieldCheckIcon, PenIcon, DocumentIcon } f
 // every AI action and its answer lives, in the job's own chat, instead of
 // running any of them here. The three actions are offered by name as well,
 // so the likeliest next step is one click rather than "open the chat, then
-// find the button". On a posting the feed already doubts, the question on
-// the person's mind is "is this real?", so that is the main control there.
+// find the button". On a posting with a Caution (a red flag it states), the
+// question on the person's mind is "is this real?", so that is the main
+// control there.
 // `onAsked` is for the dialog on a narrow screen, which has to get out of
 // the way for the chat to show.
 //

@@ -24,9 +24,12 @@ vi.mock('../api.js', () => ({
   setStatus: vi.fn(async () => null),
   getCareersPage: vi.fn(async () => true),
   blockCompany: vi.fn(async (name, { stopFetching }) => ({ key: 'acme', name, blockedAt: '2026-10-02T10:00:00.000Z', stopFetching, careersPage: true })),
+  // The pane reads the posting whole; most tests here have no use for it.
+  getPosting: vi.fn(async () => { throw new Error('not read in this test'); }),
+  describePosting: vi.fn(async () => { throw new Error('not described in this test'); }),
 }));
 
-import { getPostings, getPostingsPage, setStatus, getSetup, blockCompany } from '../api.js';
+import { getPostings, getPostingsPage, setStatus, getSetup, blockCompany, getPosting, describePosting } from '../api.js';
 import { announceRefreshed } from '../lib/postingsRefreshedSignal.js';
 
 // The feed reads a page with its counts; these tests speak in postings, so
@@ -394,24 +397,21 @@ describe('PostingsView best-fit ranking', () => {
 });
 
 describe('PostingsView legitimacy and grade', () => {
-  it('shows the ghost signals in the overlay, not on the row', async () => {
+  it('marks a stated red flag on the row and names it in the overlay', async () => {
+    const reason = 'Asks applicants to pay a ₹1,500 registration fee';
     getPostings.mockResolvedValue([
-      row({
-        title: 'Ghost Engineer',
-        legitimacy: 'low',
-        ghostSignals: ['no pay stated', 'posted 4 months ago'],
-      }),
+      row({ title: 'Ghost Engineer', legitimacy: 'low', ghostSignals: [reason], caution: [{ code: 'fee', reason, evidence: 'Pay Rs 1500 to register.' }] }),
+      row({ id: 'p2', title: 'Plain Engineer', legitimacy: 'high', caution: [] }),
     ]);
     render(<Harness filters={EMPTY} onOpenProfile={() => {}} />);
     expect(await screen.findByText('Ghost Engineer')).toBeInTheDocument();
 
-    // The row carries the warning; the evidence stays in the overlay.
-    expect(screen.getByText('Caution')).toBeInTheDocument();
-    expect(screen.queryByText('no pay stated')).not.toBeInTheDocument();
+    // The row carries the chip; the reasons wait behind it and in the overlay.
+    expect(screen.getAllByRole('button', { name: 'Caution' })).toHaveLength(1);
+    expect(screen.queryByText(reason)).not.toBeInTheDocument();
 
     fireEvent.click(card('Ghost Engineer'));
-    expect(await screen.findByText('no pay stated')).toBeInTheDocument();
-    expect(screen.getByText('posted 4 months ago')).toBeInTheDocument();
+    expect(await screen.findByRole('region', { name: 'Caution' })).toHaveTextContent(reason);
   });
 
   it('shows the grade and the breakdown with the fit reasons in the overlay', async () => {
@@ -716,6 +716,54 @@ describe('PostingsView and blocking a company', () => {
     const setFilters = vi.fn();
     render(<Harness filters={{ ...EMPTY, companies: ['Acme', 'Beta'] }} setFilters={setFilters} />);
     await waitFor(() => expect(setFilters).toHaveBeenCalledWith({ ...EMPTY, companies: ['Beta'] }));
+  });
+});
+
+// A posting opened with no description has it fetched once; the row it was
+// opened from takes the new tags, in place, without the feed reading again.
+describe('PostingsView and a description fetched on opening', () => {
+  it('fetches it once and retags the row in the feed', async () => {
+    mockWide(true);
+    const bare = row({ id: 'li-9', source: 'linkedin', title: 'Platform Engineer', descriptionSnippet: '', level: null, workMode: null, caution: [] });
+    getPostings.mockResolvedValue([bare, row({ id: 'p2', title: 'Other Engineer' })]);
+    getPosting.mockResolvedValueOnce({ ...bare, descriptionText: '', sections: null, facts: null });
+    describePosting.mockResolvedValueOnce({
+      described: true,
+      posting: {
+        ...bare, descriptionText: 'You will run the platform.\n- 6 to 10 years of experience', descriptionSnippet: 'You will run the platform.', sections: null, facts: null,
+        level: 'senior', levelTag: { value: 'senior', from: 'text', evidence: 'Asks for 6 to 10 years' },
+        workMode: 'hybrid', workModeTag: { value: 'hybrid', from: 'text', evidence: 'Says "hybrid role"' },
+      },
+    });
+    render(<Harness filters={EMPTY} />);
+    fireEvent.click(await screen.findByText('Platform Engineer'));
+    expect(await screen.findByText('You will run the platform.', { selector: 'p' })).toBeInTheDocument();
+    const feedRow = screen.getByRole('row', { name: /Platform Engineer/ });
+    await waitFor(() => expect(within(feedRow).getByText('Senior')).toHaveAccessibleDescription('Asks for 6 to 10 years'));
+    expect(within(feedRow).getByText('Hybrid')).toBeInTheDocument();
+    expect(describePosting).toHaveBeenCalledTimes(1);
+    expect(getPostings).toHaveBeenCalledTimes(1);
+  });
+});
+
+// "New today" is the board's own date; first found today is counted apart.
+describe('PostingsView counts', () => {
+  it('says how many are new today and how many were found today', async () => {
+    getPostingsPage.mockImplementationOnce(async () => ({ postings: [row({ title: 'Alpha' })], total: 1, newToday: 9, postedToday: 2, foundToday: 7 }));
+    render(<Harness filters={EMPTY} />);
+    expect(await screen.findByText(/2 new today/)).toBeInTheDocument();
+    expect(screen.getByText(/7 found today/)).toBeInTheDocument();
+    expect(screen.queryByText(/9 new today/)).not.toBeInTheDocument();
+  });
+
+  it('opens the part with no stated level under its divider, with the whole count', async () => {
+    getPostingsPage.mockImplementationOnce(async () => ({
+      postings: [row({ id: 'a', title: 'Alpha', level: 'senior' }), row({ id: 'b', title: 'Beta', level: null, levelNotStated: true })],
+      total: 2, postedToday: 0, foundToday: 0, levelNotStatedTotal: 41,
+    }));
+    render(<Harness filters={{ ...EMPTY, levels: ['senior'] }} />);
+    await screen.findByText('Beta');
+    expect(screen.getByRole('columnheader', { name: /Level not stated/ })).toHaveTextContent('41 jobs');
   });
 });
 

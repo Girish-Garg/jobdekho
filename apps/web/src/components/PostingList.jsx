@@ -1,44 +1,47 @@
 import { Fragment, useEffect, useRef } from 'react';
 import PostingRow from './PostingRow.jsx';
-import GradeBand from './GradeBand.jsx';
-import { bandStarts } from '../lib/gradeBands.js';
+import FeedMarks from './FeedMarks.jsx';
+import { feedMarks } from '../lib/gradeBands.js';
 import { scrollSelectedIntoView } from '../lib/scrollSelectedIntoView.js';
 import Card from './ui/Card.jsx';
 
-// The mode nearly every row on screen shares is not information; only a row
-// that differs from the rest of the page is worth a word for it.
+// The mode most rows on screen share is not information; only a row that
+// differs from the rest of the page is worth a word for it. Most means more
+// than half of the page: a posting that does not say its mode has none, and
+// the commonest stated mode among a few could otherwise hide the very rows
+// it was stated on.
 function dominantWorkMode(postings) {
   const counts = {};
   for (const posting of postings) {
     if (posting.workMode) counts[posting.workMode] = (counts[posting.workMode] || 0) + 1;
   }
-  let top = null;
-  let max = 0;
-  for (const [mode, count] of Object.entries(counts)) {
-    if (count > max) {
-      top = mode;
-      max = count;
-    }
-  }
-  return top;
+  const [top, count = 0] = Object.entries(counts).sort((a, b) => b[1] - a[1])[0] ?? [];
+  return count * 2 > postings.length ? top : null;
 }
 
-// Each grade opens with its band row (see GradeBand.jsx); `bands` holds how
-// many jobs the whole feed has in each, not just the loaded page.
-export default function PostingList({ postings, bands = null, selectedId, flashId, onOpen, onSelect, onStatus, onUndo }) {
+// Each grade opens with its band row (see GradeBand.jsx), and under a level
+// filter the postings that do not say their level open with their own
+// divider (see FeedMarks.jsx). `bands` holds how many jobs the whole feed
+// has in each grade and `notStated` how many it has that state no level,
+// not just the loaded page's.
+//
+// The list does not clip its rows, or the evidence tips of its last row
+// would be cut off at its edge, so its first and last rows round their own
+// corners instead.
+export default function PostingList({ postings, bands = null, notStated = null, selectedId, flashId, onOpen, onSelect, onStatus, onUndo }) {
   const containerRef = useRef(null);
   const dominant = dominantWorkMode(postings);
-  const starts = bandStarts(postings);
+  const marks = feedMarks(postings, bands, notStated);
 
   useEffect(() => {
     if (selectedId) scrollSelectedIntoView(selectedId, containerRef.current);
   }, [selectedId]);
 
   return (
-    <Card ref={containerRef} variant="list" role="grid" aria-label="Postings" data-testid="posting-list">
+    <Card ref={containerRef} variant="list" role="grid" aria-label="Postings" data-testid="posting-list" className="overflow-visible">
       {postings.map((posting) => (
         <Fragment key={posting.id}>
-          {starts.has(posting.id) && <GradeBand grade={posting.grade} count={bands?.[posting.grade]} />}
+          <FeedMarks posting={posting} marks={marks} />
           <PostingRow
             posting={posting}
             selected={posting.id === selectedId}

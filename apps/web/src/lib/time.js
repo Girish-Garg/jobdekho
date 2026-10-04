@@ -1,13 +1,5 @@
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-// "new today" = first seen within the last 24 hours.
-export function isNewToday(firstSeenAt, now = Date.now()) {
-  if (!firstSeenAt) return false;
-  const t = new Date(firstSeenAt).getTime();
-  if (Number.isNaN(t)) return false;
-  return now - t < DAY_MS;
-}
-
 export function relativeDay(value) {
   if (!value) return '';
   const t = new Date(value).getTime();

@@ -51,4 +51,34 @@
   .page-title {
     @apply font-display text-2xl font-extrabold tracking-tight text-ink;
   }
+
+  /* A value's evidence, shown while it is pointed at or focused
+     (components/TagChip.jsx). The tip belongs to the host's box, and its
+     ::before bridges the gap above it, so the pointer can move onto it and
+     read it without it closing. It waits a beat for the pointer, so sweeping
+     across a list does not flash a tip on every chip passed, and none for
+     focus, which is always meant. */
+  .tip-host {
+    @apply relative inline-flex max-w-full;
+  }
+
+  .tip {
+    @apply invisible absolute top-full z-20 mt-1.5 w-max max-w-[18rem] whitespace-normal rounded-lg border border-line bg-overlay px-2.5 py-1.5 text-left text-xs font-medium normal-case leading-snug tracking-normal text-ink opacity-0 shadow-pop;
+    transition: opacity var(--duration-fast) var(--ease), visibility var(--duration-fast) var(--ease);
+  }
+
+  .tip::before {
+    content: '';
+    @apply absolute inset-x-0 -top-1.5 h-1.5;
+  }
+
+  .tip-host:hover > .tip {
+    @apply visible opacity-100;
+    transition-delay: 150ms;
+  }
+
+  .tip-host:focus-within > .tip {
+    @apply visible opacity-100;
+    transition-delay: 0s;
+  }
 }

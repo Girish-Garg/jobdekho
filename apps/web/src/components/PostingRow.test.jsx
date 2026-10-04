@@ -8,7 +8,7 @@ const hoursAgo = (h) => new Date(Date.now() - h * 3600 * 1000).toISOString();
 // mode word, and a work-mode test needs to tell the two apart.
 const base = {
   id: 'p1', company: 'Acme', title: 'Frontend Intern', location: 'Bengaluru',
-  firstSeenAt: hoursAgo(6), status: null, level: 'internship',
+  postedAt: hoursAgo(6), firstSeenAt: hoursAgo(6), newness: 'new', status: null, level: 'internship',
 };
 
 const noop = () => {};
@@ -30,8 +30,29 @@ describe('PostingRow content', () => {
   it('shows the new-today mark for a fresh posting and hides it once stale', () => {
     const { rerender } = render(<PostingRow posting={base} {...handlers} />);
     expect(screen.getByLabelText('New today')).toBeInTheDocument();
-    rerender(<PostingRow posting={{ ...base, firstSeenAt: hoursAgo(30) }} {...handlers} />);
+    rerender(<PostingRow posting={{ ...base, postedAt: hoursAgo(30), newness: null }} {...handlers} />);
     expect(screen.queryByLabelText('New today')).not.toBeInTheDocument();
+  });
+
+  // New is the board's own date; first found today but posted a week ago
+  // says so in the details line instead of wearing the chip.
+  it('says Found today in the details line, and keeps the posting age', () => {
+    render(<PostingRow posting={{ ...base, postedAt: hoursAgo(24 * 9), firstSeenAt: hoursAgo(2), newness: 'found-today' }} {...handlers} />);
+    expect(screen.queryByLabelText('New today')).not.toBeInTheDocument();
+    expect(screen.getByText(/Acme/)).toHaveTextContent('Acme · Bengaluru · 9d ago · Found today');
+  });
+
+  it('notes a thin posting in grey on the details line, never in the warning colour', () => {
+    const { container } = render(<PostingRow posting={{ ...base, newness: null, fewDetails: true }} {...handlers} />);
+    expect(screen.getByText(/Acme/)).toHaveTextContent(/Few details$/);
+    expect(container.querySelectorAll('[class*="ember"]')).toHaveLength(0);
+  });
+
+  // One pay format everywhere, with where it came from on hover and focus.
+  it('shows the server pay label, with its evidence', () => {
+    render(<PostingRow posting={{ ...base, stipend: '400000', payLabel: '₹4L/yr', payTag: { value: '400000', from: 'board', evidence: 'Pay field: 400000' } }} {...handlers} />);
+    expect(screen.getByText('₹4L/yr')).toHaveAccessibleDescription('Pay field: 400000');
+    expect(screen.queryByText('400000')).not.toBeInTheDocument();
   });
 
   it('leaves no fit meter on an unranked row, and shows one once ranked', () => {

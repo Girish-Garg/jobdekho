@@ -17,15 +17,17 @@ import Card from './ui/Card.jsx';
 // somewhere else. Below the wide breakpoint there is no room to float beside
 // anything, and the dialog takes over; it closes on the way to a company's
 // jobs, which it would otherwise cover. `onBlock` blocks the job's company
-// (see BlockCompanyConfirm.jsx) and puts the pane or the dialog away itself.
-export default function PostingDetailSlot({ isWide, opened, onClose, onDismiss = onClose, onStatus, onCompany, onBlock }) {
+// (see BlockCompanyConfirm.jsx) and puts the pane or the dialog away itself;
+// `onOpenSettings` leads to Settings, where LinkedIn is switched on.
+export default function PostingDetailSlot({ isWide, opened, onClose, onDismiss = onClose, onStatus, onCompany, onBlock, onOpenSettings }) {
   const paneRef = useRef(null);
   useOutsideDismiss(paneRef, onDismiss, Boolean(opened && isWide));
 
   if (!opened) return null;
   if (!isWide) {
     const toCompany = onCompany && ((name) => { onCompany(name); onClose(); });
-    return <PostingDialog posting={opened} onClose={onClose} onStatus={onStatus} onCompany={toCompany} onBlock={onBlock} />;
+    const toSettings = onOpenSettings && (() => { onClose(); onOpenSettings(); });
+    return <PostingDialog posting={opened} onClose={onClose} onStatus={onStatus} onCompany={toCompany} onBlock={onBlock} onOpenSettings={toSettings} />;
   }
 
   const pane = (
@@ -37,7 +39,7 @@ export default function PostingDetailSlot({ isWide, opened, onClose, onDismiss =
       className="slide-in-right absolute bottom-3 right-3 top-3 z-30 flex w-[460px] max-w-[calc(100%-1.5rem)] flex-col overflow-hidden bg-panel"
     >
       <div key={opened.id} className="rise flex min-h-0 flex-1 flex-col">
-        <PostingDetail posting={opened} onClose={onClose} onStatus={onStatus} onCompany={onCompany} onBlock={onBlock} />
+        <PostingDetail posting={opened} onClose={onClose} onStatus={onStatus} onCompany={onCompany} onBlock={onBlock} onOpenSettings={onOpenSettings} />
       </div>
     </Card>
   );
