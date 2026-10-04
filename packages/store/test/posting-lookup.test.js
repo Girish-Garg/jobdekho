@@ -97,6 +97,17 @@ describe('getPosting', () => {
     expect(posting.workModeTag).toEqual(workModeTag)
   })
 
+  // Only a text with no heading is sorted by the small section model, and
+  // then every section says so. What the shipped weights place is theirs to
+  // say; the shape is what the pane codes against.
+  it('sorts a text no heading organises with the section model, marked as its', async () => {
+    const text = 'We are hiring an engineer. Design and build REST APIs in Go. Write tests for every change. You need a degree in computer science. We offer health insurance for your family.'
+    const store = seeded([row({ descriptionText: text }), row({ id: 'p2', descriptionText: 'Responsibilities\n- Build APIs' })])
+    const sorted = (await getPosting(store, 'me', 'p1')).sections
+    expect(sorted === null || sorted.every((s) => s.from === 'model' && s.heading === null && Number.isInteger(s.version))).toBe(true)
+    expect((await getPosting(store, 'me', 'p2')).sections.every((s) => s.from === undefined)).toBe(true)
+  })
+
   // A sentence the company repeats across its own postings is its template.
   it('folds the company template text it repeats in three postings', async () => {
     const about = 'About Acme\nAcme builds payment rails for small shops across India.'
@@ -107,9 +118,9 @@ describe('getPosting', () => {
   })
 
   it('leaves out what the tags were read from', async () => {
-    const store = seeded([row({ board: { type: 'job' }, adKey: 'k', tagsVersion: 2 })])
+    const store = seeded([row({ board: { type: 'job' }, adKey: 'k', tagsVersion: 2, modelVersion: 1 })])
     const posting = await getPosting(store, 'me', 'p1')
-    for (const key of ['board', 'adKey', 'tagsVersion', 'features']) expect(posting).not.toHaveProperty(key)
+    for (const key of ['board', 'adKey', 'tagsVersion', 'modelVersion', 'features']) expect(posting).not.toHaveProperty(key)
   })
 })
 

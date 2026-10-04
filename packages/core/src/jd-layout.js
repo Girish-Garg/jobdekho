@@ -21,7 +21,7 @@ const ABOUT_LINE = /^about\s+[^.!?]{2,40}$/i
 // phrase, ends in a colon, or is in capitals. "Experience with Kafka" opens
 // like a heading and is a bullet, so the words that also open bullets count
 // only alone or before a colon.
-function headingLine(line) {
+export function headingLine(line) {
   const text = line.replace(/^[-*•\s]+/, '').trim()
   if (!text || text.length > 60 || text.split(/\s+/).length > 8) return null
   const colon = /:$/.test(text)
@@ -81,10 +81,18 @@ export function postingSections(text, { company = '', isTemplate = () => false }
   if (sections.length === 1) return null
   const [first, ...rest] = sections
   const top = first.lines.length ? [{ ...first, kind: opening(first.lines, company) }] : []
+  return inReadingOrder([...top, ...rest], { isTemplate, opens: top.length > 0 })
+}
+
+// Sections, each split where equal-opportunity or template text starts, in
+// reading order after the opening summary, when `opens` says the first one
+// is that summary. The small model's sections are laid out by the same
+// steps (model/model-sections.js), so both read alike in the pane.
+export function inReadingOrder(sections, { isTemplate = () => false, opens = false } = {}) {
   // A heading with nothing under it (one heading straight after another)
   // says nothing a reader can use.
-  const all = [...top, ...rest].flatMap((s) => runs(s, isTemplate))
-  const lead = top.length && all[0].kind === 'other' && !all[0].boilerplate ? [all.shift()] : []
+  const all = sections.flatMap((s) => runs(s, isTemplate))
+  const lead = opens && all[0]?.kind === 'other' && !all[0].boilerplate ? [all.shift()] : []
   const rank = (s) => ORDER.indexOf(s.kind) + (s.boilerplate ? 0.5 : 0)
   return [...lead, ...all.map((s, i) => ({ s, i })).sort((a, b) => rank(a.s) - rank(b.s) || a.i - b.i).map(({ s }) => s)]
 }

@@ -10,6 +10,7 @@ const DESCRIBED = [
   'descriptionSnippet', 'descriptionText', 'url', 'degreeMin', 'degreeRequired', 'features', 'board',
   'level', 'levelTag', 'type', 'typeTag', 'workMode', 'workModeTag',
   'stipend', 'stipendMin', 'currency', 'payTag', 'caution', 'fewDetails', 'adKey', 'tagsVersion',
+  'levelEstimate', 'modelVersion',
 ]
 
 // The stored row as an adapter would have sent it, with what the posting's

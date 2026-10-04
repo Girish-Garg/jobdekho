@@ -5,11 +5,15 @@ import { workModeTag } from './work-mode.js'
 import { payFields } from './pay.js'
 import { cautionOf, fewDetails } from './caution.js'
 import { adKey } from './ad-key.js'
+import { levelEstimateFields } from './model/estimate-fields.js'
 
 // Every tag a posting carries, decided one way whether it is scraped now
 // (normalize.js) or tagged again from what a stored row kept (retag.js):
 //
 //   level, levelTag        'senior' | null, and its tag (see tag.js)
+//   levelEstimate          the small model's range when level is null, or
+//                          null; modelVersion the model that looked
+//                          (see model/estimate-fields.js)
 //   type, typeTag          'internship' | 'job', and its tag or null
 //   workMode, workModeTag  'remote' | 'hybrid' | 'onsite' | null, and its tag
 //   stipend, stipendMin, currency, payTag   the pay fields and where pay came from
@@ -32,6 +36,7 @@ export function tagsFor(p) {
   return {
     level: level?.value ?? null,
     levelTag: level,
+    ...levelEstimateFields(p, level),
     type: type?.value ?? 'job',
     typeTag: type,
     workMode: workMode?.value ?? null,

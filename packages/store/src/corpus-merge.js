@@ -14,6 +14,7 @@ const REFRESHABLE = [
   'stipendMin', 'currency', 'durationMonths', 'experienceYears', 'groupKey', 'logoUrl', 'features',
   // The tags' evidence and what the board declared (see core's tagging.js).
   'board', 'levelTag', 'typeTag', 'workModeTag', 'payTag', 'caution', 'fewDetails', 'adKey', 'tagsVersion',
+  'levelEstimate', 'modelVersion',
   // A deadline a board moves, or stops publishing (see corpus-closure.js).
   'closesAt',
   // Bumping this on every conflict is what makes staleness detectable: a row

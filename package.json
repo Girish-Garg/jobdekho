@@ -16,6 +16,8 @@
     "scrape": "node apps/scraper/src/index.js",
     "build": "npm -w @jobdekho/web run build",
     "pack:npm": "node scripts/npm-package/stage.js",
+    "train:model": "node --max-old-space-size=8192 scripts/model/train.js",
+    "review:model": "node scripts/model/review/server.js",
     "resume:check": "node apps/server/src/resume/check-templates.js"
   },
   "devDependencies": {

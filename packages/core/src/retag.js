@@ -2,6 +2,8 @@ import { TAGS_VERSION } from './tag.js'
 import { tagsFor } from './tagging.js'
 import { storedBoard } from './board-fields.js'
 import { withTitleLevel } from './posting-features.js'
+import { levelEstimateFields } from './model/estimate-fields.js'
+import { LEVEL_MODEL_VERSION } from './model/version.js'
 
 // A stored posting tagged by today's rules, from what it kept: its title,
 // its text, the board's own fields, and its pay field when that came from
@@ -24,13 +26,19 @@ export function tagRow(row) {
   return { ...row, board, ...tagged, features: withTitleLevel(row.features, row.title) }
 }
 
-// Only rows tagged under an older version, so calling this on every load
-// costs a version check once the corpus is current. A row the rules cannot
-// read (a hand-edited file) loads as it was rather than failing the corpus.
+// Only rows tagged under an older version of the rules, or estimated by an
+// older level model, so calling this on every load costs two version checks
+// once the corpus is current. A newer model alone only estimates again: the
+// rules' tags it would leave as they are. A row the rules cannot read (a
+// hand-edited file) loads as it was rather than failing the corpus.
 export function retagged(row) {
-  if (!row || row.tagsVersion === TAGS_VERSION) return row
+  if (!row) return row
+  const tagsCurrent = row.tagsVersion === TAGS_VERSION
+  if (tagsCurrent && row.modelVersion === LEVEL_MODEL_VERSION) return row
   try {
-    return tagRow(row)
+    if (!tagsCurrent) return tagRow(row)
+    const posting = { title: row.title ?? '', company: row.company ?? '', description: row.descriptionText || '' }
+    return { ...row, ...levelEstimateFields(posting, row.levelTag ?? null) }
   } catch {
     return row
   }

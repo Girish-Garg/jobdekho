@@ -66,10 +66,10 @@ export async function listPostingsForUser(store, userId, opts = {}) {
 // that leads its group, the other fed the ghost signals, and neither is a
 // field a card shows. externalId, groupKey and currency were never part of
 // the feed's row either (payLabel says the pay), features are what the fit
-// read, already explained by why, and board, adKey and tagsVersion are what
-// the tags were read from, already said by each tag's evidence. No window
-// value means a group of one.
-const SCAFFOLDING = ['groupRank', 'groupSourceCount', 'externalId', 'groupKey', 'currency', 'features', 'board', 'adKey', 'tagsVersion']
+// read, already explained by why, and board, adKey, tagsVersion and
+// modelVersion are what the tags were read from, already said by each tag's
+// evidence. No window value means a group of one.
+const SCAFFOLDING = ['groupRank', 'groupSourceCount', 'externalId', 'groupKey', 'currency', 'features', 'board', 'adKey', 'tagsVersion', 'modelVersion']
 
 function toPosting(row) {
   const out = { ...row, groupCount: Number(row.groupCount ?? 1), matchScore: Number(row.matchScore ?? 0) }

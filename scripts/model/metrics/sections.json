@@ -1,0 +1,241 @@
+{
+  "model": "sections",
+  "version": 1,
+  "data": {
+    "files": [
+      {
+        "file": "postings.ndjson",
+        "date": "2026-10-03",
+        "rows": 6482,
+        "added": 6482
+      },
+      {
+        "file": "postings.ndjson",
+        "date": "2026-10-02",
+        "rows": 4827,
+        "added": 4200
+      }
+    ],
+    "postings": 10128,
+    "headedPostings": 3152,
+    "trainedOn": 56457,
+    "companies": 272,
+    "lines": {
+      "duties": 24254,
+      "requirements": 21697,
+      "pay": 2494,
+      "about": 7451,
+      "other": 561
+    }
+  },
+  "split": {
+    "by": "company",
+    "folds": 5,
+    "seed": 20261004
+  },
+  "training": {
+    "epochs": 8,
+    "rate": 0.2,
+    "l2": 0.00001,
+    "seed": 20261004,
+    "minCount": 5,
+    "pruneBelow": 0.02,
+    "vocabulary": 37952,
+    "kept": 37952
+  },
+  "temperature": 1.2961,
+  "minSupport": 50,
+  "heldOut": {
+    "lines": 56457
+  },
+  "globalThresholds": [
+    {
+      "threshold": 0.9,
+      "coverage": 0.6126,
+      "precision": 0.9781,
+      "wrong": 758
+    },
+    {
+      "threshold": 0.95,
+      "coverage": 0.4993,
+      "precision": 0.9874,
+      "wrong": 354
+    },
+    {
+      "threshold": 0.98,
+      "coverage": 0.3542,
+      "precision": 0.9934,
+      "wrong": 131
+    },
+    {
+      "threshold": 0.99,
+      "coverage": 0.2519,
+      "precision": 0.9959,
+      "wrong": 59
+    },
+    {
+      "threshold": 0.995,
+      "coverage": 0.1621,
+      "precision": 0.9981,
+      "wrong": 17
+    }
+  ],
+  "chosen": {
+    "target": 0.995,
+    "thresholds": {
+      "duties": 0.98,
+      "requirements": 0.993,
+      "pay": null,
+      "about": 0.95
+    },
+    "heldOut": {
+      "covered": 17188,
+      "right": 17109,
+      "precision": 0.9954,
+      "coverage": 0.3044
+    },
+    "thresholdsChosenWithoutTheTestFold": {
+      "covered": 16242,
+      "right": 16151,
+      "precision": 0.9943972417190001
+    },
+    "byKind": {
+      "duties": {
+        "threshold": 0.98,
+        "covered": 11548,
+        "right": 11496,
+        "precision": 0.9955
+      },
+      "requirements": {
+        "threshold": 0.993,
+        "covered": 4821,
+        "right": 4797,
+        "precision": 0.995
+      },
+      "pay": {
+        "threshold": null,
+        "covered": 0,
+        "right": 0,
+        "precision": null
+      },
+      "about": {
+        "threshold": 0.95,
+        "covered": 819,
+        "right": 816,
+        "precision": 0.9963
+      }
+    }
+  },
+  "alternative": {
+    "target": 0.98,
+    "thresholds": {
+      "duties": 0.9,
+      "requirements": 0.95,
+      "pay": 0.95,
+      "about": 0.94
+    },
+    "heldOut": {
+      "covered": 31074,
+      "right": 30564,
+      "precision": 0.9836,
+      "coverage": 0.5504
+    },
+    "thresholdsChosenWithoutTheTestFold": {
+      "covered": 31714,
+      "right": 31055,
+      "precision": 0.97922053351832
+    },
+    "byKind": {
+      "duties": {
+        "threshold": 0.9,
+        "covered": 18398,
+        "right": 18120,
+        "precision": 0.9849
+      },
+      "requirements": {
+        "threshold": 0.95,
+        "covered": 11604,
+        "right": 11384,
+        "precision": 0.981
+      },
+      "pay": {
+        "threshold": 0.95,
+        "covered": 53,
+        "right": 52,
+        "precision": 0.9811
+      },
+      "about": {
+        "threshold": 0.94,
+        "covered": 1019,
+        "right": 1008,
+        "precision": 0.9892
+      }
+    }
+  },
+  "accuracy": 0.8623,
+  "reliability": [
+    {
+      "from": 0.5,
+      "to": 0.7,
+      "n": 7323,
+      "right": 4445
+    },
+    {
+      "from": 0.7,
+      "to": 0.8,
+      "n": 4403,
+      "right": 3365
+    },
+    {
+      "from": 0.8,
+      "to": 0.9,
+      "n": 6377,
+      "right": 5480
+    },
+    {
+      "from": 0.9,
+      "to": 0.95,
+      "n": 6394,
+      "right": 5990
+    },
+    {
+      "from": 0.95,
+      "to": 0.98,
+      "n": 8194,
+      "right": 7971
+    },
+    {
+      "from": 0.98,
+      "to": 0.99,
+      "n": 5777,
+      "right": 5705
+    },
+    {
+      "from": 0.99,
+      "to": 0.995,
+      "n": 5066,
+      "right": 5024
+    },
+    {
+      "from": 0.995,
+      "to": 1,
+      "n": 9153,
+      "right": 9136
+    }
+  ],
+  "unheaded": {
+    "postings": 2186,
+    "sorted": 1531,
+    "sortedShare": 0.7004,
+    "lines": 34463,
+    "placedLines": 8557,
+    "placedShare": 0.2483,
+    "placed": {
+      "requirements": 1062,
+      "duties": 5326,
+      "about": 2079,
+      "nice": 90
+    }
+  },
+  "weightsBytes": 1565563
+}

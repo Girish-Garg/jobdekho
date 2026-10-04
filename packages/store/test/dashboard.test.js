@@ -213,11 +213,11 @@ describe('ranking', () => {
   it('never returns descriptionText or query scaffolding, ranked or not', async () => {
     // Stored features are the fit's working; the card gets `why` instead.
     const features = { v: 1, skills: { python: 'intro' }, band: null, from: null, titleLevel: null }
-    const tagInputs = { board: { type: null, employment: null, workMode: null }, adKey: 'k1', tagsVersion: 2 }
+    const tagInputs = { board: { type: null, employment: null, workMode: null }, adKey: 'k1', tagsVersion: 2, modelVersion: 1 }
     const store = seeded([row({ id: 'a', groupKey: 'k', features, ...tagInputs })])
     for (const opts of [{}, { sort: 'match', profile: PROFILE }]) {
       const [p] = await listPostingsForUser(store, 'me', opts)
-      for (const key of ['descriptionText', 'groupRank', 'groupSourceCount', 'externalId', 'groupKey', 'currency', 'features', 'board', 'adKey', 'tagsVersion']) {
+      for (const key of ['descriptionText', 'groupRank', 'groupSourceCount', 'externalId', 'groupKey', 'currency', 'features', 'board', 'adKey', 'tagsVersion', 'modelVersion']) {
         expect(p).not.toHaveProperty(key)
       }
       expect(p.descriptionSnippet).toBe('Build things.')
