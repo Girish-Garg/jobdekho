@@ -74,8 +74,18 @@ describe('checkTarget', () => {
     expect(checkTarget({ source: 'kpit', url: 'https://talentojo.kpit.com/tojo/app/job-apply/' })).toBeNull()
   })
 
+  // A RippleHire job page names the job after the #, which is never sent;
+  // the job record the page reads is checked instead.
+  it('checks a RippleHire posting through its job record', () => {
+    const url = 'https://mphasis.ripplehire.com/candidate/?token=ty4DfyWddnOrtpclQeia&lang=en&source=CAREERSITE#detail/job/912147'
+    expect(checkTarget({ source: 'mphasis', url })).toBe('https://mphasis.ripplehire.com/candidate/candidatejobdetail?token=ty4DfyWddnOrtpclQeia&jobSeq=912147&source=CAREERSITE&lang=en')
+    expect(checkTarget({ source: 'mphasis', url: 'https://mphasis.ripplehire.com/candidate/?token=ty4DfyWddnOrtpclQeia' })).toBeNull()
+  })
+
+  // Infosys's and Swiggy's job pages read the same for an open job and a
+  // made-up one, and "live" from them reopened closed postings.
   it('checks nothing where robots.txt, a challenge or a script-drawn page leaves nothing to learn', () => {
-    for (const source of ['linkedin', 'adzuna:in', 'instahyre', 'remotive', 'ashby:acme', 'unstop']) {
+    for (const source of ['linkedin', 'adzuna:in', 'instahyre', 'remotive', 'ashby:acme', 'unstop', 'infosys', 'swiggy']) {
       expect(checkTarget({ source, url: 'https://example.com/job/12345' })).toBeNull()
     }
     expect(checkTarget({ source: 'hn-hiring', url: 'https://news.ycombinator.com/item?id=49523558' })).toBeNull()
@@ -108,6 +118,18 @@ describe('verdict', () => {
     expect(verdict({ target, status: 410 })).toBe('gone')
     expect(verdict({ target, status: 200, body: '{"job":{"id":"82118","title":"Trainee","status":"Closed"}}' })).toBe('gone')
     expect(verdict({ target, status: 200, body: '{"job":{"id":"82118","title":"Trainee","status":"Published"}}' })).toBe('live')
+  })
+
+  // A record for an open job carried "jobStatus":"ACTIVE" on 2026-10-04.
+  it('reads a RippleHire job record that is no longer active, or whose link is off, as gone', () => {
+    const target = 'https://mphasis.ripplehire.com/candidate/candidatejobdetail?token=t&jobSeq=912147&source=CAREERSITE&lang=en'
+    const record = (jobStatus, linkDeactivated = false) => JSON.stringify({ linkDeactivated, jobVO: { jobSeq: '912147', jobStatus } })
+    expect(verdict({ target, status: 200, body: record('ACTIVE') })).toBe('live')
+    expect(verdict({ target, status: 200, body: record('CLOSED') })).toBe('gone')
+    expect(verdict({ target, status: 200, body: record('ACTIVE', true) })).toBe('gone')
+    expect(verdict({ target, status: 200, body: '<html>Sign in</html>' })).toBe('unknown')
+    expect(verdict({ target, status: 200, body: '{"jobVO":null}' })).toBe('unknown')
+    expect(verdict({ target, status: 500 })).toBe('unknown')
   })
 
   it('learns nothing from a server error, a block or a refusal', () => {

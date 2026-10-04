@@ -68,3 +68,16 @@ describe('swiggy adapter', () => {
     expect(await swiggy().fetch(fakeSwiggy({}).http)).toEqual([])
   })
 })
+
+// The one call is every open job, so a posting it stops listing can be
+// closed; an empty answer could be an outage, so it never says so.
+describe('swiggy list', () => {
+  it('is complete when it answers jobs, and not when it answers none', async () => {
+    const adapter = swiggy()
+    await adapter.fetch(fakeSwiggy().http)
+    expect(adapter.complete).toBe(true)
+    const empty = swiggy()
+    await empty.fetch(fakeSwiggy({}).http)
+    expect(empty.complete).toBe(false)
+  })
+})

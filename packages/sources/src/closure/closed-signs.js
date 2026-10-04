@@ -10,13 +10,32 @@
 // A 5xx, a 403, a 429, a timeout prove nothing, so they change nothing.
 const GONE = new Set([404, 410])
 
-// Pages that answer 200 for a job that is gone, and the words that say so.
+// Pages that answer 200 for a job that is gone, and what in them says so.
 // KPIT's TalentOjo job record answers 410 or 404 for a job that is gone, and
 // its apply page also reads a record whose status is no longer "Published"
 // as closed.
+const saying = (words) => (body) => (words.test(body) ? 'gone' : 'live')
+
+// A RippleHire job record (see link-target.js) for an open job carried
+// "jobStatus":"ACTIVE" and "linkDeactivated":false on 2026-10-04; one the
+// site has taken down says otherwise. A reply that is not such a record
+// proves nothing either way, so it is never read as open.
+function rippleRecord(body) {
+  let data
+  try {
+    data = JSON.parse(body)
+  } catch {
+    return 'unknown'
+  }
+  const status = data?.jobVO?.jobStatus
+  if (data?.linkDeactivated === true || (status && status !== 'ACTIVE')) return 'gone'
+  return status === 'ACTIVE' ? 'live' : 'unknown'
+}
+
 const PAGE_SAYS = [
-  [/(^|\.)jobs\.apple\.com$/, /this role does not exist or is no longer available/i],
-  [/^talentojo\.kpit\.com$/, /"status"\s*:\s*"(?!Published")[^"]*"/],
+  [/(^|\.)jobs\.apple\.com$/, saying(/this role does not exist or is no longer available/i)],
+  [/^talentojo\.kpit\.com$/, saying(/"status"\s*:\s*"(?!Published")[^"]*"/)],
+  [/\.ripplehire\.com$/, rippleRecord],
 ]
 
 // The part of a job link that names the job: a UUID (Lever, Ashby), else the
@@ -59,5 +78,5 @@ export function verdict({ target, status, location = null, body = '' }) {
   if (status !== 200) return 'unknown'
   const host = new URL(target).hostname
   const says = PAGE_SAYS.find(([hostRe]) => hostRe.test(host))
-  return says && says[1].test(body) ? 'gone' : 'live'
+  return says ? says[1](body) : 'live'
 }

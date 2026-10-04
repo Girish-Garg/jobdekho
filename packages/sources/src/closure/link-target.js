@@ -10,7 +10,12 @@ import { parseSite } from '../providers/workday-site.js'
 //   the job is open or not (Unstop's registration deadline closes it instead,
 //   see the store's corpus-closure.js).
 //   HN "Who is hiring": a comment never closes; only a link out can.
-const NEVER = [/^linkedin$/, /^adzuna:/, /^instahyre$/, /^remotive$/, /^ashby:/, /^unstop$/]
+//   Infosys and Swiggy: the page is drawn by script and was byte for byte the
+//   same for an open job and a made-up one on 2026-10-04. Their lists are
+//   complete instead, so a job they stop listing closes (see the adapters).
+// A page that always reads open did worse than nothing: "live" counts as a
+// sighting, which reset the count towards closing and reopened a closed job.
+const NEVER = [/^linkedin$/, /^adzuna:/, /^instahyre$/, /^remotive$/, /^ashby:/, /^unstop$/, /^infosys$/, /^swiggy$/]
 
 // A Workday job page is drawn by script too, but the careers site's own job
 // API answers 404 for a posting that is gone ("errorCode":"S21").
@@ -28,6 +33,17 @@ function kpitRecord(url) {
   return id ? `https://talentojo.kpit.com/service/jobs/${id}` : null
 }
 
+// A RippleHire job page names the job after the #, which is never sent, so
+// every one reads the same; the job record the page reads (the token names
+// the career site, see companies/ripplehire.js) says whether it is open.
+function rippleRecord(url) {
+  const seq = url.hash.match(/^#detail\/job\/(\d+)$/)?.[1]
+  const token = url.searchParams.get('token')
+  if (!seq || !token) return null
+  const query = new URLSearchParams({ token, jobSeq: seq, source: 'CAREERSITE', lang: 'en' })
+  return `https://${url.hostname}/candidate/candidatejobdetail?${query}`
+}
+
 export function checkTarget(row) {
   const source = String(row?.source ?? '')
   if (NEVER.some((re) => re.test(source))) return null
@@ -39,5 +55,6 @@ export function checkTarget(row) {
   }
   if (!/^https?:$/.test(url.protocol) || url.hostname === 'news.ycombinator.com') return null
   if (source === 'kpit') return kpitRecord(url)
+  if (url.hostname.endsWith('.ripplehire.com')) return rippleRecord(url)
   return source.startsWith('workday:') ? workdayApi(url) : url.href
 }

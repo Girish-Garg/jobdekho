@@ -46,12 +46,16 @@ function toPosting(j) {
 }
 
 // country is checked as well as the source ids: sourceId 21 is empty today,
-// and a future row from another country must not ride in on it.
+// and a future row from another country must not ride in on it. The one
+// call is every open job, so the list is complete and a posting it stops
+// listing has closed; the job page cannot say (closure/link-target.js). An
+// empty answer is never taken for that: an outage could give it too.
 export function infosys() {
-  return politeAdapter('infosys', async (http) => {
+  return politeAdapter('infosys', async (http, context, adapter) => {
     const rows = await (await http(SEARCH)).json()
-    return (Array.isArray(rows) ? rows : [])
+    const kept = (Array.isArray(rows) ? rows : [])
       .filter((j) => j?.referenceCode && (!j.country || /^india$/i.test(j.country)))
-      .map(toPosting)
+    adapter.complete = kept.length > 0
+    return kept.map(toPosting)
   })
 }

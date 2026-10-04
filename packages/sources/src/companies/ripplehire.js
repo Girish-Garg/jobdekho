@@ -51,6 +51,10 @@ export function ripplehire(site, { pause = pauseFor(1000) } = {}) {
   return politeAdapter(site.name, async (http, context, adapter) => {
     const pages = await listJobs(http, site, pause)
     const rows = site.keep ? pages.rows.filter(site.keep) : pages.rows
+    // A list read to its end is every job the site has, so a posting it
+    // stops listing has closed (the scraper's closure-turn.js). An empty
+    // one is never taken for that: an outage could answer it too.
+    adapter.complete = pages.complete && rows.length > 0
     return describeNew({ ...pages, rows }, {
       name: site.name,
       adapter,

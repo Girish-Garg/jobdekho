@@ -80,3 +80,16 @@ describe('infosys adapter', () => {
     expect(await infosys().fetch(fakeInfosys({}).http)).toEqual([])
   })
 })
+
+// The one call is every open job, so a posting it stops listing can be
+// closed; an empty answer could be an outage, so it never says so.
+describe('infosys list', () => {
+  it('is complete when it answers jobs, and not when it answers none', async () => {
+    const adapter = infosys()
+    await adapter.fetch(fakeInfosys().http)
+    expect(adapter.complete).toBe(true)
+    const empty = infosys()
+    await empty.fetch(fakeInfosys({}).http)
+    expect(empty.complete).toBe(false)
+  })
+})

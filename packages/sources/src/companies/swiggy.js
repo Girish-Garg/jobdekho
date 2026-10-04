@@ -44,14 +44,20 @@ function toPosting(r) {
   }
 }
 
+// The one POST is every open requisition, so the list is complete and a
+// posting it stops listing has closed; the job page cannot say
+// (closure/link-target.js). An empty answer is never taken for that: an
+// outage could give it too.
 export function swiggy() {
-  return politeAdapter('swiggy', async (http) => {
+  return politeAdapter('swiggy', async (http, context, adapter) => {
     const res = await http(LIST, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(QUERY),
     })
     const rows = (await res.json())?.reqDetailsBOList
-    return (Array.isArray(rows) ? rows : []).filter((r) => r?.reqId != null).map(toPosting)
+    const kept = (Array.isArray(rows) ? rows : []).filter((r) => r?.reqId != null)
+    adapter.complete = kept.length > 0
+    return kept.map(toPosting)
   })
 }

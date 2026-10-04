@@ -9,9 +9,12 @@ export const pauseFor = (ms) => () => new Promise((resolve) => setTimeout(resolv
 // Pages in the portal's own order until a short page, at most maxPages. The
 // first page failing is the source failing, so it throws and the run records
 // why. A later one is skipped so the pages already read still count, unless
-// the host has started refusing: then the listing ends there.
+// the host has started refusing: then the listing ends there. `complete`
+// says every job the portal has was read: a short page ended it, with no
+// page skipped on the way.
 export async function readPages(readPage, { maxPages, pageSize, pause }) {
   const rows = []
+  let skipped = false
   for (let page = 0; page < maxPages; page++) {
     if (page) await pause()
     let got
@@ -19,13 +22,14 @@ export async function readPages(readPage, { maxPages, pageSize, pause }) {
       got = (await readPage(page)) || []
     } catch (err) {
       if (page === 0) throw err
-      if (isThrottled(err)) return { rows, throttled: true }
+      if (isThrottled(err)) return { rows, throttled: true, complete: false }
+      skipped = true
       continue
     }
     rows.push(...got)
-    if (got.length < pageSize) break
+    if (got.length < pageSize) return { rows, throttled: false, complete: !skipped }
   }
-  return { rows, throttled: false }
+  return { rows, throttled: false, complete: false }
 }
 
 // The adapter the registry builds, around one run(http, context, adapter).

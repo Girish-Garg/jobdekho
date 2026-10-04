@@ -99,6 +99,22 @@ describe('ripplehire adapters', () => {
     expect(fake.calls.map((c) => c.params?.page)).toEqual([0, 1])
   })
 
+  // Read to its end, the list is every job the site has, so a posting it
+  // stops listing can be closed; capped at two pages it may not be, and an
+  // empty list could be an outage.
+  it('says its list is complete when it was read to the end, and never when empty', async () => {
+    const whole = ltimindtree({ pause: noPause })
+    await whole.fetch(fakeRipple().http)
+    expect(whole.complete).toBe(true)
+    const full = { ...SEARCH, jobVoList: Array.from({ length: 50 }, (_, i) => ({ ...SEARCH.jobVoList[0], jobSeq: String(700000 + i) })) }
+    const capped = ltimindtree({ pause: noPause })
+    await capped.fetch(fakeRipple({ search: () => full }).http, { known: () => true })
+    expect(capped.complete).toBe(false)
+    const empty = ltimindtree({ pause: noPause })
+    await empty.fetch(fakeRipple({ search: () => ({ ...SEARCH, jobVoList: [] }) }).http)
+    expect(empty.complete).toBe(false)
+  })
+
   it('skips a job the store has or the filter drops before asking for its detail', async () => {
     const fake = fakeRipple()
     const context = { known: (name, id) => name === 'ltimindtree' && id === '898002', wanted: (name, raw) => raw.title !== 'Test Lead' }

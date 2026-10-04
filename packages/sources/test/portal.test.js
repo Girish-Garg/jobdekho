@@ -43,7 +43,21 @@ describe('readPages', () => {
       return page(n, 2)
     }, { maxPages: 5, pageSize: 2, pause: noPause })
     expect(asked).toEqual([0, 1])
-    expect(out).toEqual({ rows: ['0-0', '0-1'], throttled: true })
+    expect(out).toEqual({ rows: ['0-0', '0-1'], throttled: true, complete: false })
+  })
+
+  // A list read to its end is every job the portal has, which is what lets
+  // a posting it stops listing be closed; a cap, a skipped page or a 429
+  // leaves jobs unread.
+  it('says the list is complete only when a short page ended it with nothing skipped', async () => {
+    const opts = { maxPages: 5, pageSize: 2, pause: noPause }
+    expect((await readPages(async (n) => page(n, n === 2 ? 1 : 2), opts)).complete).toBe(true)
+    expect((await readPages(async (n) => page(n, 2), { ...opts, maxPages: 2 })).complete).toBe(false)
+    const skipped = await readPages(async (n) => {
+      if (n === 1) throw new Error('HTTP 500')
+      return page(n, n === 2 ? 1 : 2)
+    }, opts)
+    expect(skipped.complete).toBe(false)
   })
 })
 
