@@ -19,8 +19,15 @@ describe('labelledLines', () => {
   })
 
   it('ends a section at a heading step 1 does not know', () => {
+    expect(labels('Responsibilities\n- Build APIs\nAdditional Information:\n- Rust')).toEqual([
+      ['- Build APIs', 'duties'], ['Additional Information:', null], ['- Rust', null],
+    ])
+  })
+
+  // A nice-to-have heading labels its lines requirements, like any other.
+  it('labels the lines under a nice-to-have heading step 1 now knows', () => {
     expect(labels('Responsibilities\n- Build APIs\nDesired Qualifications:\n- Rust')).toEqual([
-      ['- Build APIs', 'duties'], ['Desired Qualifications:', null], ['- Rust', null],
+      ['- Build APIs', 'duties'], ['- Rust', 'requirements'],
     ])
   })
 

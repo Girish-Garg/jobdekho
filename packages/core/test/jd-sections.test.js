@@ -43,6 +43,34 @@ describe('sectionize', () => {
     expect(got.at(-1)).toEqual(['nice', 'Bonus points if you know Svelte.'])
   })
 
+  // A cue that qualifies part of a line leaves it a requirement: on the
+  // owner's postings, the old cue-anywhere rule moved 7 of 40 checked
+  // must-haves to nice.
+  it('keeps a must-have with an optional part where its heading put it', () => {
+    const got = sections("Requirements: - 3 years of Java, preferably Spring. - Bachelor's degree required (Master's preferred). - Kafka is a plus.")
+    expect(got.slice(1)).toEqual([
+      ['req', '3 years of Java, preferably Spring.'],
+      ['req', "Bachelor's degree required (Master's preferred)."],
+      ['nice', 'Kafka is a plus.'],
+    ])
+  })
+
+  // Headings the owner's postings use that the lists missed, whose lines
+  // were read as requirements or duties.
+  it('reads the nice-to-have and must-have headings the lists missed', () => {
+    for (const heading of ['You may also have:', 'Will be added advantages if you have', 'Ways to stand out from the crowd:', 'Extras good to have', 'Desired Qualifications:', 'Optional Skills', 'You Might Also Have:']) {
+      expect(sections(`Requirements:\n- Go\n${heading}\n- Rust`).at(-1)).toEqual(['nice', 'Rust'])
+    }
+    for (const heading of ['This is you', 'What we need to see:', 'Your Background', 'Required:', 'You will have:', 'For This Role, You Will Need:']) {
+      expect(sections(`What you'll be doing:\n- Build APIs\n${heading}\n- 5 years of Go`).at(-1)).toEqual(['req', '5 years of Go'])
+    }
+  })
+
+  it('does not take a sentence or an inline field for one of those headings', () => {
+    expect(sections('Responsibilities:\n- Build APIs\nRequired to travel 20% of the time.\n- Ship weekly').at(-1)[0]).toBe('resp')
+    expect(sections('Responsibilities:\n- Build APIs\nDesired: worked with an engine OEM\n- Ship weekly').at(-1)[0]).toBe('resp')
+  })
+
   // "Experience with X" opens a bullet far more often than a section, so a
   // long one inside a nice-to-have list stays nice-to-have.
   it('does not let a long bullet starting "Experience" end the section it is in', () => {
