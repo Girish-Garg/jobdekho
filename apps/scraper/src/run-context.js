@@ -1,6 +1,7 @@
 import { makeId } from '@jobdekho/core/posting.js'
 import { normalize } from '@jobdekho/core/normalize.js'
 import { filter } from '@jobdekho/core/filter.js'
+import { postedTooLongAgo } from '@jobdekho/core/freshness.js'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 const iso = (ms) => new Date(ms).toISOString()
@@ -37,10 +38,13 @@ export function createRunContext({ db, rules, memo, now = Date.now, isBlocked = 
     },
     // A card the relevance filter would drop is never stored, and would
     // otherwise be fetched again on every run; nor is one from a blocked
-    // company, whose detail page is not worth a request either.
+    // company, whose detail page is not worth a request either, nor one its
+    // list already dates past the age cut, which the pipeline drops on
+    // arrival (core's freshness.js). A card with no date is never judged by
+    // one.
     wanted(source, raw) {
       const posting = normalize(raw, source)
-      return filter(posting, rules) && !isBlocked(posting)
+      return filter(posting, rules) && !isBlocked(posting) && !postedTooLongAgo(posting, now())
     },
     // The source's listing is the one it gave at `since` (a 304 answers for
     // the read its ETag came from). Every posting that read listed counts as

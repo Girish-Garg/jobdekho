@@ -34,7 +34,12 @@ function where(ad) {
 
 const idOf = (ad) => String(ad?.PositionID || '').trim()
 
-const listed = (ad) => ({ externalId: idOf(ad), title: ad.PositionTitle || '', company: 'Mercedes-Benz', location: where(ad) })
+// The list's date goes to the run's filter too, which turns down an ad
+// already past the age cut before its page is read.
+const listed = (ad) => ({
+  externalId: idOf(ad), title: ad.PositionTitle || '', company: 'Mercedes-Benz', location: where(ad),
+  postedAt: toIso(ad.PublicationStartDate),
+})
 
 const toPosting = (ad, ld) => ({
   ...listed(ad),

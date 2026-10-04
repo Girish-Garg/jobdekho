@@ -96,6 +96,15 @@ describe('mercedesbenz adapter', () => {
     expect(fake.urls).toHaveLength(4)
   })
 
+  // The run's filter turns down an ad already past the age cut, which the
+  // pipeline would drop, before its page is read.
+  it("hands the run's filter each ad's own date", async () => {
+    const asked = []
+    await run(fakeBoard(), { wanted: (name, raw) => (asked.push([raw.externalId, raw.postedAt]), false) })
+    expect(asked[0]).toEqual(['mer00048zv', '2026-10-01T00:00:00.000Z'])
+    expect(asked.at(-1)).toEqual(['mer0003rzv', '2026-08-11T00:00:00.000Z'])
+  })
+
   // Every Indian ad came back, so a posting the board stops listing can be
   // closed; a board holding more than one request read cannot say so.
   it('says when it listed the whole of India', async () => {
