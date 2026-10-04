@@ -80,6 +80,9 @@ export async function syncPending() {
     failed: { ...asMissed(now.failed), ...localOnly(s.failed) },
     ...(s.busy?.local ? {} : { busy: now.busy ? remoteBusy(now.busy) : null }),
   }));
+  // A call this page did not start can run in a chat made since the list
+  // was read, and the switcher shows it from the list.
+  if (now.busy && !same && !chatStore.get().list?.some((row) => row.id === now.busy.chatId)) refreshList();
   if (was?.remote && !same) await ended(was);
   if (now.busy && !chatStore.get().busy?.local) timer = setTimeout(syncPending, POLL_MS);
 }

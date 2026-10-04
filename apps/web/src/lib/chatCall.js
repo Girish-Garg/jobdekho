@@ -1,6 +1,6 @@
 import { chatStore, entryFor, realId, without } from './chatStore.js';
 import { draftOf, setDraft } from './chatDrafts.js';
-import { loadPage } from './chatPages.js';
+import { loadPage, refreshList } from './chatPages.js';
 import { landAnswer, landFailure } from './chatLanding.js';
 import { syncPending } from './chatPending.js';
 
@@ -60,15 +60,18 @@ export async function startCall(call, run) {
   }));
   // The note a job action leaves in the chat it was pressed in is saved
   // before the action starts, so it is read as soon as the action is under
-  // way: the view does not move, and the note says where it went.
-  let noted = !call.notedIn;
+  // way: the view does not move, and the note says where it went. The list
+  // is read again then too: the server has made the call's chat by then and
+  // lists it while it runs, where a new chat used to reach the switcher only
+  // once its first answer was in.
+  let started = false;
   const onEvent = (event) => {
     if (!mine()) return;
     chatStore.set((s) => (s.busy?.local ? { busy: foldEvent(s.busy, event) } : {}));
-    if (!noted) {
-      noted = true;
-      loadPage(call.notedIn);
-    }
+    if (started) return;
+    started = true;
+    refreshList();
+    if (call.notedIn) loadPage(call.notedIn);
   };
   const ending = () => {
     const ran = chatStore.get().busy;

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { waitFor } from '@testing-library/react';
 import { ask, queue, runCombined, runJobAction } from './chatAsk.js';
-import { chatStore } from './chatStore.js';
+import { busyIn, chatStore } from './chatStore.js';
 import { draftOf, setDraft } from './chatDrafts.js';
 import { onScreenId, onOpenChat } from './activeChat.js';
 import { onNotice } from './toast.js';
@@ -124,5 +124,25 @@ describe('a follow-up', () => {
     await asking;
     await waitFor(() => expect(chatStore.get().busy).toMatchObject({ chatId: 'c1', remote: true, say: 'and the second?' }));
     expect(chatStore.get().waiting.c1).toBeUndefined();
+  });
+});
+
+// The server makes a job's chat before its first call runs and lists it
+// while the call runs; the switcher read the list again only once the
+// answer was in, so the chat was missing from it the whole time.
+describe('a chat whose first call is running', () => {
+  it('is in the list, marked busy, as soon as the call is under way', async () => {
+    const check = held();
+    api.listChats.mockImplementation(async () => server.chats.filter((chat) => chat.id === 'c-pB' || server.turns[chat.id]?.length));
+    api.runPostingAction.mockImplementationOnce(async (_id, _kind, { onEvent }) => {
+      server.chats.push(jobChat('pB', { busy: true }));
+      onEvent({ event: 'start', provider: 'claude' });
+      return check.gate;
+    });
+    const running = runJobAction('pB', 'fake-check');
+    await waitFor(() => expect(chatStore.get().list?.map((row) => row.id)).toContain('c-pB'));
+    expect(busyIn('c-pB')).toMatchObject({ action: 'fake-check' });
+    check.release({ kind: 'fake-check', postingId: 'pB', chatId: 'c-pB', versions: [] });
+    await running;
   });
 });

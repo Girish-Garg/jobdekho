@@ -29,6 +29,13 @@ describe('what the server runs that this page did not start', () => {
     expect(chatStore.get().busy).toMatchObject({ chatId: 'c-pA', kind: 'action', say: 'Is it real?', remote: true, provider: 'agy', startedAt: Date.parse(STARTED) });
   });
 
+  it('reads the list again when the chat it runs in is not on it yet', async () => {
+    chatStore.set({ list: [generalChat('c1', 'hi')] });
+    server.pending.busy = CHECK;
+    await syncPending();
+    expect(api.listChats).toHaveBeenCalled();
+  });
+
   it('follows it until it ends, then lands the answer in its chat alone, unseen and announced', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     const notices = [];
