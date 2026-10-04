@@ -1,5 +1,7 @@
 import { useId, useMemo, useState } from 'react';
 import { sectionView } from '../lib/descriptionView.js';
+import { foldSections, sectionsSize, FOLD_OVER } from '../lib/descriptionFold.js';
+import FoldToggle from './FoldToggle.jsx';
 import { ChevronDownIcon, ChevronUpIcon } from './Icon.jsx';
 
 function Lines({ groups }) {
@@ -33,15 +35,23 @@ function Section({ section }) {
 // text and equal-opportunity statements fold under one "Show company text",
 // closed to start: they say the same in every one of its postings. Folded,
 // they are still on the page, never dropped.
+//
+// A long description opens folded behind "Show more", the same fold and the
+// same control as one drawn in blocks (DescriptionBody.jsx): only those used
+// to fold, so whether a description had one depended on whether it had
+// headings. The company text waits under the fold with the rest.
 export default function DescriptionSections({ sections }) {
   const [open, setOpen] = useState(false);
+  const [more, setMore] = useState(false);
   const foldId = useId();
   const { shown, folded } = useMemo(() => sectionView(sections), [sections]);
+  const folds = sectionsSize(shown) > FOLD_OVER;
+  const whole = !folds || more;
 
   return (
     <div className="max-w-[68ch] space-y-3 text-base leading-relaxed text-ink/85">
-      {shown.map((section, i) => <Section key={i} section={section} />)}
-      {folded.length > 0 && (
+      {(whole ? shown : foldSections(shown)).map((section, i) => <Section key={i} section={section} />)}
+      {whole && folded.length > 0 && (
         <div className="pt-1">
           <button type="button" aria-expanded={open} aria-controls={foldId} onClick={() => setOpen(!open)} className="link inline-flex items-center gap-1.5 text-sm">
             {open ? 'Hide company text' : 'Show company text'}
@@ -52,6 +62,7 @@ export default function DescriptionSections({ sections }) {
           </div>
         </div>
       )}
+      {folds && <FoldToggle open={more} onToggle={() => setMore(!more)} />}
     </div>
   );
 }

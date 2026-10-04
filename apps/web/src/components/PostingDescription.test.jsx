@@ -129,3 +129,38 @@ describe('PostingDescription in sections', () => {
     expect(values[2]).toHaveAccessibleDescription('Says "Workplace type: Hybrid"');
   });
 });
+
+// Only the blocks used to fold, so whether a long description had "Show
+// more" depended on whether its text had headings.
+describe('PostingDescription in long sections', () => {
+  const duty = (n) => `- Duty ${n}: ${'own the merchant dashboard end to end '.repeat(3).trim()}`;
+  const LONG = [
+    { kind: 'other', heading: null, lines: ['Northwind builds payment rails for small shops.'], boilerplate: false },
+    { kind: 'duties', heading: 'What you will do', lines: Array.from({ length: 16 }, (_, i) => duty(i + 1)), boilerplate: false },
+    { kind: 'requirements', heading: 'What we are looking for', lines: ['- 3 to 5 years of experience'], boilerplate: false },
+    { kind: 'about', heading: 'About Northwind', lines: ['Northwind serves 40,000 shops across India.'], boilerplate: true },
+  ];
+
+  it('folds behind Show more as the blocks do, with the company text under the fold', async () => {
+    getPosting.mockResolvedValue({ id: 'p1', descriptionText: 'Northwind builds rails.', sections: LONG });
+    render(<Description posting={posting} />);
+    const more = await screen.findByRole('button', { name: 'Show more' });
+    expect(more).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByText(/Duty 1:/)).toBeInTheDocument();
+    expect(screen.queryByText(/Duty 16:/)).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'What we are looking for' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Show company text' })).toBeNull();
+    fireEvent.click(more);
+    expect(screen.getByText(/Duty 16:/)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'What we are looking for' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Show company text' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Show less' })).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('shows a short one whole, with no Show more', async () => {
+    getPosting.mockResolvedValue({ id: 'p1', descriptionText: 'Northwind builds rails.', sections: SECTIONS });
+    render(<Description posting={posting} />);
+    await screen.findByRole('heading', { name: 'What you will do' });
+    expect(screen.queryByRole('button', { name: 'Show more' })).toBeNull();
+  });
+});

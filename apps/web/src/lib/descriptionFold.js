@@ -48,3 +48,44 @@ export function foldBlocks(blocks, budget = FOLD_AT) {
   if (shown.length > 1 && shown.at(-1).kind === 'heading') shown.pop();
   return shown;
 }
+
+// The same fold for a description read into sections (lib/descriptionView.js
+// groups), so a long one folds whichever way it is drawn: the sections in
+// order as far as about FOLD_AT, cut between lines or list items, and inside
+// a paragraph only when it alone runs past the fold. A section cut to
+// nothing goes heading and all, and a label left with nothing under it
+// waits, as a heading does.
+const groupSize = (group) => (group.kind === 'list' ? group.items.join('').length : group.text.length);
+
+export function sectionsSize(sections) {
+  return sections.reduce((sum, section) => sum + section.groups.reduce((part, group) => part + groupSize(group), 0), 0);
+}
+
+export function foldSections(sections, budget = FOLD_AT) {
+  const shown = [];
+  let used = 0;
+  for (const section of sections) {
+    if (used >= budget) break;
+    const groups = [];
+    for (const group of section.groups) {
+      if (used >= budget) break;
+      if (group.kind === 'list') {
+        const items = [];
+        for (const item of group.items) {
+          if (used >= budget && items.length) break;
+          items.push(item);
+          used += item.length;
+        }
+        groups.push({ ...group, items });
+        continue;
+      }
+      const room = budget - used;
+      const cut = group.kind === 'text' && group.text.length > room * 1.5;
+      groups.push(cut ? { ...group, text: cutText(group.text, Math.max(room, 200)) } : group);
+      used += cut ? budget : group.text.length;
+    }
+    if (groups.at(-1)?.kind === 'label') groups.pop();
+    if (groups.length) shown.push({ ...section, groups });
+  }
+  return shown;
+}
