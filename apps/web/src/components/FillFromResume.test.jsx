@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import FillFromResume from './FillFromResume.jsx';
 
 vi.mock('../api.js', () => ({
@@ -133,40 +133,43 @@ describe('FillFromResume, choosing how', () => {
 });
 
 describe('FillFromResume while it reads', () => {
-  it('narrates which CLI is answering and the elapsed seconds while it thinks', async () => {
+  it('ticks off its steps from the call events, naming the CLI, with no Stop it could not honour', async () => {
     let finish;
     extractProfile.mockImplementationOnce(async ({ onEvent }) => {
       onEvent({ event: 'start', provider: 'claude', path: 'C:\\npm\\claude.cmd' });
       onEvent({ event: 'progress', stage: 'send', chars: 1200 });
       onEvent({ event: 'progress', stage: 'wait', elapsedMs: 5000 });
-      onEvent({ event: 'progress', stage: 'wait', elapsedMs: 10000 });
       await new Promise((resolve) => { finish = resolve; });
       return FOUND;
     });
     render(<FillFromResume profile={EMPTY} reviewing onFound={() => REVIEW} />);
     await fill();
 
-    const live = await screen.findByText('Claude Code is reading... 10s');
-    expect(live).toHaveAttribute('aria-live', 'polite');
-    expect(screen.getByRole('button', { name: 'Filling in...' })).toBeDisabled();
+    expect(await screen.findByText('Handed to Claude Code')).toBeInTheDocument();
+    expect(screen.getByText('Reading your resume')).toBeInTheDocument();
+    const steps = within(screen.getByRole('list', { name: 'Progress' }));
+    expect(steps.getByText('Finding roles, projects and skills').closest('li')).toHaveAttribute('aria-current', 'step');
+    expect(screen.getByText('Usually 20 to 40 seconds')).toBeInTheDocument();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
 
     finish();
-    expect(await screen.findByText('Found 2 changes to review.')).toBeInTheDocument();
+    await waitFor(() => expect(steps.getByText('Ready for you to review').closest('li')).not.toHaveAttribute('aria-current'));
+    expect(steps.queryByText(/\d+s$/)).not.toBeInTheDocument();
+    const said = await screen.findByText('Found 2 changes to review.', {}, { timeout: 2000 });
+    expect(said).toHaveAttribute('aria-live', 'polite');
     expect(button()).toBeEnabled();
   });
 
   it('says when the resume would change nothing, with no review to wait for', async () => {
     render(<FillFromResume profile={EMPTY} onFound={() => ({ mode: 'smart', rows: [], same: [] })} />);
     await fill();
-    expect(await screen.findByText('Nothing to change. Your profile already has what this resume says.')).toBeInTheDocument();
+    expect(await screen.findByText('Nothing to change. Your profile already has what this resume says.', {}, { timeout: 2000 })).toBeInTheDocument();
   });
 
   it('says nothing about a review that has since been applied or discarded', async () => {
-    const onFound = vi.fn(() => REVIEW);
-    render(<FillFromResume profile={EMPTY} reviewing={false} onFound={onFound} />);
+    render(<FillFromResume profile={EMPTY} reviewing={false} onFound={() => REVIEW} />);
     await fill();
-    await waitFor(() => expect(onFound).toHaveBeenCalled());
-    expect(await screen.findByRole('button', { name: 'Fill in from resume' })).toBeEnabled();
+    await screen.findByRole('button', { name: 'Fill in from resume' }, { timeout: 2000 });
     expect(screen.queryByText(/changes to review/)).not.toBeInTheDocument();
   });
 });

@@ -11,7 +11,7 @@
 //   policy   the tool policy its server twin runs under (see providerFor.js):
 //            a browser for the fake check, which only ever sees the posting,
 //            and none at all for the two that carry the resume
-//   noun, doing   the progress line's words (see aiProgress.js)
+//   noun, doing   the progress line's words (see aiSteps.js)
 //   intro    the install hint's first sentence when no CLI can take it
 export const ACTION_KINDS = {
   'fake-check': {
