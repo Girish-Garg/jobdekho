@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { overlayHost } from '../lib/overlayHost.js';
 import { useOutsideDismiss } from '../lib/useOutsideDismiss.js';
-import PostingDetail from './PostingDetail.jsx';
+import SafePostingDetail from './SafePostingDetail.jsx';
 import PostingDialog from './PostingDialog.jsx';
 import Card from './ui/Card.jsx';
 
@@ -39,7 +39,7 @@ export default function PostingDetailSlot({ isWide, opened, onClose, onDismiss =
       className="slide-in-right absolute bottom-3 right-3 top-3 z-30 flex w-[460px] max-w-[calc(100%-1.5rem)] flex-col overflow-hidden bg-panel"
     >
       <div key={opened.id} className="rise flex min-h-0 flex-1 flex-col">
-        <PostingDetail posting={opened} onClose={onClose} onStatus={onStatus} onCompany={onCompany} onBlock={onBlock} onOpenSettings={onOpenSettings} />
+        <SafePostingDetail posting={opened} onClose={onClose} onStatus={onStatus} onCompany={onCompany} onBlock={onBlock} onOpenSettings={onOpenSettings} />
       </div>
     </Card>
   );

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import PostingGrid from './PostingGrid.jsx';
 
@@ -8,6 +8,17 @@ const posting = (over) => ({
 });
 
 describe('PostingGrid', () => {
+  // A posting whose data cannot be drawn once took the whole app down.
+  it('keeps the grid when one card cannot be drawn, and says which', () => {
+    const quiet = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const postings = [posting({ id: 'a', title: 'Alpha' }), posting({ id: 'b', title: { odd: true }, company: 'Constructor' })];
+    render(<PostingGrid postings={postings} selectedId={null} onOpen={noop} />);
+    expect(screen.getByText('Alpha')).toBeInTheDocument();
+    expect(screen.getByText('This posting could not be shown')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy details' })).toBeInTheDocument();
+    quiet.mockRestore();
+  });
+
   it('renders one card per posting', () => {
     const postings = [posting({ id: 'a', title: 'Alpha' }), posting({ id: 'b', title: 'Beta' })];
     render(<PostingGrid postings={postings} selectedId={null} onOpen={noop} />);

@@ -1,6 +1,8 @@
-import { Fragment, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import PostingCard from './PostingCard.jsx';
 import FeedMarks from './FeedMarks.jsx';
+import ErrorBoundary from './ErrorBoundary.jsx';
+import BrokenPosting from './BrokenPosting.jsx';
 import { feedMarks } from '../lib/gradeBands.js';
 import { scrollSelectedIntoView } from '../lib/scrollSelectedIntoView.js';
 
@@ -12,7 +14,8 @@ const COLS = 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3';
 // The same status handlers the list rows take, so a card saves, marks applied
 // or dismisses (with its undo) from under the pointer, as a row does. The
 // bands and the "Level not stated" divider head the cards the way they
-// divide the list (see FeedMarks.jsx).
+// divide the list (see FeedMarks.jsx). A card that cannot be drawn says so
+// in its place, as a list row does (see PostingList.jsx).
 export default function PostingGrid({ postings, bands = null, notStated = null, selectedId, openId = null, flashId, onOpen, onStatus, onUndo }) {
   const containerRef = useRef(null);
   const marks = feedMarks(postings, bands, notStated);
@@ -26,7 +29,12 @@ export default function PostingGrid({ postings, bands = null, notStated = null, 
   return (
     <div ref={containerRef} className={COLS} data-testid="posting-grid">
       {postings.map((posting) => (
-        <Fragment key={posting.id}>
+        <ErrorBoundary
+          key={posting.id}
+          where={`the posting ${posting.id} in the feed`}
+          resetKey={posting}
+          fallback={({ report }) => <BrokenPosting posting={posting} report={report} card />}
+        >
           <FeedMarks posting={posting} marks={marks} as="heading" />
           <PostingCard
             posting={posting}
@@ -37,7 +45,7 @@ export default function PostingGrid({ postings, bands = null, notStated = null, 
             onStatus={onStatus}
             onUndo={onUndo}
           />
-        </Fragment>
+        </ErrorBoundary>
       ))}
     </div>
   );

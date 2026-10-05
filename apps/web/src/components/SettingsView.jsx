@@ -10,6 +10,7 @@ import AdzunaCard from './AdzunaCard.jsx';
 import YourDataCard from './YourDataCard.jsx';
 import AboutCard from './AboutCard.jsx';
 import ProfileIndex from './ProfileIndex.jsx';
+import SettingsSection from './SettingsSection.jsx';
 import { PaletteIcon } from './Icon.jsx';
 import PageTitle from './ui/PageTitle.jsx';
 import Card from './ui/Card.jsx';
@@ -26,6 +27,7 @@ const SECTIONS = [
   { id: 'settings-about', label: 'About' },
 ];
 const IDS = SECTIONS.map((s) => s.id);
+const section = (id) => SECTIONS.find((s) => s.id === id);
 
 // Every setting saves as it is picked, so there is no Save button to find.
 // Laid out like the Profile: an index of the sections in a rail that stays
@@ -47,19 +49,19 @@ export default function SettingsView() {
             <ProfileIndex rows={SECTIONS} current={current} onJump={jumpTo} />
           </Card>
           <div className="flex min-w-0 flex-col gap-5">
-            <div id="settings-setup" className="scroll-mt-4"><SetupCard /></div>
-            <div id="settings-ai" className="scroll-mt-4"><SettingsAiCard /></div>
-            <div id="settings-postings" className="scroll-mt-4"><RefreshSettingsCard /></div>
-            <div id="settings-blocked" className="scroll-mt-4"><BlockedCompaniesCard /></div>
-            <div id="settings-adzuna" className="scroll-mt-4"><AdzunaCard /></div>
-            <div id="settings-appearance" className="scroll-mt-4">
+            <SettingsSection {...section('settings-setup')}><SetupCard /></SettingsSection>
+            <SettingsSection {...section('settings-ai')}><SettingsAiCard /></SettingsSection>
+            <SettingsSection {...section('settings-postings')}><RefreshSettingsCard /></SettingsSection>
+            <SettingsSection {...section('settings-blocked')}><BlockedCompaniesCard /></SettingsSection>
+            <SettingsSection {...section('settings-adzuna')}><AdzunaCard /></SettingsSection>
+            <SettingsSection {...section('settings-appearance')}>
               <SettingsCard icon={<PaletteIcon size={18} />} title="Appearance" hint="How JobDekho looks on this computer.">
                 <ThemeChoice />
                 <EffectsChoice />
               </SettingsCard>
-            </div>
-            <div id="settings-data" className="scroll-mt-4"><YourDataCard /></div>
-            <div id="settings-about" className="scroll-mt-4"><AboutCard /></div>
+            </SettingsSection>
+            <SettingsSection {...section('settings-data')}><YourDataCard /></SettingsSection>
+            <SettingsSection {...section('settings-about')}><AboutCard /></SettingsSection>
           </div>
         </div>
       </div>

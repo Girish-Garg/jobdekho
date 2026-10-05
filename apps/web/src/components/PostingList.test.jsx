@@ -39,4 +39,18 @@ describe('PostingList', () => {
     render(<PostingList postings={postings} selectedId={null} flashId="a" {...handlers} />);
     expect(screen.getByText(/Dismissed\./)).toBeInTheDocument();
   });
+
+  // A posting whose data cannot be drawn (here a title that is not text)
+  // once took the whole app down with it.
+  it('keeps the feed when one row cannot be drawn, and says which', () => {
+    const quiet = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const postings = [posting({ id: 'a', title: 'Alpha' }), posting({ id: 'b', title: { odd: true }, company: 'Constructor' }), posting({ id: 'c', title: 'Gamma' })];
+    render(<PostingList postings={postings} selectedId={null} {...handlers} />);
+    expect(screen.getByText('Alpha')).toBeInTheDocument();
+    expect(screen.getByText('Gamma')).toBeInTheDocument();
+    expect(screen.getByText('This posting could not be shown')).toBeInTheDocument();
+    expect(screen.getByText('Constructor')).toBeInTheDocument();
+    expect(within(screen.getByTestId('posting-list')).getAllByRole('row')).toHaveLength(3);
+    quiet.mockRestore();
+  });
 });

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
-import PostingDetail, { TITLE_ID } from './PostingDetail.jsx';
+import { TITLE_ID } from './PostingDetail.jsx';
+import SafePostingDetail from './SafePostingDetail.jsx';
 import Card from './ui/Card.jsx';
 
 export default function PostingDialog({ posting, onClose, onStatus, onCompany, onBlock, onOpenSettings }) {
@@ -36,7 +37,7 @@ export default function PostingDialog({ posting, onClose, onStatus, onCompany, o
         tabIndex={-1}
         className="mx-auto w-full max-w-2xl overflow-hidden rounded-xl bg-panel outline-none"
       >
-        <PostingDetail posting={posting} onClose={onClose} onStatus={onStatus} onAsked={onClose} onCompany={onCompany} onBlock={onBlock} onOpenSettings={onOpenSettings} />
+        <SafePostingDetail posting={posting} onClose={onClose} onStatus={onStatus} onAsked={onClose} onCompany={onCompany} onBlock={onBlock} onOpenSettings={onOpenSettings} />
       </Card>
     </div>
   );
