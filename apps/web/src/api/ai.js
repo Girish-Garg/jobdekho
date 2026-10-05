@@ -25,8 +25,9 @@ export function putProviderPreference(pref) {
 // These stream their progress (see lib/aiCall.js), which also announces a
 // failure by `label` - the button that started it already shows its own
 // inline error, so the notice is only for the moment the person is not
-// watching that panel. Each resolves with the saved outcome: the profile for
-// the extraction, and for a posting action the record
+// watching that panel. The extraction resolves with what the resume says,
+// { ranking, basics, proposed }, with nothing saved (see lib/resumeReview.js);
+// a posting action with its saved record
 // { kind, postingId, provider, createdAt, result, versions }.
 export function extractProfile(opts) {
   return streamedPost('/api/profile/extract', { ...opts, label: 'Fill in from resume' });

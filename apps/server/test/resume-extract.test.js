@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest'
 import { INSTRUCTION } from '@jobdekho/server/resume/extract-prompt.js'
 import { extractProfile } from '@jobdekho/server/resume/extract.js'
 import { readExtraction } from '@jobdekho/server/resume/extract-shape.js'
-import { fillBasics } from '@jobdekho/server/resume/fill-basics.js'
 import { LINKS_HEADING } from '@jobdekho/server/resume/link-appendix.js'
 import { CLAUDE } from '@jobdekho/server/ai/providers.js'
 
@@ -71,7 +70,7 @@ describe('extractProfile with links', () => {
 })
 
 describe('readExtraction', () => {
-  it('reads a well-formed reply into what is saved, what fills basics and what is proposed', () => {
+  it('reads a well-formed reply into the ranking fields, the basics and the lists', () => {
     const out = readExtraction({
       skills: ['rust'], titles: ['backend engineer'], locations: ['pune'], years: 2, degree: 'bachelors',
       basics: { name: 'Demo Candidate', email: 'demo@example.com', links: { github: 'https://github.com/demo-candidate' } },
@@ -79,7 +78,7 @@ describe('readExtraction', () => {
       achievements: [{ title: 'First place', organisation: 'Demo Hackathon', bullets: ['Out of 400 teams'] }],
       skillGroups: [{ name: 'Languages', items: ['Rust', 'Go'] }],
     })
-    expect(out.flat).toEqual({ skills: ['rust'], titles: ['backend engineer'], locations: ['pune'], years: 2, degree: 'bachelors' })
+    expect(out.ranking).toEqual({ skills: ['rust'], titles: ['backend engineer'], locations: ['pune'], years: 2, degree: 'bachelors' })
     expect(out.basics).toEqual({
       name: 'Demo Candidate', headline: '', email: 'demo@example.com', phone: '', location: '',
       links: { github: 'https://github.com/demo-candidate', linkedin: '', portfolio: '' },
@@ -93,14 +92,14 @@ describe('readExtraction', () => {
   })
 
   it('drops a garbled ranking field on its own and keeps the rest', () => {
-    const { flat } = readExtraction({ skills: 'rust, go', titles: ['engineer', 7, null], years: 'lots', degree: 'B.Tech', locations: ['pune'] })
-    expect(flat).toEqual({ titles: ['engineer', '7'], locations: ['pune'] })
+    const { ranking } = readExtraction({ skills: 'rust, go', titles: ['engineer', 7, null], years: 'lots', degree: 'B.Tech', locations: ['pune'] })
+    expect(ranking).toEqual({ titles: ['engineer', '7'], locations: ['pune'] })
   })
 
   it('takes years written as a number in a string, and nothing below zero', () => {
-    expect(readExtraction({ years: '3.5' }).flat).toEqual({ years: 3.5 })
-    expect(readExtraction({ years: -1 }).flat).toEqual({})
-    expect(readExtraction({ years: null }).flat).toEqual({})
+    expect(readExtraction({ years: '3.5' }).ranking).toEqual({ years: 3.5 })
+    expect(readExtraction({ years: -1 }).ranking).toEqual({})
+    expect(readExtraction({ years: null }).ranking).toEqual({})
   })
 
   it('drops a wrong field inside an entry without losing the entry', () => {
@@ -141,39 +140,8 @@ describe('readExtraction', () => {
   it('reads a reply that is not an object at all as empty', () => {
     for (const reply of [null, [], 'text', 3]) {
       const out = readExtraction(reply)
-      expect(out.flat).toEqual({})
+      expect(out.ranking).toEqual({})
       expect(Object.values(out.proposed).every((list) => list.length === 0)).toBe(true)
     }
-  })
-})
-
-describe('fillBasics', () => {
-  const FOUND = {
-    name: 'Demo Candidate', headline: 'Backend engineer', email: 'demo@example.com', phone: '', location: 'Pune',
-    links: { github: 'https://github.com/demo-candidate', linkedin: '', portfolio: 'https://demo.dev' },
-  }
-
-  it('fills only the empty fields and names each one it filled', () => {
-    const current = {
-      name: 'Demo C.', headline: '', email: '  ', phone: '+91 90000 00000', location: '',
-      links: { github: 'https://github.com/typed-by-hand', linkedin: '', portfolio: '' },
-    }
-    const { basics, filled } = fillBasics(current, FOUND)
-    expect(basics).toEqual({
-      name: 'Demo C.', headline: 'Backend engineer', email: 'demo@example.com', phone: '+91 90000 00000', location: 'Pune',
-      links: { github: 'https://github.com/typed-by-hand', linkedin: '', portfolio: 'https://demo.dev' },
-    })
-    expect(filled).toEqual(['headline', 'email', 'location', 'links.portfolio'])
-  })
-
-  it('fills a profile that has no basics yet', () => {
-    const { basics, filled } = fillBasics(undefined, FOUND)
-    expect(basics.name).toBe('Demo Candidate')
-    expect(basics.links.github).toBe('https://github.com/demo-candidate')
-    expect(filled).toEqual(['name', 'headline', 'email', 'location', 'links.github', 'links.portfolio'])
-  })
-
-  it('fills nothing when the resume showed nothing', () => {
-    expect(fillBasics({ name: '' }, {}).filled).toEqual([])
   })
 })

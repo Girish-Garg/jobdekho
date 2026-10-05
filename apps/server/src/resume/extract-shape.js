@@ -12,10 +12,11 @@ function years(v) {
 }
 
 // Only the ranking fields the reply carries in a usable form. One the model
-// left out or garbled is absent here rather than blank, so the route keeps
-// what the profile already holds for it (see api/profile-fill.js) instead of
-// saving an empty list over the person's skills because of one bad reply.
-function flatFields(src) {
+// left out or garbled is absent here rather than blank, so the review the
+// page builds from it (see the web's lib/resumeFitRows.js) has no word on it
+// and keeps what the profile holds, instead of offering to empty the
+// person's skills because of one bad reply.
+function rankingFields(src) {
   const out = {}
   for (const key of LISTS) if (Array.isArray(src[key])) out[key] = texts(src[key])
   if (years(src.years) !== undefined) out.years = years(src.years)
@@ -33,12 +34,12 @@ function basicsFields(src) {
 }
 
 // The parsed reply, whatever shape it came back in, as the three things the
-// route does with it: ranking fields to save, basics to fill where empty,
-// and the lists to propose.
+// page sets beside the profile for review: the ranking fields, the basics
+// and the lists.
 export function readExtraction(parsed) {
   const src = isObject(parsed) ? parsed : {}
   return {
-    flat: flatFields(src),
+    ranking: rankingFields(src),
     basics: basicsFields(src.basics),
     proposed: {
       ...Object.fromEntries(ENTRY_KEYS.map((key) => [key, entryList(src[key])])),

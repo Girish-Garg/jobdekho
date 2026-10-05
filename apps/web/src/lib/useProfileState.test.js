@@ -38,79 +38,79 @@ describe('useProfileState', () => {
     expect(sent.skills).toEqual(['node']);
   });
 
-  // The heart of "extraction never silently overwrites a hand-typed entry":
-  // adopt() only folds in the fields upload/extract actually change on the
-  // server, so a section edited locally but not yet saved survives it.
-  it('adopt keeps an unsaved local section instead of reverting it to the last-saved copy', async () => {
+  // An upload changes only the file's name on the server, so a section,
+  // Best fit or a basics field edited here but not saved yet survives it.
+  it('adopt takes only the file name an upload returns, keeping every unsaved edit', async () => {
     getProfile.mockResolvedValue(EMPTY_PROFILE);
     const { result } = renderHook(() => useProfileState());
     await waitFor(() => expect(result.current.profile).toBeDefined());
-    act(() => result.current.setProfile((p) => ({ ...p, experience: SAVED.experience })));
+    act(() => result.current.setProfile((p) => ({ ...p, experience: SAVED.experience, skills: ['go'] })));
     act(() => result.current.adopt({ ...EMPTY_PROFILE, skills: ['node'], resumeName: 'cv.pdf' }));
     expect(result.current.profile.experience).toEqual(SAVED.experience);
-    expect(result.current.profile.skills).toEqual(['node']);
+    expect(result.current.profile.skills).toEqual(['go']);
+    expect(result.current.profile.resumeName).toBe('cv.pdf');
+    expect(result.current.exists).toBe(true);
   });
 
-  it('adopt stages non-empty proposals and leaves them for addProposals to merge', async () => {
-    getProfile.mockResolvedValue(EMPTY_PROFILE);
-    const { result } = renderHook(() => useProfileState());
-    await waitFor(() => expect(result.current.profile).toBeDefined());
-    act(() => result.current.adopt({
-      ...EMPTY_PROFILE,
-      proposed: { experience: [{ title: 'Proposed role' }], projects: [], education: [] },
-    }));
-    expect(result.current.proposed.experience).toEqual([{ title: 'Proposed role' }]);
-    expect(result.current.profile.experience).toEqual([]);
-
-    act(() => result.current.addProposals({ experience: [{ title: 'Proposed role' }], projects: [], education: [] }));
-    expect(result.current.profile.experience).toMatchObject([{ title: 'Proposed role' }]);
-    expect(result.current.proposed).toBeNull();
-  });
-
-  it('adopt stages certifications, achievements and skill groups, and addProposals merges them', async () => {
-    getProfile.mockResolvedValue(EMPTY_PROFILE);
-    const { result } = renderHook(() => useProfileState());
-    await waitFor(() => expect(result.current.profile).toBeDefined());
-    const found = {
-      experience: [], projects: [], education: [],
-      certifications: [{ title: 'Cloud Practitioner', organisation: 'Demo Cloud' }],
-      achievements: [{ title: 'First place' }],
-      skillGroups: [{ name: 'Languages', items: ['Rust'] }],
+  // The heart of "nothing is saved until the person keeps it": what the
+  // resume says waits beside the record, and only the rows kept reach it,
+  // as an unsaved edit like any other.
+  describe('a review of what the resume says', () => {
+    const FOUND = {
+      ranking: { skills: ['react', 'node'] },
+      basics: { name: 'Demo Candidate' },
+      proposed: { experience: [{ title: 'Engineer', organisation: 'Acme', bullets: ['Built the billing service'] }, { title: 'Proposed role', organisation: 'Globex' }] },
     };
-    act(() => result.current.adopt({ ...EMPTY_PROFILE, proposed: found }));
-    expect(result.current.proposed).toEqual(found);
 
-    act(() => result.current.addProposals({ ...found, achievements: [] }));
-    expect(result.current.profile.certifications).toMatchObject([{ title: 'Cloud Practitioner', organisation: 'Demo Cloud' }]);
-    expect(result.current.profile.achievements).toEqual([]);
-    expect(result.current.profile.skillGroups).toEqual([{ id: expect.any(String), name: 'Languages', items: ['Rust'] }]);
-    expect(result.current.proposed).toBeNull();
-  });
+    async function loaded() {
+      getProfile.mockResolvedValue(SAVED);
+      const hook = renderHook(() => useProfileState());
+      await waitFor(() => expect(hook.result.current.exists).toBe(true));
+      return hook.result;
+    }
 
-  // The server filled email and name because its saved copy had neither; the
-  // name typed here but not saved yet stays, and so stays unsaved.
-  it('adopt folds in the basics the server filled without overwriting one typed here', async () => {
-    getProfile.mockResolvedValue(EMPTY_PROFILE);
-    const { result } = renderHook(() => useProfileState());
-    await waitFor(() => expect(result.current.profile).toBeDefined());
-    act(() => result.current.setProfile((p) => ({ ...p, basics: { ...p.basics, name: 'Typed here' } })));
-    act(() => result.current.adopt({
-      ...EMPTY_PROFILE,
-      basics: { ...EMPTY_PROFILE.basics, name: 'Demo Candidate', email: 'demo@example.com' },
-      filledBasics: ['name', 'email'],
-    }));
-    expect(result.current.profile.basics).toMatchObject({ name: 'Typed here', email: 'demo@example.com' });
-    expect(result.current.dirty).toBe(true);
-    act(() => result.current.discard());
-    expect(result.current.profile.basics).toMatchObject({ name: 'Demo Candidate', email: 'demo@example.com' });
-  });
+    it('is built against the record as it is now and changes nothing until kept', async () => {
+      const result = await loaded();
+      act(() => result.current.setProfile((p) => ({ ...p, basics: { ...p.basics, name: 'Typed here' } })));
+      let built;
+      act(() => { built = result.current.reviewResume(FOUND, 'smart'); });
+      expect(built.rows.map((row) => row.id)).toEqual(['experience:newer:e1', 'experience:new:1', 'fit:skills:new:node']);
+      expect(result.current.review).toMatchObject({ mode: 'smart', rows: built.rows });
+      expect(result.current.profile.experience).toEqual(SAVED.experience);
+    });
 
-  it('adopt leaves proposed null when extraction found nothing structured', async () => {
-    getProfile.mockResolvedValue(EMPTY_PROFILE);
-    const { result } = renderHook(() => useProfileState());
-    await waitFor(() => expect(result.current.profile).toBeDefined());
-    act(() => result.current.adopt({ ...EMPTY_PROFILE, proposed: { experience: [], projects: [], education: [] } }));
-    expect(result.current.proposed).toBeNull();
+    it('applies only the rows kept, as unsaved changes, and goes', async () => {
+      const result = await loaded();
+      act(() => { result.current.reviewResume(FOUND, 'smart'); });
+      const kept = result.current.review.rows.filter((row) => row.kind === 'new');
+      act(() => result.current.applyChanges(kept));
+      expect(result.current.review).toBeNull();
+      expect(result.current.profile.experience.map((e) => [e.title, e.endDate])).toEqual([['Engineer', ''], ['Proposed role', '']]);
+      expect(result.current.profile.skills).toEqual(['react', 'node']);
+      expect(result.current.dirty).toBe(true);
+      expect(putProfile).not.toHaveBeenCalled();
+    });
+
+    it('is discarded without touching the record', async () => {
+      const result = await loaded();
+      act(() => { result.current.reviewResume(FOUND, 'overwrite'); });
+      act(() => result.current.discardReview());
+      expect(result.current.review).toBeNull();
+      expect(result.current.dirty).toBe(false);
+    });
+
+    it('is not opened when the resume would change nothing', async () => {
+      const result = await loaded();
+      act(() => { result.current.reviewResume({ ranking: { skills: ['react'] }, proposed: {} }, 'smart'); });
+      expect(result.current.review).toBeNull();
+    });
+
+    it('goes when a new resume is uploaded', async () => {
+      const result = await loaded();
+      act(() => { result.current.reviewResume(FOUND, 'smart'); });
+      act(() => result.current.adopt({ ...SAVED, resumeName: 'new.pdf' }));
+      expect(result.current.review).toBeNull();
+    });
   });
 
   it('reset returns to the blank profile and exists=false', async () => {
@@ -123,17 +123,14 @@ describe('useProfileState', () => {
     expect(result.current.dirty).toBe(false);
   });
 
-  it('reset also drops what the deleted resume proposed', async () => {
+  it('reset also drops the review of the deleted resume', async () => {
     getProfile.mockResolvedValue(SAVED);
     const { result } = renderHook(() => useProfileState());
     await waitFor(() => expect(result.current.exists).toBe(true));
-    act(() => result.current.adopt({
-      ...SAVED,
-      proposed: { experience: [{ title: 'Proposed role' }], projects: [], education: [] },
-    }));
-    expect(result.current.proposed).not.toBeNull();
+    act(() => { result.current.reviewResume({ proposed: { experience: [{ title: 'Proposed role' }] } }, 'smart'); });
+    expect(result.current.review).not.toBeNull();
     act(() => result.current.reset());
-    expect(result.current.proposed).toBeNull();
+    expect(result.current.review).toBeNull();
   });
 
   // The save bar shows on `dirty` alone, so for a profile never saved it has

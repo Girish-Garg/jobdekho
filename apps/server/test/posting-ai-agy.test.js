@@ -170,7 +170,8 @@ describe('choosing the CLI for the resume extraction', () => {
     expect(call.file).toBe('/usr/local/bin/agy')
     expect(call.args).toEqual(AGY.promptArgs('none'))
     expect(JSON.parse(call.input).message.content[0].text).toContain('JANE DOE RESUME')
-    expect(store.upsertProfile).toHaveBeenCalledWith('u1', expect.objectContaining({ skills: ['node'], years: 3, resumeText: 'JANE DOE RESUME' }))
+    expect(res.json().ranking).toMatchObject({ skills: ['node'], years: 3 })
+    expect(store.upsertProfile).not.toHaveBeenCalled()
   })
 
   it('prefers Claude Code for the extraction too when both are installed', async () => {

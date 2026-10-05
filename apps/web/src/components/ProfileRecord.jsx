@@ -1,4 +1,4 @@
-import ExtractedEntriesReview from './ExtractedEntriesReview.jsx';
+import ResumeReview from './ResumeReview.jsx';
 import ProfileHero from './ProfileHero.jsx';
 import CareerSections from './CareerSections.jsx';
 import ProfileForm from './ProfileForm.jsx';
@@ -9,17 +9,18 @@ import ChangedNotice from './ChangedNotice.jsx';
 import MemorySection from './MemorySection.jsx';
 import { notify } from '../lib/toast.js';
 
-// The record itself, top to bottom: whatever the resume proposed and still
-// needs a decision, a line on the quickest ways to start while nothing is
-// saved, who the record is about, the entry sections, skills, the ranking
-// fields, and last the control that acts on the saved copy, which only exists
-// once there is one. A person with no profile gets this same record, blank
-// and open to type into, with no button to press first. The save floats at
-// the bottom while anything is unsaved (see ProfileSaveBar.jsx); a chat
-// change applied over unsaved edits asks at the top, and stays in view while
-// scrolling, since the person may be anywhere in a long record when it lands.
+// The record itself, top to bottom: what the resume would change, while it
+// still needs a decision (see ResumeReview.jsx), a line on the quickest ways
+// to start while nothing is saved, who the record is about, the entry
+// sections, skills, the ranking fields, and last the control that acts on
+// the saved copy, which only exists once there is one. A person with no
+// profile gets this same record, blank and open to type into, with no
+// button to press first. The save floats at the bottom while anything is
+// unsaved (see ProfileSaveBar.jsx); a chat change applied over unsaved
+// edits asks at the top, and stays in view while scrolling, since the
+// person may be anywhere in a long record when it lands.
 export default function ProfileRecord({ state, applied = null, onDeleted }) {
-  const { profile, setProfile, exists, proposed, save, addProposals, dismissProposed, dirty, discard } = state;
+  const { profile, setProfile, exists, review, applyChanges, discardReview, save, dirty, discard } = state;
 
   // The bar goes the moment nothing is unsaved, so the confirmation is a
   // notice that outlives it rather than a label on a button already gone.
@@ -42,7 +43,7 @@ export default function ProfileRecord({ state, applied = null, onDeleted }) {
           onKeep={applied.keep}
         />
       )}
-      {proposed && <ExtractedEntriesReview proposed={proposed} onAdd={addProposals} onDismiss={dismissProposed} />}
+      {review && <ResumeReview key={review.run} review={review} onApply={applyChanges} onDiscard={discardReview} />}
       {!exists && <ProfileEmptyState />}
       <ProfileHero basics={profile.basics} profile={profile} onChange={(basics) => setProfile({ ...profile, basics })} />
       <CareerSections profile={profile} onChange={setProfile} />

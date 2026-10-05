@@ -172,7 +172,8 @@ function mockResponse(body, headers) {
 }
 const ndjson = (...objs) => mockResponse(objs.map((o) => JSON.stringify(o)).join('\n') + '\n', { 'content-type': 'application/x-ndjson' });
 
-const PROFILE = { skills: ['react'], titles: [], locations: [], years: 1, degree: 'none', resumeName: 'cv.pdf' };
+// What an extraction answers: what the resume says, nothing saved.
+const FOUND = { ranking: { skills: ['react'], years: 1 }, basics: { name: 'Demo Candidate' }, proposed: { experience: [] } };
 const START = { event: 'start', provider: 'claude', path: 'C:\\npm\\claude.cmd' };
 const WAIT = { event: 'progress', stage: 'wait', elapsedMs: 5000 };
 
@@ -210,7 +211,7 @@ describe('ai api', () => {
   });
 
   it('extractProfile asks for the stream with a bodyless POST', async () => {
-    const fetchMock = ndjson(PROFILE);
+    const fetchMock = ndjson(FOUND);
     await extractProfile();
     const [url, opts] = fetchMock.mock.calls[0];
     expect(url).toBe('/api/profile/extract');
@@ -220,10 +221,10 @@ describe('ai api', () => {
     expect(opts.headers).toEqual({ accept: 'application/x-ndjson' });
   });
 
-  it('extractProfile reports each event and resolves with the saved profile', async () => {
-    ndjson(START, WAIT, PROFILE);
+  it('extractProfile reports each event and resolves with what the resume says', async () => {
+    ndjson(START, WAIT, FOUND);
     const onEvent = vi.fn();
-    expect(await extractProfile({ onEvent })).toEqual(PROFILE);
+    expect(await extractProfile({ onEvent })).toEqual(FOUND);
     expect(onEvent.mock.calls.map(([e]) => e)).toEqual([START, WAIT]);
   });
 
@@ -246,8 +247,8 @@ describe('ai api', () => {
   });
 
   it('extractProfile takes a plain JSON 200 as the same object the stream ends with', async () => {
-    mockResponse(JSON.stringify(PROFILE), { 'content-type': 'application/json' });
-    expect(await extractProfile()).toEqual(PROFILE);
+    mockResponse(JSON.stringify(FOUND), { 'content-type': 'application/json' });
+    expect(await extractProfile()).toEqual(FOUND);
   });
 
   it('extractProfile rejects a stream that ends before the result line', async () => {

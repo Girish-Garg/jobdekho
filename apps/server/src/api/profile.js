@@ -39,7 +39,7 @@ export async function profileRoutes(app) {
   // Storing the text needs only unpdf, so the upload never waits on the AI CLI
   // and cannot fail because it is missing or signed out. Reading a profile out
   // of the text is the separate action below, and the hand-edited fields
-  // survive a re-upload: only that action overwrites them.
+  // survive a re-upload: nothing but the person's own save changes them.
   app.post('/api/profile/resume', { preHandler: app.requireAuth }, async (request, reply) => {
     const file = await request.file({ limits: { fileSize: MAX_BYTES } })
     if (!file) return reply.code(400).send({ error: 'no file' })
@@ -63,20 +63,17 @@ export async function profileRoutes(app) {
   // Send Accept: application/x-ndjson to watch it happen (see ai/events.js).
   // A missing CLI, an expired login and a timeout each come back as
   // { error, kind } with a sentence saying what to do (see ai/errors.js).
+  //
+  // Answers { ranking, basics, proposed }: what the resume says, and only
+  // that. It used to save the ranking fields and fill empty basics the moment
+  // the CLI answered, before the person had seen any of it, so a wrong read
+  // went straight into the ranking. Now nothing is written here at all: the
+  // page sets the answer beside the profile for review, and what the person
+  // keeps is saved through the PUT above, the same as a hand edit.
   app.post('/api/profile/extract', { preHandler: app.requireAuth }, async (request, reply) => {
     const userId = request.user.sub
     const text = await app.dashboard.getResumeText(userId)
     if (!text) return reply.code(400).send({ error: 'Upload a resume first.' })
-    return answer(request, reply, async (emit) => {
-      const { fields, proposed, filledBasics } = await readResume(app, userId, text, { ...cli, select: app.ai.select, emit })
-      const saved = await app.dashboard.upsertProfile(userId, await keepingResume(app, userId, fields))
-      // The structured entries never reach upsertProfile: they are proposals,
-      // not a write, so a hand-typed job or project already on the profile
-      // is never in the room to be overwritten. The person reviews each one
-      // and the ones they keep are saved through the normal PUT, same as a
-      // hand edit. The basics are written, but only into empty fields, and
-      // filledBasics names those so the page can fold in just them.
-      return { ...saved, proposed, filledBasics }
-    })
+    return answer(request, reply, (emit) => readResume(app, userId, text, { ...cli, select: app.ai.select, emit }))
   })
 }

@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { putProfile } from '../api.js';
 import { useProfileLoad } from './useProfileLoad.js';
 import { withDefaults } from './emptyProfile.js';
-import { hasProposals, withProposals } from './mergeProposals.js';
 import { adoptResult } from './adoptResult.js';
+import { buildReview } from './resumeReview.js';
+import { applyReview } from './applyReview.js';
 
 // Everything ProfileView needs to know or do with the profile, kept out of
 // the component so its render stays about layout, not data flow.
@@ -13,12 +14,17 @@ export function useProfileState() {
   // (see withDefaults) so every section can render without its own guard.
   const [profile, setProfile] = useState(undefined);
   const [exists, setExists] = useState(false);
-  // Proposals from the last extraction, held apart from the profile so they
-  // can be reviewed - and discarded - without ever becoming part of it.
-  const [proposed, setProposed] = useState(null);
+  // What the last "Fill in from resume" found, as rows to tick (see
+  // resumeReview.js), held apart from the profile until the person keeps it.
+  const [review, setReview] = useState(null);
   // The last copy the server has, to tell an edited record from a saved one
   // (see ProfileSaveBar.jsx) and to put an edit back.
   const [lastSaved, setLastSaved] = useState(null);
+  // The record as it is now, for a review built when the AI answers: the
+  // person may have edited it in the half a minute the AI took.
+  const latest = useRef(profile);
+  latest.current = profile;
+  const runs = useRef(0);
 
   const { failed, retry } = useProfileLoad((p) => {
     setProfile(withDefaults(p));
@@ -36,28 +42,39 @@ export function useProfileState() {
     setExists(true);
   }
 
-  // Only what upload and fill-in change on the server is taken from their
-  // answer (see adoptResult.js), so a section edited here but not yet saved
-  // survives them. Extraction's proposals are held apart for review.
+  // A new upload names the file and changes nothing else (see
+  // adoptResult.js), and a review of the resume it replaced goes with it.
   function adopt(result) {
-    setProfile((p) => adoptResult(p, result, { keepTyped: true }));
+    setProfile((p) => adoptResult(p, result));
     setLastSaved((p) => adoptResult(p, result));
     setExists(true);
-    setProposed(hasProposals(result.proposed) ? result.proposed : null);
+    setReview(null);
   }
 
-  function addProposals(chosen) {
-    setProfile((p) => withProposals(p, chosen));
-    setProposed(null);
+  // What the resume says, set beside the record for review; none at all
+  // when nothing on it would change the record. Returns the review, so the
+  // control that asked can say how it went.
+  function reviewResume(found, mode) {
+    const built = buildReview(withDefaults(latest.current), found, mode);
+    runs.current += 1;
+    setReview(built.rows.length ? { ...built, run: runs.current } : null);
+    return built;
   }
 
-  // What a deleted resume proposed goes with it, so the blank record that
+  // The kept rows, applied to the record as it is now. That makes it
+  // unsaved, and Save profile writes it the way it writes a hand edit.
+  function applyChanges(rows) {
+    setProfile((p) => applyReview(p, rows));
+    setReview(null);
+  }
+
+  // A deleted profile takes its review with it, so the blank record that
   // follows is the same one a first visit gets.
   function reset() {
     setProfile(withDefaults(null));
     setLastSaved(withDefaults(null));
     setExists(false);
-    setProposed(null);
+    setReview(null);
   }
 
   // A whole record the server already saved (a chat proposal applied, see
@@ -77,6 +94,7 @@ export function useProfileState() {
   const discard = () => lastSaved && setProfile(lastSaved);
 
   return {
-    profile, setProfile, exists, failed, retry, proposed, save, adopt, addProposals, dismissProposed: () => setProposed(null), reset, dirty, discard, replace, rebase,
+    profile, setProfile, exists, failed, retry, review, reviewResume, applyChanges, discardReview: () => setReview(null),
+    save, adopt, reset, dirty, discard, replace, rebase,
   };
 }

@@ -19,7 +19,7 @@ const WIDE_QUERY = '(min-width: 1100px)';
 
 export default function ProfileView() {
   const state = useProfileState();
-  const { profile, adopt, reset } = state;
+  const { profile, adopt, reset, review, reviewResume } = state;
   // A chat proposal applied while this page is open (see useAppliedProfile.js).
   const applied = useAppliedProfile(state);
   // Counts deletes. The record is keyed by it so a deleted profile starts over
@@ -35,7 +35,7 @@ export default function ProfileView() {
 
   const resume = profile && (
     <ResumeUpload resumeName={profile.resumeName} onUploaded={adopt}>
-      {profile.resumeName && <FillFromResume profile={profile} onFilled={adopt} />}
+      {profile.resumeName && <FillFromResume profile={profile} reviewing={Boolean(review)} onFound={reviewResume} />}
     </ResumeUpload>
   );
   const body = (

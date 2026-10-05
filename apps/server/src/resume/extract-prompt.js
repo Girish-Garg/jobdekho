@@ -1,9 +1,9 @@
 // What "Fill in from resume" asks for. One object covers the whole record
 // the profile can hold, because the person reviews it all at once: the
-// ranking fields at the top are saved, the basics fill only fields left
-// empty, and every list below them is a proposal (see api/profile-fill.js).
-// The links paragraph is what the list after the resume is for (see
-// link-appendix.js): a PDF's links are not in its text.
+// ranking fields, the basics and every list below them are set beside the
+// profile, and nothing is saved until the person picks what to keep (see
+// api/profile-fill.js). The links paragraph is what the list after the
+// resume is for (see link-appendix.js): a PDF's links are not in its text.
 export const INSTRUCTION = `Read the resume below and reply with ONE JSON object and nothing else.
 No prose, no markdown fence. Shape:
 {"skills":[],"titles":[],"locations":[],"years":<number>,"degree":"none|bachelors|masters|phd",

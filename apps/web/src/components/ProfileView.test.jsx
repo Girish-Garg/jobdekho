@@ -11,7 +11,7 @@ vi.mock('../api.js', () => ({
   uploadResume: vi.fn(async () => PROFILE),
   deleteProfile: vi.fn(async () => null),
   getProviders: vi.fn(async () => [CLAUDE]),
-  extractProfile: vi.fn(async () => ({ ...PROFILE, skills: ['node'] })),
+  extractProfile: vi.fn(async () => FOUND),
   // What the AI knows sits at the foot of the record (see MemorySection.jsx).
   getMemory: vi.fn(async () => ({ enabled: true, items: [], archived: 0 })),
 }));
@@ -25,6 +25,9 @@ const PROFILE = {
   skills: ['react'], titles: ['frontend intern'], locations: ['pune'],
   years: 1, degree: 'bachelors', resumeName: 'cv.pdf',
 };
+// What a run of Fill in from resume answers: what the resume says, nothing
+// saved (see the server's api/profile-fill.js).
+const FOUND = { ranking: { skills: ['react', 'node'] }, basics: {}, proposed: {} };
 const CLAUDE = {
   id: 'claude', label: 'Claude Code', install: 'https://claude.ai/code', policies: ['none', 'web'],
   present: true, path: 'C:\\npm\\claude.cmd', runs: true, version: '1.0.0', error: null,
@@ -107,17 +110,21 @@ describe('ProfileView with no profile', () => {
     expect(putProfile.mock.calls[0][0].experience).toMatchObject([{ title: 'Backend Engineer' }]);
   });
 
-  it('adopts the profile the upload returns and shows the file name', async () => {
+  it('takes the file name from the upload, as saved, and nothing else', async () => {
+    uploadResume.mockResolvedValueOnce({ ...EMPTY_PROFILE, skills: ['from the server'], resumeName: 'cv.pdf' });
     render(<ProfileView />);
     await screen.findByText(WELCOME);
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Asha Rao' } });
     pickFile();
-    expect(await screen.findByText('react')).toBeInTheDocument();
+    expect(await screen.findByText('cv.pdf')).toBeInTheDocument();
     expect(uploadResume).toHaveBeenCalled();
-    expect(screen.getByText('cv.pdf')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Delete profile' })).toBeInTheDocument();
     // The upload saved a profile on the server, so the greeting has done its job.
     expect(screen.queryByText(WELCOME)).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Save profile' })).not.toBeInTheDocument();
+    // What was typed and not saved is still there, and still unsaved.
+    expect(screen.getByLabelText('Name')).toHaveValue('Asha Rao');
+    expect(screen.queryByText('from the server')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save profile' })).toBeInTheDocument();
   });
 
   it('offers to fill in from the resume only once one is on file', async () => {
@@ -221,80 +228,97 @@ describe('ProfileView with a saved profile', () => {
     expect(putProfile.mock.calls[0][0].skills).toEqual(['react']);
   });
 
-  it('puts the extracted flat fields into the form after the overwrite warning', async () => {
+  // Nothing the resume says reaches the record until it is ticked, applied
+  // and saved, and then only through the same PUT a hand edit uses.
+  it('sets what the resume says beside the record, and saves only what is applied', async () => {
     render(<ProfileView />);
     fireEvent.click(await screen.findByRole('button', { name: 'Fill in from resume' }));
-    // The saved profile has fields, so the run waits for the confirm.
+    // The saved profile holds something, so how to meet it is asked first.
     expect(extractProfile).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: 'Overwrite and fill in' }));
-    expect(await screen.findByText('node')).toBeInTheDocument();
-    expect(screen.queryByText('react')).not.toBeInTheDocument();
-    expect(extractProfile).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Read the resume' }));
+    const review = within(await screen.findByRole('region', { name: 'From your resume' }));
+    expect(review.getByText(/^Smart add found 1 change\./)).toBeInTheDocument();
+    expect(review.getByRole('button', { name: 'Add node' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.queryByRole('button', { name: 'Save profile' })).not.toBeInTheDocument();
+
+    fireEvent.click(review.getByRole('button', { name: 'Apply 1 change' }));
+    expect(screen.queryByRole('region', { name: 'From your resume' })).not.toBeInTheDocument();
+    expect(putProfile).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Save profile' }));
+    await waitFor(() => expect(putProfile).toHaveBeenCalled());
+    expect(putProfile.mock.calls[0][0].skills).toEqual(['react', 'node']);
   });
 
-  it('reviews proposed experience entries without touching a hand-typed one', async () => {
+  it('updates a matching entry in place, adds a new one after a hand-typed one, and saves both', async () => {
     render(<ProfileView />);
     await screen.findByText('react');
     fireEvent.click(screen.getByRole('button', { name: 'Add role' }));
     fireEvent.change(await screen.findByLabelText('Role'), { target: { value: 'Hand typed role' } });
+    fireEvent.change(screen.getByLabelText('Company'), { target: { value: 'Acme' } });
 
     extractProfile.mockResolvedValueOnce({
-      ...PROFILE,
-      proposed: { experience: [{ title: 'Proposed role', organisation: 'Acme' }], projects: [], education: [] },
+      proposed: {
+        experience: [
+          { title: 'Proposed role', organisation: 'Globex' },
+          { title: 'Hand typed role', organisation: 'Acme Pvt Ltd', location: 'Pune', bullets: ['Built the billing service'] },
+        ],
+      },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Fill in from resume' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Overwrite and fill in' }));
-
-    const panel = await screen.findByText(/found 1 entry/i);
-    expect(within(panel.closest('div')).getByText(/Proposed role/)).toBeInTheDocument();
-    // Nothing is written yet: the hand-typed entry is unchanged and no save happened.
+    fireEvent.click(screen.getByRole('radio', { name: /Overwrite/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Read the resume' }));
+    const review = within(await screen.findByRole('region', { name: 'From your resume' }));
+    expect(review.getByText(/^Overwrite found 2 changes\./)).toBeInTheDocument();
+    expect(review.getByRole('checkbox', { name: /Hand typed role at Acme.*Location and 1 point/ })).toBeChecked();
+    // Nothing is written yet: the hand-typed entry is as typed.
     expect(screen.getByDisplayValue('Hand typed role')).toBeInTheDocument();
-    expect(putProfile).not.toHaveBeenCalled();
+    expect(screen.queryByDisplayValue('Pune')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Add selected' }));
+    fireEvent.click(review.getByRole('button', { name: 'Apply 2 changes' }));
     fireEvent.click(screen.getByRole('button', { name: 'Save profile' }));
     await waitFor(() => expect(putProfile).toHaveBeenCalled());
     const [sent] = putProfile.mock.calls[0];
-    expect(sent.experience.map((e) => e.title)).toEqual(['Hand typed role', 'Proposed role']);
+    expect(sent.experience.map((e) => [e.title, e.organisation, e.location, e.bullets])).toEqual([
+      ['Hand typed role', 'Acme', 'Pune', ['Built the billing service']],
+      ['Proposed role', 'Globex', '', []],
+    ]);
   });
 
-  it('dismisses a proposal review without changing the profile', async () => {
+  it('discards a review without changing the record', async () => {
     render(<ProfileView />);
-    extractProfile.mockResolvedValueOnce({
-      ...PROFILE,
-      proposed: { experience: [{ title: 'Proposed role' }], projects: [], education: [] },
-    });
+    extractProfile.mockResolvedValueOnce({ proposed: { experience: [{ title: 'Proposed role' }] } });
     fireEvent.click(await screen.findByRole('button', { name: 'Fill in from resume' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Overwrite and fill in' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Dismiss' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Read the resume' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Discard' }));
     expect(screen.queryByText(/Proposed role/)).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Role')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Save profile' })).not.toBeInTheDocument();
   });
 
-  it('reviews a proposed certification and skill group and saves the ones kept', async () => {
+  it('reviews a certification, a skill group and an empty basics field, and saves the ones kept', async () => {
     render(<ProfileView />);
     extractProfile.mockResolvedValueOnce({
-      ...PROFILE,
+      basics: { email: 'demo@example.com' },
       proposed: {
-        experience: [], projects: [], education: [], achievements: [{ title: 'First place', organisation: 'Demo Hackathon' }],
+        achievements: [{ title: 'First place', organisation: 'Demo Hackathon' }],
         certifications: [{ title: 'Cloud Practitioner', organisation: 'Demo Cloud', link: 'https://demo.dev/cert' }],
         skillGroups: [{ name: 'Languages', items: ['Rust'] }],
       },
     });
     fireEvent.click(await screen.findByRole('button', { name: 'Fill in from resume' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Overwrite and fill in' }));
-    expect(await screen.findByText(/Found 1 certification, 1 achievement and 1 skill group to review/)).toBeInTheDocument();
-
-    const skip = screen.getByText('First place at Demo Hackathon').closest('label');
-    fireEvent.click(within(skip).getByRole('checkbox'));
-    expect(screen.getByText('Languages: Rust')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Add selected' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Read the resume' }));
+    const review = within(await screen.findByRole('region', { name: 'From your resume' }));
+    expect(review.getByRole('checkbox', { name: /Email demo@example\.com/ })).toBeChecked();
+    fireEvent.click(review.getByRole('checkbox', { name: /First place at Demo Hackathon/ }));
+    expect(review.getByText('Languages, a new group')).toBeInTheDocument();
+    fireEvent.click(review.getByRole('button', { name: 'Apply 3 changes' }));
     fireEvent.click(screen.getByRole('button', { name: 'Save profile' }));
     await waitFor(() => expect(putProfile).toHaveBeenCalled());
     const [sent] = putProfile.mock.calls[0];
     expect(sent.certifications).toMatchObject([{ title: 'Cloud Practitioner', organisation: 'Demo Cloud', link: 'https://demo.dev/cert' }]);
     expect(sent.achievements).toEqual([]);
     expect(sent.skillGroups).toMatchObject([{ name: 'Languages', items: ['Rust'] }]);
+    expect(sent.basics.email).toBe('demo@example.com');
     expect(sent.skills).toEqual(['react']);
   });
 

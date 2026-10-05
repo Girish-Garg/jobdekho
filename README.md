@@ -293,10 +293,12 @@ Your profile is what the ranking scores postings against: skills, target
 titles, years of experience, and highest degree. On the Profile page you can
 upload a resume (a PDF with a text layer, 5MB max; a scanned one has no text
 to read, so type the details in instead). The upload only stores the text,
-with no AI call. "Fill in from resume" then has the AI propose the fields
-from it; it asks before overwriting a profile that already has something in
-it, and the experience, projects and education it finds arrive as a list to
-pick from. Or type it all in by hand.
+with no AI call. "Fill in from resume" then has the AI read it. On a profile
+that already has something in it, pick Smart add (adds what is new, updates
+what the resume has newer, skips what you already have) or Overwrite (your
+sections become the resume's; each removal waits for your tick). Either way
+every change arrives as a list to tick, and nothing is saved until you apply
+it and press "Save profile". Or type it all in by hand.
 
 Beside the fields that rank the feed, the profile holds what your documents
 are made from: the basics (name, headline, email, phone, location, links)

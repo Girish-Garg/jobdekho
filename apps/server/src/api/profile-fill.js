@@ -1,10 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import { extractProfile } from '../resume/extract.js'
 import { readExtraction } from '../resume/extract-shape.js'
-import { fillBasics } from '../resume/fill-basics.js'
 import { pdfLinks } from '../resume/pdf-links.js'
-
-const FLAT = ['skills', 'titles', 'locations', 'years', 'degree']
 
 // The addresses behind a resume's links live only in the PDF, never in the
 // stored text, so they are read from the file as uploaded (resume/original.js).
@@ -20,22 +17,12 @@ async function linksIn(path) {
   }
 }
 
-// What one "Fill in from resume" run writes and what it proposes. The
-// profile is read after the reply rather than before it: the person may
-// have saved a hand edit in the twenty seconds the AI took, and that is the
-// copy the basics are filled into and the ranking fields are kept from.
+// What one "Fill in from resume" run found: the ranking fields, the basics
+// and the lists, as the resume has them (see resume/extract-shape.js). The
+// stored profile is neither read nor written here. The page sets this
+// beside the profile it is showing, the person picks what to take, and the
+// save that follows is the same PUT a hand edit uses.
 export async function readResume(app, userId, text, seams) {
   const links = await linksIn(app.dashboard.originalResumePath?.(userId))
-  const found = readExtraction(await extractProfile(text, { ...seams, links }))
-  const current = (await app.dashboard.getProfile(userId)) ?? {}
-  const { basics, filled } = fillBasics(current.basics, found.basics)
-  const kept = Object.fromEntries(FLAT.filter((key) => key in current).map((key) => [key, current[key]]))
-  return {
-    // basics only when a field was filled: a run that fills nothing leaves
-    // the section out of the write, which is how upsertProfile is told to
-    // keep it as it is (see packages/store/src/profile-sections.js).
-    fields: { ...kept, ...found.flat, ...(filled.length ? { basics } : {}) },
-    proposed: found.proposed,
-    filledBasics: filled,
-  }
+  return readExtraction(await extractProfile(text, { ...seams, links }))
 }

@@ -174,24 +174,35 @@ describe('POST /api/profile/extract', () => {
     expect(res.json().kind).toBe('unreadable')
   })
 
-  it('sends the stored text, saves the extracted fields and keeps the resume with them', async () => {
+  it('sends the stored text and answers with what the resume says', async () => {
     const store = makeFakeStore()
     const cli = cliAnswering(envelope('{"skills":["node"],"titles":["backend"],"years":3,"degree":"masters","locations":["pune"]}'))
     const res = await extract(store, cli)
     expect(res.statusCode).toBe(200)
     expect(cli.run.mock.calls.at(-1)[0].input).toContain('Jane Doe, two years of React.')
-    expect(store.upsertProfile).toHaveBeenCalledWith('u1', {
-      skills: ['node'], titles: ['backend'], years: 3, degree: 'masters', locations: ['pune'],
-      resumeText: 'Jane Doe, two years of React.', resumeName: 'cv.pdf',
-    })
-    expect(res.json()).toMatchObject({ skills: ['node'], resumeName: 'cv.pdf' })
+    expect(res.json().ranking).toEqual({ skills: ['node'], titles: ['backend'], years: 3, degree: 'masters', locations: ['pune'] })
   })
 
-  // The heart of "extraction proposes, the person keeps or discards": the
-  // structured entries ride along in the response for review, but never
-  // reach upsertProfile, so a hand-typed experience entry already on the
-  // profile is never in the room to be overwritten by this call.
-  it('returns proposed experience, projects and education without saving them', async () => {
+  // The heart of "nothing is saved until the person keeps it": the run used
+  // to save the ranking fields and fill empty basics the moment the CLI
+  // answered, before anyone had seen a word of it. Now the whole answer is
+  // only read: every write the store offers stays untouched.
+  it('writes nothing to the stored profile, whatever the resume says', async () => {
+    const store = { ...makeFakeStore({ profile: { ...STORED, basics: { name: '', email: '' } } }), saveOriginalResume: vi.fn() }
+    const res = await extract(store, cliAnswering(envelope(JSON.stringify({
+      skills: ['node'], years: 5, degree: 'phd',
+      basics: { name: 'Demo Candidate', email: 'demo@example.com' },
+      experience: [{ title: 'Backend Engineer', organisation: 'Acme' }],
+    }))))
+    expect(res.statusCode).toBe(200)
+    for (const write of ['upsertProfile', 'deleteProfile', 'setPostingStatus', 'upsertUserFilters', 'saveOriginalResume']) {
+      expect(store[write], write).not.toHaveBeenCalled()
+    }
+  })
+
+  // The ranking fields the reply left out are absent rather than blank, so
+  // the page keeps what the profile holds for them.
+  it('returns proposed experience, projects and education, and only the ranking fields the reply carried', async () => {
     const store = makeFakeStore()
     const cli = cliAnswering(envelope(JSON.stringify({
       skills: ['node'],
@@ -201,32 +212,31 @@ describe('POST /api/profile/extract', () => {
     })))
     const res = await extract(store, cli)
     expect(res.statusCode).toBe(200)
-    // The ranking fields the reply left out keep what the profile held.
-    expect(store.upsertProfile).toHaveBeenCalledWith('u1', {
-      skills: ['node'], titles: [], locations: [], years: 2, degree: 'bachelors',
-      resumeText: 'Jane Doe, two years of React.', resumeName: 'cv.pdf',
-    })
+    expect(res.json().ranking).toEqual({ skills: ['node'] })
     expect(res.json().proposed).toEqual({
       experience: [{ title: 'Backend Engineer', organisation: 'Acme' }],
       projects: [{ title: 'Side project' }],
       education: [{ title: 'B.Tech', organisation: 'IIT' }],
       certifications: [], achievements: [], skillGroups: [],
     })
+    expect(store.upsertProfile).not.toHaveBeenCalled()
   })
 
   it('proposes nothing structured when the reply carries none', async () => {
     const store = makeFakeStore()
     const res = await extract(store, cliAnswering(envelope('{"skills":["node"]}')))
-    expect(res.json().proposed).toEqual({
-      experience: [], projects: [], education: [], certifications: [], achievements: [], skillGroups: [],
+    expect(res.json()).toEqual({
+      ranking: { skills: ['node'] },
+      basics: { name: '', headline: '', email: '', phone: '', location: '', links: { github: '', linkedin: '', portfolio: '' } },
+      proposed: { experience: [], projects: [], education: [], certifications: [], achievements: [], skillGroups: [] },
     })
-    expect(res.json().filledBasics).toEqual([])
   })
 })
 
 // The rest of the record a resume carries: certifications, achievements and
-// skill groups are proposals like the entries above, and the basics fill
-// only what the person has left empty.
+// skill groups come back for review like the entries above, and so do the
+// basics, every one the resume shows, for the page to offer where the
+// person's own are empty (see the web's lib/resumeFitRows.js).
 describe('POST /api/profile/extract, beyond jobs, projects and degrees', () => {
   const BASICS = {
     name: 'Demo Candidate', headline: '', email: '', phone: '+91 90000 00000', location: '',
@@ -234,7 +244,6 @@ describe('POST /api/profile/extract, beyond jobs, projects and degrees', () => {
   }
   const withBasics = (basics = BASICS) => makeFakeStore({ profile: { ...STORED, basics } })
   const replying = (reply) => cliAnswering(envelope(JSON.stringify(reply)))
-  const sentFields = (store) => store.upsertProfile.mock.calls[0][1]
 
   it('proposes certifications, achievements and skill groups for review without saving them', async () => {
     const store = makeFakeStore()
@@ -250,10 +259,10 @@ describe('POST /api/profile/extract, beyond jobs, projects and degrees', () => {
       achievements: [{ title: 'First place', organisation: 'Demo Hackathon', startDate: '2023', bullets: ['Out of 400 teams'] }],
       skillGroups: [{ name: 'Languages', items: ['Rust', 'Go'] }, { name: 'Tools', items: ['Git'] }],
     })
-    for (const key of ['certifications', 'achievements', 'skillGroups', 'basics']) expect(sentFields(store)).not.toHaveProperty(key)
+    expect(store.upsertProfile).not.toHaveBeenCalled()
   })
 
-  it('fills only the empty basics, keeps what the person typed, and says which it filled', async () => {
+  it('answers with the basics as the resume shows them, filled or not on the profile, and writes none', async () => {
     const store = withBasics()
     const res = await extract(store, replying({
       basics: {
@@ -261,19 +270,12 @@ describe('POST /api/profile/extract, beyond jobs, projects and degrees', () => {
         links: { github: 'https://github.com/demo-candidate', linkedin: 'https://linkedin.com/in/from-the-resume' },
       },
     }))
-    expect(sentFields(store).basics).toEqual({
-      ...BASICS, headline: 'Backend engineer', email: 'demo@example.com',
-      links: { ...BASICS.links, github: 'https://github.com/demo-candidate' },
+    expect(res.json().basics).toEqual({
+      name: 'Someone Else', headline: 'Backend engineer', email: 'demo@example.com', phone: '+91 98765 43210', location: '',
+      links: { github: 'https://github.com/demo-candidate', linkedin: 'https://linkedin.com/in/from-the-resume', portfolio: '' },
     })
-    expect(res.json().filledBasics).toEqual(['headline', 'email', 'links.github'])
-  })
-
-  it('leaves the basics out of the write when there is nothing empty to fill', async () => {
-    const full = { ...BASICS, headline: 'Engineer', email: 'demo@example.com', location: 'Pune', links: { github: 'g', linkedin: 'l', portfolio: 'p' } }
-    const store = withBasics(full)
-    const res = await extract(store, replying({ skills: ['rust'], basics: { name: 'Someone Else', email: 'other@example.com' } }))
-    expect(sentFields(store)).not.toHaveProperty('basics')
-    expect(res.json().filledBasics).toEqual([])
+    expect(res.json()).not.toHaveProperty('filledBasics')
+    expect(store.upsertProfile).not.toHaveBeenCalled()
   })
 
   it('drops junk field by field and keeps the rest of the reply', async () => {
@@ -286,16 +288,15 @@ describe('POST /api/profile/extract, beyond jobs, projects and degrees', () => {
       basics: { name: ['Demo'], email: 'demo@example.com', links: { github: 'javascript:alert(1)' } },
     }))
     expect(res.statusCode).toBe(200)
-    expect(store.upsertProfile).toHaveBeenCalledWith('u1', {
-      skills: ['react'], titles: ['backend engineer'], locations: [], years: 2, degree: 'bachelors',
+    expect(res.json()).toEqual({
+      ranking: { titles: ['backend engineer'] },
       basics: { links: { github: '', linkedin: '', portfolio: '' }, name: '', headline: '', email: 'demo@example.com', phone: '', location: '' },
-      resumeText: 'Jane Doe, two years of React.', resumeName: 'cv.pdf',
+      proposed: {
+        experience: [], projects: [{ title: 'Chess Engine', startDate: '2021' }], education: [],
+        certifications: [], achievements: [], skillGroups: [{ name: 'Tools', items: ['Git', '7'] }],
+      },
     })
-    expect(res.json().proposed).toEqual({
-      experience: [], projects: [{ title: 'Chess Engine', startDate: '2021' }], education: [],
-      certifications: [], achievements: [], skillGroups: [{ name: 'Tools', items: ['Git', '7'] }],
-    })
-    expect(res.json().filledBasics).toEqual(['email'])
+    expect(store.upsertProfile).not.toHaveBeenCalled()
   })
 })
 
@@ -338,7 +339,7 @@ describe('POST /api/profile/extract with the uploaded file on disk', () => {
     const res = await extract(storeWithFile(Buffer.from('not a pdf at all')), cli)
     expect(res.statusCode).toBe(200)
     expect(sentPrompt(cli)).not.toContain(HEADING)
-    expect(res.json()).toMatchObject({ skills: ['rust'] })
+    expect(res.json().ranking).toEqual({ skills: ['rust'] })
   })
 
   it('sends the text alone for a resume uploaded before files were kept', async () => {
