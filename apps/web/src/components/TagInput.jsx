@@ -13,10 +13,13 @@ import { CloseIcon } from './Icon.jsx';
 // a click on the caption removed it. A click on the well's empty space puts
 // the cursor in the box instead, which is what it used to look like it did.
 //
+// `caption` says what the field is for, under its name, which then reads in
+// ink as Best fit's other names do (see FitField.jsx).
+//
 // `max` is how many the server keeps: the field says so and stops there,
 // where a save used to cut the newest ones off unseen. A value already in
 // the list in other capitals is not added twice, as the server keeps one.
-export default function TagInput({ label, values, onChange, plain = false, max = Infinity }) {
+export default function TagInput({ label, values, onChange, plain = false, max = Infinity, caption = null }) {
   const [draft, setDraft] = useState('');
   const id = useId();
   const box = useRef(null);
@@ -38,9 +41,10 @@ export default function TagInput({ label, values, onChange, plain = false, max =
   return (
     <div className={plain ? 'flex flex-col gap-1' : 'flex flex-col gap-2'}>
       <div className="flex items-baseline justify-between gap-2">
-        <label htmlFor={id} className={plain ? 'text-sm text-muted' : 'font-mono text-[11px] uppercase tracking-[0.2em] text-muted'}>{label}</label>
+        <label htmlFor={id} className={caption ? 'text-sm font-semibold text-ink' : plain ? 'text-sm text-muted' : 'font-mono text-[11px] uppercase tracking-[0.2em] text-muted'}>{label}</label>
         {Number.isFinite(max) && <span className={`tnum text-xs ${full ? 'text-ink' : 'text-muted'}`}>{values.length} of {max}</span>}
       </div>
+      {caption && <p className="mb-1 text-xs text-muted">{caption}</p>}
       <div
         onMouseDown={focusBox}
         className={`field flex cursor-text flex-wrap gap-1.5 p-2 focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/15 ${plain ? '' : 'bg-paper'}`}

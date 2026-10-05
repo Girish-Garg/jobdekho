@@ -148,7 +148,7 @@ describe('ProfileView with a saved profile', () => {
     render(<ProfileView />);
     expect(await screen.findByText('react')).toBeInTheDocument();
     expect(screen.getByLabelText('Years of experience')).toHaveValue(1);
-    expect(screen.getByLabelText('Highest degree')).toHaveValue('bachelors');
+    expect(within(screen.getByRole('group', { name: 'Highest degree' })).getByRole('button', { name: "Bachelor's" })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByText('cv.pdf')).toBeInTheDocument();
   });
 
