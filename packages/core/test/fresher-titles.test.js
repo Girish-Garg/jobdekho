@@ -70,6 +70,16 @@ describe('a graduate programme is read only at its company', () => {
     expect(graduateProgramme('Software Engineer - Edge', 'MathWorks')).toBeNull()
   })
 
+  // A real employer, Constructor, keys to "constructor", a name every plain
+  // object answers to: the lookup threw and took a whole refresh down.
+  it('reads nothing at a company named like a property every object has', () => {
+    for (const company of ['Constructor', 'The Constructor', 'Constructor Technology', '__proto__', 'toString', 'hasOwnProperty']) {
+      expect(graduateProgramme('Software Engineer - EDG', company)).toBeNull()
+      expect(level('Software Engineer - EDG', company)).toBeNull()
+    }
+    expect(postingFeatures({ title: 'Software Engineer', company: 'Constructor' })).toMatchObject({ titleLevel: null })
+  })
+
   // The chip and the fit read one rule set, company included.
   it('reaches the fit as well as the chip', () => {
     expect(titleLevel('Software Engineer - EDG', 'MathWorks')).toEqual({ level: 'entry', band: [0, 2] })
