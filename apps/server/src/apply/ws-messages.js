@@ -10,6 +10,9 @@ const num = (value) => (typeof value === 'number' && Number.isFinite(value) ? va
 const clamp = (value, max) => Math.max(0, Math.min(Math.round(value), Math.max(0, max)))
 const BUTTONS = new Set(['left', 'none'])
 const CHOICES = new Set(['resume', 'cover', 'cancel'])
+// The address bar's buttons (see session-input.js). Without a reader here
+// every press was dropped as unknown, and the buttons did nothing.
+const GOES = new Set(['back', 'forward', 'reload'])
 
 function point(msg, size) {
   const x = num(msg.x)
@@ -36,6 +39,7 @@ const READERS = {
   pick: (m) => (typeof m.value === 'string' && m.value.length <= 500 ? { t: 'pick', value: m.value } : { t: 'pick', value: null }),
   chooser: (m) => (CHOICES.has(m.choice) ? { t: 'chooser', choice: m.choice } : null),
   dialog: (m) => ({ t: 'dialog', accept: m.accept === true }),
+  nav: (m) => (GOES.has(m.go) ? { t: 'nav', go: m.go } : null),
 }
 
 function pointer(m, size) {

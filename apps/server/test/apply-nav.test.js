@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { onSocketMessage } from '@jobdekho/server/apply/session-input.js'
+import { parseMessage } from '@jobdekho/server/apply/ws-messages.js'
 
 // A session as the input relay sees one, with a page that only navigates.
 function session(state) {
@@ -30,5 +31,16 @@ describe('back, forward and reload from the address bar', () => {
     const s = session('yours')
     await onSocketMessage(s, { t: 'nav', go: 'somewhere' })
     expect(s.active.page.goBack).not.toHaveBeenCalled()
+  })
+
+  // Each half passed alone while the socket's reader dropped every press:
+  // the message the panel sends (ApplyBrowserFrame.jsx) goes through the
+  // reader here, the way api/apply-socket.js hands it on.
+  it('arrive as the panel sends them, through the socket reader', async () => {
+    const s = session('yours')
+    for (const go of ['back', 'forward', 'reload']) await onSocketMessage(s, parseMessage(JSON.stringify({ t: 'nav', go })))
+    expect(s.active.page.goBack).toHaveBeenCalledTimes(1)
+    expect(s.active.page.goForward).toHaveBeenCalledTimes(1)
+    expect(s.active.page.reload).toHaveBeenCalledTimes(1)
   })
 })

@@ -38,6 +38,14 @@ describe('parseMessage', () => {
     expect(parseMessage(JSON.stringify({ t: 'wheel', x: 1, y: 1, dy: 1e9 }), size).dy).toBe(2000)
   })
 
+  it('reads back, forward and reload from the address bar, and no other way', () => {
+    for (const go of ['back', 'forward', 'reload']) expect(parseMessage(JSON.stringify({ t: 'nav', go }), size)).toEqual({ t: 'nav', go })
+    for (const go of ['somewhere', 'constructor', '__proto__', 'toString', '', 1, null]) {
+      expect(parseMessage(JSON.stringify({ t: 'nav', go }), size)).toBeNull()
+    }
+    expect(parseMessage(JSON.stringify({ t: 'nav' }), size)).toBeNull()
+  })
+
   it('drops anything unknown or malformed', () => {
     expect(parseMessage('not json', size)).toBeNull()
     expect(parseMessage(JSON.stringify({ t: 'eval', code: '1' }), size)).toBeNull()
