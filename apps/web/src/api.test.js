@@ -251,6 +251,21 @@ describe('ai api', () => {
     expect(await extractProfile()).toEqual(FOUND);
   });
 
+  it('extractProfile stops on its own signal, as a stop and with no notice', async () => {
+    global.fetch = vi.fn((url, opts) => new Promise((resolve, reject) => {
+      opts.signal.addEventListener('abort', () => reject(new DOMException('The operation was aborted.', 'AbortError')));
+    }));
+    const notices = [];
+    const quiet = onNotice((n) => notices.push(n));
+    const control = new AbortController();
+    const call = extractProfile({ signal: control.signal });
+    control.abort();
+    await expect(call).rejects.toMatchObject({ kind: 'stopped' });
+    quiet();
+    expect(global.fetch.mock.calls[0][1].signal).toBe(control.signal);
+    expect(notices).toEqual([]);
+  });
+
   it('extractProfile rejects a stream that ends before the result line', async () => {
     ndjson(START, WAIT);
     await expect(extractProfile()).rejects.toThrow(/connection dropped/);

@@ -28,10 +28,9 @@ function Mark({ state }) {
 // for; the clock counts from it every second rather than on the server's
 // five-second heartbeat, which would read as stuck in between.
 //
-// No Stop: the extraction is not one of the calls the chat's stop reaches
-// (see the server's chat/in-flight.js), and dropping the request would
-// leave the CLI reading on regardless, so a Stop here would do nothing.
-export default function FillProgress({ events, label, startedAt, finished }) {
+// Stop drops the request, and the server stops the CLI for it (see
+// useFillRun.js); it goes once the answer is in, with nothing left to stop.
+export default function FillProgress({ events, label, startedAt, finished, onStop }) {
   const now = useNow(!finished);
   const elapsed = Math.max(0, now - startedAt);
   const steps = fillSteps(events, { label, finished });
@@ -57,7 +56,10 @@ export default function FillProgress({ events, label, startedAt, finished }) {
           style={{ width: `${Math.round(fillFraction(elapsed, finished) * 100)}%` }}
         />
       </div>
-      <p className="-mt-1 text-xs text-muted">Usually 20 to 40 seconds</p>
+      <div className="-mt-1 flex items-center justify-between gap-3 text-xs text-muted">
+        <span>Usually 20 to 40 seconds</span>
+        {!finished && onStop && <button type="button" onClick={onStop} className="link text-xs">Stop</button>}
+      </div>
     </div>
   );
 }

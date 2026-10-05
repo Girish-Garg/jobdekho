@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, within, fireEvent } from '@testing-library/react';
 import FillProgress from './FillProgress.jsx';
 
 const SENT = [{ event: 'start', provider: 'claude' }, { event: 'progress', stage: 'send', chars: 900 }];
@@ -45,10 +45,12 @@ describe('FillProgress', () => {
     expect(screen.getByText('Claude Code was busy signing itself in. Trying again.')).toBeInTheDocument();
   });
 
-  // The extraction cannot be stopped on the server (see FillProgress.jsx),
-  // so there is no control that would only pretend to.
-  it('offers no Stop', () => {
-    render(<FillProgress events={SENT} label="Claude Code" startedAt={Date.now()} finished={false} />);
-    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  it('offers a Stop while it reads, and none once the answer is in', () => {
+    const onStop = vi.fn();
+    const { rerender } = render(<FillProgress events={SENT} label="Claude Code" startedAt={Date.now()} finished={false} onStop={onStop} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Stop' }));
+    expect(onStop).toHaveBeenCalledTimes(1);
+    rerender(<FillProgress events={SENT} label="Claude Code" startedAt={Date.now()} finished onStop={onStop} />);
+    expect(screen.queryByRole('button', { name: 'Stop' })).not.toBeInTheDocument();
   });
 });

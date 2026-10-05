@@ -21,19 +21,23 @@ function bodyOf({ instruction, chatId }) {
   return Object.keys(fields).length ? JSON.stringify(fields) : undefined;
 }
 
-export async function streamedPost(url, { onEvent, instruction, chatId, label } = {}) {
+// `signal` is the caller's own Stop: aborting it drops the request, which
+// the server reads as nobody waiting (see its api/profile.js), and the call
+// rejects as stopped, the way a stop the server reports does.
+export async function streamedPost(url, { onEvent, instruction, chatId, label, signal } = {}) {
   try {
     const headers = { accept: NDJSON_TYPE };
     const body = bodyOf({ instruction, chatId });
     if (body) headers['content-type'] = 'application/json';
-    const res = await send(url, { method: 'POST', headers, body });
+    const res = await send(url, { method: 'POST', headers, body, ...(signal ? { signal } : {}) });
     // The 400s and the 401 are plain JSON and have already thrown inside send().
     // A plain 200 body is the same object the stream would have ended with.
     const streamed = (res.headers.get('content-type') || '').includes(NDJSON_TYPE);
     const result = streamed ? await readNdjson(res, onEvent) : await res.json();
     if (!result || result.error) throw failure(result, 'The connection dropped before the answer arrived. Try again.');
     return result;
-  } catch (err) {
+  } catch (caught) {
+    const err = caught?.name === 'AbortError' ? Object.assign(new Error('Stopped.'), { kind: 'stopped' }) : caught;
     // A refusal while another call runs is said in the chat, where the
     // person pressed, and a stop is their own doing: neither is news.
     // `actionable` is safe because every other failure this call can produce

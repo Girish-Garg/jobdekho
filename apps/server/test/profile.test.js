@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest'
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { request as httpRequest } from 'node:http'
 import { buildApp } from '@jobdekho/server/app.js'
 import { readNdjson, NDJSON_TYPE } from '@jobdekho/server/ai/events.js'
 import { CLAUDE_MODELS, DEFAULT_MODEL } from '@jobdekho/server/ai/cli-models.js'
@@ -376,6 +377,81 @@ describe('POST /api/profile/extract as NDJSON', () => {
     const res = await extract(makeFakeStore({ resumeText: null }), NO_CLI, accept)
     expect(res.statusCode).toBe(400)
     expect(res.headers['content-type']).toMatch(/application\/json/)
+  })
+})
+
+// The page's Stop drops the request, and so does a closed tab: either way
+// nobody will read the answer, so the CLI is stopped, the way the chat's
+// Stop ends one (see ai/spawn.js). Over a real socket, since only a real
+// client can go away mid-answer.
+describe('POST /api/profile/extract, abandoned', () => {
+  // A CLI that has taken the resume and reads on until it is stopped.
+  function readingCli() {
+    const seen = { asked: false, stopped: false }
+    const run = vi.fn(({ args, signal }) => {
+      if (args[0] === '--version') return Promise.resolve({ stdout: '2.1.0', stderr: '', code: 0 })
+      seen.asked = true
+      return new Promise((resolve, reject) => {
+        signal?.addEventListener('abort', () => {
+          seen.stopped = true
+          reject(Object.assign(new Error('stopped'), { code: 'EABORTED' }))
+        })
+      })
+    })
+    return { cli: { locate: () => '/usr/local/bin/claude', run, home: '/no/such/home', scratch: (work) => work('/scratch') }, seen }
+  }
+
+  const until = async (check) => {
+    for (let i = 0; i < 200 && !check(); i += 1) await new Promise((resolve) => setTimeout(resolve, 10))
+    return check()
+  }
+
+  it('stops the CLI when the request closes before the answer, and writes nothing', async () => {
+    const store = makeFakeStore()
+    const { cli, seen } = readingCli()
+    const { app, cookie } = await makeApp(store, cli)
+    const address = await app.listen({ port: 0, host: '127.0.0.1' })
+    try {
+      const req = httpRequest(`${address}/api/profile/extract`, { method: 'POST', headers: { cookie, accept: NDJSON_TYPE } })
+      req.on('error', () => {})
+      const started = new Promise((resolve) => req.on('response', (res) => res.once('data', resolve)))
+      req.end()
+      await started
+      expect(await until(() => seen.asked)).toBe(true)
+      expect(seen.stopped).toBe(false)
+      req.destroy()
+      expect(await until(() => seen.stopped)).toBe(true)
+      expect(store.upsertProfile).not.toHaveBeenCalled()
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('stops nothing once the answer is written', async () => {
+    let signal = null
+    const cli = cliAnswering(envelope('{"skills":["node"]}'))
+    cli.run.mockImplementation(async (call) => {
+      if (call.args[0] !== '--version') signal = call.signal
+      return { stdout: envelope('{"skills":["node"]}'), stderr: '', code: 0 }
+    })
+    const { app, cookie } = await makeApp(makeFakeStore(), cli)
+    const address = await app.listen({ port: 0, host: '127.0.0.1' })
+    try {
+      const body = await new Promise((resolve, reject) => {
+        const req = httpRequest(`${address}/api/profile/extract`, { method: 'POST', headers: { cookie, accept: NDJSON_TYPE } }, (res) => {
+          let text = ''
+          res.on('data', (chunk) => { text += chunk })
+          res.on('end', () => resolve(text))
+        })
+        req.on('error', reject)
+        req.end()
+      })
+      expect(readNdjson(body).result.ranking).toEqual({ skills: ['node'] })
+      await new Promise((resolve) => setTimeout(resolve, 50))
+      expect(signal?.aborted).toBe(false)
+    } finally {
+      await app.close()
+    }
   })
 })
 

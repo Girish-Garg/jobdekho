@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react';
-import { extractProfile } from '../api.js';
+import { useState } from 'react';
 import { useProviders } from '../lib/useProviders.js';
 import { providerFor } from '../lib/providerFor.js';
 import { modesDiffer } from '../lib/resumeReview.js';
-import { fillLine } from '../lib/reviewText.js';
+import { useFillRun } from '../lib/useFillRun.js';
 import InstallHint from './InstallHint.jsx';
 import FillModePicker from './FillModePicker.jsx';
 import FillProgress from './FillProgress.jsx';
@@ -18,10 +17,6 @@ const INTRO = 'Filling in from the resume asks an AI CLI installed on this compu
 // same one this component names (ai/select.js).
 const POLICY = 'none';
 
-// How long the finished checklist stays, every step ticked, before the card
-// goes back to its button.
-const HOLD_MS = 900;
-
 // A button, not a side effect of the upload: each run spends the person's
 // own CLI subscription and takes half a minute, and an automatic run on
 // every corrected PDF would read like the app filling in the profile on
@@ -29,43 +24,12 @@ const HOLD_MS = 900;
 // beside the record for review (`onFound`, see resumeReview.js), and the
 // card says how many changes wait there. On a profile that already holds
 // something, the person first picks how the resume should meet it; on one
-// that holds nothing the two ways are the same, so it just runs.
+// that holds nothing the two ways are the same, so it just runs. The run
+// itself, its Stop included, is useFillRun.js.
 export default function FillFromResume({ profile, reviewing = false, onFound }) {
   const { providers, checking, refresh } = useProviders();
-  const [step, setStep] = useState('idle');
   const [mode, setMode] = useState('smart');
-  const [run, setRun] = useState(null);
-  const [error, setError] = useState(null);
-  // What the last run came to, said under the button while it still holds.
-  const [outcome, setOutcome] = useState(null);
-
-  useEffect(() => {
-    if (step !== 'done') return undefined;
-    const id = setTimeout(() => setStep('idle'), HOLD_MS);
-    return () => clearTimeout(id);
-  }, [step]);
-
-  // Only the start event names the CLI that answers, which can be another
-  // one than expected when the first is signed out (see ai/fallback.js).
-  const labelOf = (id) => providers?.find((p) => p.id === id)?.label ?? id;
-
-  async function read(chosen, label) {
-    setStep('busy');
-    setError(null);
-    setOutcome(null);
-    setRun({ events: [], label, startedAt: Date.now() });
-    try {
-      const found = await extractProfile({
-        onEvent: (event) => setRun((was) => ({ ...was, events: [...was.events, event], label: event.event === 'start' ? labelOf(event.provider) : was.label })),
-      });
-      const review = onFound(found, chosen);
-      setOutcome({ text: fillLine(review), count: review.rows.length });
-      setStep('done');
-    } catch (err) {
-      setError(err);
-      setStep('idle');
-    }
-  }
+  const { step, setStep, run, error, setError, outcome, read, stop } = useFillRun({ providers, onFound });
 
   // The picker opens on Smart add every time: it is the one recommended.
   function start(label) {
@@ -78,7 +42,7 @@ export default function FillFromResume({ profile, reviewing = false, onFound }) 
   const ready = providerFor(providers, POLICY);
   if (!ready) return <InstallHint intro={INTRO} policies={[POLICY]} providers={providers} checking={checking} onRecheck={refresh} />;
   if (step === 'pick') return <FillModePicker mode={mode} onMode={setMode} onRead={() => read(mode, ready.label)} onCancel={() => setStep('idle')} />;
-  if (step !== 'idle') return <FillProgress {...run} finished={step === 'done'} />;
+  if (step !== 'idle') return <FillProgress {...run} finished={step === 'done'} onStop={stop} />;
 
   return (
     <div className="flex flex-col gap-2 border-t border-line pt-4">
@@ -88,8 +52,10 @@ export default function FillFromResume({ profile, reviewing = false, onFound }) 
         <SparkleIcon size={14} />
         Fill in from resume
       </Button>
+      {/* What the last run came to, while it still holds: a count of
+          changes only while their review is open (see useFillRun.js). */}
       <span aria-live="polite" className="text-xs text-muted empty:hidden">
-        {outcome && (reviewing || outcome.count === 0) ? outcome.text : ''}
+        {outcome && (reviewing || !outcome.waits) ? outcome.text : ''}
       </span>
       <AiError error={error} checking={checking} onRecheck={() => (setError(null), refresh())} />
       {/* Short and not tied to one CLI: which one runs is a setting, and the

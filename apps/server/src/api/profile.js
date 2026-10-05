@@ -17,6 +17,20 @@ async function keepingResume(app, userId, fields) {
   return { ...fields, resumeText, resumeName: current?.resumeName ?? null }
 }
 
+// A read nobody is waiting for any more: the page's Stop drops the
+// request, and so does a closed tab. The response closing before its answer
+// is written is the one sign of either, so it stops the CLI where it is
+// (see ai/spawn.js) rather than leave it spending the person's subscription
+// on an answer no one will read. A finished answer closes the response too,
+// after it is written, and stops nothing.
+function stopWhenAbandoned(reply) {
+  const control = new AbortController()
+  reply.raw.once('close', () => {
+    if (!reply.raw.writableFinished) control.abort()
+  })
+  return control.signal
+}
+
 export async function profileRoutes(app) {
   // Tests decorate `cli` with fakes before ready() so no real CLI is spawned.
   const cli = app.hasDecorator('cli') ? app.cli : {}
@@ -74,6 +88,7 @@ export async function profileRoutes(app) {
     const userId = request.user.sub
     const text = await app.dashboard.getResumeText(userId)
     if (!text) return reply.code(400).send({ error: 'Upload a resume first.' })
-    return answer(request, reply, (emit) => readResume(app, userId, text, { ...cli, select: app.ai.select, emit }))
+    const signal = stopWhenAbandoned(reply)
+    return answer(request, reply, (emit) => readResume(app, userId, text, { ...cli, select: app.ai.select, emit, signal }))
   })
 }

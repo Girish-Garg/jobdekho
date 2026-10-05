@@ -133,7 +133,7 @@ describe('FillFromResume, choosing how', () => {
 });
 
 describe('FillFromResume while it reads', () => {
-  it('ticks off its steps from the call events, naming the CLI, with no Stop it could not honour', async () => {
+  it('ticks off its steps from the call events, naming the CLI, with a Stop while it reads', async () => {
     let finish;
     extractProfile.mockImplementationOnce(async ({ onEvent }) => {
       onEvent({ event: 'start', provider: 'claude', path: 'C:\\npm\\claude.cmd' });
@@ -150,7 +150,7 @@ describe('FillFromResume while it reads', () => {
     const steps = within(screen.getByRole('list', { name: 'Progress' }));
     expect(steps.getByText('Finding roles, projects and skills').closest('li')).toHaveAttribute('aria-current', 'step');
     expect(screen.getByText('Usually 20 to 40 seconds')).toBeInTheDocument();
-    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    expect(screen.getAllByRole('button').map((b) => b.textContent)).toEqual(['Stop']);
 
     finish();
     await waitFor(() => expect(steps.getByText('Ready for you to review').closest('li')).not.toHaveAttribute('aria-current'));
@@ -171,6 +171,38 @@ describe('FillFromResume while it reads', () => {
     await fill();
     await screen.findByRole('button', { name: 'Fill in from resume' }, { timeout: 2000 });
     expect(screen.queryByText(/changes to review/)).not.toBeInTheDocument();
+  });
+});
+
+// A Stop drops the request, which is what stops the CLI on the server; the
+// call then rejects as stopped (see lib/aiCall.js), the way it does here.
+const stoppable = () => extractProfile.mockImplementationOnce(({ signal }) => new Promise((resolve, reject) => {
+  signal.addEventListener('abort', () => reject(Object.assign(new Error('Stopped.'), { kind: 'stopped' })));
+}));
+
+describe('FillFromResume stopped', () => {
+  it('aborts the read and goes back to its button, saying nothing was changed', async () => {
+    stoppable();
+    const onFound = vi.fn(() => REVIEW);
+    render(<FillFromResume profile={EMPTY} onFound={onFound} />);
+    await fill();
+    const { signal } = extractProfile.mock.calls[0][0];
+    fireEvent.click(await screen.findByRole('button', { name: 'Stop' }));
+    expect(signal.aborted).toBe(true);
+    const said = await screen.findByText('Stopped. Nothing was changed.');
+    expect(said).toHaveAttribute('aria-live', 'polite');
+    expect(button()).toBeEnabled();
+    expect(onFound).not.toHaveBeenCalled();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('stops the read when the card goes away mid-run', async () => {
+    stoppable();
+    const { unmount } = render(<FillFromResume profile={EMPTY} onFound={() => REVIEW} />);
+    await fill();
+    const { signal } = extractProfile.mock.calls[0][0];
+    unmount();
+    expect(signal.aborted).toBe(true);
   });
 });
 
