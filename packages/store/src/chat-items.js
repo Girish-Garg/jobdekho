@@ -51,9 +51,11 @@ export function homeItem(chat) {
 
 // The chat's lists with one item added or removed: { jobs, documents }, or
 // { error } saying why not. Adding what is already there, or removing what
-// is not, changes nothing, so a repeated click is harmless.
+// is not, changes nothing, so a repeated click is harmless. The type is the
+// request's own word, so only ITEM_TYPES' own keys count: "constructor" is
+// a key every plain object has.
 export function withItem(chat, { action, type, id }) {
-  const key = ITEM_TYPES[type]
+  const key = Object.hasOwn(ITEM_TYPES, type) ? ITEM_TYPES[type] : null
   if (!key || typeof id !== 'string' || !id) return { error: 'Say which job or document to add or remove.' }
   const lists = { jobs: [...chat.jobs], documents: [...chat.documents] }
   const has = lists[key].includes(id)

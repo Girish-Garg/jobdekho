@@ -22,14 +22,16 @@ const CLASSES = new Set(['article', 'letter'])
 // package, and key-value packages pick them up.
 const OPTION_CHARS = /^[A-Za-z0-9\s.,=+\-!{}]*$/
 const FILE_KEYS = /(?:^|[\s,{])(?:config|file|input|load)\w*\s*=/i
-const OPTION_VALUES = { fontenc: new Set(['T1', 'OT1', 'LY1']), inputenc: new Set(['utf8']) }
+// A Map, since the names are the document's: in a plain object a package
+// named "constructor" found a function and the check threw.
+const OPTION_VALUES = new Map([['fontenc', new Set(['T1', 'OT1', 'LY1'])], ['inputenc', new Set(['utf8'])]])
 
 const optionsSafe = (option) => option === null || (OPTION_CHARS.test(option) && !option.includes('..') && !FILE_KEYS.test(option))
 
 function valuesAllowed(names, option) {
   if (option === null) return true
   const values = option.split(',').map((v) => v.trim()).filter(Boolean)
-  return names.every((name) => !OPTION_VALUES[name] || values.every((v) => OPTION_VALUES[name].has(v)))
+  return names.every((name) => !OPTION_VALUES.has(name) || values.every((v) => OPTION_VALUES.get(name).has(v)))
 }
 
 function checkClass({ option, group }, report) {

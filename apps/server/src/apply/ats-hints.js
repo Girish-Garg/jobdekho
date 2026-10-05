@@ -50,10 +50,14 @@ const HINTS = {
 // picked from it, so they are answered like a combobox.
 const SUGGESTING = { lever: new Set(['location']) }
 
+// The id and name are the page's, so only the table's own keys count: an id
+// "toString" would otherwise find a function and call it a slot.
+const hinted = (table, key) => (Object.hasOwn(table, key) ? table[key] : null)
+
 export function hintFor(ats, field) {
   const table = HINTS[ats]
   if (!table) return null
-  return table[field.id] ?? table[String(field.name).toLowerCase()] ?? null
+  return hinted(table, field.id) ?? hinted(table, String(field.name).toLowerCase())
 }
 
 export const suggests = (ats, field) => SUGGESTING[ats]?.has(field.name) ?? false

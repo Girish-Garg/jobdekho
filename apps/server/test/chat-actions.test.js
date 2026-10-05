@@ -8,6 +8,12 @@ describe('validateActions', () => {
     expect(validateActions('nope')).toEqual([])
   })
 
+  // A small local model can write the patch as a bare word: no patch, not
+  // a failed answer.
+  it('drops a filters action whose patch is not an object', () => {
+    for (const patch of ['remote', 5, true]) expect(validateActions([{ type: 'filters', patch }])).toEqual([])
+  })
+
   it('accepts a filters action naming only known keys, labelled from the cleaned patch', () => {
     const [action] = validateActions([{ type: 'filters', patch: { levels: ['mid'], minFit: '55' } }])
     expect(action).toEqual({ type: 'filters', patch: { levels: ['mid'], minFit: '55' }, label: 'Show mid level, grade A' })

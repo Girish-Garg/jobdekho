@@ -38,7 +38,7 @@ const NAV = {
 }
 
 async function navigate(s, go) {
-  const act = NAV[go]
+  const act = Object.hasOwn(NAV, go) ? NAV[go] : null
   if (act && s.active?.page) await act(s.active.page).catch(() => null)
 }
 

@@ -50,10 +50,13 @@ const FILTER_KEYS = {
   companies: (v) => (Array.isArray(v) ? v.filter((s) => typeof s === 'string' && s.trim()).map((s) => s.trim()).slice(0, 20) : undefined),
 }
 
+// The patch is the model's, and a small one can write it as a bare word,
+// which `in` throws on: that is no patch, not a failed answer.
 function cleanFilterPatch(raw) {
   const patch = {}
+  if (!raw || typeof raw !== 'object') return patch
   for (const [key, clean] of Object.entries(FILTER_KEYS)) {
-    if (!raw || !(key in raw)) continue
+    if (!(key in raw)) continue
     const value = clean(raw[key])
     if (value !== undefined) patch[key] = value
   }

@@ -68,7 +68,7 @@ export function texToText(tex) {
     else if (BREAKS.has(t.name)) out += '\n'
     else if (Object.hasOwn(CHARACTERS, t.name)) out += CHARACTERS[t.name]
     k = skipGroup(tokens, k, '[', ']')
-    for (let n = SETTINGS_ARGS[t.name] ?? 0; n > 0; n -= 1) k = skipGroup(tokens, k, '{', '}')
+    for (let n = Object.hasOwn(SETTINGS_ARGS, t.name) ? SETTINGS_ARGS[t.name] : 0; n > 0; n -= 1) k = skipGroup(tokens, k, '{', '}')
   }
   return out.replace(DIMENSION, ' ').split('\n').map((line) => line.replace(/\s+/g, ' ').trim()).filter(Boolean).join('\n')
 }

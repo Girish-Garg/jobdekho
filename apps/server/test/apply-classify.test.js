@@ -48,6 +48,14 @@ describe('classify: facts JobDekho fills', () => {
     expect(slot({ type: 'file', label: 'Portfolio sample' })).toEqual({ kind: 'file', slot: null })
     expect(slot({ type: 'file', label: 'Resume', visible: false })).toMatchObject({ kind: 'file', slot: 'resume' })
   })
+
+  // A page names its own fields, and a name every plain object answers to
+  // (constructor, toString) once read as a slot of its own.
+  it('reads a field named like a property every object has by what it says', () => {
+    expect(slot({ type: 'email', name: 'email', label: 'Email', ac: 'constructor' })).toMatchObject({ kind: 'slot', slot: 'email' })
+    expect(slot({ type: 'email', id: 'toString', label: 'Email' }, 'greenhouse')).toMatchObject({ kind: 'slot', slot: 'email' })
+    expect(slot({ type: 'file', id: 'constructor', name: 'Constructor', label: 'Resume/CV' }, 'lever')).toEqual({ kind: 'file', slot: 'resume' })
+  })
 })
 
 describe('classify: never the candidate', () => {

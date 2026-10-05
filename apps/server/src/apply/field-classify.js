@@ -56,7 +56,10 @@ export function classify(f, ats = 'generic') {
     const found = FILE_PATTERNS.find(([, pattern]) => pattern.test(words))
     return { kind: 'file', slot: hintFor(ats, f) ?? found?.[0] ?? null }
   }
-  const slot = DECLARED[f.ac] ?? hintFor(ats, f) ?? namedSlot(words)
+  // The page's own autocomplete word: only DECLARED's own keys count, or
+  // "constructor" would name a slot.
+  const declared = Object.hasOwn(DECLARED, f.ac) ? DECLARED[f.ac] : null
+  const slot = declared ?? hintFor(ats, f) ?? namedSlot(words)
   const via = viaOf(f, ats)
   // A slot is only ever answered by typing or by picking from a list; a
   // lone checkbox or radio is a question for the person whatever it says.

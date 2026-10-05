@@ -83,6 +83,9 @@ describe('what a chat may hold', () => {
     expect(withItem(compare, { action: 'remove', type: 'job', id: 'p2' })).toEqual({ error: 'A comparison holds two to five jobs.' })
     expect(withItem(compare, { action: 'swap', type: 'job', id: 'p3' })).toEqual({ error: 'Say whether to add or remove it.' })
     expect(withItem(compare, { action: 'add', type: 'posting', id: 'p3' })).toEqual({ error: 'Say which job or document to add or remove.' })
+    for (const type of ['constructor', 'toString', '__proto__']) {
+      expect(withItem(compare, { action: 'add', type, id: 'p3' })).toEqual({ error: 'Say which job or document to add or remove.' })
+    }
   })
 })
 

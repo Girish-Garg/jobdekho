@@ -202,6 +202,14 @@ describe('the LaTeX guard on classes, packages and environments', () => {
     expect(checkTex('\\usepackage[includeheadfoot, top=1cm]{geometry}').ok).toBe(true)
   })
 
+  // Every plain object answers "constructor" and its kin with a function of
+  // its own: the option check threw on such a name instead of refusing it.
+  it('refuses a package named like a property every object has, with options too', () => {
+    for (const name of ['constructor', 'toString', 'hasOwnProperty', '__proto__']) {
+      expect(checkTex(`\\usepackage[T1]{${name}}`).ok).toBe(false)
+    }
+  })
+
   it('allows standard and document-defined environments, and nothing else', () => {
     expect(refused('\\begin{itemize}\\item a\\end{itemize}\\begin{tabular}{ll}a & b\\end{tabular}').ok).toBe(true)
     expect(refused('\\begin{tikzpicture}\\end{tikzpicture}').problems[0]).toMatch(/"tikzpicture" environment is not on/)
