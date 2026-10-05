@@ -52,10 +52,10 @@ async function mount() {
 }
 
 describe('SettingsView structure', () => {
-  it('renders the cards in order: the setup check and the AI, then postings and the companies blocked from them, appearance and data', async () => {
+  it('renders the cards in order: the setup check and the AI, then postings and the companies blocked from them, appearance and data, and About last', async () => {
     await mount();
     const headings = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent);
-    expect(headings).toEqual(['Setup check', 'AI CLI', 'Postings', 'Blocked companies', 'Adzuna', 'Appearance', 'Your data']);
+    expect(headings).toEqual(['Setup check', 'AI CLI', 'Postings', 'Blocked companies', 'Adzuna', 'Appearance', 'Your data', 'About JobDekho']);
   });
 
   it('puts the theme choice under Appearance', async () => {
