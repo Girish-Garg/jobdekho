@@ -11,14 +11,18 @@ import { companyKey } from './company-key.js'
 // titles read Senior, Lead, AVP or VP, as the title rules read a bank's VP
 // ranks. Its Analyst block also sits on a "Senior Test Engineer", so it is
 // left out.
-const LADDERS = {
-  barclays: [[/^[^\S\n]*((?:Assistant )?Vice President) Expectations[^\S\n]*$/m, 'senior']],
-}
+//
+// A Map, not an object: the key is scraped text, and a real employer named
+// Constructor keys to "constructor", which every plain object answers with
+// a function of its own (see graduate-programmes.js).
+const LADDERS = new Map([
+  ['barclays', [[/^[^\S\n]*((?:Assistant )?Vice President) Expectations[^\S\n]*$/m, 'senior']]],
+])
 
 // [{ level, evidence, rule }] for the rungs the company's ladder names.
 export function ladderIn(description = '', company = '') {
   const found = []
-  for (const [re, level] of LADDERS[companyKey(company)] ?? []) {
+  for (const [re, level] of LADDERS.get(companyKey(company)) ?? []) {
     const m = re.exec(description)
     if (m) found.push({ level, evidence: `Says "${m[1]} Expectations", a bank rank`, rule: 'ladder' })
   }

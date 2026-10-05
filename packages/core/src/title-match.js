@@ -32,6 +32,9 @@ const FAMILY = {
   frontend: { fullstack: 0.6, web: 0.7, ui: 0.6 },
   backend: { fullstack: 0.6, software: 0.5, api: 0.5, server: 0.5 },
 }
+// Own keys only: both words are titles' own, and a title word "constructor"
+// found the Object function in every row, which scored the match as none.
+const near = (w, h) => (Object.hasOwn(FAMILY, w) && Object.hasOwn(FAMILY[w], h) ? FAMILY[w][h] : 0)
 
 // Words that make it a different job, checked only when no wanted title
 // holds them, and only the strongest counts. The first group changes the
@@ -52,7 +55,7 @@ export function titleMatch(postingTitle, wanted) {
   let best = { value: 0, changedBy: null }
   for (const want of wanted) {
     let got = 0
-    for (const w of want) got += hay.includes(w) ? 1 : Math.max(0, ...hay.map((h) => FAMILY[w]?.[h] ?? 0))
+    for (const w of want) got += hay.includes(w) ? 1 : Math.max(0, ...hay.map((h) => near(w, h)))
     const changer = hay.filter((h) => CHANGE.has(h) && !want.includes(h)).sort((a, b) => CHANGE.get(a) - CHANGE.get(b))[0]
     const value = (got / want.length) * (changer ? CHANGE.get(changer) : 1)
     if (value > best.value) best = { value, changedBy: changer ?? null }

@@ -20,6 +20,9 @@ export function placesOf(item) {
 // Oracle's own codes, not the label, which each company rewords ("Hybrid/Club"
 // at Icertis, "Work From Home" at EXL). core's work mode reads the tag.
 const WORKPLACE = { ORA_REMOTE: 'Remote', ORA_HYBRID: 'Hybrid', ORA_ON_SITE: 'On-site' }
+// The code is the site's own: only the table's keys count, not the names
+// every plain object answers to.
+const workplaceOf = (code) => (Object.hasOwn(WORKPLACE, code ?? '') ? WORKPLACE[code] : null)
 
 // The body is the posting's own three sections. The corporate and legal
 // blocks beside them are left out: they are the same text on every posting a
@@ -45,7 +48,7 @@ export function toPosting(row, info, { site, company }) {
     location: placesOf(info?.PrimaryLocation ? info : row),
     url: `${site.publicBase}/job/${encodeURIComponent(id)}`,
     description: body(info),
-    tags: [WORKPLACE[info?.WorkplaceTypeCode || row?.WorkplaceTypeCode], info?.JobSchedule].filter(Boolean),
+    tags: [workplaceOf(info?.WorkplaceTypeCode || row?.WorkplaceTypeCode), info?.JobSchedule].filter(Boolean),
     postedAt: toIso(info?.ExternalPostedStartDate) || toIso(row?.PostedDate),
   }
 }

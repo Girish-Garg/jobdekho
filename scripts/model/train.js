@@ -21,8 +21,11 @@ const MODELS = { level: trainLevel, sections: trainSections }
 const SHIPPED = new Set(['sections'])
 
 const args = process.argv.slice(2)
-const names = args.filter((arg) => MODELS[arg])
-const paths = args.filter((arg) => !MODELS[arg])
+// Own keys only, so a postings file named like an object property
+// ("constructor") stays a file to read.
+const isModel = (arg) => Object.hasOwn(MODELS, arg)
+const names = args.filter(isModel)
+const paths = args.filter((arg) => !isModel(arg))
 const { postings, files } = loadPostings(paths.length ? paths : defaultFiles())
 console.log(`${postings.length} distinct postings from ${files.map((f) => `${f.file} (${f.rows} rows, ${f.date})`).join(', ')}`)
 

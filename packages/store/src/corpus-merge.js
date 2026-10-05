@@ -58,7 +58,16 @@ export function refreshed(existing, row) {
   // A sighting that could not say how the board files the experience asked
   // keeps the filing it had, and the tags read from it.
   const unsaid = !row.board?.seniority && Boolean(existing.board?.seniority)
-  return bare || unsaid ? tagRow({ ...out, board: boardOf(existing, row) }) : out
+  if (!bare && !unsaid) return out
+  const merged = { ...out, board: boardOf(existing, row) }
+  // This runs inside the scrape's one write: a row the rules cannot read
+  // keeps the tags it had, as it does on load (core's retag.js), rather
+  // than losing every source's postings with it.
+  try {
+    return tagRow(merged)
+  } catch {
+    return merged
+  }
 }
 
 // Postings a source listed but did not send, because the store already held

@@ -21,7 +21,7 @@ const USAGE = 'Usage: npm run review:model -- sections [--draw-only] [postings.n
 const args = process.argv.slice(2)
 const drawOnly = args.includes('--draw-only')
 const [model, ...paths] = args.filter((arg) => arg !== '--draw-only')
-if (!OUTPUTS[model]) {
+if (!Object.hasOwn(OUTPUTS, String(model))) {
   console.error(USAGE)
   process.exit(1)
 }

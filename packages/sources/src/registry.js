@@ -46,19 +46,24 @@ const COMPANIES = {
 // on every run.
 const BOARDS = { internshala, unstop, adzuna, remotive, remoteok, arbeitnow, linkedin, instahyre, 'hn-hiring': hnHiring }
 
+// The names are the companies file's, which a person can edit: only the
+// tables' own keys count, or "constructor" would build a broken source that
+// stopped every refresh before it began.
+const has = (table, name) => Object.hasOwn(table, name)
+
 export function buildAdapters(config) {
   const adapters = []
   for (const p of config.providers || []) {
     // The whole entry, not just the slug: a Workday board is addressed by its
     // careers site URL and named by its company, which one slug cannot carry.
     // An entry's tags ("YC W21") go on every posting it sends (tagged.js).
-    if (PROVIDERS[p.provider]) adapters.push(withTags(PROVIDERS[p.provider](p), p.tags))
+    if (has(PROVIDERS, p.provider)) adapters.push(withTags(PROVIDERS[p.provider](p), p.tags))
   }
   for (const name of config.companies || []) {
-    if (COMPANIES[name]) adapters.push(COMPANIES[name]())
+    if (has(COMPANIES, name)) adapters.push(COMPANIES[name]())
   }
   for (const name of config.boards || []) {
-    if (BOARDS[name]) adapters.push(BOARDS[name]())
+    if (has(BOARDS, name)) adapters.push(BOARDS[name]())
   }
   return adapters
 }

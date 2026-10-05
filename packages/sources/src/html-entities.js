@@ -25,5 +25,7 @@ export function decodeEntities(text) {
     // the text arrives as &amp;amp; and "L&D" was stored as "L D".
     .replace(/&amp;(?:amp;)*/g, '&')
     .replace(/&#(\d+);|&#x([0-9a-f]+);/gi, (_, dec, hex) => fromCode(dec ? Number(dec) : parseInt(hex, 16)))
-    .replace(/&([a-z]+);/gi, (_, name) => NAMED[name.toLowerCase()] ?? ' ')
+    // Own keys only: "&constructor;" found the Object function and wrote
+    // its source into the description.
+    .replace(/&([a-z]+);/gi, (_, name) => (Object.hasOwn(NAMED, name.toLowerCase()) ? NAMED[name.toLowerCase()] : ' '))
 }
