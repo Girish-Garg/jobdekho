@@ -17,7 +17,7 @@ import { scrapeRunner } from './run.js'
 // `userId` is whose Adzuna key and LinkedIn switch a run obeys (see run.js).
 // `run` is for tests, which pass a fake so no source is ever fetched.
 export function createScrapeService(store, {
-  userId = null, run = scrapeRunner(store, { userId }), now = Date.now, log = null,
+  userId = null, log = null, run = scrapeRunner(store, { userId, log }), now = Date.now,
 } = {}) {
   return {
     job: createScrapeJob({ run, now, log }),

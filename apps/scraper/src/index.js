@@ -21,6 +21,7 @@ async function main() {
   console.log(`  ${summary.closed} found closed; ${summary.checked} posting links checked.`)
   if (summary.blocked) console.log(`  ${summary.blocked} from companies you blocked left out.`)
   for (const r of summary.results) console.log(`  ${r.name}: ${outcome(r)}${r.note ? ` (${r.note})` : ''}`)
+  for (const u of summary.unread) console.error(`  Left out "${u.title}" at ${u.company} from ${u.source}: the rules could not read it.`, u.error)
 }
 
 main().catch((err) => { console.error(err); process.exit(1) })

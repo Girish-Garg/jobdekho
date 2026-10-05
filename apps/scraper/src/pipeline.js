@@ -11,6 +11,24 @@ const DEFAULT_PORTS = { getExistingIds, upsertPostings, recordRun }
 // for the store's closure rules.
 const withDeadline = (posting, raw) => (posting && raw?.closesAt ? { ...posting, closesAt: raw.closesAt } : posting)
 
+// A posting the rules cannot read is left out, not the whole run: a refresh
+// reads thousands from hundreds of sources, and one company named
+// Constructor once threw here and lost every one of them (see core's
+// graduate-programmes.js). What was left out comes back, error and all, for
+// whoever runs the scrape to log.
+function normalizeEach(items) {
+  const unread = []
+  const postings = items.flatMap(({ source, raw }) => {
+    try {
+      return [withDeadline(normalize(raw, source), raw)]
+    } catch (error) {
+      unread.push({ source, title: raw?.title ?? '', company: raw?.company ?? '', error })
+      return []
+    }
+  })
+  return { postings, unread }
+}
+
 // rules is config/filters.json, the scraper's own relevance floor: what
 // counts as worth keeping at all, independent of anyone's saved feed filter.
 //
@@ -26,7 +44,7 @@ const withDeadline = (posting, raw) => (posting && raw?.closesAt ? { ...posting,
 // is dropped like an irrelevant one, so a block keeps it out of the corpus
 // for good; `blocked` counts them for the run's summary.
 export async function runPipeline({ items, results, seen = [], closure = {} }, { db, rules, runId, ports = DEFAULT_PORTS, now = Date.now(), isBlocked = () => false }) {
-  const normalized = items.map(({ source, raw }) => withDeadline(normalize(raw, source), raw))
+  const { postings: normalized, unread } = normalizeEach(items)
   const kept = normalized.filter((p) => filter(p, rules))
   const relevant = kept.filter((p) => !isBlocked(p))
   const recent = relevant.filter((p) => !postedTooLongAgo(p, now))
@@ -37,5 +55,5 @@ export async function runPipeline({ items, results, seen = [], closure = {} }, {
   const checked = closure.checked ?? 0
   await ports.recordRun(db, { id: runId, sourceResults: results, newCount: fresh.length, closed, checked })
   const blocked = kept.length - relevant.length
-  return { total: all.length, fresh: fresh.length, freshPostings: fresh, tooOld: relevant.length - recent.length, blocked, removed, closed, checked }
+  return { total: all.length, fresh: fresh.length, freshPostings: fresh, tooOld: relevant.length - recent.length, blocked, removed, closed, checked, unread }
 }
