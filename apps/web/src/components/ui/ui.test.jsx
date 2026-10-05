@@ -142,6 +142,13 @@ describe('text fields', () => {
     fireEvent.change(box, { target: { value: 'razor' } });
     expect(onChange).toHaveBeenCalledTimes(1);
   });
+
+  // An inline wrapper ignored a margin given to it: the blocked companies'
+  // search sat flush on the chips under it.
+  it('wraps the box in a block, so a margin given to it holds', () => {
+    render(<SearchField label="Find a company" value="" onChange={() => {}} className="mb-3" />);
+    expect(screen.getByRole('textbox', { name: 'Find a company' }).parentElement).toHaveClass('block', 'mb-3');
+  });
 });
 
 describe('marks', () => {

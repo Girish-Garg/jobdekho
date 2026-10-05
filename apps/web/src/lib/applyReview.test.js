@@ -126,10 +126,10 @@ describe('applyReview on a record that moved on', () => {
     expect(applyReview(typed, pick(review, 'basics:email')).basics.email).toBe('typed@example.com');
   });
 
-  it('stops Best fit at 25 skills however many are kept', () => {
-    const full = withDefaults({ skills: Array.from({ length: 24 }, (_, i) => `s${i}`) });
+  it('stops Best fit at 40 skills however many are kept', () => {
+    const full = withDefaults({ skills: Array.from({ length: 39 }, (_, i) => `s${i}`) });
     const rows = buildReview(full, { ranking: { skills: ['go', 'rust'] } }, 'smart').rows.map((row) => ({ ...row, ticked: true }));
-    expect(applyReview(full, rows).skills).toHaveLength(25);
+    expect(applyReview(full, rows).skills).toHaveLength(40);
   });
 
   it('changes nothing for nothing kept', () => {

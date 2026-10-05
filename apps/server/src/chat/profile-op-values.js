@@ -1,4 +1,5 @@
 import { DEGREES } from '@jobdekho/core/degree.js'
+import { MAX_SKILLS } from '@jobdekho/core/profile.js'
 import { normalizeLinks } from '@jobdekho/store/profile-links.js'
 
 // The values a profile op may carry, cleaned before anything is stored:
@@ -62,7 +63,8 @@ export function entryFields(raw) {
 
 export const BASICS_TEXT = { name: 120, headline: 200, email: 200, phone: 60, location: 120 }
 export const LINK_KEYS = ['github', 'linkedin', 'portfolio']
-const LIST_FIELDS = { skills: [60, 60], titles: [25, 80], locations: [20, 80] }
+// Skills and titles stop where Best fit's save does (core's profile.js).
+const LIST_FIELDS = { skills: [MAX_SKILLS, 60], titles: [MAX_SKILLS, 80], locations: [20, 80] }
 export const SET_FIELDS = [...Object.keys(BASICS_TEXT), 'links', 'moreLinks', ...Object.keys(LIST_FIELDS), 'years', 'degree']
 export const GROUP_NAME = 60
 export const GROUP_ITEMS = [40, 60]

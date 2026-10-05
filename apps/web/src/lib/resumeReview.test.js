@@ -59,7 +59,7 @@ describe('buildReview with Smart add', () => {
   });
 
   it('remembers the room Best fit has left', () => {
-    expect(review.room).toEqual({ skills: 25, titles: 25 });
+    expect(review.room).toEqual({ skills: 40, titles: 40 });
   });
 });
 

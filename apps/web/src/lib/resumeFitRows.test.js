@@ -20,11 +20,11 @@ describe('fitRows with Smart add', () => {
     expect(same.map((item) => item.label)).toEqual(['react', 'Backend Engineer']);
   });
 
-  it('ticks only as many as the 25 the field keeps, and offers the rest unticked', () => {
-    const full = withDefaults({ skills: many(24, 'skill') });
+  it('ticks only as many as the 40 the field keeps, and offers the rest unticked', () => {
+    const full = withDefaults({ skills: many(39, 'skill') });
     const rows = fitRows(full, { skills: ['go', 'rust', 'zig'] }, 'smart', []);
     expect(rows.map((row) => row.ticked)).toEqual([true, false, false]);
-    expect(roomOf(full)).toEqual({ skills: 1, titles: 25 });
+    expect(roomOf(full)).toEqual({ skills: 1, titles: 40 });
   });
 
   it('fills an empty years and degree, ticked, and offers a different one unticked', () => {

@@ -3,6 +3,7 @@ import { render, screen, fireEvent, within } from '@testing-library/react';
 import ResumeReview from './ResumeReview.jsx';
 import { buildReview } from '../lib/resumeReview.js';
 import { withDefaults } from '../lib/emptyProfile.js';
+import { MAX_SKILLS } from '../lib/groupSkills.js';
 
 const role = (id, title, organisation, more = {}) => ({ id, title, organisation, location: '', startDate: '', endDate: '', bullets: [], tech: [], pinned: false, weight: 0, ...more });
 
@@ -93,13 +94,13 @@ describe('ResumeReview', () => {
   });
 
   it('shows skills as chips to toggle, and stops at the room Best fit has', () => {
-    const full = withDefaults({ ...PROFILE, skills: Array.from({ length: 24 }, (_, i) => `s${i}`).concat('grpc') });
+    const full = withDefaults({ ...PROFILE, skills: Array.from({ length: MAX_SKILLS - 1 }, (_, i) => `s${i}`).concat('grpc') });
     shown('overwrite', full);
     const fit = group('Best fit');
     const kube = fit.getByRole('button', { name: 'Add Kubernetes' });
     expect(kube).toHaveAttribute('aria-pressed', 'false');
     expect(kube).toBeDisabled();
-    expect(fit.getByText('Best fit keeps 25 skills')).toBeInTheDocument();
+    expect(fit.getByText('Best fit keeps 40 skills')).toBeInTheDocument();
     expect(fit.getByText('Skills, not on the resume')).toBeInTheDocument();
     // Ticking a removal makes room for one more.
     fireEvent.click(fit.getByRole('button', { name: 'Remove grpc' }));

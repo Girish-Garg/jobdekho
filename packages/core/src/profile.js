@@ -21,9 +21,12 @@ function clean(list, keepCase = false) {
   return out
 }
 
-// Enough to rank well. A resume listing 40 skills is mostly listing noise,
-// and every skill listed is one more thing each posting is checked for.
-const MAX_SKILLS = 25
+// How many skills, and how many titles, Best fit keeps. The owner found 25
+// too few for a real stack and asked for 40. More only helps a match: the
+// fit is the share of a posting's asked skills the person holds, so a
+// longer list never dilutes it. The web form and the chat stop at the same
+// number (the web's groupSkills.js, the server's chat/profile-op-values.js).
+export const MAX_SKILLS = 40
 
 // Number(null) and Number('') are both 0, so an unstated number of years read
 // as a zero-year fresher rather than as unknown. GET /api/profile returns null

@@ -1,6 +1,7 @@
-// Mirrors the cap core's normalizeProfile applies to the Best fit skills, so
-// the field stops at what the server keeps instead of a save cutting it.
-export const MAX_SKILLS = 25;
+// Mirrors the cap core's normalizeProfile applies to the Best fit skills and
+// titles (40, the owner's number), so the field stops at what the server
+// keeps instead of a save cutting it. A test holds the two equal.
+export const MAX_SKILLS = 40;
 
 const key = (skill) => String(skill).trim().toLowerCase();
 

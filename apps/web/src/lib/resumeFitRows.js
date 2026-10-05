@@ -2,8 +2,9 @@ import { MAX_SKILLS } from './groupSkills.js';
 
 const LISTS = ['skills', 'titles', 'locations'];
 
-// Best fit keeps 25 skills, and the server keeps 25 titles the same way (see
-// core's normalizeProfile), so a tick past either would be cut by the save.
+// Best fit keeps MAX_SKILLS skills, and the server keeps as many titles the
+// same way (see core's normalizeProfile), so a tick past either would be cut
+// by the save.
 // Places are not counted.
 export const CAPPED = ['skills', 'titles'];
 

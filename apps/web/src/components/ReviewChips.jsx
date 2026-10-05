@@ -1,6 +1,7 @@
 import Chip from './ui/Chip.jsx';
+import { MAX_SKILLS } from '../lib/groupSkills.js';
 
-const FULL = 'Best fit keeps 25. Untick one, or remove one, to make room.';
+const FULL = `Best fit keeps ${MAX_SKILLS}. Untick one, or remove one, to make room.`;
 
 // One skill, title or place to add or remove, as a chip that toggles. An
 // addition reads "+ Go", saffron while kept and struck through once
@@ -40,7 +41,7 @@ export default function ReviewChips({ lines, picked, onToggle, isLocked }) {
           {line.rows.map((row) => (
             <ToggleChip key={row.id} row={row} on={picked.has(row.id)} locked={isLocked(row)} onToggle={() => onToggle(row.id)} />
           ))}
-          {line.rows.some(isLocked) && <span className="ml-1 text-xs text-muted">Best fit keeps 25 {line.field}</span>}
+          {line.rows.some(isLocked) && <span className="ml-1 text-xs text-muted">Best fit keeps {MAX_SKILLS} {line.field}</span>}
         </div>
       ))}
     </div>

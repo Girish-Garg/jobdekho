@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { normalizeProfile } from '@jobdekho/core/profile.js'
+import { normalizeProfile, MAX_SKILLS } from '@jobdekho/core/profile.js'
 
 describe('normalizeProfile', () => {
   it('lowercases, dedupes and drops blanks', () => {
@@ -28,9 +28,11 @@ describe('normalizeProfile', () => {
     expect(normalizeProfile({ years: '4' }).years).toBe(4)
   })
 
-  // A resume listing 40 skills is mostly listing noise.
-  it('caps the skill list', () => {
+  // The owner asked for 40, up from 25.
+  it('caps the skill and title lists at 40', () => {
     const many = Array.from({ length: 60 }, (_, i) => `skill${i}`)
-    expect(normalizeProfile({ skills: many }).skills).toHaveLength(25)
+    expect(MAX_SKILLS).toBe(40)
+    expect(normalizeProfile({ skills: many }).skills).toHaveLength(40)
+    expect(normalizeProfile({ titles: many }).titles).toHaveLength(40)
   })
 })
