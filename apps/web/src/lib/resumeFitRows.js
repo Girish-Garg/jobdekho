@@ -8,7 +8,6 @@ const LISTS = ['skills', 'titles', 'locations'];
 export const CAPPED = ['skills', 'titles'];
 
 const key = (value) => String(value ?? '').trim().toLowerCase();
-const said = (value) => Boolean(String(value ?? '').trim());
 
 // The room Best fit has left in each capped list before any of the review
 // is applied.
@@ -56,19 +55,4 @@ export function fitRows(profile, ranking = {}, mode, same) {
     ...oneRow('years', profile.years, ranking?.years, mode, same),
     ...oneRow('degree', profile.degree, ranking?.degree, mode, same),
   ];
-}
-
-const BASICS = ['name', 'headline', 'email', 'phone', 'location'];
-const LINKS = ['github', 'linkedin', 'portfolio'];
-
-// The basics fill only what the person left empty, in either mode: a name
-// or an email they typed is theirs, whatever the resume says.
-export function basicsRows(basics = {}, found = {}) {
-  const fields = [
-    ...BASICS.map((field) => [field, basics?.[field], found?.[field]]),
-    ...LINKS.map((field) => [`links.${field}`, basics?.links?.[field], found?.links?.[field]]),
-  ];
-  return fields
-    .filter(([, mine, theirs]) => !said(mine) && said(theirs))
-    .map(([field, , value]) => ({ id: `basics:${field}`, section: 'basics', field, kind: 'new', value: value.trim(), ticked: true }));
 }

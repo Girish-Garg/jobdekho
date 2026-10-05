@@ -45,8 +45,9 @@ export function applyFit(profile, rows) {
   return next;
 }
 
-// Into an empty field only: the person may have typed one while the review
-// was open, and what they typed wins.
+// A new value goes into an empty field only: the person may have typed one
+// while the review was open, and what they typed wins. A changed one was
+// ticked over the person's own value on purpose, so it replaces it.
 export function applyBasics(basics, rows) {
   if (!rows.length) return basics;
   const next = { ...basics, links: { ...basics?.links } };
@@ -54,7 +55,7 @@ export function applyBasics(basics, rows) {
     const [field, sub] = row.field.split('.');
     const target = sub ? next.links : next;
     const name = sub ?? field;
-    if (!String(target[name] ?? '').trim()) target[name] = row.value;
+    if (row.kind === 'changed' || !String(target[name] ?? '').trim()) target[name] = row.value;
   }
   return next;
 }

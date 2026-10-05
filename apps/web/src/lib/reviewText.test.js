@@ -7,8 +7,8 @@ const rows = (...kinds) => kinds.map((kind, i) => ({ id: `r${i}`, kind, section:
 
 describe('the review summary', () => {
   it('counts the rows by kind, leaving out a kind there is none of', () => {
-    expect(countLabels(rows('new', 'new', 'newer', 'remove'))).toEqual([
-      { kind: 'new', text: '2 new' }, { kind: 'newer', text: '1 newer' }, { kind: 'remove', text: '1 to remove' },
+    expect(countLabels(rows('new', 'new', 'newer', 'changed', 'changed', 'remove'))).toEqual([
+      { kind: 'new', text: '2 new' }, { kind: 'newer', text: '1 newer' }, { kind: 'changed', text: '2 changed' }, { kind: 'remove', text: '1 to remove' },
     ]);
     expect(countLabels(rows('newer'))).toEqual([{ kind: 'newer', text: '1 newer' }]);
   });
@@ -16,6 +16,11 @@ describe('the review summary', () => {
   it('names the mode and says nothing is saved yet', () => {
     expect(summaryLine({ mode: 'smart', rows: rows('new', 'newer') })).toBe('Smart add found 2 changes. Nothing is saved until you apply them and save your profile.');
     expect(summaryLine({ mode: 'overwrite', rows: rows('remove') })).toMatch(/^Overwrite found 1 change\./);
+  });
+
+  it('says how many changes are only the resume saying it differently', () => {
+    expect(summaryLine({ mode: 'overwrite', rows: rows('new', 'changed', 'changed', 'remove') }))
+      .toBe('Overwrite found 4 changes, 2 of them where the resume says it differently. Nothing is saved until you apply them and save your profile.');
   });
 
   it('counts the kept changes on the apply button', () => {
@@ -51,6 +56,8 @@ describe('a row in words', () => {
     expect(rowHeading({ section: 'certifications', kind: 'newer', before: { title: 'Cloud Practitioner', organisation: 'AWS' }, entry: {} }))
       .toEqual({ title: 'Cloud Practitioner', at: 'from AWS', when: '' });
     expect(rowHeading({ section: 'experience', kind: 'new', entry: { organisation: 'Demo Labs' } }).title).toBe('Demo Labs');
+    expect(rowHeading({ section: 'experience', kind: 'changed', before: { title: 'Engineer', organisation: 'Acme' }, entry: { title: 'SDE' } }))
+      .toEqual({ title: 'Engineer', at: 'at Acme', when: '' });
   });
 
   it('notes what a Newer row changes, points last and counted as the new ones', () => {
@@ -64,8 +71,8 @@ describe('a row in words', () => {
 
   it('names a field and its value as the profile does', () => {
     expect([fieldLabel('links.github'), fieldLabel('years'), fieldLabel('titles')]).toEqual(['GitHub', 'Years of experience', 'Target titles']);
-    expect([fieldValue('years', 1), fieldValue('years', 2.5), fieldValue('degree', 'bachelors'), fieldValue('email', 'a@b.c')])
-      .toEqual(['1 year', '2.5 years', "Bachelor's", 'a@b.c']);
+    expect([fieldValue('years', 0), fieldValue('years', 1), fieldValue('years', 2.5), fieldValue('degree', 'bachelors'), fieldValue('email', 'a@b.c')])
+      .toEqual(['Fresher', '1 year', '2.5 years', "Bachelor's", 'a@b.c']);
   });
 });
 

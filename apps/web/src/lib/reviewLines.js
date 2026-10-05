@@ -13,14 +13,15 @@ function endText(section, end, mine) {
 }
 
 // One side of an entry row's detail, as lines of parts: { key, kind,
-// parts: [{ text, mark }] }. Where the two sides of a Newer row differ, the
-// profile's part is marked 'gone' (struck) and the resume's 'added' (lit);
-// a New or a Remove row has one side only and marks nothing. `side` is
-// 'mine' for the profile or 'theirs' for the resume.
+// parts: [{ text, mark }] }. Where the two sides of a Newer or a Changed
+// row differ, the profile's part is marked 'gone' (struck) and the
+// resume's 'added' (lit); a New or a Remove row has one side only and
+// marks nothing. `side` is 'mine' for the profile or 'theirs' for the
+// resume.
 export function detailLines(row, side) {
   const mine = side === 'mine';
-  const entry = mine && row.kind === 'newer' ? row.before : row.entry;
-  const other = row.kind !== 'newer' ? null : mine ? row.entry : row.before;
+  const entry = mine && row.before ? row.before : row.entry;
+  const other = !row.before ? null : mine ? row.entry : row.before;
   const changed = (key) => (row.fields ?? []).includes(key);
   const mark = (key) => (changed(key) ? (mine ? 'gone' : 'added') : null);
   const line = (key, parts, kind = 'text') => ({ key, kind, parts: parts.filter((part) => part.text) });

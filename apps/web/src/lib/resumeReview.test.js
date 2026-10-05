@@ -66,19 +66,55 @@ describe('buildReview with Smart add', () => {
 describe('buildReview with Overwrite', () => {
   const review = buildReview(PROFILE, FOUND, 'overwrite');
 
-  it('does all Smart add does, and lists each entry the resume lacks as a removal left unticked', () => {
+  it('does all Smart add does, takes the resume\'s wording where it differs, and lists each entry the resume lacks as a removal left unticked', () => {
     expect(brief(review.rows)).toEqual([
       ['experience:new:0', true],
       ['experience:newer:oss', true],
       ['projects:new:0', true],
       ['projects:newer:maap', true],
       ['projects:remove:weather', false],
+      ['education:changed:btech', true],
     ]);
-    expect(review.rows.at(-1)).toMatchObject({ kind: 'remove', target: 'weather', entry: PROFILE.projects[1] });
+    expect(review.rows.find((row) => row.kind === 'remove')).toMatchObject({ target: 'weather', entry: PROFILE.projects[1] });
   });
 
-  it('removes nothing that matched, however differently the resume words it', () => {
-    expect(review.rows.some((row) => row.target === 'btech' || row.target === 'ta')).toBe(false);
+  it('offers an entry the resume says differently, with nothing newer, as Changed: ticked, with the profile\'s own beside it', () => {
+    expect(review.rows.at(-1)).toMatchObject({ kind: 'changed', target: 'btech', fields: ['title'], before: PROFILE.education[0] });
+  });
+
+  it('leaves an entry the resume words exactly alike as it is', () => {
+    expect(review.rows.some((row) => row.target === 'ta')).toBe(false);
+    expect(review.same).toEqual([{ section: 'experience', label: 'Teaching Assistant' }]);
+  });
+});
+
+describe('Changed, where Smart add and Overwrite part ways', () => {
+  const ended = withDefaults({ experience: [role('se', 'Software Engineer Intern', 'Acme', { startDate: 'May 2024', endDate: 'Present', bullets: ['Built the billing service'] })] });
+  const resume = { proposed: { experience: [{ title: 'SWE Intern', organisation: 'Acme', startDate: 'May 2024', endDate: 'Aug 2024', bullets: ['Built the billing service in Go'] }] } };
+
+  it('Smart add keeps the profile\'s own: an ended job, a reworded title and points are not news', () => {
+    const smart = buildReview(ended, resume, 'smart');
+    expect(smart.rows).toEqual([]);
+    expect(smart.same).toEqual([{ section: 'experience', label: 'Software Engineer Intern' }]);
+  });
+
+  it('Overwrite takes the resume\'s version of every field it states, ticked', () => {
+    const overwrite = buildReview(ended, resume, 'overwrite');
+    expect(overwrite.rows).toMatchObject([{ id: 'experience:changed:se', kind: 'changed', ticked: true, fields: ['title', 'endDate', 'bullets'] }]);
+  });
+
+  it('Overwrite keeps a newer version Newer, so Changed never hides news', () => {
+    const later = { proposed: { experience: [{ ...resume.proposed.experience[0], bullets: ['One', 'Two'] }] } };
+    expect(buildReview(ended, later, 'overwrite').rows).toMatchObject([{ kind: 'newer', fields: ['title', 'endDate', 'bullets'] }]);
+  });
+
+  it('Overwrite offers a differing basics field unticked, and Smart add never does', () => {
+    const named = withDefaults({ basics: { name: 'Asha R.', email: '' } });
+    const found = { basics: { name: 'Asha Rao', email: 'asha@example.com' } };
+    expect(buildReview(named, found, 'smart').rows.map((row) => [row.id, row.kind, row.ticked])).toEqual([['basics:email', 'new', true]]);
+    expect(buildReview(named, found, 'overwrite').rows.map((row) => [row.id, row.kind, row.ticked])).toEqual([
+      ['basics:name', 'changed', false], ['basics:email', 'new', true],
+    ]);
   });
 });
 
@@ -118,12 +154,17 @@ describe('buildReview, the tricky entries', () => {
 describe('modesDiffer', () => {
   it('is false for a profile with nothing the two modes would treat apart', () => {
     expect(modesDiffer(withDefaults(null))).toBe(false);
-    expect(modesDiffer(withDefaults({ basics: { name: 'Asha Rao' }, skillGroups: [{ id: 'g', name: 'Empty', items: [] }] }))).toBe(false);
+    expect(modesDiffer(withDefaults({ basics: { name: '  ' }, skillGroups: [{ id: 'g', name: 'Empty', items: [] }] }))).toBe(false);
   });
 
-  it('is true once there is an entry, a skill, a title, a place, a years or a degree', () => {
-    for (const held of [{ projects: [role('p', 'X', '')] }, { skills: ['go'] }, { titles: ['sde'] }, { locations: ['pune'] }, { years: 0 }, { degree: 'masters' }, { skillGroups: [{ id: 'g', name: 'Tools', items: ['git'] }] }]) {
-      expect([held, modesDiffer(withDefaults(held))]).toEqual([held, true]);
+  // Overwrite offers a differing basics field too, so a name alone counts.
+  it('is true once there is an entry, a skill, a title, a place, a years, a degree or a basics field', () => {
+    const held = [
+      { projects: [role('p', 'X', '')] }, { skills: ['go'] }, { titles: ['sde'] }, { locations: ['pune'] }, { years: 0 }, { degree: 'masters' },
+      { skillGroups: [{ id: 'g', name: 'Tools', items: ['git'] }] }, { basics: { name: 'Asha Rao' } }, { basics: { links: { github: 'github.com/asha' } } },
+    ];
+    for (const one of held) {
+      expect([one, modesDiffer(withDefaults(one))]).toEqual([one, true]);
     }
   });
 });

@@ -8,10 +8,11 @@ import { counted, joined } from './reviewText.js';
 const capital = (text) => text.charAt(0).toUpperCase() + text.slice(1);
 
 // An entry row's own line: its title, where it was, and when, for a new
-// one (a removal says why it is there instead). A Newer row leaves the
-// when to its note. "from" an issuer, "at" anywhere else.
+// one (a removal says why it is there instead). A Newer or a Changed row
+// is named as the profile has it and leaves the when to its note. "from"
+// an issuer, "at" anywhere else.
 export function rowHeading(row) {
-  const entry = row.kind === 'newer' ? row.before : row.entry;
+  const entry = row.before ?? row.entry;
   const title = entry.title || entry.organisation || 'Untitled';
   const at = entry.title && entry.organisation ? `${row.section === 'certifications' ? 'from' : 'at'} ${entry.organisation}` : '';
   // The resume's own end only reads as now when it says so: a project with
@@ -37,8 +38,9 @@ function fieldWord(row, key) {
   return DATE_WORDS[row.section]?.[key] ?? FIELD_WORDS[key];
 }
 
-// What a Newer row changes, points last: "End date and 2 points", "Live
-// link and 1 point". The count is of points the profile does not have.
+// What a Newer or a Changed row changes, points last: "End date and 2
+// points", "Live link and 1 point". The count is of points the profile does
+// not have.
 export function changeNote(row) {
   const keys = [...row.fields.filter((key) => key !== 'bullets'), ...row.fields.filter((key) => key === 'bullets')];
   return capital(joined(keys.map((key) => fieldWord(row, key))));
@@ -55,8 +57,9 @@ const DEGREES = Object.fromEntries(PROFILE_DEGREE_OPTIONS);
 // A basics field, years or a degree, named as the profile names it.
 export const fieldLabel = (field) => FIELD_LABELS[field] ?? field;
 
+// No years at all reads as "Fresher", the way Best fit's own pill says it.
 export function fieldValue(field, value) {
-  if (field === 'years') return counted(value, 'year');
+  if (field === 'years') return value === 0 ? 'Fresher' : counted(value, 'year');
   if (field === 'degree') return DEGREES[value] ?? String(value);
   return String(value);
 }

@@ -24,11 +24,11 @@ function Side({ row, side, title }) {
   );
 }
 
-// What one entry row would do, opened from its chevron. A Newer row sets
-// the profile's version beside the resume's; a new entry shows only the
-// resume's, and a removal only what is on the profile.
+// What one entry row would do, opened from its chevron. A Newer or a
+// Changed row sets the profile's version beside the resume's; a new entry
+// shows only the resume's, and a removal only what is on the profile.
 export default function ReviewDetail({ row, id }) {
-  const both = row.kind === 'newer';
+  const both = Boolean(row.before);
   return (
     <div id={id} className={`mt-2 grid gap-3 rounded-lg bg-select/60 p-3 text-xs sm:ml-[46px] ${both ? 'sm:grid-cols-2' : ''}`}>
       {(both || row.kind === 'remove') && <Side row={row} side="mine" title="On your profile" />}

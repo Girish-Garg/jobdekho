@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { basicsRows, fitRows, roomOf } from './resumeFitRows.js';
+import { fitRows, roomOf } from './resumeFitRows.js';
 import { skillGroupRows } from './resumeSkillRows.js';
 import { withDefaults } from './emptyProfile.js';
 
@@ -81,26 +81,5 @@ describe('skillGroupRows', () => {
       ['skillGroups:remove:g1:python', 'remove', 'g1', false],
       ['skillGroups:remove:g2:git', 'remove', 'g2', false],
     ]);
-  });
-});
-
-describe('basicsRows', () => {
-  it('fills only the basics the person left empty, ticked, whatever else the resume says', () => {
-    const basics = { name: 'Demo C.', headline: '', email: '  ', phone: '+91 90000 00000', location: '', links: { github: 'https://github.com/typed-by-hand', linkedin: '', portfolio: '' } };
-    const found = {
-      name: 'Demo Candidate', headline: 'Backend engineer', email: 'demo@example.com', phone: '', location: 'Pune',
-      links: { github: 'https://github.com/demo-candidate', linkedin: '', portfolio: 'https://demo.dev' },
-    };
-    expect(basicsRows(basics, found).map((row) => [row.field, row.value, row.ticked])).toEqual([
-      ['headline', 'Backend engineer', true],
-      ['email', 'demo@example.com', true],
-      ['location', 'Pune', true],
-      ['links.portfolio', 'https://demo.dev', true],
-    ]);
-  });
-
-  it('offers nothing when the resume showed nothing, or the profile has no basics yet', () => {
-    expect(basicsRows({ name: '' }, {})).toEqual([]);
-    expect(basicsRows(undefined, { name: 'Demo Candidate' })).toMatchObject([{ field: 'name', value: 'Demo Candidate' }]);
   });
 });

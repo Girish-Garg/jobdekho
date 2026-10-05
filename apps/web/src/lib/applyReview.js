@@ -7,13 +7,14 @@ const of = (rows, kind) => rows.filter((row) => row.kind === kind);
 
 // One section's kept rows, on the list as it is now (the person may have
 // edited it while the review was open). A removal goes by id, and a Newer
-// one takes the resume's word on its changed fields in place, keeping the
-// entry's id, its place and anything the resume has no word on, such as a
-// pin. New ones land after everything, as hand-picked proposals always
-// have (see mergeProposals.js). An entry deleted meanwhile is let go.
+// or a Changed one takes the resume's word on its changed fields in place,
+// keeping the entry's id, its place and anything the resume has no word
+// on, such as a pin. New ones land after everything, as hand-picked
+// proposals always have (see mergeProposals.js). An entry deleted
+// meanwhile is let go.
 function applyEntries(list = [], rows) {
   const gone = new Set(of(rows, 'remove').map((row) => row.target));
-  const newer = new Map(of(rows, 'newer').map((row) => [row.target, row]));
+  const newer = new Map([...of(rows, 'newer'), ...of(rows, 'changed')].map((row) => [row.target, row]));
   const kept = list
     .filter((entry) => !gone.has(entry.id))
     .map((entry) => (newer.has(entry.id) ? mergeEntry(entry, newer.get(entry.id).entry, newer.get(entry.id).fields) : entry));

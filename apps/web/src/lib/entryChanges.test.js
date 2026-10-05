@@ -32,6 +32,20 @@ describe('entryDiff', () => {
   });
 });
 
+describe('entryDiff, read exactly for Overwrite', () => {
+  it('takes a title in other words as a change, and case or punctuation as none', () => {
+    const mine = { ...MINE, title: 'Software Development Engineer' };
+    expect(entryDiff('experience', mine, { title: 'SDE' })).toEqual([]);
+    expect(entryDiff('experience', mine, { title: 'SDE' }, true)).toEqual(['title']);
+    expect(entryDiff('experience', mine, { title: 'software development engineer.' }, true)).toEqual([]);
+  });
+
+  it('reads every other field the same way in both', () => {
+    const same = { ...MINE, organisation: 'STDLIB Pvt Ltd', startDate: '03/2024', endDate: 'April 2024', bullets: ['fixed 12 numerical edge cases'] };
+    expect(entryDiff('experience', MINE, same, true)).toEqual([]);
+  });
+});
+
 describe('isNewer', () => {
   const newer = (mine, theirs, section = 'experience') => isNewer(section, mine, theirs, entryDiff(section, mine, theirs));
 

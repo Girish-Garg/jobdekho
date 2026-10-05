@@ -1,6 +1,6 @@
 import { linkKind, webAddress } from './linkKind.js';
 import { linksOf, withLinks } from './entryLinks.js';
-import { orgKey, titleScore } from './resumeWords.js';
+import { orgKey, titleScore, words } from './resumeWords.js';
 import { endIsNewer, sameDate, sameEnd, SWITCHED } from './resumeDates.js';
 
 const said = (value) => Boolean(String(value ?? '').trim());
@@ -22,13 +22,19 @@ const SAME = {
   startDate: sameDate,
 };
 
+// Overwrite takes the resume's wording of a title too ("SDE" over "Software
+// Development Engineer"), so there only case and punctuation are the same.
+const WORDED = { ...SAME, title: (a, b) => words(a).join(' ') === words(b).join(' ') };
+
 // The fields where the resume says something, and says it differently from
 // the profile. A field the resume is silent on is never listed, so taking
 // the list keeps the person's own there. A link counts only when it is an
 // address the profile does not already hold; the store keeps web
-// addresses alone, so a mail link would never be saved.
-export function entryDiff(section, mine, theirs) {
-  const fields = Object.keys(SAME).filter((key) => said(theirs[key]) && !SAME[key](mine[key], theirs[key]));
+// addresses alone, so a mail link would never be saved. `exact` is
+// Overwrite's reading of a title (see WORDED).
+export function entryDiff(section, mine, theirs, exact = false) {
+  const same = exact ? WORDED : SAME;
+  const fields = Object.keys(same).filter((key) => said(theirs[key]) && !same[key](mine[key], theirs[key]));
   if (said(theirs.endDate) && !sameEnd(section, mine.endDate, theirs.endDate)) fields.push('endDate');
   if (theirs.bullets?.length && !sameList(mine.bullets, theirs.bullets, pointKey)) fields.push('bullets');
   if (theirs.tech?.length && !sameList(mine.tech, theirs.tech)) fields.push('tech');

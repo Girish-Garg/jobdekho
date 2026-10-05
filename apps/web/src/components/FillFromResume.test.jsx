@@ -23,7 +23,7 @@ const BROKEN = {
   error: 'Claude Code is installed at C:\\npm\\claude.cmd but could not run: exited with code 1',
 };
 
-const EMPTY = { skills: [], titles: [], locations: [], years: null, degree: 'none', resumeName: 'cv.pdf', basics: { name: 'Asha Rao' } };
+const EMPTY = { skills: [], titles: [], locations: [], years: null, degree: 'none', resumeName: 'cv.pdf', basics: { name: '' } };
 const EDITED = { ...EMPTY, skills: ['react'] };
 const FOUND = { ranking: { skills: ['node'] }, basics: {}, proposed: { experience: [{ title: 'Engineer' }] } };
 const REVIEW = { mode: 'smart', rows: [{ id: 'a' }, { id: 'b' }], same: [] };

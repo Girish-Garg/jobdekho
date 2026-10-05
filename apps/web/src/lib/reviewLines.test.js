@@ -32,6 +32,12 @@ describe('detailLines', () => {
     expect(show(detailLines(row, 'theirs'))).toEqual(['Jun 2026', '[+One]']);
   });
 
+  it('sets a Changed row\'s two sides apart the same way', () => {
+    const row = { section: 'experience', kind: 'changed', fields: ['endDate'], before: { startDate: 'May 2024', endDate: 'Present' }, entry: { startDate: 'May 2024', endDate: 'Aug 2024' } };
+    expect(show(detailLines(row, 'mine'))).toEqual(['May 2024 to [-now]']);
+    expect(show(detailLines(row, 'theirs'))).toEqual(['May 2024 to [+Aug 2024]']);
+  });
+
   it('marks nothing on a row with one side only', () => {
     const row = { section: 'projects', kind: 'new', entry: { title: 'Docker', startDate: 'Jun 2026', bullets: ['Built a container runtime'], link: 'github.com/demo/docker' } };
     expect(show(detailLines(row, 'theirs'))).toEqual(['Jun 2026', 'github.com/demo/docker', 'Built a container runtime']);

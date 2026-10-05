@@ -18,7 +18,7 @@ export default function ReviewEntryRow({ row, on, onToggle }) {
   const [open, setOpen] = useState(false);
   const detailId = useId();
   const { title, at, when } = rowHeading(row);
-  const note = row.kind === 'newer' ? changeNote(row) : row.kind === 'remove' ? removalNote(on) : '';
+  const note = row.before ? changeNote(row) : row.kind === 'remove' ? removalNote(on) : '';
 
   return (
     <li className={`border-b border-line py-2.5 transition-opacity duration-fast ease-ease ${row.kind === 'remove' && !on ? 'opacity-70' : ''}`}>

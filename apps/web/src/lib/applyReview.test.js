@@ -87,6 +87,31 @@ describe('applyReview with Overwrite', () => {
   });
 });
 
+describe('applyReview with Changed rows', () => {
+  const ended = withDefaults({
+    basics: { name: 'Asha R.', email: 'asha@old.example' },
+    experience: [role('se', 'Software Engineer Intern', 'Acme', { startDate: 'May 2024', endDate: 'Present', bullets: ['Built billing'], pinned: true, location: 'Pune' })],
+  });
+  const found = {
+    basics: { name: 'Asha Rao', email: 'asha@example.com' },
+    proposed: { experience: [{ title: 'SWE Intern', organisation: 'Acme', startDate: 'May 2024', endDate: 'Aug 2024', bullets: ['Built the billing service in Go'] }] },
+  };
+  const review = buildReview(ended, found, 'overwrite');
+
+  it('takes the resume\'s version of every field it states, in place, keeping the rest', () => {
+    const next = applyReview(ended, ticked(review));
+    expect(next.experience).toEqual([{
+      ...ended.experience[0], title: 'SWE Intern', endDate: 'Aug 2024', bullets: ['Built the billing service in Go'],
+    }]);
+    expect(next.experience[0]).toMatchObject({ id: 'se', pinned: true, location: 'Pune' });
+  });
+
+  it('leaves a changed basics field alone unless it is ticked, and replaces it when it is', () => {
+    expect(applyReview(ended, ticked(review)).basics).toMatchObject({ name: 'Asha R.', email: 'asha@old.example' });
+    expect(applyReview(ended, pick(review, 'basics:name', 'basics:email')).basics).toMatchObject({ name: 'Asha Rao', email: 'asha@example.com' });
+  });
+});
+
 describe('applyReview on a record that moved on', () => {
   const review = buildReview(PROFILE, FOUND, 'smart');
 

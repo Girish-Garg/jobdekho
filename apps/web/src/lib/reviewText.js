@@ -8,20 +8,28 @@ export const counted = (n, one, many = `${one}s`) => `${n} ${n === 1 ? one : man
 
 export function kindCounts(rows) {
   const count = (kind) => rows.filter((row) => row.kind === kind).length;
-  return { new: count('new'), newer: count('newer'), remove: count('remove') };
+  return { new: count('new'), newer: count('newer'), changed: count('changed'), remove: count('remove') };
 }
 
-// "5 new", "3 newer", "1 to remove", leaving out a kind there is none of.
+// "5 new", "3 newer", "2 changed", "1 to remove", leaving out a kind there
+// is none of.
 export function countLabels(rows) {
   const counts = kindCounts(rows);
   return [
     counts.new && { kind: 'new', text: `${counts.new} new` },
     counts.newer && { kind: 'newer', text: `${counts.newer} newer` },
+    counts.changed && { kind: 'changed', text: `${counts.changed} changed` },
     counts.remove && { kind: 'remove', text: `${counts.remove} to remove` },
   ].filter(Boolean);
 }
 
-export const summaryLine = (review) => `${MODE_NAMES[review.mode]} found ${counted(review.rows.length, 'change')}. Nothing is saved until you apply them and save your profile.`;
+// The Changed rows are said apart, since they are the ones Overwrite takes
+// over the person's own wording without the resume saying anything newer.
+export function summaryLine(review) {
+  const { changed } = kindCounts(review.rows);
+  const differ = changed ? `, ${changed} of them where the resume says it differently` : '';
+  return `${MODE_NAMES[review.mode]} found ${counted(review.rows.length, 'change')}${differ}. Nothing is saved until you apply them and save your profile.`;
+}
 
 export const applyLabel = (n) => `Apply ${counted(n, 'change')}`;
 

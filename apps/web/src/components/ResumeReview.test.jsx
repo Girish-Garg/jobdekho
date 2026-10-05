@@ -116,6 +116,20 @@ describe('ResumeReview', () => {
     expect(within(screen.getByRole('list', { name: 'Already on your profile' })).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['Chess Engine', 'react']);
   });
 
+  it('offers an entry the resume says differently as Changed under Overwrite, ticked, opening to both versions', () => {
+    const ended = withDefaults({ experience: [role('se', 'Software Engineer Intern', 'Acme', { startDate: 'May 2024', endDate: 'Present' })] });
+    const resume = { proposed: { experience: [{ title: 'Software Engineer Intern', organisation: 'Acme', startDate: 'May 2024', endDate: 'Aug 2024' }] } };
+    shown('overwrite', ended, resume);
+    expect(screen.getByText('1 changed')).toHaveClass('chip-quiet');
+    expect(screen.getByText(/^Overwrite found 1 change, 1 of them where the resume says it differently\./)).toBeInTheDocument();
+    expect(box('Software Engineer Intern')).toBeChecked();
+    expect(box('Software Engineer Intern').closest('label')).toHaveTextContent('ChangedSoftware Engineer Intern at AcmeEnd date');
+    expect(screen.getByText('Changed')).toHaveClass('chip-line');
+    fireEvent.click(screen.getByRole('button', { name: 'Details for Software Engineer Intern' }));
+    expect(screen.getByText('now')).toHaveClass('text-ember', 'line-through');
+    expect(screen.getByText('Aug 2024')).toHaveClass('text-applied');
+  });
+
   it('discards without applying, and cannot apply nothing', () => {
     const { onApply, onDiscard } = shown();
     fireEvent.click(screen.getByRole('button', { name: 'Discard' }));
