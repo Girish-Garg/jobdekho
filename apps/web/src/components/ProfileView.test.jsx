@@ -203,7 +203,9 @@ describe('ProfileView with a saved profile', () => {
     expect(sent.experience.map((e) => e.title)).toEqual(['Second role', 'First role']);
   });
 
-  it('derives the flat skills field from the skill groups at save time', async () => {
+  // The group's new skill is offered under Best fit, to add with a click;
+  // the save no longer folds it in on its own.
+  it('offers a new group skill under Best fit and saves Best fit as typed', async () => {
     render(<ProfileView />);
     await screen.findByText('react');
     fireEvent.click(screen.getByRole('button', { name: 'Add group' }));
@@ -213,10 +215,10 @@ describe('ProfileView with a saved profile', () => {
     const [groupTagBox] = screen.getAllByPlaceholderText('add...');
     fireEvent.change(groupTagBox, { target: { value: 'python' } });
     fireEvent.keyDown(groupTagBox, { key: 'Enter' });
+    expect(screen.getByRole('button', { name: 'Add python to Best fit' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Save profile' }));
     await waitFor(() => expect(putProfile).toHaveBeenCalled());
-    const [sent] = putProfile.mock.calls[0];
-    expect(sent.skills).toEqual(expect.arrayContaining(['react', 'python']));
+    expect(putProfile.mock.calls[0][0].skills).toEqual(['react']);
   });
 
   it('puts the extracted flat fields into the form after the overwrite warning', async () => {
@@ -293,7 +295,7 @@ describe('ProfileView with a saved profile', () => {
     expect(sent.certifications).toMatchObject([{ title: 'Cloud Practitioner', organisation: 'Demo Cloud', link: 'https://demo.dev/cert' }]);
     expect(sent.achievements).toEqual([]);
     expect(sent.skillGroups).toMatchObject([{ name: 'Languages', items: ['Rust'] }]);
-    expect(sent.skills).toEqual(expect.arrayContaining(['react', 'rust']));
+    expect(sent.skills).toEqual(['react']);
   });
 
   it('has no greeting and no save bar until something changes', async () => {

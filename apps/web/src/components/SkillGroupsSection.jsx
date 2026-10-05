@@ -8,12 +8,12 @@ import IconButton from './ui/IconButton.jsx';
 import TextInput from './ui/TextInput.jsx';
 import { TagIcon, TrashIcon } from './Icon.jsx';
 
-const HINT = 'Group your skills the way a resume would: Languages, Frameworks, Tools. Feeds the Skills field under Best fit too.';
+const HINT = 'Group your skills the way a resume would: Languages, Frameworks, Tools. Best fit offers the ones it lacks, to add with a click.';
 
 // Grouped rather than one flat list (Languages, Frameworks, ...), so a
-// hundred skills reads as a handful of rows. deriveSkills.js folds every
-// group into the flat ranking field at save time, so this is the one place
-// skills actually get typed.
+// hundred skills reads as a handful of rows. Best fit's own skills are what
+// the ranking reads; the ones here it lacks are offered there to add with a
+// click (groupSkills.js), never folded in by a save.
 export default function SkillGroupsSection({ groups, onChange }) {
   const add = () => onChange([...groups, makeGroup()]);
   const update = (index, group) => onChange(groups.map((g, i) => (i === index ? group : g)));

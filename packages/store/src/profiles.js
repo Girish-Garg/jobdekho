@@ -11,7 +11,7 @@ const RESUME_FIELDS = ['resumeText', 'resumeName']
 export function toProfile(record) {
   if (!record) return null
   return {
-    ...normalizeProfile(record),
+    ...normalizeProfile(record, { keepCase: true }),
     ...normalizeSections(record, record),
     resumeName: record.resumeName ?? null,
   }
@@ -36,7 +36,7 @@ export async function getResumeText(store, userId) {
 const carriesResume = (input) => Boolean(input) && RESUME_FIELDS.some((c) => c in input)
 
 export async function upsertProfile(store, userId, input) {
-  const p = normalizeProfile(input)
+  const p = normalizeProfile(input, { keepCase: true })
   const current = store.profiles.get(userId) ?? { resumeText: null, resumeName: null }
   const sections = normalizeSections(input, current)
   const record = {

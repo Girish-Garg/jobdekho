@@ -19,7 +19,9 @@ describe('toProfile', () => {
   it('is null for no record and drops bookkeeping the caller has no use for', () => {
     expect(toProfile(null)).toBeNull()
     const p = toProfile({ skills: ['Python', 'python'], years: '2', degree: 'phd', updatedAt: 'x', resumeText: 'T', resumeName: 'cv.pdf' })
-    expect(p).toEqual({ skills: ['python'], years: 2, degree: 'phd', titles: [], locations: [], resumeName: 'cv.pdf', ...EMPTY_SECTIONS })
+    // One of each, kept as first typed: a save that lowercased them read as
+    // the app overwriting the person's edit.
+    expect(p).toEqual({ skills: ['Python'], years: 2, degree: 'phd', titles: [], locations: [], resumeName: 'cv.pdf', ...EMPTY_SECTIONS })
   })
 
   // A record saved before this feature existed has none of the new keys at

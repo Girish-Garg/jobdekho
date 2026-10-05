@@ -26,14 +26,16 @@ describe('useProfileState', () => {
     expect(result.current.exists).toBe(false);
   });
 
-  it('derives skills from skill groups and strips resumeName on save', async () => {
+  // A save used to fold every group skill into Best fit: skills appeared
+  // that nobody added there, and one taken out came back.
+  it('saves Best fit skills as typed, with no group skills folded in, and strips resumeName', async () => {
     getProfile.mockResolvedValue({ ...EMPTY_PROFILE, skills: ['node'], skillGroups: [{ id: 'g1', name: 'Languages', items: ['python'] }], resumeName: 'cv.pdf' });
     const { result } = renderHook(() => useProfileState());
     await waitFor(() => expect(result.current.profile).toBeDefined());
     await act(() => result.current.save());
     const [sent] = putProfile.mock.calls[0];
     expect(sent.resumeName).toBeUndefined();
-    expect(sent.skills).toEqual(expect.arrayContaining(['node', 'python']));
+    expect(sent.skills).toEqual(['node']);
   });
 
   // The heart of "extraction never silently overwrites a hand-typed entry":

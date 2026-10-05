@@ -1,5 +1,7 @@
 import { PROFILE_DEGREE_OPTIONS } from '../lib/taxonomy.js';
 import { sectionId } from '../lib/profileIndex.js';
+import { MAX_SKILLS } from '../lib/groupSkills.js';
+import GroupSkillSuggestions from './GroupSkillSuggestions.jsx';
 import ProfileSection from './ProfileSection.jsx';
 import { Labelled } from './ProfileField.jsx';
 import Select from './Select.jsx';
@@ -7,7 +9,7 @@ import TagInput from './TagInput.jsx';
 import TextInput from './ui/TextInput.jsx';
 import { TargetIcon } from './Icon.jsx';
 
-const HINT = 'What the recommendations on Postings score against. Skills from the groups above fold in here when you save.';
+const HINT = 'What the recommendations on Postings score against, exactly as it reads here. Skills from your groups are offered under the skills, to add with a click.';
 
 // Every field the extractor fills is editable here: extraction gets things
 // wrong, and the profile drives the ranking, so hand edits are the primary
@@ -24,7 +26,10 @@ export default function ProfileForm({ profile, onChange }) {
   return (
     <ProfileSection id={sectionId('fit')} title="Best fit" icon={TargetIcon} hint={HINT}>
       <div className="flex flex-col gap-4">
-        <TagInput plain label="Skills" values={profile.skills} onChange={set('skills')} />
+        <div className="flex flex-col gap-2">
+          <TagInput plain label="Skills" values={profile.skills} max={MAX_SKILLS} onChange={set('skills')} />
+          <GroupSkillSuggestions skills={profile.skills} skillGroups={profile.skillGroups} onAdd={(more) => set('skills')([...profile.skills, ...more])} />
+        </div>
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <TagInput plain label="Target titles" values={profile.titles} onChange={set('titles')} />
           <TagInput plain label="Locations" values={profile.locations} onChange={set('locations')} />

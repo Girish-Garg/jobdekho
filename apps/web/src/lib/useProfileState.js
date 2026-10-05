@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { putProfile } from '../api.js';
 import { useProfileLoad } from './useProfileLoad.js';
 import { withDefaults } from './emptyProfile.js';
-import { deriveSkills } from './deriveSkills.js';
 import { hasProposals, withProposals } from './mergeProposals.js';
 import { adoptResult } from './adoptResult.js';
 
@@ -29,7 +28,9 @@ export function useProfileState() {
 
   async function save() {
     const { resumeName, ...body } = profile;
-    const saved = await putProfile({ ...body, skills: deriveSkills(body.skills, body.skillGroups) });
+    // Best fit is saved as typed: the groups' skills are offered beside it
+    // to add (see groupSkills.js), never folded in by the save.
+    const saved = await putProfile(body);
     setProfile(withDefaults(saved));
     setLastSaved(withDefaults(saved));
     setExists(true);
