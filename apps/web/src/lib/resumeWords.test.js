@@ -30,6 +30,13 @@ describe('titleWords', () => {
     expect(titleWords('Ph.D')).toEqual(['doctor', 'philosophy']);
   });
 
+  // A word every plain object answers to once threw here, so every fill
+  // from a resume failed while a title held it.
+  it('reads a word named like a property every object has as a word', () => {
+    expect(titleWords('SQL Query Constructor')).toEqual(['sql', 'query', 'constructor']);
+    expect(titleScore('SQL Query Constructor', 'Portfolio site')).toBe(0);
+  });
+
   it('reads nothing as no words', () => {
     expect(titleWords('')).toEqual([]);
     expect(titleWords(null)).toEqual([]);

@@ -52,13 +52,17 @@ export function useChatWatcher() {
   }, []);
 }
 
+// Own entries only, so an id named like an object property ("constructor")
+// finds no chat rather than a function (see savedChat.js).
+const own = (map, key) => (Object.hasOwn(map, key) ? map[key] : undefined);
+
 // The real id behind a placeholder, once the chat exists.
-export const realId = (id, s = state) => (id ? s.alias[id] ?? id : null);
+export const realId = (id, s = state) => (id ? own(s.alias, id) ?? id : null);
 
 export const sameChat = (a, b, s = state) => Boolean(a && b) && realId(a, s) === realId(b, s);
 
 // A map's entry for a chat, under its real id or the id it was asked by.
-export const entryFor = (map, id, s = state) => (id ? map[realId(id, s)] ?? map[id] ?? null : null);
+export const entryFor = (map, id, s = state) => (id ? own(map, realId(id, s)) ?? own(map, id) ?? null : null);
 
 export const pageOf = (id, s = state) => entryFor(s.pages, id, s);
 

@@ -4,9 +4,13 @@
 // worth failing a render: without it, the newest general chat opens instead.
 const KEY = 'jobdekho-chat-on-screen';
 
+// The app only ever saves a chat's id here, but anything on this computer
+// can change it: a name every plain object answers to ("constructor") would
+// find a function among the chats and blank the page on every load.
 export function readSavedChat() {
   try {
-    return globalThis.localStorage?.getItem(KEY) || null;
+    const id = globalThis.localStorage?.getItem(KEY) || null;
+    return id && !(id in Object.prototype) ? id : null;
   } catch {
     return null;
   }

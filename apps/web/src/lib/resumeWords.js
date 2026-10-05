@@ -46,11 +46,15 @@ function stem(word) {
   return word;
 }
 
+// Own keys only: a title is the person's or the resume's text, and the word
+// "constructor" found the Object function and failed every fill.
+const spelled = (word) => (Object.hasOwn(SPELLED, word) ? SPELLED[word] : word);
+
 // A title as the words that say what it is. The dots inside a short form
 // go first ("B.Tech", "Ph.D"), so it stays one word to spell out.
 export function titleWords(title) {
   const plain = String(title ?? '').toLowerCase().replace(/['’]/g, '').replace(/(\p{L})\.(?=\p{L})/gu, '$1');
-  return words(plain).flatMap((word) => (SPELLED[word] ?? word).split(' ')).filter((word) => !STOP.has(word)).map(stem);
+  return words(plain).flatMap((word) => spelled(word).split(' ')).filter((word) => !STOP.has(word)).map(stem);
 }
 
 // How alike two titles read: 1 for the same words in any order, 0.8 for
