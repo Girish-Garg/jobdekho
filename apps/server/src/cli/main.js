@@ -10,11 +10,18 @@ export const DEFAULT_PORT = 4747
 // unpdf, which reads an uploaded resume, needs Node 22 (see the README).
 const MIN_NODE = 22
 
+// The last line asks once, where every npx user looks at start: a star is
+// how other people find a free project on GitHub. The web app's About card
+// in Settings names the same address (apps/web's lib/project.js).
+export const REPO_URL = 'https://github.com/Girish-Garg/jobdekho'
+
 const banner = (version, url, data) => `
   JobDekho ${version} is running at ${url}
 
   Your data: ${data}
   Keep this window open while you use it. Ctrl+C stops JobDekho.
+
+  Like it? A star on GitHub helps other people find it: ${REPO_URL}
 `
 
 // The `jobdekho` command (bin/jobdekho.js). Resolves with the running app,

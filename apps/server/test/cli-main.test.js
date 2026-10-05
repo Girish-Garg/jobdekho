@@ -50,6 +50,7 @@ describe('the jobdekho command', () => {
       expect(res.status).toBe(200)
       expect(open).toHaveBeenCalledWith(`http://localhost:${port}`)
       expect(log.mock.calls.join('\n')).toMatch(new RegExp(`JobDekho 9.9.9 is running at http://localhost:${port}[\\s\\S]*Your data: .*jobdekho-cli-`))
+      expect(log.mock.calls.join('\n')).toContain('A star on GitHub helps other people find it: https://github.com/Girish-Garg/jobdekho')
     } finally {
       await app.close()
     }

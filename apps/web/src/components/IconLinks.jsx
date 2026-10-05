@@ -32,3 +32,8 @@ export function ImageIcon(props) {
 export function GripIcon(props) {
   return <Svg {...props}><path strokeWidth="2.2" d="M6 4h.01M10 4h.01M6 8h.01M10 8h.01M6 12h.01M10 12h.01" /></Svg>;
 }
+
+// The GitHub ask in Settings' About card.
+export function StarIcon(props) {
+  return <Svg {...props}><path d="M8 1.8l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.6l-3.8 2 .7-4.3-3.1-3 4.3-.6z" /></Svg>;
+}

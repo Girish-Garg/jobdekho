@@ -8,6 +8,7 @@ import RefreshSettingsCard from './RefreshSettingsCard.jsx';
 import BlockedCompaniesCard from './BlockedCompaniesCard.jsx';
 import AdzunaCard from './AdzunaCard.jsx';
 import YourDataCard from './YourDataCard.jsx';
+import AboutCard from './AboutCard.jsx';
 import ProfileIndex from './ProfileIndex.jsx';
 import { PaletteIcon } from './Icon.jsx';
 import PageTitle from './ui/PageTitle.jsx';
@@ -22,6 +23,7 @@ const SECTIONS = [
   { id: 'settings-adzuna', label: 'Adzuna' },
   { id: 'settings-appearance', label: 'Appearance' },
   { id: 'settings-data', label: 'Your data' },
+  { id: 'settings-about', label: 'About' },
 ];
 const IDS = SECTIONS.map((s) => s.id);
 
@@ -57,6 +59,7 @@ export default function SettingsView() {
               </SettingsCard>
             </div>
             <div id="settings-data" className="scroll-mt-4"><YourDataCard /></div>
+            <div id="settings-about" className="scroll-mt-4"><AboutCard /></div>
           </div>
         </div>
       </div>
