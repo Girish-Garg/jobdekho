@@ -19,7 +19,7 @@ export default function RowActions({ posting, flashUndo, onStatus, onUndo }) {
         Dismissed.{' '}
         <button
           type="button"
-          onClick={(event) => { event.stopPropagation(); onUndo(); }}
+          onClick={(event) => { event.stopPropagation(); onUndo(posting.id); }}
           className="link"
         >
           Undo

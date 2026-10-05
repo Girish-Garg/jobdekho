@@ -12,7 +12,8 @@ const FLASH_MS = 6000;
 // the feed actually holds.
 export function useTriage(rows, onStatus) {
   const [lastChange, setLastChange] = useState(null);
-  const [flashId, setFlashId] = useState(null);
+  // The dismissal whose "Undo" shows: which posting, and what it was before.
+  const [flash, setFlash] = useState(null);
   const timerRef = useRef(null);
 
   useEffect(() => () => clearTimeout(timerRef.current), []);
@@ -25,24 +26,34 @@ export function useTriage(rows, onStatus) {
       const next = previous === value ? null : value;
       setLastChange({ id, previous });
       onStatus(id, next);
-      clearTimeout(timerRef.current);
+      // Only a new dismissal, or a change to the posting that is flashing,
+      // touches the flash. A save on another posting meanwhile used to stop
+      // the clock and leave that Undo up for good.
       if (next === 'dismissed') {
-        setFlashId(id);
-        timerRef.current = setTimeout(() => setFlashId(null), FLASH_MS);
+        clearTimeout(timerRef.current);
+        setFlash({ id, previous });
+        timerRef.current = setTimeout(() => setFlash(null), FLASH_MS);
       } else {
-        setFlashId((current) => (current === id ? null : current));
+        setFlash((current) => (current?.id === id ? null : current));
       }
     },
     [rows, onStatus],
   );
 
-  const undo = useCallback(() => {
-    if (!lastChange) return;
-    onStatus(lastChange.id, lastChange.previous);
-    setFlashId((current) => (current === lastChange.id ? null : current));
-    setLastChange(null);
-    clearTimeout(timerRef.current);
-  }, [lastChange, onStatus]);
+  // A posting's own Undo puts back the dismissal it shows (`id`); with no
+  // id, as from the keyboard, the last change is undone, whichever posting
+  // it was. The flash's Undo used to undo the last change too, so after a
+  // save elsewhere it took back the save and left the dismissal.
+  const undo = useCallback((id) => {
+    const change = id != null && flash?.id === id ? flash : lastChange;
+    if (!change) return;
+    onStatus(change.id, change.previous);
+    if (flash?.id === change.id) {
+      clearTimeout(timerRef.current);
+      setFlash(null);
+    }
+    if (lastChange?.id === change.id) setLastChange(null);
+  }, [flash, lastChange, onStatus]);
 
-  return { setStatus, undo, flashId, canUndo: Boolean(lastChange) };
+  return { setStatus, undo, flashId: flash?.id ?? null, canUndo: Boolean(lastChange) };
 }

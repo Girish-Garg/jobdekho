@@ -37,6 +37,34 @@ describe('useTriage dismiss flash', () => {
     expect(result.current.flashId).toBe(null);
   });
 
+  // A save on another posting used to stop the clock, and the first
+  // posting's Undo stayed up until it was opened again.
+  it('keeps running when another posting changes meanwhile', () => {
+    const { result } = renderHook(() => useTriage(rows, vi.fn()));
+    act(() => result.current.setStatus('a', 'dismissed'));
+    act(() => vi.advanceTimersByTime(1500));
+    act(() => result.current.setStatus('b', 'applied'));
+    expect(result.current.flashId).toBe('a');
+    act(() => vi.advanceTimersByTime(4500));
+    expect(result.current.flashId).toBe(null);
+  });
+
+  // It used to undo the last change instead, which by then was the save.
+  it("puts back the dismissal its own Undo shows, not a later change to another posting", () => {
+    const onStatus = vi.fn();
+    const { result } = renderHook(() => useTriage(rows, onStatus));
+    act(() => result.current.setStatus('a', 'dismissed'));
+    act(() => result.current.setStatus('b', 'applied'));
+    onStatus.mockClear();
+    act(() => result.current.undo('a'));
+    expect(onStatus).toHaveBeenCalledTimes(1);
+    expect(onStatus).toHaveBeenCalledWith('a', null);
+    expect(result.current.flashId).toBe(null);
+    // The keyboard's undo still takes back the last change.
+    act(() => result.current.undo());
+    expect(onStatus).toHaveBeenLastCalledWith('b', 'saved');
+  });
+
   it('never flashes for a save or an apply', () => {
     const { result } = renderHook(() => useTriage(rows, vi.fn()));
     act(() => result.current.setStatus('a', 'saved'));
