@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { notify, notifyError } from '../lib/toast.js';
 import Button from './ui/Button.jsx';
-import { BookmarkIcon } from './Icon.jsx';
 
 // The filters on screen are not the ones JobDekho opens with: a quiet way to
 // make them so, in the row of what is on, where the person is already
@@ -25,8 +24,7 @@ export default function SaveFiltersButton({ onSave }) {
   }
 
   return (
-    <Button variant="ghost" size="sm" title={HINT} onClick={save} disabled={busy} className="ml-auto gap-1.5 px-2 text-primary hover:bg-primary/10">
-      <BookmarkIcon size={12} />
+    <Button variant="ghost" size="sm" title={HINT} onClick={save} disabled={busy} className="ml-auto px-2 text-primary hover:bg-primary/10">
       {busy ? 'Saving...' : 'Save as default'}
     </Button>
   );
