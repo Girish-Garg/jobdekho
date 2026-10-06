@@ -33,6 +33,10 @@ export const FILES = {
   // What the chat remembers of the person's lasting preferences, each line
   // saved by their own click or their own "remember". See memory.js.
   memory: 'memory.json',
+  // Every memory JobDekho offered and what the person did with it, so a
+  // dismissed offer waits before it comes back, and so a small classifier
+  // can later learn when to offer. See memory-feedback.js.
+  memoryFeedback: 'memory-feedback.json',
   // Whether the running server refreshes postings on its own once a day.
   // See apps/server/src/scrape/prefs.js.
   scrapeSettings: 'scrape-settings.json',

@@ -12,5 +12,5 @@ function records(seed = {}) {
 }
 
 export const memoryChatStore = ({ chats, chatMessages, memory } = {}) => ({
-  chats: records(chats), chatMessages: records(chatMessages), memory: records(memory),
+  chats: records(chats), chatMessages: records(chatMessages), memory: records(memory), memoryFeedback: records(),
 })

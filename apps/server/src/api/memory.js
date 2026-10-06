@@ -1,5 +1,6 @@
-import { listMemory, setMemoryEnabled, forgetMemory, deleteMemory } from '@jobdekho/store/memory.js'
+import { listMemory, setMemoryEnabled, forgetMemory, deleteMemory, cleanMemoryText } from '@jobdekho/store/memory.js'
 import { addMemory, editMemory, restoreMemory } from '@jobdekho/store/memory-items.js'
+import { noteFeedback, forgetFeedback } from '@jobdekho/store/memory-feedback.js'
 import { chatStore } from '../chat/store.js'
 
 // What each refusal from the store (see memory-items.js) says, written to be
@@ -18,7 +19,12 @@ const REFUSALS = {
 // refusal is the sentence above rather than one of Fastify's own.
 const words = { type: 'string', maxLength: 2000 }
 const id = { type: ['string', 'null'], maxLength: 64 }
-const itemSchema = { body: { type: 'object', properties: { text: words, scope: words, quote: { ...words, type: ['string', 'null'] }, replaces: id } } }
+const tag = { type: ['string', 'null'], maxLength: 40 }
+// A chip's Save also says where its offer came from (`source`, `topic`) and
+// what was offered, so the feedback log can tell a save from an edit.
+const offer = { source: tag, topic: tag, offered: { ...words, type: ['string', 'null'] } }
+const itemSchema = { body: { type: 'object', properties: { text: words, scope: words, quote: { ...words, type: ['string', 'null'] }, replaces: id, ...offer } } }
+const dismissSchema = { body: { type: 'object', required: ['text'], properties: { text: words, source: tag, topic: tag } } }
 const editSchema = { body: { type: 'object', properties: { text: words, scope: words, restore: { type: 'boolean' } } } }
 const settingsSchema = { body: { type: 'object', required: ['enabled'], properties: { enabled: { type: 'boolean' } } } }
 
@@ -39,9 +45,13 @@ export async function memoryRoutes(app) {
   app.get('/api/memory', auth, async (request) => listMemory(store, request.user.sub))
 
   app.post('/api/memory', { ...auth, schema: itemSchema }, async (request, reply) => {
-    const { text, scope = 'everywhere', quote = null, replaces = null } = request.body ?? {}
+    const { text, scope = 'everywhere', quote = null, replaces = null, source = null, topic = null, offered = null } = request.body ?? {}
     const saved = await addMemory(store, request.user.sub, { text, scope, quote, replaces })
     if (saved.error) return refuse(reply, saved)
+    if (source) {
+      const outcome = !offered || cleanMemoryText(offered) === cleanMemoryText(text) ? 'saved' : 'edited'
+      noteFeedback(store, request.user.sub, [{ text: offered || text, source, topic, outcome }])
+    }
     const replaced = saved.replaced ? { id: saved.replaced.id, text: saved.replaced.text } : null
     return reply.code(saved.existing ? 200 : 201).send({ item: saved.item, replaced })
   })
@@ -65,6 +75,15 @@ export async function memoryRoutes(app) {
 
   app.delete('/api/memory', auth, async (request, reply) => {
     await forgetMemory(store, request.user.sub)
+    forgetFeedback(store, request.user.sub)
+    return reply.code(204).send()
+  })
+
+  // "Not now" on an offer: noted, so a habit offer waits before it comes
+  // back (see memory/habits.js). Nothing is saved.
+  app.post('/api/memory/feedback', { ...auth, schema: dismissSchema }, async (request, reply) => {
+    const { text, source = null, topic = null } = request.body
+    noteFeedback(store, request.user.sub, [{ text, source, topic, outcome: 'dismissed' }])
     return reply.code(204).send()
   })
 

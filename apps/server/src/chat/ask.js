@@ -1,7 +1,7 @@
 import { getChatMessages } from '@jobdekho/store/chat-messages.js'
 import { assembleThreadContext } from './thread-context.js'
 import { runChatTurn } from './run.js'
-import { chatMemory, settleMemory } from './memory-turn.js'
+import { chatMemory, memoryOffers } from './memory-turn.js'
 import { noteEvent, stopSignal } from './in-flight.js'
 import { saveTurn } from './save-turn.js'
 
@@ -26,9 +26,10 @@ export async function askInChat(deps, { userId, chat, message, body = {}, emit =
   context.memory = await chatMemory(deps.store, userId, { page: context.page, message })
   const watch = (event) => { noteEvent(userId, event); emit(event) }
   const asked = await runChatTurn({ message, context, history, select: deps.select, emit: watch, signal: stopSignal(userId), ...deps.cli })
-  // Saved now only when the message itself said "remember"; the rest wait
-  // under the answer for the person's Save.
-  const memory = await settleMemory(deps.store, userId, message, asked.memory)
+  // What to offer to remember: the AI's offers and what the local spotters
+  // found (see memory-turn.js). Saved now only when the message itself said
+  // "remember"; the rest wait under the answer for the person's Save.
+  const memory = await memoryOffers(deps.store, userId, { message, chatId: chat.id, memory: context.memory, offered: asked.memory })
   const turn = { ...asked, memory, items: { jobs: [...chat.jobs], documents: [...chat.documents] } }
   return { ...turn, chatId: await saveTurn(deps.store, userId, chat.id, turn) }
 }

@@ -41,6 +41,7 @@ export function openStore(dir) {
     chatMessages: userFile(at('chatMessages')),
     documents: userFile(at('documents')),
     memory: userFile(at('memory')),
+    memoryFeedback: userFile(at('memoryFeedback')),
     scrapeSettings: userFile(at('scrapeSettings')),
     blockedCompanies: userFile(at('blockedCompanies')),
     adzuna: userFile(at('adzuna')),

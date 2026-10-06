@@ -53,9 +53,9 @@ describe('memory in a chat turn', () => {
     const { store, ask, history } = await setup({ reply: 'Sure.', memory: [ONE_PAGE] })
     const res = await ask('From now on keep my resume to one page')
     expect(res.statusCode).toBe(200)
-    expect(res.json().memory).toEqual([{ status: 'suggested', ...ONE_PAGE }])
+    expect(res.json().memory).toEqual([{ status: 'suggested', ...ONE_PAGE, source: 'ai' }])
     expect((await listMemory(store, 'u1')).items).toEqual([])
-    expect((await history())[0].memory).toEqual([{ status: 'suggested', ...ONE_PAGE }])
+    expect((await history())[0].memory).toEqual([{ status: 'suggested', ...ONE_PAGE, source: 'ai' }])
   })
 
   it('saves it at once when the message says remember, and says so on the turn', async () => {
@@ -63,7 +63,7 @@ describe('memory in a chat turn', () => {
     const res = await ask('Remember: keep my resume to one page')
     const [saved] = (await listMemory(store, 'u1')).items
     expect(saved).toMatchObject({ ...ONE_PAGE, replaces: null })
-    expect(res.json().memory).toEqual([{ status: 'saved', id: saved.id, ...ONE_PAGE }])
+    expect(res.json().memory).toEqual([{ status: 'saved', id: saved.id, ...ONE_PAGE, source: 'ai' }])
   })
 
   it('replaces the saved preference it names, and says which', async () => {
@@ -71,7 +71,7 @@ describe('memory in a chat turn', () => {
     const { store, ask } = await setup(() => ({ reply: 'Sure.', memory: [{ ...ONE_PAGE, replaces: oldId }] }))
     oldId = (await addMemory(store, 'u1', { text: 'Two pages are fine', scope: 'resume' })).item.id
     const [chip] = (await ask("Don't forget: keep my resume to one page")).json().memory
-    expect(chip).toEqual({ status: 'saved', id: expect.any(String), ...ONE_PAGE, replaces: oldId, replacedText: 'Two pages are fine' })
+    expect(chip).toEqual({ status: 'saved', id: expect.any(String), ...ONE_PAGE, source: 'ai', replaces: oldId, replacedText: 'Two pages are fine' })
     expect(await listMemory(store, 'u1')).toMatchObject({ items: [{ text: ONE_PAGE.text, replaces: oldId }], archived: 1 })
   })
 
@@ -79,7 +79,7 @@ describe('memory in a chat turn', () => {
     const { store, ask } = await setup({ reply: 'Sure.', memory: [{ ...ONE_PAGE, replaces: 'aaaa1111' }] })
     await addMemory(store, 'u1', { text: 'Two pages are fine', scope: 'resume' })
     const [chip] = (await ask('Remember: keep my resume to one page')).json().memory
-    expect(chip).toEqual({ status: 'saved', id: expect.any(String), ...ONE_PAGE })
+    expect(chip).toEqual({ status: 'saved', id: expect.any(String), ...ONE_PAGE, source: 'ai' })
     expect((await listMemory(store, 'u1')).items).toHaveLength(2)
   })
 

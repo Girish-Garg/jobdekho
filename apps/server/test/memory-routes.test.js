@@ -123,4 +123,21 @@ describe('the memory routes', () => {
     expect((await call('PUT', '/api/memory/settings', { enabled: 'maybe' })).statusCode).toBe(400)
     expect((await call('PUT', '/api/memory/settings', {})).statusCode).toBe(400)
   })
+
+  // What became of each offer, for the habit spotter's cooldown and a
+  // classifier later (see packages/store/src/memory-feedback.js).
+  it('notes a chip saved as offered, saved after an edit, or put off with Not now', async () => {
+    const { store, call } = await setup()
+    const offer = { source: 'habit', topic: 'pay', offered: 'Always tell me the pay when we talk about a job' }
+    expect((await call('POST', '/api/memory', { text: offer.offered, scope: 'jobs', ...offer })).statusCode).toBe(201)
+    expect((await call('POST', '/api/memory', { text: 'Tell me the stipend too', scope: 'jobs', ...offer, topic: 'pay' })).statusCode).toBe(201)
+    expect((await call('POST', '/api/memory/feedback', { text: 'Tell me the interview process', source: 'habit', topic: 'interview' })).statusCode).toBe(204)
+    expect((await call('POST', '/api/memory', { text: 'Written by hand' })).statusCode).toBe(201)
+    const log = store.memoryFeedback.get('u1')
+    expect(log.map((entry) => [entry.topic, entry.outcome])).toEqual([['pay', 'saved'], ['pay', 'edited'], ['interview', 'dismissed']])
+    expect(log[1].text).toBe(offer.offered)
+    expect((await call('POST', '/api/memory/feedback', {})).statusCode).toBe(400)
+    await call('DELETE', '/api/memory')
+    expect(store.memoryFeedback.get('u1')).toEqual([])
+  })
 })

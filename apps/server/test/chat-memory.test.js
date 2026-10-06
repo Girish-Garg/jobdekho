@@ -8,7 +8,7 @@ import { listMemory, setMemoryEnabled, MAX_MEMORIES } from '@jobdekho/store/memo
 import { isMemoryCommand } from '@jobdekho/server/chat/memory-command.js'
 import { memorySuggestions } from '@jobdekho/server/chat/memory-suggest.js'
 import { memoryRules, savedPreferences, memoryLines } from '@jobdekho/server/chat/memory-prompt.js'
-import { chatMemory, settleMemory } from '@jobdekho/server/chat/memory-turn.js'
+import { chatMemory, settleMemory, memoryOffers } from '@jobdekho/server/chat/memory-turn.js'
 import { buildChatPrompt } from '@jobdekho/server/chat/prompt.js'
 
 const SAVED = [{ id: 'a1b2c3d4', text: 'Only show me remote roles', scope: 'jobs' }, { id: 'e5f6a7b8', text: 'Keep answers short', scope: 'everywhere' }]
@@ -135,6 +135,26 @@ describe('saving what a turn offered', () => {
   it('only offers them when the message did not say remember', async () => {
     expect(await settleMemory(store, 'u1', 'keep my resume to one page', [offer])).toEqual([{ status: 'suggested', ...offer }])
     expect((await listMemory(store, 'u1')).items).toEqual([])
+  })
+
+  // A habit offer is never something the person said, so even a
+  // "remember" in the same message leaves it waiting for a Save.
+  it('never saves a habit offer on its own', async () => {
+    const habit = { text: 'Always tell me the pay when we talk about a job', scope: 'jobs', quote: 'remember the pay', source: 'habit', topic: 'pay' }
+    expect(await settleMemory(store, 'u1', 'remember the pay', [habit])).toEqual([{ status: 'suggested', ...habit }])
+    expect((await listMemory(store, 'u1')).items).toEqual([])
+  })
+
+  // The AI offered nothing; the person's own phrasing and their earlier
+  // questions still give an offer, and each is noted in the feedback log.
+  it('offers what the spotters find and notes each offer', async () => {
+    const memory = await chatMemory(store, 'u1', { page: 'postings', message: 'x' })
+    const offers = await memoryOffers(store, 'u1', { message: 'From now on only show me remote roles', chatId: 'c1', memory, offered: [] })
+    expect(offers).toEqual([expect.objectContaining({ status: 'suggested', text: 'Only show me remote roles', source: 'phrase' })])
+    expect(store.memoryFeedback.get('u1')).toEqual([expect.objectContaining({ source: 'phrase', outcome: 'offered', text: 'Only show me remote roles' })])
+    expect(await memoryOffers(store, 'u1', { message: 'Remember that my notice period is 30 days', chatId: 'c1', memory, offered: [] }))
+      .toEqual([expect.objectContaining({ status: 'saved', text: 'My notice period is 30 days', source: 'remember' })])
+    expect(await memoryOffers(store, 'u1', { message: 'Remember', chatId: 'c1', memory: null })).toEqual([])
   })
 
   it('saves them at once when the message said remember, replacing what they name', async () => {
