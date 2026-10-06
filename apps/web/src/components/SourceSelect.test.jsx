@@ -37,13 +37,14 @@ describe('SourceSelect trigger', () => {
     expect(screen.getByRole('button', { name: 'All sources' })).toBeInTheDocument();
   });
 
-  it('counts the exclusions rather than the inclusions', () => {
+  // Whichever is fewer, the sources left out or the sources kept in.
+  it('counts the exclusions, or the few kept once fewer are in than out', () => {
     const { unmount } = render(<SourceSelect options={OPTIONS} excluded={['lever']} onChange={() => {}} />);
     expect(screen.getByRole('button', { name: '1 excluded' })).toBeInTheDocument();
     unmount();
 
     render(<SourceSelect options={OPTIONS} excluded={['lever', 'ashby', 'internshala']} onChange={() => {}} />);
-    expect(screen.getByRole('button', { name: '3 excluded' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '1 source' })).toBeInTheDocument();
   });
 
   it('reports its expanded state', () => {
@@ -134,21 +135,34 @@ describe('SourceSelect search', () => {
   });
 });
 
-describe('SourceSelect reset', () => {
-  it('offers Reset only once something is excluded', () => {
+describe('SourceSelect All and None', () => {
+  it('offers All only once something is excluded, and None while anything is ticked', () => {
     setup();
     fireEvent.click(screen.getByRole('button', { name: 'All sources' }));
-    expect(screen.queryByRole('button', { name: 'Reset' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Clear' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'All' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'None' })).toBeInTheDocument();
   });
 
-  it('re-ticks every board', () => {
+  it('re-ticks every board with All', () => {
     const { onChange } = setup(['lever', 'ashby']);
     fireEvent.click(screen.getByRole('button', { name: '2 excluded' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
+    fireEvent.click(screen.getByRole('button', { name: 'All' }));
     expect(onChange).toHaveBeenLastCalledWith([]);
     expect(screen.getByRole('button', { name: 'All sources' })).toBeInTheDocument();
     for (const box of screen.getAllByRole('checkbox')) expect(box).toBeChecked();
+  });
+
+  // The owner's ask: clear every source, then tick just the few wanted.
+  it('unticks every board with None, and names the few ticked after', () => {
+    const { onChange } = setup();
+    fireEvent.click(screen.getByRole('button', { name: 'All sources' }));
+    fireEvent.click(screen.getByRole('button', { name: 'None' }));
+    expect(onChange).toHaveBeenLastCalledWith(['internshala', 'greenhouse', 'lever', 'ashby']);
+    for (const box of screen.getAllByRole('checkbox')) expect(box).not.toBeChecked();
+    expect(screen.getByRole('button', { name: 'No sources' })).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole('checkbox')[0]);
+    expect(screen.getByRole('button', { name: '1 source' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'None' })).toBeInTheDocument();
   });
 });
 

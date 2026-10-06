@@ -77,7 +77,8 @@ describe('Shell saved filter hydration', () => {
     expect(screen.getByRole('button', { name: 'Entry' })).toHaveAttribute('aria-pressed', 'false');
     open('Level');
 
-    expect(screen.getByRole('button', { name: '1 excluded' })).toBeInTheDocument();
+    // Lever is the only source there is, so excluding it leaves none.
+    expect(screen.getByRole('button', { name: 'No sources' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Work mode (1)' })).toBeInTheDocument();
 
     openMore();

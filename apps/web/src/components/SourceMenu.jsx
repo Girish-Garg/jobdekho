@@ -20,8 +20,14 @@ export default function SourceMenu({ options, excluded, onChange }) {
   const toggle = (name) =>
     onChange(excluded.includes(name) ? excluded.filter((s) => s !== name) : [...excluded, name]);
 
-  // Reset, not Clear: an empty exclude list is every source included.
-  const action = excluded.length > 0 ? { label: 'Reset', onClick: () => onChange([]) } : null;
+  // All ticks every source again (an empty exclude list); None unticks them
+  // all, so the person can tick just the few they want, rather than
+  // unticking eighty one by one.
+  const names = options.map((option) => option.name);
+  const actions = [
+    ...(excluded.length > 0 ? [{ label: 'All', onClick: () => onChange([]) }] : []),
+    ...(names.some((name) => !excluded.includes(name)) ? [{ label: 'None', onClick: () => onChange(names) }] : []),
+  ];
 
   return (
     <ChecklistMenu
@@ -29,7 +35,7 @@ export default function SourceMenu({ options, excluded, onChange }) {
       placeholder="Search companies and boards"
       query={query}
       onQuery={setQuery}
-      action={action}
+      actions={actions}
       rows={shown.map((option) => ({
         id: option.name,
         title: option.title,

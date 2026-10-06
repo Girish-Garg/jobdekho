@@ -50,6 +50,15 @@ describe('activeChips', () => {
     expect(labels({ ...EMPTY_FILTERS, excludedSources: ['a'] })).toEqual(['1 source excluded']);
   });
 
+  // None, then a few ticked: the few kept are what the chip names.
+  it('names the few sources kept once fewer are in than out', () => {
+    const sources = ['a', 'b', 'c', 'd', 'e'];
+    const chip = (excludedSources) => activeChips({ ...EMPTY_FILTERS, excludedSources }, { sources }).map((c) => c.label);
+    expect(chip(['a', 'b', 'c', 'd'])).toEqual(['Only 1 source']);
+    expect(chip(['a', 'b', 'c'])).toEqual(['Only 2 sources']);
+    expect(chip(['a', 'b'])).toEqual(['2 sources excluded']);
+  });
+
   it('reuses the select copy for the numeric ceilings', () => {
     const filters = { ...EMPTY_FILTERS, minStipend: '10000', maxExp: '2', maxMonths: '3', maxDegree: 'masters' };
     expect(labels(filters)).toEqual(["Master's", '₹10,000+ /mo', 'Up to 2 years experience', 'Up to 3 months']);

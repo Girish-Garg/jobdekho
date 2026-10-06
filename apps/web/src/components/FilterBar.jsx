@@ -30,7 +30,7 @@ export default function FilterBar({ filters, setFilters, trailing, defaults = nu
   // Truthiness, not presence: the stale toggle is a boolean that is always set.
   // The ceilings are select strings, so '0' (Fresher) still counts.
   const extra = ADVANCED.filter((key) => Boolean(filters[key])).length;
-  const chips = activeChips(filters);
+  const chips = activeChips(filters, { sources: sources.map((source) => source.name) });
   const unsaved = Boolean(defaults?.saved) && !sameDefaults(filters, defaults.saved);
   const offer = unsaved && <SaveFiltersButton onSave={() => defaults.save(filters)} />;
 

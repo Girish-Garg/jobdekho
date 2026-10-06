@@ -27,7 +27,8 @@ function Row({ title, sub = '', count, checked, onToggle }) {
 // when there are none, and a note under them for whatever the list is not
 // showing. What a tick means and which rows there are stay with the menu that
 // hands them in, so this is only the drawing. A row is { id, title, sub,
-// count, checked, onToggle }; the action is { label, onClick } or null.
+// count, checked, onToggle }; an action is { label, onClick }, one as
+// `action` (or null) or several as `actions`.
 export default function ChecklistMenu({
   width = 'w-80',
   label,
@@ -36,6 +37,7 @@ export default function ChecklistMenu({
   onQuery,
   onKeyDown,
   action = null,
+  actions = action ? [action] : [],
   rows,
   empty = '',
   note = '',
@@ -51,11 +53,11 @@ export default function ChecklistMenu({
           onChange={(event) => onQuery(event.target.value)}
           onKeyDown={onKeyDown}
         />
-        {action && (
-          <Button variant="ghost" size="sm" onClick={action.onClick} className="shrink-0 px-2 text-primary hover:bg-primary/10">
-            {action.label}
+        {actions.map(({ label: name, onClick }) => (
+          <Button key={name} variant="ghost" size="sm" onClick={onClick} className="shrink-0 px-2 text-primary hover:bg-primary/10">
+            {name}
           </Button>
-        )}
+        ))}
       </div>
       <ul className="max-h-72 overflow-y-auto">
         {rows.map(({ id, ...row }) => <Row key={id} {...row} />)}

@@ -161,11 +161,11 @@ describe('FilterBar source exclusions', () => {
     expect(setFilters).toHaveBeenCalledWith(expect.objectContaining({ excludedSources: ['lever'] }));
   });
 
-  it('re-includes everything from Reset', async () => {
+  it('re-includes everything from All', async () => {
     const { setFilters } = await setup({ excludedSources: ['lever', 'internshala'] });
     await waitFor(() => expect(getSources).toHaveBeenCalled());
-    open('2 excluded');
-    fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
+    open('No sources');
+    fireEvent.click(screen.getByRole('button', { name: 'All' }));
     expect(setFilters).toHaveBeenCalledWith(expect.objectContaining({ excludedSources: [] }));
   });
 

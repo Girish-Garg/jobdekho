@@ -23,6 +23,11 @@ export default function SourceSelect({ options, excluded, onChange }) {
     ...options.filter((o) => !pinned.includes(o.name)),
   ];
   const count = excluded.length;
+  // Once fewer are in than out (None, then a few ticked), the few are what
+  // the trigger names; until the list loads it can only count exclusions.
+  const included = options.filter((o) => !excluded.includes(o.name)).length;
+  const fewIn = options.length > 0 && included < options.length - included;
+  const label = count === 0 ? 'All sources' : fewIn ? (included === 0 ? 'No sources' : `${included} source${included === 1 ? '' : 's'}`) : `${count} excluded`;
 
   return (
     <div ref={ref} className="relative">
@@ -32,7 +37,7 @@ export default function SourceSelect({ options, excluded, onChange }) {
         aria-expanded={open}
         className={`${TRIGGER} ${triggerTone(count > 0, open)}`}
       >
-        <TriggerFace icon={GlobeIcon} label={count === 0 ? 'All sources' : `${count} excluded`} open={open} />
+        <TriggerFace icon={GlobeIcon} label={label} open={open} />
       </button>
       {open && <SourceMenu options={ranked} excluded={excluded} onChange={onChange} />}
     </div>

@@ -18,8 +18,9 @@ const without = (values, value) => values.filter((v) => v !== value);
 
 // One entry per active filter, each carrying the patch that removes only
 // itself. The row is what keeps the state readable once the dropdowns that set
-// it are closed.
-export function activeChips(filters = {}) {
+// it are closed. `sources` names every source there is, so a few kept in
+// (None, then a few ticked) read as those few rather than as the many left out.
+export function activeChips(filters = {}, { sources = [] } = {}) {
   const levels = filters.levels || [];
   const workModes = filters.workModes || [];
   const excluded = filters.excludedSources || [];
@@ -44,7 +45,9 @@ export function activeChips(filters = {}) {
     chips.push(chip(`mode-${value}`, labelOf(WORK_MODE_OPTIONS, value), { workModes: without(workModes, value) }));
   }
   if (excluded.length) {
-    const label = `${excluded.length} source${excluded.length === 1 ? '' : 's'} excluded`;
+    const kept = sources.filter((name) => !excluded.includes(name)).length;
+    const few = sources.length > 0 && kept < sources.length - kept;
+    const label = few ? `Only ${kept} source${kept === 1 ? '' : 's'}` : `${excluded.length} source${excluded.length === 1 ? '' : 's'} excluded`;
     chips.push(chip('excludedSources', label, { excludedSources: [] }, 'source exclusions'));
   }
   for (const [key, options] of CEILINGS) {
