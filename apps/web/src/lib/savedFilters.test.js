@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { toFilterState, toSavedFilters, mergeSave, EMPTY_FILTERS } from './savedFilters.js';
+import { toFilterState, toSavedFilters, mergeSave, sameDefaults, EMPTY_FILTERS } from './savedFilters.js';
 
 vi.mock('../api.js', () => ({
   getFilters: vi.fn(async () => ({})),
@@ -158,5 +158,25 @@ describe('mergeSave', () => {
     getFilters.mockRejectedValueOnce(new Error('offline'));
     await mergeSave({ maxDegree: 'phd' });
     expect(putFilters).toHaveBeenCalledWith({ maxDegree: 'phd' });
+  });
+});
+
+// The bar offers to save only when saving would change what JobDekho opens
+// with (see FilterBar.jsx).
+describe('sameDefaults', () => {
+  const saved = { ...EMPTY_FILTERS, levels: ['entry', 'mid'], workModes: ['remote'] };
+
+  it('ignores the order of a pick', () => {
+    expect(sameDefaults({ ...saved, levels: ['mid', 'entry'] }, saved)).toBe(true);
+  });
+
+  it('ignores the fields kept for this visit only', () => {
+    expect(sameDefaults({ ...saved, q: 'react', companies: ['Acme'], status: 'saved', minFit: '40', includeStale: true }, saved)).toBe(true);
+  });
+
+  it('sees any kept field that changed, emptied ones included', () => {
+    expect(sameDefaults({ ...saved, levels: ['entry'] }, saved)).toBe(false);
+    expect(sameDefaults({ ...saved, minStipend: '5000' }, saved)).toBe(false);
+    expect(sameDefaults({ ...EMPTY_FILTERS }, saved)).toBe(false);
   });
 });

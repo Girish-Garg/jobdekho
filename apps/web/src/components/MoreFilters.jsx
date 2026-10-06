@@ -4,7 +4,6 @@ import { FieldGroup } from './FilterField.jsx';
 import PillGroup from './PillGroup.jsx';
 import StepSlider from './StepSlider.jsx';
 import SettingSwitch from './SettingSwitch.jsx';
-import SaveDefaultFilters from './SaveDefaultFilters.jsx';
 import Button from './ui/Button.jsx';
 import Eyebrow from './ui/Eyebrow.jsx';
 
@@ -28,12 +27,13 @@ function Section({ title, children }) {
 }
 
 // The refinements most sessions never touch, grouped by what they are about,
-// with Reset once any is set and the save control at the foot. Pay and
-// experience are ladders of a dozen steps, which a slider walks far better
-// than a dropdown; the length and the degree are four or five choices, which
-// fit on one line as pills and show all of them at once. Two columns on a
-// wide window, so the whole panel fits on one screen; one column on a narrow
-// one, where the panel scrolls (see Dropdown.jsx).
+// with Reset once any is set. Saving them as the default is offered in the
+// row of chips under the bar, with every other filter (see FilterBar.jsx).
+// Pay and experience are ladders of a dozen steps, which a slider walks far
+// better than a dropdown; the length and the degree are four or five
+// choices, which fit on one line as pills and show all of them at once. Two
+// columns on a wide window, so the whole panel fits on one screen; one
+// column on a narrow one, where the panel scrolls (see Dropdown.jsx).
 export default function MoreFilters({ filters, setFilters }) {
   const set = (key) => (value) => setFilters({ ...filters, [key]: value });
   const touched = Object.keys(CLEARED).some((key) => Boolean(filters[key]));
@@ -76,9 +76,6 @@ export default function MoreFilters({ filters, setFilters }) {
           onChange={(on) => setFilters({ ...filters, includeStale: on })}
         />
       </Section>
-      <div className="border-t border-line pt-3">
-        <SaveDefaultFilters filters={filters} />
-      </div>
     </div>
   );
 }

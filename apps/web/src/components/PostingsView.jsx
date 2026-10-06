@@ -20,7 +20,7 @@ const WIDE_QUERY = '(min-width: 1100px)';
 // chat change them too; this view shows and sets them (see FeedTop.jsx). The
 // defaults are what a fresh install shows.
 export default function PostingsView({
-  filters, setFilters, sort = 'match', setSort, viewMode = 'list', setViewMode, onOpenProfile, onOpenSettings,
+  filters, setFilters, defaults = null, sort = 'match', setSort, viewMode = 'list', setViewMode, onOpenProfile, onOpenSettings,
 }) {
   const feed = usePostingsFeed(filters, sort);
   const { rows, loading, more, loadMore, onStatus, bands, notStated, blockedPicks } = feed;
@@ -47,7 +47,7 @@ export default function PostingsView({
     <section className="flex gap-4 px-4 pb-10">
       <div className="mx-auto w-full min-w-0 max-w-[84rem]">
         <FeedTop
-          filters={filters} setFilters={setFilters} sort={sort} setSort={setSort} viewMode={viewMode} setViewMode={setViewMode}
+          filters={filters} setFilters={setFilters} defaults={defaults} sort={sort} setSort={setSort} viewMode={viewMode} setViewMode={setViewMode}
           shown={rows.length} total={feed.total} fresh={{ posted: feed.postedToday, found: feed.foundToday }} onOpenSettings={onOpenSettings}
           companyLogo={rows.find((row) => row.logoUrl)?.id ?? null}
         />

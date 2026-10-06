@@ -41,7 +41,17 @@ export function toSavedFilters(filters) {
 // as a default, every company scraped later would be missing from the feed.
 export const EMPTY_FILTERS = { ...toFilterState(), q: '', companies: [], status: '', includeStale: false, minFit: '' };
 
-// "Save as my default" only ever sends this bar's own fields, so the merge
+// Whether two filter states would save the same default: only the fields
+// that are kept count, and a pick's order does not (levels picked in another
+// order are the same levels).
+const sorted = (v) => [...list(v)].sort();
+function keptOf(filters) {
+  const kept = toSavedFilters(filters);
+  return JSON.stringify({ ...kept, excludedSources: sorted(kept.excludedSources), levels: sorted(kept.levels), workModes: sorted(kept.workModes) });
+}
+export const sameDefaults = (a, b) => keptOf(a) === keptOf(b);
+
+// "Save as default" only ever sends this bar's own fields, so the merge
 // keeps that write from resetting every field the bar does not carry.
 export async function mergeSave(patch) {
   const current = await getFilters().catch(() => ({}));

@@ -2,17 +2,16 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act, within } from '@testing-library/react';
 import FilterBar from './FilterBar.jsx';
 import { EMPTY_FILTERS } from '../lib/savedFilters.js';
+import { onNotice } from '../lib/toast.js';
 
 vi.mock('../api.js', () => ({
-  getFilters: vi.fn(async () => ({ includeKeywords: ['react'], excludeKeywords: [], locations: [] })),
-  putFilters: vi.fn(async () => null),
   getSources: vi.fn(async () => [
     { name: 'internshala', count: 878 },
     { name: 'lever', count: 205 },
   ]),
 }));
 
-import { getFilters, putFilters, getSources } from '../api.js';
+import { getSources } from '../api.js';
 
 // The bar loads its source list on mount, so every case flushes that fetch
 // before asserting rather than racing it.
@@ -267,65 +266,67 @@ describe('FilterBar More filters disclosure', () => {
   });
 });
 
-describe('Save as my default', () => {
-  it('says the saved filters are what JobDekho opens with, with no sign-in to speak of', async () => {
-    await setup();
-    openMore();
-    expect(screen.getByText('Open JobDekho with these filters every time.')).toBeInTheDocument();
-    expect(screen.queryByText(/sign in/)).not.toBeInTheDocument();
-  });
-
-  it('PUTs the filters under the persisted field names', async () => {
-    await setup({
-      excludedSources: ['lever'],
-      levels: ['mid', 'senior'],
-      workModes: ['remote'],
-      maxDegree: 'bachelors',
-      minStipend: '5000',
-      maxExp: '2',
-      maxMonths: '6',
+// Saving the filters as the default is offered where the filters are, once
+// the ones on screen would open JobDekho differently: a button at the foot
+// of More filters was easy to forget (see SaveFiltersButton.jsx).
+describe('Save as default', () => {
+  const saved = { ...EMPTY_FILTERS, levels: ['entry'] };
+  const showing = async (filters, defaults) => {
+    await act(async () => {
+      render(<FilterBar filters={{ ...EMPTY_FILTERS, ...filters }} setFilters={vi.fn()} defaults={defaults} />);
     });
-    openMore();
-    fireEvent.click(screen.getByRole('button', { name: 'Save as my default' }));
+  };
+  const offer = () => screen.queryByRole('button', { name: 'Save as default' });
 
-    await waitFor(() => expect(putFilters).toHaveBeenCalled());
-    expect(putFilters).toHaveBeenCalledWith(
-      expect.objectContaining({
-        excludedSources: ['lever'],
-        levels: ['mid', 'senior'],
-        workModes: ['remote'],
-        maxDegree: 'bachelors',
-        minStipend: 5000,
-        maxExperienceYears: 2,
-        maxDurationMonths: 6,
-      }),
-    );
+  it('is not offered while the filters are the saved ones, in any order', async () => {
+    await showing({ levels: ['entry'] }, { saved, save: vi.fn() });
+    expect(offer()).not.toBeInTheDocument();
   });
 
-  it('carries the keyword filters through so a bar save does not wipe them', async () => {
-    await setup({ levels: ['entry'] });
-    openMore();
-    fireEvent.click(screen.getByRole('button', { name: 'Save as my default' }));
-
-    await waitFor(() => expect(putFilters).toHaveBeenCalled());
-    expect(getFilters).toHaveBeenCalled();
-    expect(putFilters).toHaveBeenCalledWith(expect.objectContaining({ includeKeywords: ['react'] }));
+  it('is offered once a kept filter differs, and saves the filters on screen', async () => {
+    const save = vi.fn(async () => {});
+    const notices = [];
+    const off = onNotice((notice) => notices.push(notice));
+    await showing({ levels: ['entry', 'mid'] }, { saved, save });
+    fireEvent.click(offer());
+    await waitFor(() => expect(save).toHaveBeenCalledWith(expect.objectContaining({ levels: ['entry', 'mid'] })));
+    await waitFor(() => expect(notices.at(-1)).toMatchObject({ kind: 'done', title: 'Filters saved' }));
+    off();
   });
 
-  it('confirms on success', async () => {
+  // The search, companies, status and fit floor are for this visit, so
+  // saving them would keep nothing: no offer for those alone.
+  it('is not offered for what is kept for this visit only', async () => {
+    await showing({ levels: ['entry'], q: 'react', companies: ['Acme'], status: 'saved' }, { saved, save: vi.fn() });
+    expect(screen.getByRole('button', { name: 'Clear all' })).toBeInTheDocument();
+    expect(offer()).not.toBeInTheDocument();
+  });
+
+  // Clearing every filter is a change too: the bare feed can be the default.
+  it('stands alone once every chip is gone', async () => {
+    await showing({}, { saved, save: vi.fn() });
+    expect(offer()).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Clear all' })).not.toBeInTheDocument();
+  });
+
+  it('waits to know the saved filters before offering anything', async () => {
+    await showing({ levels: ['mid'] }, { saved: null, save: vi.fn() });
+    expect(offer()).not.toBeInTheDocument();
+  });
+
+  it('says so when the save fails, and stays to try again', async () => {
+    const notices = [];
+    const off = onNotice((notice) => notices.push(notice));
+    await showing({ levels: ['mid'] }, { saved, save: vi.fn(async () => { throw new Error('boom'); }) });
+    fireEvent.click(offer());
+    await waitFor(() => expect(notices.at(-1)).toMatchObject({ kind: 'error', title: 'Could not save the filters', detail: 'boom' }));
+    expect(offer()).toBeInTheDocument();
+    off();
+  });
+
+  it('is no longer at the foot of More filters', async () => {
     await setup();
     openMore();
-    expect(screen.queryByRole('button', { name: 'Saved' })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Save as my default' }));
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Saved' })).toBeInTheDocument());
-  });
-
-  it('shows an error state when the save fails', async () => {
-    putFilters.mockRejectedValueOnce(new Error('boom'));
-    await setup();
-    openMore();
-    fireEvent.click(screen.getByRole('button', { name: 'Save as my default' }));
-    expect(await screen.findByText('Could not save.')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Save as/ })).not.toBeInTheDocument();
   });
 });

@@ -1,17 +1,22 @@
 import { LEVEL_OPTIONS, STATUS_OPTIONS, WORK_MODE_OPTIONS } from '../lib/taxonomy.js';
 import { useSources } from '../lib/useSources.js';
 import { activeChips } from '../lib/activeChips.js';
+import { sameDefaults } from '../lib/savedFilters.js';
 import Dropdown from './Dropdown.jsx';
 import PillGroup from './PillGroup.jsx';
 import SourceSelect from './SourceSelect.jsx';
 import CompanySelect from './CompanySelect.jsx';
 import MoreFilters from './MoreFilters.jsx';
 import ActiveChips from './ActiveChips.jsx';
+import SaveFiltersButton from './SaveFiltersButton.jsx';
 import { BookmarkIcon, BriefcaseIcon, MapPinIcon, SlidersIcon } from './Icon.jsx';
 
 const ADVANCED = ['maxDegree', 'minStipend', 'maxExp', 'maxMonths', 'includeStale'];
 
-export default function FilterBar({ filters, setFilters, trailing }) {
+// `defaults` is what JobDekho opens with and how to save over it (see
+// useSavedFilters.js): once the filters on screen differ from it in what is
+// kept, the row of chips ends with the offer to save them.
+export default function FilterBar({ filters, setFilters, trailing, defaults = null }) {
   const sources = useSources();
   const patch = (key, value) => setFilters({ ...filters, [key]: value });
 
@@ -26,6 +31,8 @@ export default function FilterBar({ filters, setFilters, trailing }) {
   // The ceilings are select strings, so '0' (Fresher) still counts.
   const extra = ADVANCED.filter((key) => Boolean(filters[key])).length;
   const chips = activeChips(filters);
+  const unsaved = Boolean(defaults?.saved) && !sameDefaults(filters, defaults.saved);
+  const offer = unsaved && <SaveFiltersButton onSave={() => defaults.save(filters)} />;
 
   return (
     // The one control row over the feed: filters on the left, More filters
@@ -66,7 +73,7 @@ export default function FilterBar({ filters, setFilters, trailing }) {
         </div>
       </div>
 
-      {chips.length > 0 && <ActiveChips chips={chips} filters={filters} setFilters={setFilters} />}
+      {(chips.length > 0 || unsaved) && <ActiveChips chips={chips} filters={filters} setFilters={setFilters} trailing={offer} />}
     </div>
   );
 }

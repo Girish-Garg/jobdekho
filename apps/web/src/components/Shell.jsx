@@ -21,7 +21,7 @@ import { WIDE_QUERY } from '../lib/chatLayout.js';
 // state stays here, where the chat and the command palette change it too.
 export default function Shell() {
   const [view, setView] = useState('postings');
-  const [filters, setFilters] = useSavedFilters();
+  const [filters, setFilters, defaults] = useSavedFilters();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   // The feed reads these; the filter row and the command palette set them.
@@ -77,7 +77,7 @@ export default function Shell() {
           apply={{ setFilters, setSort, setView }}
         />
         <main className="min-h-0 min-w-0 flex-1 overflow-y-auto">
-          <ShellMain view={view} setView={setView} feed={{ filters, setFilters, sort, setSort, viewMode, setViewMode }} />
+          <ShellMain view={view} setView={setView} feed={{ filters, setFilters, defaults, sort, setSort, viewMode, setViewMode }} />
         </main>
       </div>
       <CommandPalette

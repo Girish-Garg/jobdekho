@@ -13,12 +13,12 @@ import Card from './ui/Card.jsx';
 // card of its own, frosted, so the rows passing under it stay out of the way.
 // Under the title, the setup banner while something required is missing.
 // With one company picked, the title is that company (see PostingsHeader.jsx).
-export default function FeedTop({ filters, setFilters, sort, setSort, viewMode, setViewMode, shown, total, fresh, companyLogo, onOpenSettings }) {
+export default function FeedTop({ filters, setFilters, defaults = null, sort, setSort, viewMode, setViewMode, shown, total, fresh, companyLogo, onOpenSettings }) {
   const picked = filters.companies || [];
   return (
     <>
       <Card className="sticky-lift sticky top-2 z-20 mt-3 bg-panel/85 p-1.5 shadow-raise backdrop-blur-md">
-        <FilterBar filters={filters} setFilters={setFilters} />
+        <FilterBar filters={filters} setFilters={setFilters} defaults={defaults} />
       </Card>
       <PostingsHeader
         shown={shown}
