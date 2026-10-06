@@ -2,6 +2,7 @@ import { makeId } from '@jobdekho/core/posting.js'
 import { normalize } from '@jobdekho/core/normalize.js'
 import { filter } from '@jobdekho/core/filter.js'
 import { postedTooLongAgo } from '@jobdekho/core/freshness.js'
+import { isTeaser } from '@jobdekho/core/teaser.js'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 const iso = (ms) => new Date(ms).toISOString()
@@ -26,10 +27,12 @@ export function createRunContext({ db, rules, memo, now = Date.now, isBlocked = 
 
   const context = {
     // A posting the store already holds a description for needs no second
-    // request, and it was still listed, so it counts as seen.
+    // request, and it was still listed, so it counts as seen. A board's
+    // one-line teaser is not a description (core's teaser.js).
     known(source, externalId) {
       const id = makeId(source, externalId)
-      const hit = Boolean(db.corpus.byId().get(id)?.descriptionText)
+      const row = db.corpus.byId().get(id)
+      const hit = Boolean(row?.descriptionText) && !isTeaser(row)
       if (hit) {
         seen.add(id)
         count(source)

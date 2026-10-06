@@ -1,3 +1,4 @@
+import { isTeaser } from '@jobdekho/core/teaser.js'
 import { ghostSignals, legitimacy } from '@jobdekho/core/ghost.js'
 import { payLabel } from '@jobdekho/core/pay-label.js'
 import { newness } from '@jobdekho/core/newness.js'
@@ -41,6 +42,9 @@ export async function getPosting(store, userId, id) {
     ...row,
     status: store.statuses.get(userId)?.[id] ?? null,
     groupCount: Number(windowed.groupCount ?? 1),
+    // Only the board's first line (core's teaser.js): the pane asks for the
+    // whole description as it opens, as it does for a posting with none.
+    descriptionPartial: isTeaser(stored),
     caution,
     legitimacy: legitimacy({ caution }),
     ghostSignals: ghostSignals({ caution }),

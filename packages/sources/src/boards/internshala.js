@@ -1,4 +1,5 @@
 import { load } from 'cheerio'
+import { keepReadPages } from './internshala-detail.js'
 
 const INTERN_CATS = ['computer-science', 'web-development', 'data-science', 'machine-learning', 'mobile-app-development', 'artificial-intelligence']
 const JOB_CATS = ['software-development', 'web-development', 'data-science', 'mobile-app-development']
@@ -66,10 +67,12 @@ export function parseInternshala(html, type = 'internship') {
   return out
 }
 
+// The cards give everything but the description, which each posting's own
+// page holds, read when the person opens one (see internshala-detail.js).
 export function internshala() {
   return {
     name: 'internshala',
-    async fetch(http) {
+    async fetch(http, context) {
       const out = []
       const targets = []
       for (const c of INTERN_CATS) for (let p = 1; p <= PAGES; p++) targets.push([internUrl(c, p), 'internship'])
@@ -82,7 +85,7 @@ export function internshala() {
           // skip a failed page; the rest still run
         }
       }
-      return out
+      return keepReadPages(out, { name: 'internshala', context })
     },
   }
 }

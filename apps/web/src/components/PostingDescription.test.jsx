@@ -163,4 +163,23 @@ describe('PostingDescription in long sections', () => {
     await screen.findByRole('heading', { name: 'What you will do' });
     expect(screen.queryByRole('button', { name: 'Show more' })).toBeNull();
   });
+
+  // Adzuna's API sends only the start of each description.
+  it('says where the rest of a cut Adzuna description is', async () => {
+    const adzuna = { id: 'a1', source: 'adzuna:in', url: 'https://www.adzuna.in/details/1', descriptionSnippet: '' };
+    getPosting.mockResolvedValue({ ...adzuna, descriptionText: 'Research and identify solutions to issues during int…' });
+    render(<Description posting={adzuna} />);
+    const link = await screen.findByRole('link', { name: "Read the rest on the posting's page" });
+    expect(link).toHaveAttribute('href', 'https://www.adzuna.in/details/1');
+  });
+
+  // An Internshala card's first line is not its description: the pane asks
+  // the board for the page as it opens.
+  it('fetches the whole description of a posting that holds only a teaser', async () => {
+    getPosting.mockResolvedValue({ id: 'p1', descriptionText: 'As an intern you will', descriptionPartial: true });
+    describePosting.mockResolvedValue({ posting: { id: 'p1', descriptionText: FULL, descriptionPartial: false } });
+    render(<Description posting={posting} />);
+    expect(await screen.findByText(/You will be a key member/)).toBeInTheDocument();
+    expect(describePosting).toHaveBeenCalledWith('p1');
+  });
 });

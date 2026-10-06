@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { buildApp } from '@jobdekho/server/app.js'
 import { openStore } from '@jobdekho/store/open.js'
 import { TAGS_VERSION } from '@jobdekho/core/tag.js'
+import { getPosting } from '@jobdekho/store/posting-lookup.js'
 import { describeAndSave } from '../src/api/describe-posting.js'
 import { createDashboardStore } from '../src/api/store.js'
 
@@ -60,6 +61,7 @@ describe('describeAndSave', () => {
     tagsVersion: TAGS_VERSION, board: { type: null, employment: null, workMode: null },
   }
   const seed = (rows) => db.corpus.save(new Map(rows.map((r) => [r.id, r])))
+  const getPostingFor = (id) => getPosting(db, 'local', id)
 
   it('stores the fetched text, tags the posting again and returns it whole', async () => {
     seed([card])
@@ -69,6 +71,17 @@ describe('describeAndSave', () => {
     expect(out.posting).toMatchObject({ level: 'mid', workMode: 'hybrid', facts: { years: { min: 3, max: 5 } } })
     expect(out.posting.sections[0]).toMatchObject({ kind: 'requirements', heading: 'Requirements' })
     expect(db.corpus.byId().get('sr1').descriptionText).toContain('embedded C')
+  })
+
+  // An Internshala card stores only its first line, which is not its text.
+  it('reads the page of a posting that holds only a board teaser', async () => {
+    const teaser = 'As a React Native Development intern at Krazio Cloud, you will have the exciting opportunity t'
+    seed([{ ...card, id: 'is1', source: 'internshala', externalId: '9', descriptionText: teaser, descriptionSnippet: teaser }])
+    expect((await getPostingFor('is1')).descriptionPartial).toBe(true)
+    const describe = vi.fn(async () => ({ page: { description: 'About the internship\n\nBuild mobile apps with React Native.' } }))
+    const out = await describeAndSave(db, describe, 'local', 'is1')
+    expect(out.described).toBe(true)
+    expect(out.posting).toMatchObject({ descriptionText: expect.stringContaining('React Native'), descriptionPartial: false })
   })
 
   // A posting that already has its text costs no request.

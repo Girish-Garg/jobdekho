@@ -2,6 +2,7 @@ import DescriptionFacts from './DescriptionFacts.jsx';
 import DescriptionSections from './DescriptionSections.jsx';
 import DescriptionBody from './DescriptionBody.jsx';
 import DescribeNote from './DescribeNote.jsx';
+import CutDescriptionNote from './CutDescriptionNote.jsx';
 
 const CAPTION = 'text-xs font-semibold text-muted';
 const NOTE = 'mt-3 text-sm text-muted';
@@ -33,6 +34,7 @@ export default function PostingDescription({ posting, view, onOpenSettings }) {
       <h3 id="posting-description-title" className={`${CAPTION} mb-2`}>About the job</h3>
       <DescriptionFacts facts={detail?.facts} />
       {sections ? <DescriptionSections sections={sections} /> : <DescriptionBody key={full ? 'full' : 'snippet'} text={full || snippet} full={Boolean(full)} />}
+      <CutDescriptionNote posting={posting} text={full} />
       <DescribeNote status={status} refusal={refusal} placeholder={empty} onOpenSettings={onOpenSettings} />
       {status === 'failed' && <p className={NOTE}>The full description did not load, so this is the preview.</p>}
     </section>

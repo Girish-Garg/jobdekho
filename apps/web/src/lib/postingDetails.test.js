@@ -36,6 +36,8 @@ describe('loadDetail', () => {
     expect(hasText({ descriptionText: 'Ship it.' })).toBe(true);
     expect(hasText({ descriptionText: '  ' })).toBe(false);
     expect(hasText(null)).toBe(false);
+    // A board's first line only (the server's descriptionPartial).
+    expect(hasText({ descriptionText: 'As an intern you will', descriptionPartial: true })).toBe(false);
   });
 });
 

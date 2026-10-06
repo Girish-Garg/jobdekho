@@ -27,6 +27,17 @@ describe('createRunContext', () => {
     expect(run.knownBy.get('a')).toBe(1)
   })
 
+  // An Internshala card's first line is not its description (core's
+  // teaser.js), so its page is still worth reading.
+  it('does not count a board teaser as a description', () => {
+    const teaser = 'As a React Native Development intern at Krazio Cloud, you will have the exciting opportunity t'
+    const db = fakeDb([row('internshala', '1', { descriptionText: teaser }), row('internshala', '2', { descriptionText: `Full text. ${'x'.repeat(300)}` }), row('other', '3', { descriptionText: teaser })])
+    const run = createRunContext({ db, rules: {}, memo: openMemo(db, {}), now: () => NOW })
+    expect(run.context.known('internshala', '1')).toBe(false)
+    expect(run.context.known('internshala', '2')).toBe(true)
+    expect(run.context.known('other', '3')).toBe(true)
+  })
+
   // LinkedIn and the list-then-describe platforms ask before fetching a
   // job's own page: one from a blocked company would only be dropped.
   it('calls a card from a blocked company unwanted, so its page is never fetched', () => {

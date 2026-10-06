@@ -22,7 +22,9 @@ function remember(id, posting) {
 // undefined means "not fetched yet".
 export const cachedDetail = (id) => details.get(id);
 
-export const hasText = (posting) => Boolean(String(posting?.descriptionText || '').trim());
+// A board's one-line teaser (the server's `descriptionPartial`, see core's
+// teaser.js) is not the description: the pane asks for the whole of it.
+export const hasText = (posting) => Boolean(String(posting?.descriptionText || '').trim()) && !posting?.descriptionPartial;
 
 // One request per posting however many times it is asked for while in
 // flight. A failure is not kept, so opening the posting again retries.
