@@ -5,4 +5,4 @@
 // is trained again only after its number here goes up: the training writes
 // this number into the weights, a weights file carrying any other is not
 // used, and docs/model-card.md records it beside the model's measurements.
-export const MODEL_VERSIONS = { level: 1, sections: 2 }
+export const MODEL_VERSIONS = { level: 1, sections: 2, facts: 1 }

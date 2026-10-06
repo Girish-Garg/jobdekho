@@ -30,7 +30,7 @@ export function decodeModel(json) {
 
 const loaded = new Map()
 
-// The shipped model by name ('level' or 'sections'), read once and kept.
+// The shipped model by name ('sections', 'facts' or 'level'), read once and kept.
 // null when its file is missing, unreadable or of another version than the
 // code expects: tagging then goes on without estimates rather than failing,
 // and never mixes a stale model's numbers with this code's thresholds. A

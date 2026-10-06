@@ -1,3 +1,5 @@
+import { shiftValue } from './shift-value.js'
+
 // The terms of the work a description states in so many words: a bond or a
 // service agreement, an immediate start, night or rotational shifts (see
 // description-facts.js, which reads the offer and how to apply). `said`
@@ -26,16 +28,21 @@ export function startFact(lines, said) {
   return line ? { value: 'Immediate start', evidence: said(line) } : null
 }
 
+// Which line states the shifts is the patterns' to say; what it states is
+// shift-value.js's, the reader the facts model's lines share: the hours a
+// line gives, nights now and then, nights among rotating shifts.
 const SHIFTS = [[/\bnight\s+shifts?\b/i, 'Night shift'], [/\b(?:rotational|rotating)\s+shifts?\b/i, 'Rotational shifts'], [/\b(?:US|UK)\s+shifts?\b/, 'US or UK shift hours']]
 
 // A company describing its product (labour-law compliance, payroll) names
 // shifts that are not this job's.
 const NOT_SCHEDULE = /\b(?:laws?|labou?r|compliance|regulat|payroll|overtime)\b/i
+// A line saying there are none ("no night shifts") is not a night shift.
+const NONE = /\b(?:no|not|never|don'?t|do not|without)\b[^.;]{0,25}\b(?:nights?|shifts?)/i
 
 export function shiftFact(lines, said) {
   for (const [pattern, value] of SHIFTS) {
-    const line = lines.find((l) => pattern.test(l) && !NOT_SCHEDULE.test(l))
-    if (line) return { value, evidence: said(line) }
+    const line = lines.find((l) => pattern.test(l) && !NOT_SCHEDULE.test(l) && !NONE.test(l))
+    if (line) return { value: shiftValue(line)?.value ?? value, evidence: said(line) }
   }
   return null
 }

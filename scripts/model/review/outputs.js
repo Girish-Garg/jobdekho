@@ -4,6 +4,8 @@ import { placedKinds, sortedSections } from '@jobdekho/core/model/model-sections
 import { sortableUnits } from '@jobdekho/core/model/section-lines.js'
 import { postingSections } from '@jobdekho/core/jd-layout.js'
 import { shippedModel } from '@jobdekho/core/model/weights.js'
+import { descriptionFacts, linesOf } from '@jobdekho/core/description-facts.js'
+import { modelFacts } from '@jobdekho/core/model/model-facts.js'
 
 // Every output the shipped model would show on these postings, as the
 // review page needs it: { id, postingId, company, companyKey, title,
@@ -42,4 +44,31 @@ function sectionOutputs(postings) {
   return out
 }
 
-export const OUTPUTS = { level: levelOutputs, sections: sectionOutputs }
+// Every fact the list above a description would show with the facts model
+// on: the plain readers' and the model's additions, since the audit is of
+// the list a person sees. `group` is the fact and who read it, so the
+// sample spreads over both. A plain reader's line is the one its evidence
+// quotes, cut or whole.
+const FACT_NAMES = { ppo: 'Pre-placement offer', email: 'Apply by email', openings: 'Openings', bond: 'Bond', start: 'Start', shift: 'Shift' }
+const quoted = (evidence) => /^Says "(.*?)(?:\.\.\.)?"$/.exec(evidence ?? '')?.[1] ?? null
+
+function factOutputs(postings) {
+  const model = shippedModel('facts')
+  const out = []
+  for (const p of postings) {
+    const ruled = descriptionFacts(p.description, { model: null })
+    const added = modelFacts(linesOf(p.description), model)
+    for (const [kind, name] of Object.entries(FACT_NAMES)) {
+      const byModel = !ruled[kind] && added[kind]
+      const fact = ruled[kind] ?? added[kind]
+      if (!fact) continue
+      out.push({
+        id: `facts:${p.id}:${kind}`, ...posting(p), group: `${kind}:${byModel ? 'model' : 'rule'}`, output: `${name}: ${fact.value}`,
+        confidence: byModel ? fact.confidence : null, words: byModel ? fact.words : [], evidence: fact.evidence, line: byModel ? fact.line : quoted(fact.evidence),
+      })
+    }
+  }
+  return out
+}
+
+export const OUTPUTS = { level: levelOutputs, sections: sectionOutputs, facts: factOutputs }

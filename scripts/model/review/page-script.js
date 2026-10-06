@@ -48,7 +48,7 @@ function render() {
   $('main').innerHTML =
     '<div class="muted">' + esc(s.company) + ' | ' + esc(s.source) + ' | ' + esc(s.id) + '</div>' +
     '<h2>' + markWords(s.title, s.words) + '</h2>' +
-    '<div class="output">' + esc(s.output) + ' <span class="muted">confidence ' + s.confidence + '</span></div>' +
+    '<div class="output">' + esc(s.output) + (s.confidence == null ? '' : ' <span class="muted">confidence ' + s.confidence + '</span>') + '</div>' +
     (s.line ? '<div class="box">Line: ' + markWords(s.line, s.words) + '</div>' : '') +
     '<div class="muted">' + esc(s.evidence) + '</div>' +
     '<div class="box">' + (pre ? 'Claude pre-check: <b>' + esc(pre.verdict) + '</b> ' + esc(pre.note) : '<span class="muted">No pre-check yet.</span>') + '</div>' +

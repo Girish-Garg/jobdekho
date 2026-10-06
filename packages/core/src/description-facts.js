@@ -1,14 +1,19 @@
 import { quote } from './tag.js'
 import { bondFact, startFact, shiftFact } from './description-terms.js'
+import { shippedModel } from './model/weights.js'
+import { shippedAudits } from './model/audit.js'
+import { withModelFacts } from './model/model-facts.js'
 
 // Facts a fresher weighs before applying that a description states in so
 // many words: a pre-placement offer, an address to send the resume to, how
 // many openings, a bond, an immediate start, night or rotational shifts.
-// Each keeps the words that said it. Plain rules, not a model: a fact shown
-// wrongly costs more than one missed, so each needs words that cannot mean
-// much else, and an explicit "no" wins ("no PPO" shows nothing, "no bond"
-// shows that).
-const linesOf = (text) => String(text ?? '').split(/\n+|(?<=[.!?])\s+/).map((s) => s.trim()).filter(Boolean)
+// Each keeps the words that said it. The plain readers here come first: a
+// fact shown wrongly costs more than one missed, so each needs words that
+// cannot mean much else, and an explicit "no" wins ("no PPO" shows
+// nothing, "no bond" shows that). Where they find nothing, the facts model
+// may, in wordings no rule lists, once its audit has passed (see
+// model/model-facts.js).
+export const linesOf = (text) => String(text ?? '').split(/\n+|(?<=[.!?])\s+/).map((s) => s.trim()).filter(Boolean)
 const said = (line) => `Says "${quote(line, 120)}"`
 
 // The line under a heading, as Internshala's sections and others lay them out.
@@ -33,7 +38,7 @@ const EMAIL = /[A-Z0-9._%+-]+@[A-Z0-9-]+(?:\.[A-Z0-9-]+)*\.[A-Z]{2,}/i
 const TO_APPLY = /\b(?:resumes?|cvs?|apply|applying|applications?|portfolio)\b/i
 // An address that is itself for applying, whatever its line says.
 const APPLY_DESK = /^(?:apply|applications?|careers?|jobs?|hiring|hr|recruit\w*|talent|resumes?|cv)\b[\w.+-]*@/i
-const NOT_APPLY = /\b(?:accommodations?|accessib|disabilit|privacy|unsubscribe|fraud|scams?|grievance|concerned|legitimate|impersonat|phishing|suspicious|seems off|third[- ]party|does not accept|do not send)/i
+const NOT_APPLY = /\b(?:questions?|accommodations?|accessib|disabilit|privacy|unsubscribe|fraud|scams?|grievance|concerned|legitimate|impersonat|phishing|suspicious|seems off|third[- ]party|does not accept|do not send)/i
 // Addresses for help, not for applying.
 const HELP_DESK = /^(?:accessibility|accommodations?|privacy|security|support|help|no-?reply|legal|compliance|grievance|abuse|dpo)@/i
 const PERSONAL = /@(?:gmail|googlemail|yahoo|ymail|outlook|hotmail|live|rediffmail|icloud|protonmail)\./i
@@ -59,9 +64,9 @@ function openingsFact(lines) {
   return { value: `${count} opening${count === 1 ? '' : 's'}`, evidence: line ? said(line) : `Number of openings: ${count}` }
 }
 
-export function descriptionFacts(text) {
+export function descriptionFacts(text, { model = shippedModel('facts'), audits = shippedAudits() } = {}) {
   const lines = linesOf(text)
-  return {
+  const ruled = {
     ppo: ppoFact(lines),
     email: emailFact(lines),
     openings: openingsFact(lines),
@@ -69,4 +74,5 @@ export function descriptionFacts(text) {
     start: startFact(lines, said),
     shift: shiftFact(lines, said),
   }
+  return withModelFacts(ruled, lines, { model, audits })
 }

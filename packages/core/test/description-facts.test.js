@@ -2,7 +2,9 @@ import { describe, it, expect } from 'vitest'
 import { descriptionFacts } from '@jobdekho/core/description-facts.js'
 import { postingFacts } from '@jobdekho/core/posting-facts.js'
 
-const fact = (text, key) => descriptionFacts(text)[key]
+// The plain readers alone: what the facts model adds once its audit passes
+// is model-facts.test.js's.
+const fact = (text, key) => descriptionFacts(text, { model: null })[key]
 const value = (text, key) => fact(text, key)?.value ?? null
 
 // Lines from the owner's corpus, 2026-10-06, the right ones and the ones a
@@ -35,6 +37,7 @@ describe('an address to send the resume to', () => {
     expect(value("Please email accessibility@flex.com and we'll discuss your situation (this email does not accept applications).", 'email')).toBeNull()
     expect(value("If something seems off or you're contacted by an unexpected third party, reach out to careers@arcesium.com", 'email')).toBeNull()
     expect(value('If you have any questions about the steps above, write to internship-queries@hackerrank.com', 'email')).toBeNull()
+    expect(value('Questions: jobs@thisdot.co', 'email')).toBeNull()
   })
 })
 
@@ -52,11 +55,16 @@ describe('the terms', () => {
     expect(value('No bond, no deposits.', 'bond')).toBe('No bond')
   })
 
-  it('reads an immediate start and the shifts, but not shifts a product is about', () => {
+  // The value is the shift reader's (shift-value.js): the hours a line
+  // gives, nights now and then, nights among rotating shifts.
+  it('reads an immediate start and the shifts, but not shifts a product is about or none at all', () => {
     expect(value('- Immediate joiners preferred.', 'start')).toBe('Immediate start')
-    expect(value('- Open to work in the Night Shift(6PM to 1 AM)', 'shift')).toBe('Night shift')
+    expect(value('- Open to work in the Night Shift(6PM to 1 AM)', 'shift')).toBe('Night shift, 6 PM to 1 AM')
+    expect(value('- Day shift and flexible to work in Night shift if needed.', 'shift')).toBe('Night shifts possible')
+    expect(value('- Ready to work in 24X7 shifts (Rotational Shifts including Night Shift and Weekends)', 'shift')).toBe('Rotational shifts, including nights')
     expect(value('Willing to work in 24/7 rotational shifts.', 'shift')).toBe('Rotational shifts')
-    expect(value('The candidate will work US shift timings.', 'shift')).toBe('US or UK shift hours')
+    expect(value('The candidate will work US shift timings.', 'shift')).toBe('US hours')
+    expect(value('We do not have night shifts.', 'shift')).toBeNull()
     expect(value('Our platform covers labor laws on overtime and night shifts in 60 countries.', 'shift')).toBeNull()
   })
 })

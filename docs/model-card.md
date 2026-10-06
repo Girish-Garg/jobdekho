@@ -1,11 +1,11 @@
 # Model card
 
-JobDekho has two small word models. They run on the person's own computer in plain JavaScript, and only where the step 1 rules found no evidence. The maintainer trains them with `npm run train:model` (scripts/model), which writes the weights, the measurements in scripts/model/metrics, and this card. The numbers below are generated; edit scripts/model/card*.js, not this file.
+JobDekho has three small word models. They run on the person's own computer in plain JavaScript, and only where the step 1 rules found no evidence. The maintainer trains them with `npm run train:model` (scripts/model), which writes the weights, the measurements in scripts/model/metrics, and this card. The numbers below are generated; edit scripts/model/card*.js, not this file.
 
 ## How a claim is proved
 
 - Held out: every model is tested on companies it never saw, and its thresholds are set for about 99.5% precision there, so that the owner's check passes reliably.
-- The owner's check: `npm run review:model -- sections` opens a local page with 250 of the model's real outputs, drawn once and kept, spread across companies (`--draw-only` draws them and leaves). Each shows the posting, the output, the words that pushed it, and Claude's pre-check when there is one. The owner marks each right or wrong.
+- The owner's check: `npm run review:model -- sections` (or `facts`) opens a local page with up to 250 of the model's real outputs, drawn once and kept, spread across companies (`--draw-only` draws them and leaves). Each shows the posting, the output, the words that pushed it, and Claude's pre-check when there is one. The owner marks each right or wrong.
 - The claim is 98% precision with 95% confidence: 0 wrong in 150 checked, or at most 1 in 236. When a review is finished, its record goes into packages/core/src/model/audit.json with its one-sided 95% Clopper-Pearson lower bound, and is written below.
 - A shipped model's output shows in the app only once that record is for its very version and passed; until then the model is off, and the card reads "not yet audited".
 - Pre-checks are read from scripts/model/data/review/<model>/precheck.json: `{ "<sample id>": { "verdict": "right" | "wrong" | "unsure", "note": "why" } }`, empty until filled.
@@ -54,6 +54,44 @@ At a 98% target: 34,570 held-out lines placed (62.1%), 98.22% precise (97.99% wi
 | 0.98 | 40.4% | 99.26% | 166 |
 | 0.99 | 29.9% | 99.50% | 84 |
 | 0.995 | 20.4% | 99.72% | 32 |
+
+- Audit: not yet audited.
+
+## Facts model
+
+- Status: shipped, but off in the app until the owner's audit of this version passes.
+- What it does: reads each line of a description and says which fact it states, if any: a pre-placement offer, shifts or working hours, an early start, an address to send the resume to. It runs only where the plain readers (core's description-facts.js) found that fact in no line, and it never replaces theirs. What a picked line states is read by core's fact-values.js, which also refuses a line that states no usable value ("Permanent" alone, "Letter of recommendation based on performance", "Shift timings:" with the hours on the next line, daytime hours). Its facts say they were the model's.
+- Version: 1
+- Weights: 4,885 features, 195 KB.
+- Labels: no posting labels these facts, so the maintainer's corpus was read by hand. Every line a candidate word picks out (scripts/model/fact-data.js) was labelled with the fact it states or none, kept in scripts/model/labels/facts.json by the line's fingerprint, never its text. Labelled: ppo 40, shift 253, start 15, email 17, none 9,273, from 11,027 postings at 664 companies (postings.ndjson saved 2026-10-06 (7,947 rows, 7,947 not in an earlier file); postings.ndjson saved 2026-09-30 (8,762 rows, 3,770 not in an earlier file)); the none count includes a sample of the lines no candidate word picks out. Candidate lines still unlabelled: 0. Lines the weights would show in the app that no one has read: 0.
+- Written examples: ppo 38, shift 5, start 13, email 8, none 38, sentences written by hand (scripts/model/labels/facts-written.json) for wordings the corpus has too few of. They are trained on in every fold and never measured.
+- Openings and bonds are stated in too few lines to learn, and stay the plain readers' alone.
+- Features: the line's words and word pairs and its first word, with an email address as the kind of address it is (an applying desk, a help desk, a personal mailbox, any other), a clock time, a round-the-clock and a link as one word each.
+- Split: by company, 5 folds (seed 20261004); every number below is out of fold, on the compacted weights as shipped, and counts a line as shown only when its value reads, as in the app.
+- Calibration: temperature 1.0497.
+- Thresholds: one per fact, as for the section model, with at least 15 lines covered.
+
+### At the shipped target, 99.0% precision
+
+Held out: 114 right of 114 shown (100.00%). With each fold's thresholds chosen on the other folds: 120 of 121 (99.17%).
+
+| Fact | Threshold | Shown, right | Lines stating it | Rules find | Model finds | Either finds |
+|---|---|---|---|---|---|---|
+| Pre-placement offer | 0.5 | 31 of 31 | 40 | 22.5% | 77.5% | 82.5% |
+| Shifts and hours | 0.91 | 83 of 83 | 253 | 19.0% | 32.8% | 43.1% |
+| Early start | never shown | none | 15 | 33.3% | 0.0% | 33.3% |
+| Address to apply to | never shown | none | 17 | 100.0% | 0.0% | 100.0% |
+
+### Trade-off
+
+At a 95% target: 164 right of 171 shown (95.91%; 95.83% with thresholds chosen on the other folds).
+
+| Fact | Threshold | Shown, right | Lines stating it | Rules find | Model finds | Either finds |
+|---|---|---|---|---|---|---|
+| Pre-placement offer | 0.5 | 31 of 31 | 40 | 22.5% | 77.5% | 82.5% |
+| Shifts and hours | 0.5 | 133 of 140 | 253 | 19.0% | 52.6% | 58.1% |
+| Early start | never shown | none | 15 | 33.3% | 0.0% | 33.3% |
+| Address to apply to | never shown | none | 17 | 100.0% | 0.0% | 100.0% |
 
 - Audit: not yet audited.
 

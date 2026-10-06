@@ -1,0 +1,258 @@
+{
+  "model": "facts",
+  "version": 1,
+  "data": {
+    "files": [
+      {
+        "file": "postings.ndjson",
+        "date": "2026-10-06",
+        "rows": 7947,
+        "added": 7947
+      },
+      {
+        "file": "postings.ndjson",
+        "date": "2026-09-30",
+        "rows": 8762,
+        "added": 3770
+      }
+    ],
+    "postings": 11027,
+    "companies": 664,
+    "lines": {
+      "ppo": 40,
+      "shift": 253,
+      "start": 15,
+      "email": 17,
+      "none": 9273
+    },
+    "written": {
+      "ppo": 38,
+      "shift": 5,
+      "start": 13,
+      "email": 8,
+      "none": 38
+    },
+    "unlabelled": 0,
+    "unreviewedShown": 0
+  },
+  "split": {
+    "by": "company",
+    "folds": 5,
+    "seed": 20261004
+  },
+  "training": {
+    "epochs": 25,
+    "rate": 0.2,
+    "l2": 0.0001,
+    "seed": 20261004,
+    "minCount": 5,
+    "pruneBelow": 0.02,
+    "vocabulary": 4886,
+    "kept": 4885
+  },
+  "temperature": 1.0497,
+  "minSupport": 15,
+  "heldOut": {
+    "lines": 9598
+  },
+  "chosen": {
+    "target": 0.99,
+    "thresholds": {
+      "ppo": 0.5,
+      "shift": 0.91,
+      "start": null,
+      "email": null
+    },
+    "heldOut": {
+      "covered": 114,
+      "right": 114,
+      "precision": 1
+    },
+    "thresholdsChosenWithoutTheTestFold": {
+      "covered": 121,
+      "right": 120,
+      "precision": 0.9917355371900827
+    },
+    "byKind": {
+      "ppo": {
+        "threshold": 0.5,
+        "covered": 31,
+        "right": 31,
+        "precision": 1,
+        "stated": 40,
+        "rules": 0.225,
+        "model": 0.775,
+        "either": 0.825
+      },
+      "shift": {
+        "threshold": 0.91,
+        "covered": 83,
+        "right": 83,
+        "precision": 1,
+        "stated": 253,
+        "rules": 0.1897,
+        "model": 0.3281,
+        "either": 0.4308
+      },
+      "start": {
+        "threshold": null,
+        "covered": 0,
+        "right": 0,
+        "precision": null,
+        "stated": 15,
+        "rules": 0.3333,
+        "model": 0,
+        "either": 0.3333
+      },
+      "email": {
+        "threshold": null,
+        "covered": 0,
+        "right": 0,
+        "precision": null,
+        "stated": 17,
+        "rules": 1,
+        "model": 0,
+        "either": 1
+      }
+    }
+  },
+  "alternative": {
+    "target": 0.95,
+    "thresholds": {
+      "ppo": 0.5,
+      "shift": 0.5,
+      "start": null,
+      "email": null
+    },
+    "heldOut": {
+      "covered": 171,
+      "right": 164,
+      "precision": 0.9591
+    },
+    "thresholdsChosenWithoutTheTestFold": {
+      "covered": 168,
+      "right": 161,
+      "precision": 0.9583333333333334
+    },
+    "byKind": {
+      "ppo": {
+        "threshold": 0.5,
+        "covered": 31,
+        "right": 31,
+        "precision": 1,
+        "stated": 40,
+        "rules": 0.225,
+        "model": 0.775,
+        "either": 0.825
+      },
+      "shift": {
+        "threshold": 0.5,
+        "covered": 140,
+        "right": 133,
+        "precision": 0.95,
+        "stated": 253,
+        "rules": 0.1897,
+        "model": 0.5257,
+        "either": 0.581
+      },
+      "start": {
+        "threshold": null,
+        "covered": 0,
+        "right": 0,
+        "precision": null,
+        "stated": 15,
+        "rules": 0.3333,
+        "model": 0,
+        "either": 0.3333
+      },
+      "email": {
+        "threshold": null,
+        "covered": 0,
+        "right": 0,
+        "precision": null,
+        "stated": 17,
+        "rules": 1,
+        "model": 0,
+        "either": 1
+      }
+    }
+  },
+  "globalThresholds": [
+    {
+      "threshold": 0.8,
+      "covered": 135,
+      "precision": 0.9852,
+      "wrong": 2
+    },
+    {
+      "threshold": 0.9,
+      "covered": 113,
+      "precision": 0.9823,
+      "wrong": 2
+    },
+    {
+      "threshold": 0.95,
+      "covered": 93,
+      "precision": 0.9892,
+      "wrong": 1
+    },
+    {
+      "threshold": 0.99,
+      "covered": 42,
+      "precision": 1,
+      "wrong": 0
+    }
+  ],
+  "reliability": [
+    {
+      "from": 0.5,
+      "to": 0.7,
+      "n": 34,
+      "right": 28
+    },
+    {
+      "from": 0.7,
+      "to": 0.8,
+      "n": 20,
+      "right": 20
+    },
+    {
+      "from": 0.8,
+      "to": 0.9,
+      "n": 22,
+      "right": 22
+    },
+    {
+      "from": 0.9,
+      "to": 0.95,
+      "n": 20,
+      "right": 19
+    },
+    {
+      "from": 0.95,
+      "to": 0.98,
+      "n": 27,
+      "right": 26
+    },
+    {
+      "from": 0.98,
+      "to": 0.99,
+      "n": 24,
+      "right": 24
+    },
+    {
+      "from": 0.99,
+      "to": 0.995,
+      "n": 11,
+      "right": 11
+    },
+    {
+      "from": 0.995,
+      "to": 1,
+      "n": 31,
+      "right": 31
+    }
+  ],
+  "shipped": true,
+  "weightsBytes": 199204
+}

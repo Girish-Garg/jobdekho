@@ -13,11 +13,11 @@ import { page } from './page.js'
 // this computer alone (127.0.0.1, a free port). No AI is called: Claude's
 // pre-checks, when a later step has written them, are read from a file.
 //
-//   npm run review:model -- sections [--draw-only] [postings.ndjson ...]
+//   npm run review:model -- sections|facts [--draw-only] [postings.ndjson ...]
 //
 // --draw-only draws the sample and leaves, so the pre-checks can be
 // written before the owner opens the page.
-const USAGE = 'Usage: npm run review:model -- sections [--draw-only] [postings.ndjson ...]'
+const USAGE = 'Usage: npm run review:model -- sections|facts [--draw-only] [postings.ndjson ...]'
 const args = process.argv.slice(2)
 const drawOnly = args.includes('--draw-only')
 const [model, ...paths] = args.filter((arg) => arg !== '--draw-only')
