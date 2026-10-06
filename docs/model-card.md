@@ -62,34 +62,35 @@ At a 98% target: 34,570 held-out lines placed (62.1%), 98.22% precise (97.99% wi
 - Status: shipped, but off in the app until the owner's audit of this version passes.
 - What it does: reads each line of a description and says which fact it states, if any: a pre-placement offer, shifts or working hours, an early start, an address to send the resume to. It runs only where the plain readers (core's description-facts.js) found that fact in no line, and it never replaces theirs. What a picked line states is read by core's fact-values.js, which also refuses a line that states no usable value ("Permanent" alone, "Letter of recommendation based on performance", "Shift timings:" with the hours on the next line, daytime hours). Its facts say they were the model's.
 - Version: 1
-- Weights: 4,885 features, 195 KB.
-- Labels: no posting labels these facts, so the maintainer's corpus was read by hand. Every line a candidate word picks out (scripts/model/fact-data.js) was labelled with the fact it states or none, kept in scripts/model/labels/facts.json by the line's fingerprint, never its text. Labelled: ppo 40, shift 253, start 15, email 17, none 9,273, from 11,027 postings at 664 companies (postings.ndjson saved 2026-10-06 (7,947 rows, 7,947 not in an earlier file); postings.ndjson saved 2026-09-30 (8,762 rows, 3,770 not in an earlier file)); the none count includes a sample of the lines no candidate word picks out. Candidate lines still unlabelled: 0. Lines the weights would show in the app that no one has read: 0.
+- Weights: 4,899 features, 195 KB.
+- Labels: no posting labels these facts, so the maintainer's corpus was read by hand. Every line a candidate word picks out (scripts/model/fact-data.js) was labelled with the fact it states or none, kept in scripts/model/labels/facts.json by the line's fingerprint, never its text. Labelled: ppo 42, shift 253, start 15, email 17, none 9,314, from 11,027 postings at 630 companies (postings.ndjson saved 2026-10-06 (7,947 rows, 7,947 not in an earlier file); postings.ndjson saved 2026-09-30 (8,762 rows, 3,770 not in an earlier file)); the none count includes a sample of the lines no candidate word picks out. Candidate lines still unlabelled: 0. Lines the weights would show in the app that no one has read: 0.
+- Archive: the app deletes a posting once it closes, or two months after it was posted or last listed, and a fingerprint alone cannot find a line it no longer holds. So every candidate line, labelled line and line the weights show is kept as text in scripts/model/data/facts/lines.ndjson on the maintainer's computer (git ignores it: it holds posting text), and training reads its labelled lines from there. It holds 1,641 lines; 0 labelled lines are trained on from it alone, their postings gone. Each training run adds what the corpus holds, and `npm run keep:lines` does it between runs.
 - Written examples: ppo 38, shift 5, start 13, email 8, none 38, sentences written by hand (scripts/model/labels/facts-written.json) for wordings the corpus has too few of. They are trained on in every fold and never measured.
 - Openings and bonds are stated in too few lines to learn, and stay the plain readers' alone.
 - Features: the line's words and word pairs and its first word, with an email address as the kind of address it is (an applying desk, a help desk, a personal mailbox, any other), a clock time, a round-the-clock and a link as one word each.
 - Split: by company, 5 folds (seed 20261004); every number below is out of fold, on the compacted weights as shipped, and counts a line as shown only when its value reads, as in the app.
-- Calibration: temperature 1.0497.
+- Calibration: temperature 1.0585.
 - Thresholds: one per fact, as for the section model, with at least 15 lines covered.
 
 ### At the shipped target, 99.0% precision
 
-Held out: 114 right of 114 shown (100.00%). With each fold's thresholds chosen on the other folds: 120 of 121 (99.17%).
+Held out: 102 right of 102 shown (100.00%). With each fold's thresholds chosen on the other folds: 107 of 108 (99.07%).
 
 | Fact | Threshold | Shown, right | Lines stating it | Rules find | Model finds | Either finds |
 |---|---|---|---|---|---|---|
-| Pre-placement offer | 0.5 | 31 of 31 | 40 | 22.5% | 77.5% | 82.5% |
-| Shifts and hours | 0.91 | 83 of 83 | 253 | 19.0% | 32.8% | 43.1% |
+| Pre-placement offer | 0.5 | 30 of 30 | 42 | 21.4% | 71.4% | 76.2% |
+| Shifts and hours | 0.93 | 72 of 72 | 253 | 19.0% | 28.5% | 39.5% |
 | Early start | never shown | none | 15 | 33.3% | 0.0% | 33.3% |
 | Address to apply to | never shown | none | 17 | 100.0% | 0.0% | 100.0% |
 
 ### Trade-off
 
-At a 95% target: 164 right of 171 shown (95.91%; 95.83% with thresholds chosen on the other folds).
+At a 95% target: 156 right of 159 shown (98.11%; 95.18% with thresholds chosen on the other folds).
 
 | Fact | Threshold | Shown, right | Lines stating it | Rules find | Model finds | Either finds |
 |---|---|---|---|---|---|---|
-| Pre-placement offer | 0.5 | 31 of 31 | 40 | 22.5% | 77.5% | 82.5% |
-| Shifts and hours | 0.5 | 133 of 140 | 253 | 19.0% | 52.6% | 58.1% |
+| Pre-placement offer | 0.5 | 30 of 30 | 42 | 21.4% | 71.4% | 76.2% |
+| Shifts and hours | 0.6 | 126 of 129 | 253 | 19.0% | 49.8% | 55.3% |
 | Early start | never shown | none | 15 | 33.3% | 0.0% | 33.3% |
 | Address to apply to | never shown | none | 17 | 100.0% | 0.0% | 100.0% |
 

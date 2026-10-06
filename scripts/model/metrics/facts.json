@@ -17,13 +17,13 @@
       }
     ],
     "postings": 11027,
-    "companies": 664,
+    "companies": 630,
     "lines": {
-      "ppo": 40,
+      "ppo": 42,
       "shift": 253,
       "start": 15,
       "email": 17,
-      "none": 9273
+      "none": 9314
     },
     "written": {
       "ppo": 38,
@@ -33,6 +33,8 @@
       "none": 38
     },
     "unlabelled": 0,
+    "archived": 1641,
+    "labelledGone": 0,
     "unreviewedShown": 0
   },
   "split": {
@@ -47,52 +49,52 @@
     "seed": 20261004,
     "minCount": 5,
     "pruneBelow": 0.02,
-    "vocabulary": 4886,
-    "kept": 4885
+    "vocabulary": 4900,
+    "kept": 4899
   },
-  "temperature": 1.0497,
+  "temperature": 1.0585,
   "minSupport": 15,
   "heldOut": {
-    "lines": 9598
+    "lines": 9641
   },
   "chosen": {
     "target": 0.99,
     "thresholds": {
       "ppo": 0.5,
-      "shift": 0.91,
+      "shift": 0.93,
       "start": null,
       "email": null
     },
     "heldOut": {
-      "covered": 114,
-      "right": 114,
+      "covered": 102,
+      "right": 102,
       "precision": 1
     },
     "thresholdsChosenWithoutTheTestFold": {
-      "covered": 121,
-      "right": 120,
-      "precision": 0.9917355371900827
+      "covered": 108,
+      "right": 107,
+      "precision": 0.9907407407407407
     },
     "byKind": {
       "ppo": {
         "threshold": 0.5,
-        "covered": 31,
-        "right": 31,
+        "covered": 30,
+        "right": 30,
         "precision": 1,
-        "stated": 40,
-        "rules": 0.225,
-        "model": 0.775,
-        "either": 0.825
+        "stated": 42,
+        "rules": 0.2143,
+        "model": 0.7143,
+        "either": 0.7619
       },
       "shift": {
-        "threshold": 0.91,
-        "covered": 83,
-        "right": 83,
+        "threshold": 0.93,
+        "covered": 72,
+        "right": 72,
         "precision": 1,
         "stated": 253,
         "rules": 0.1897,
-        "model": 0.3281,
-        "either": 0.4308
+        "model": 0.2846,
+        "either": 0.3953
       },
       "start": {
         "threshold": null,
@@ -120,40 +122,40 @@
     "target": 0.95,
     "thresholds": {
       "ppo": 0.5,
-      "shift": 0.5,
+      "shift": 0.6,
       "start": null,
       "email": null
     },
     "heldOut": {
-      "covered": 171,
-      "right": 164,
-      "precision": 0.9591
+      "covered": 159,
+      "right": 156,
+      "precision": 0.9811
     },
     "thresholdsChosenWithoutTheTestFold": {
-      "covered": 168,
-      "right": 161,
-      "precision": 0.9583333333333334
+      "covered": 166,
+      "right": 158,
+      "precision": 0.9518072289156626
     },
     "byKind": {
       "ppo": {
         "threshold": 0.5,
-        "covered": 31,
-        "right": 31,
+        "covered": 30,
+        "right": 30,
         "precision": 1,
-        "stated": 40,
-        "rules": 0.225,
-        "model": 0.775,
-        "either": 0.825
+        "stated": 42,
+        "rules": 0.2143,
+        "model": 0.7143,
+        "either": 0.7619
       },
       "shift": {
-        "threshold": 0.5,
-        "covered": 140,
-        "right": 133,
-        "precision": 0.95,
+        "threshold": 0.6,
+        "covered": 129,
+        "right": 126,
+        "precision": 0.9767,
         "stated": 253,
         "rules": 0.1897,
-        "model": 0.5257,
-        "either": 0.581
+        "model": 0.498,
+        "either": 0.5534
       },
       "start": {
         "threshold": null,
@@ -180,25 +182,25 @@
   "globalThresholds": [
     {
       "threshold": 0.8,
-      "covered": 135,
-      "precision": 0.9852,
+      "covered": 128,
+      "precision": 0.9844,
       "wrong": 2
     },
     {
       "threshold": 0.9,
-      "covered": 113,
-      "precision": 0.9823,
+      "covered": 107,
+      "precision": 0.9813,
       "wrong": 2
     },
     {
       "threshold": 0.95,
-      "covered": 93,
-      "precision": 0.9892,
+      "covered": 81,
+      "precision": 0.9877,
       "wrong": 1
     },
     {
       "threshold": 0.99,
-      "covered": 42,
+      "covered": 39,
       "precision": 1,
       "wrong": 0
     }
@@ -207,52 +209,52 @@
     {
       "from": 0.5,
       "to": 0.7,
-      "n": 34,
-      "right": 28
+      "n": 36,
+      "right": 30
     },
     {
       "from": 0.7,
       "to": 0.8,
-      "n": 20,
-      "right": 20
+      "n": 24,
+      "right": 23
     },
     {
       "from": 0.8,
       "to": 0.9,
-      "n": 22,
-      "right": 22
+      "n": 21,
+      "right": 21
     },
     {
       "from": 0.9,
       "to": 0.95,
-      "n": 20,
-      "right": 19
+      "n": 26,
+      "right": 25
     },
     {
       "from": 0.95,
       "to": 0.98,
-      "n": 27,
-      "right": 26
+      "n": 20,
+      "right": 20
     },
     {
       "from": 0.98,
       "to": 0.99,
-      "n": 24,
-      "right": 24
+      "n": 22,
+      "right": 21
     },
     {
       "from": 0.99,
       "to": 0.995,
-      "n": 11,
-      "right": 11
+      "n": 14,
+      "right": 14
     },
     {
       "from": 0.995,
       "to": 1,
-      "n": 31,
-      "right": 31
+      "n": 25,
+      "right": 25
     }
   ],
   "shipped": true,
-  "weightsBytes": 199204
+  "weightsBytes": 199744
 }

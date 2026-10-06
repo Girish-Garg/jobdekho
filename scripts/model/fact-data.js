@@ -1,72 +1,63 @@
-import { createHash } from 'node:crypto'
-import { readFileSync } from 'node:fs'
 import { linesOf } from '@jobdekho/core/description-facts.js'
 import { factFeatures } from '@jobdekho/core/model/fact-features.js'
 import { factLines } from '@jobdekho/core/model/fact-estimate.js'
 import { FACT_VALUES } from '@jobdekho/core/fact-values.js'
 import { foldOf, seeded, shuffled, SEED } from './random.js'
+import { fingerprint, isCandidate, readLabels, readWritten } from './fact-lines.js'
+import { readArchive } from './fact-archive.js'
+
+export { CANDIDATE, fingerprint, isCandidate, readLabels, readWritten } from './fact-lines.js'
 
 // What the facts model learns from. Nothing in a posting labels these
-// facts, so they were read by hand: every line of the maintainer's corpus
-// a candidate word picks out (CANDIDATE below) was labelled with the fact
-// it states, or none, and its label kept in labels/facts.json under the
-// line's fingerprint, never its text, so no recruiter's address ends up in
-// the repo. Lines no candidate word picks out are taken as stating none of
-// them, a sample of PLAIN of them. labels/facts-written.json adds
-// sentences written by hand for wordings the corpus has too few of; they
-// are trained on and never measured (train-facts.js).
+// facts, so they were read by hand: every line a candidate word picks out
+// (fact-lines.js) was labelled with the fact it states, or none, the label
+// kept in labels/facts.json under the line's fingerprint and the line in
+// the archive (fact-archive.js), which keeps it after the app deletes its
+// posting. Lines no candidate word picks out are taken as stating none of
+// them, a sample of PLAIN of them from the corpus as it is now.
+// labels/facts-written.json adds sentences written by hand for wordings the
+// corpus has too few of; they are trained on and never measured
+// (train-facts.js).
 //
 // Openings and bonds were stated in too few lines to learn (2 and 0), so
 // they stay the plain readers' alone; their lines count as none here.
 export const FACT_KINDS = ['ppo', 'shift', 'start', 'email', 'none']
 const PLAIN = 8000
 
-export const CANDIDATE = [
-  /\b(?:ppo|pre[- ]?placement|full[- ]?time\b.*\b(?:intern|internship|trainee|after|based on|performance|completion|opportunit|potential|chance|offer|convert|transition|absorb|considered|extend)|(?:intern|internship|trainee|after|based on|performance|completion|opportunit|potential|chance|offer|convert|transition|absorb|considered|extend)\b.*\bfull[- ]?time|permanent (?:role|position|employment|job|opportunit)|convert(?:ed|ion)?|absorb(?:ed|tion)?\b.*\b(?:role|employee|team|company)|job offer|offer letter|returning offer|return offer|\bfte\b)/i,
-  /[A-Z0-9._%+-]+@[A-Z0-9-]+(?:\.[A-Z0-9-]+)*\.[A-Z]{2,}/i,
-  /\b(?:openings?|vacanc(?:y|ies)|positions?|seats|hiring for|headcount)\b.*\b\d{1,3}\b|\b\d{1,3}\b.*\b(?:openings?|vacanc(?:y|ies)|positions?|seats)\b|^number of openings/i,
-  /\b(?:bond|service agreement|lock[- ]?in|commit(?:ment)? (?:to|of|for) (?:a )?(?:minimum|\d)|minimum (?:tenure|service|commitment|period)|serve (?:the company|a minimum|for)|training cost|liquidated damages|surety)\b/i,
-  /\b(?:immediate(?:ly)?|joiners?|joining|start date|starting date|notice period|asap|available to (?:start|join)|join (?:us )?(?:within|by|in|from)|start (?:within|by|from|on|in))\b/i,
-  /\b(?:shifts?|night|nights|rotational|rotating|graveyard|24x7|24\/7|time ?zones?|overlap|(?:US|UK|EU|European|American) (?:hours|time|business hours)|\d{1,2}(?::\d{2})?\s*(?:am|pm)\b.{0,15}\b\d{1,2}(?::\d{2})?\s*(?:am|pm))\b|\b(?:EST|PST|CST|GMT|BST|CET|IST)\b/i,
-]
-export const isCandidate = (line) => CANDIDATE.some((pattern) => pattern.test(line))
-
-export const fingerprint = (line) => createHash('sha256').update(line.toLowerCase().replace(/\s+/g, ' ').trim()).digest('hex').slice(0, 16)
-
-const readJson = (name) => JSON.parse(readFileSync(new URL(`./labels/${name}`, import.meta.url), 'utf8'))
-export const readLabels = () => readJson('facts.json')
-export const readWritten = () => readJson('facts-written.json').examples
-
 function example(text, label, companyKey) {
   const kind = FACT_KINDS.includes(label) ? label : 'none'
   return { text, companyKey, fold: foldOf(companyKey), y: FACT_KINDS.indexOf(kind), features: factFeatures(text) }
 }
 
-// { examples, unlabelled }: each distinct line once, under the company it
-// was first seen at; `unlabelled` the candidate lines no label covers yet,
-// for the next pass of hand reading. Written examples carry `written`.
-export function factExamples(postings, { labels = readLabels(), written = readWritten() } = {}) {
+// { examples, unlabelled, gone }: every labelled line the archive keeps,
+// under the company it was first seen at, whether or not its posting is
+// still in the corpus; the corpus's plain lines, a seeded sample, as none;
+// the written examples, marked `written`. `unlabelled` are the archive's
+// candidate lines no label covers yet, for the next pass of hand reading;
+// `gone` counts the labelled lines whose posting the app has deleted.
+export function factExamples(postings, { labels = readLabels(), written = readWritten(), archive = readArchive() } = {}) {
   const examples = []
-  const plain = []
   const unlabelled = []
-  const seen = new Set()
+  for (const entry of archive.values()) {
+    if (labels[entry.fp]) examples.push(example(entry.text, labels[entry.fp], entry.companyKey))
+    else if (isCandidate(entry.text)) unlabelled.push({ line: entry.text, company: entry.company, source: entry.source })
+  }
+  const present = new Set()
+  const plain = []
   for (const p of postings) {
     for (const line of linesOf(p.description)) {
       const key = fingerprint(line)
-      if (line.length > 600 || seen.has(key)) continue
-      seen.add(key)
-      if (!isCandidate(line)) {
-        if (line.length >= 8) plain.push({ line, companyKey: p.companyKey })
-      } else if (labels[key]) {
-        examples.push(example(line, labels[key], p.companyKey))
-      } else {
-        unlabelled.push({ line, company: p.company, source: p.source })
-      }
+      if (present.has(key)) continue
+      present.add(key)
+      // A line the archive keeps is labelled, or waits for its label.
+      if (line.length < 8 || line.length > 600 || archive.has(key) || labels[key] || isCandidate(line)) continue
+      plain.push({ line, companyKey: p.companyKey })
     }
   }
   for (const p of shuffled(plain, seeded(SEED)).slice(0, PLAIN)) examples.push(example(p.line, 'none', p.companyKey))
   for (const [text, label] of written) examples.push({ ...example(text, label, 'written'), written: true })
-  return { examples, unlabelled }
+  const gone = [...archive.values()].filter((entry) => labels[entry.fp] && !present.has(entry.fp)).length
+  return { examples, unlabelled, gone }
 }
 
 // The lines a trained model would show in the app that no one has read

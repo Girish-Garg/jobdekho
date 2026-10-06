@@ -52,10 +52,10 @@ describe('the facts model in the list', () => {
 describe('what the facts model reads of a line', () => {
   // The weights must hold no one's address or name.
   it('reads an address as the kind of address it is, never the address', () => {
-    const words = [...factFeatures('Send your CV to priya.sharma@gmail.com or careers@acme.com').keys()]
+    const words = [...factFeatures('Send your CV to first.last@gmail.com or careers@example.com').keys()]
     expect(words).toContain('w:zzpersonal')
     expect(words).toContain('w:zzapplydesk')
-    expect(words.some((w) => /priya|sharma|acme|gmail/.test(w))).toBe(false)
+    expect(words.some((w) => /first|last|example|gmail/.test(w))).toBe(false)
     expect([...factFeatures('Shift: 2 pm - 11 pm, 24x7 support').keys()]).toEqual(expect.arrayContaining(['w:zztime', 'w:zz247']))
   })
 })

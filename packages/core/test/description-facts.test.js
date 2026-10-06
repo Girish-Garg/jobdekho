@@ -28,16 +28,16 @@ describe('a pre-placement offer', () => {
 
 describe('an address to send the resume to', () => {
   it('is read from a line about applying, and marked when it is personal', () => {
-    expect(fact('📩 Apply by sending your resume to: hr@wavexcel.in', 'email')).toMatchObject({ value: 'hr@wavexcel.in', personal: false })
-    expect(fact('- Interested candidates can share their updated CV at hiring.durozen@gmail.com', 'email')).toMatchObject({ value: 'hiring.durozen@gmail.com', personal: true })
-    expect(value('If this is you, email us at recruiting@albert.com', 'email')).toBe('recruiting@albert.com')
+    expect(fact('📩 Apply by sending your resume to: hr@example.in', 'email')).toMatchObject({ value: 'hr@example.in', personal: false })
+    expect(fact('- Interested candidates can share their updated CV at example.hiring@gmail.com', 'email')).toMatchObject({ value: 'example.hiring@gmail.com', personal: true })
+    expect(value('If this is you, email us at recruiting@example.com', 'email')).toBe('recruiting@example.com')
   })
 
   it('is not a help desk, a fraud warning or a questions address', () => {
-    expect(value("Please email accessibility@flex.com and we'll discuss your situation (this email does not accept applications).", 'email')).toBeNull()
-    expect(value("If something seems off or you're contacted by an unexpected third party, reach out to careers@arcesium.com", 'email')).toBeNull()
-    expect(value('If you have any questions about the steps above, write to internship-queries@hackerrank.com', 'email')).toBeNull()
-    expect(value('Questions: jobs@thisdot.co', 'email')).toBeNull()
+    expect(value("Please email accessibility@example.com and we'll discuss your situation (this email does not accept applications).", 'email')).toBeNull()
+    expect(value("If something seems off or you're contacted by an unexpected third party, reach out to careers@example.com", 'email')).toBeNull()
+    expect(value('If you have any questions about the steps above, write to internship-queries@example.com', 'email')).toBeNull()
+    expect(value('Questions: jobs@example.co', 'email')).toBeNull()
   })
 })
 

@@ -31,8 +31,8 @@ describe('a pre-placement offer', () => {
 
 describe('an address to send the resume to', () => {
   it('is the address in a line about applying, marked when personal', () => {
-    expect(FACT_VALUES.email('Apply here: hr@sunsysglobal.com')).toEqual({ value: 'hr@sunsysglobal.com', personal: false })
-    expect(FACT_VALUES.email('Mail your CV to someone.hiring@gmail.com.')).toEqual({ value: 'someone.hiring@gmail.com', personal: true })
+    expect(FACT_VALUES.email('Apply here: hr@example.com')).toEqual({ value: 'hr@example.com', personal: false })
+    expect(FACT_VALUES.email('Mail your CV to example.hiring@gmail.com.')).toEqual({ value: 'example.hiring@gmail.com', personal: true })
   })
 
   it('is not a help desk, a questions address or a line with none', () => {
@@ -87,6 +87,15 @@ describe('the shifts', () => {
     expect(read('shift', '- Willing to work in European shifts')).toBe('UK or Europe hours')
     expect(read('shift', 'Different Shifts including APAC/EMEA/AMER hours as required.')).toBe('Shifts across time zones')
     expect(read('shift', 'Must be willing to work in shift based on business needs')).toBe('Shift work')
+  })
+
+  // Each of these once read looser than its line: one window of several,
+  // a start in another clock, a day that only overlaps.
+  it('say no more than the line: an option, a start elsewhere, an overlap', () => {
+    expect(read('shift', '- Evening: 3:00 PM to 9:00 PM')).toBe('Evening shift, 3 PM to 9 PM')
+    expect(read('shift', '- Morning: 10:00 AM to 4:00 PM')).toBeNull()
+    expect(read('shift', '- You will work in an APAC shift region, starting at 5:00 PM EST.')).toBe('Shift starts 5 PM EST')
+    expect(read('shift', '- Flexibility to work a shift overlapping part of the US Work Day.')).toBe('Overlaps US hours')
   })
 
   it('show nothing for daytime hours, a day shift, a bare heading or a no', () => {

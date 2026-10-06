@@ -33,6 +33,10 @@ function regionOf(line) {
 
 const joined = (texts) => (texts.length > 1 ? `${texts.slice(0, -1).join(', ')} or ${texts.at(-1)}` : texts[0])
 
+// A line naming one of several shift windows ("Evening: 3:00 PM to 9:00
+// PM") is named as the posting names it, not as the job's only hours.
+const OPTION = /^\s*(?:[-*•·]\s*)?(morning|afternoon|evening|night)\s*:/i
+
 // Hours, one window or several: "Late shift, 2 PM to 11 PM", "Late shifts,
 // 12 PM to 9 PM or 2 PM to 11 PM", "Shifts, 12 PM to 9 PM or 4:30 PM to
 // 1:30 AM" when they differ, or null when every one is daytime.
@@ -42,8 +46,19 @@ function hoursValue(line, all) {
   if (zone) return `${regionOf(line) ?? 'Shift'}, ${text} ${zone}`
   const kinds = all.map((h) => hoursKind(h, { night: all.length === 1 && /\bnight/i.test(line) }))
   if (!kinds.some(Boolean)) return null
+  const option = line.match(OPTION)?.[1]
+  if (option && all.length === 1) return `${option[0].toUpperCase()}${option.slice(1).toLowerCase()} shift, ${text}`
   if (all.length === 1) return `${kinds[0]}, ${text}`
   return kinds.every((kind) => kind === kinds[0]) ? `${kinds[0]}s, ${text}` : `Shifts, ${text}`
+}
+
+// A start given alone, in another region's clock: "starting at 5:00 PM
+// EST" says when the day begins there, and nothing about where it falls.
+const STARTS = /\bstart(?:ing|s)?\s+(?:at\s+)?(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm)\s*(EST|EDT|PST|PDT|CST|CDT|ET|PT|GMT|BST|CET)\b/i
+function startsValue(line) {
+  const m = line.match(STARTS)
+  if (!m) return null
+  return `Shift starts ${Number(m[1])}${m[2] && m[2] !== '00' ? `:${m[2]}` : ''} ${m[3].toUpperCase()} ${m[4]}`
 }
 
 // Nights among other shifts, nights now and then, or nights.
@@ -59,8 +74,11 @@ function valueOf(line) {
   if (hours.length) return hoursValue(line, hours)
   if (/\bnight/i.test(line)) return nightValue(line)
   if (ROTATING.test(line)) return 'Rotational shifts'
+  const starts = startsValue(line)
+  if (starts) return starts
+  // Hours that only overlap another region's day are not its hours.
   const region = regionOf(line)
-  if (region) return region
+  if (region) return /\boverlap/i.test(line) && region !== 'Shifts across time zones' ? `Overlaps ${region}` : region
   if (/\b(?:swing|afternoon|evening|second|2nd)\s+shifts?\b/i.test(line)) return 'Afternoon or evening shift'
   const words = line.split(/\s+/).filter((w) => /\w/.test(w)).length
   return words >= 3 && /\bshifts?\b/i.test(line) && !DAYTIME.test(line) && !NOT_HOURS.test(line) ? 'Shift work' : null

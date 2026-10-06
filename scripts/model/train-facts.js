@@ -3,8 +3,9 @@ import { join } from 'node:path'
 import { MODEL_VERSIONS } from '@jobdekho/core/model/version.js'
 import { logits, softmax } from '@jobdekho/core/model/linear.js'
 import { FACT_VALUES } from '@jobdekho/core/fact-values.js'
-import { decodeModel } from '@jobdekho/core/model/weights.js'
-import { FACT_KINDS, factExamples, unreviewedShown } from './fact-data.js'
+import { decodeModel, shippedModel } from '@jobdekho/core/model/weights.js'
+import { FACT_KINDS, factExamples, readLabels, unreviewedShown } from './fact-data.js'
+import { keepLines } from './fact-archive.js'
 import { fitShipped, fitTrained } from './cross-validate.js'
 import { fitTemperature } from './calibrate.js'
 import { factReport } from './fact-report.js'
@@ -47,7 +48,11 @@ const countOf = (list) => Object.fromEntries(FACT_KINDS.map((kind, c) => [kind, 
 // candidate lines no label covers yet, and unreviewed.json, the lines the
 // new weights would show that no one has read.
 export function trainFacts(postings, files) {
-  const { examples, unlabelled } = factExamples(postings)
+  // What the corpus holds now goes into the archive before anything is read
+  // from it, so the lines its next clean-up deletes are trained on still.
+  const labels = readLabels()
+  keepLines(postings, { labels, model: shippedModel('facts') })
+  const { examples, unlabelled, gone } = factExamples(postings, { labels })
   const { corpus, scores } = heldOut(examples)
   const temperature = fitTemperature(scores, corpus.map((e) => e.y))
   const items = corpus.map((e, i) => {
@@ -59,7 +64,8 @@ export function trainFacts(postings, files) {
   const report = factReport(items, OPTIONS)
   const { vocab, W, typical } = fitTrained(examples, FACT_SPEC)
   const weights = compactModel({ name: 'facts', version: FACT_SPEC.version, classes: FACT_KINDS, vocab, W, typical, temperature, thresholds: report.chosen.thresholds }, { cut: FACT_SPEC.cut })
-  const unreviewed = unreviewedShown(postings, decodeModel(weights))
+  const unreviewed = unreviewedShown(postings, decodeModel(weights), { labels })
+  const archived = keepLines(postings, { labels, model: decodeModel(weights) }).total
   mkdirSync(reviewDir('facts'), { recursive: true })
   writeFileSync(join(reviewDir('facts'), 'unlabelled.json'), `${JSON.stringify(unlabelled, null, 2)}\n`)
   writeFileSync(join(reviewDir('facts'), 'unreviewed.json'), `${JSON.stringify(unreviewed, null, 2)}\n`)
@@ -73,6 +79,8 @@ export function trainFacts(postings, files) {
       lines: countOf(corpus),
       written: countOf(examples.filter((e) => e.written)),
       unlabelled: unlabelled.length,
+      archived,
+      labelledGone: gone,
       unreviewedShown: unreviewed.length,
     },
     split: { by: 'company', folds: FOLDS, seed: SEED },
