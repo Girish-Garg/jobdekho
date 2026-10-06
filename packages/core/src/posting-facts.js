@@ -2,6 +2,7 @@ import { sectionize } from './jd-sections.js'
 import { yearsAsked, yearsIn } from './years-asked.js'
 import { payLabel } from './pay-label.js'
 import { quote } from './tag.js'
+import { descriptionFacts } from './description-facts.js'
 
 // The facts a description states, for the line above its sections, each
 // with where it came from and the words that said it:
@@ -9,6 +10,8 @@ import { quote } from './tag.js'
 //   years     { min, max, from: 'text' | 'board', evidence } | null
 //   pay       { value, label, currency, monthly, from: 'board' | 'text', evidence } | null
 //   workMode  { value, from, evidence } | null
+//   ppo, email, openings, bond, start, shift   { value, evidence } | null,
+//             what the text states in so many words (description-facts.js)
 //
 // Years are read the way the fit reads them (years-asked.js): the highest
 // floor among the requirement lines, never a founding date.
@@ -41,5 +44,5 @@ function payFact(row) {
 const workModeFact = (row) => (row.workModeTag ? { value: row.workModeTag.value, from: row.workModeTag.from, evidence: row.workModeTag.evidence } : null)
 
 export function postingFacts(row) {
-  return { years: yearsFact(row), pay: payFact(row), workMode: workModeFact(row) }
+  return { years: yearsFact(row), pay: payFact(row), workMode: workModeFact(row), ...descriptionFacts(row.descriptionText) }
 }

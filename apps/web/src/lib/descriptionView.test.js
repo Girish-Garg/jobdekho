@@ -67,6 +67,23 @@ describe('factItems', () => {
     ]);
   });
 
+  // The owner's ask: what a description states that a fresher weighs.
+  it('lists a PPO, the address to apply to, openings, a bond, the start and shifts after', () => {
+    const items = factItems({
+      ppo: { value: 'PPO possible', evidence: 'Says "PPO based on performance"' },
+      email: { value: 'hr@acme.in', personal: false, evidence: 'Says "Send your resume to hr@acme.in"' },
+      openings: { value: '10 openings', evidence: 'Number of openings: 10' },
+      bond: { value: '2-year bond', evidence: 'Says "2 year bond"' },
+      start: { value: 'Immediate start', evidence: 'Says "Immediate joiners"' },
+      shift: { value: 'Night shift', evidence: 'Says "Night shift"' },
+    });
+    expect(items.map(({ key, value }) => [key, value])).toEqual([
+      ['ppo', 'PPO possible'], ['email', 'hr@acme.in'], ['openings', '10 openings'], ['bond', '2-year bond'], ['start', 'Immediate start'], ['shift', 'Night shift'],
+    ]);
+    expect(items[1]).toMatchObject({ href: 'mailto:hr@acme.in', note: null });
+    expect(factItems({ email: { value: 'x@gmail.com', personal: true, evidence: 'e' } })[0].note).toBe('personal address');
+  });
+
   it('leaves out what the text does not state, and a pay it could not read', () => {
     expect(factItems(null)).toEqual([]);
     expect(factItems({ years: null, pay: { value: '400000', label: null, evidence: 'x' }, workMode: null })).toEqual([]);

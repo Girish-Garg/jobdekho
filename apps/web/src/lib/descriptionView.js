@@ -54,8 +54,16 @@ export function sectionView(sections = []) {
   return { shown, folded };
 }
 
+// What else a description states in so many words (the server's core
+// description-facts.js), in the order a fresher weighs them.
+const STATED = [['ppo', 'Pre-placement offer'], ['email', 'Apply by email'], ['openings', 'Openings'], ['bond', 'Bond'], ['start', 'Start'], ['shift', 'Shift']];
+
+// The address to send the resume to opens the mail app; a personal one
+// (gmail and the like) says so, since real employers seldom recruit from one.
+const mailOf = (email) => ({ href: `mailto:${email.value}`, note: email.personal ? 'personal address' : null });
+
 // The line of facts above the sections: what the text states about years,
-// pay and work mode, each with the words that said it.
+// pay and work mode, and the rest, each with the words that said it.
 export function factItems(facts) {
   if (!facts) return [];
   const { years, pay, workMode } = facts;
@@ -63,5 +71,8 @@ export function factItems(facts) {
     years && { key: 'years', name: 'Experience', value: yearsLabel(years), evidence: years.evidence },
     pay && { key: 'pay', name: 'Pay', value: payText({ payLabel: pay.label, stipend: pay.value }), evidence: pay.evidence },
     workMode && { key: 'mode', name: 'Work mode', value: workModeLabel(workMode.value), evidence: workMode.evidence },
+    ...STATED.map(([key, name]) => facts[key] && {
+      key, name, value: facts[key].value, evidence: facts[key].evidence, ...(key === 'email' ? mailOf(facts[key]) : {}),
+    }),
   ].filter((item) => item && item.value);
 }

@@ -93,6 +93,7 @@ describe('getPosting', () => {
       years: { min: 3, max: 5, from: 'text', evidence: 'Says "3-5 years of Go"' },
       pay: null,
       workMode: { value: 'hybrid', from: 'text', evidence: 'Says "Workplace type: Hybrid"' },
+      ppo: null, email: null, openings: null, bond: null, start: null, shift: null,
     })
     expect(posting.workModeTag).toEqual(workModeTag)
   })
