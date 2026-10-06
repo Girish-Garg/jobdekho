@@ -53,14 +53,26 @@ describe('which chat is on screen', () => {
     expect(onScreenId()).toBe('job:pB');
   });
 
-  it('keeps the job\'s chat on screen on leaving the feed, though the feed says no job is open as it goes', () => {
+  // A job or a document no longer looked at is no longer what the chat is
+  // about: kept, "Classic resume" stayed on every page after the Resume page.
+  it('puts back the chat from before on leaving the page, as closing the pane does', () => {
     announceOpenPosting(A);
     setPage('profile');
     announceOpenPosting(null);
-    expect(onScreenId()).toBe('job:pA');
+    expect(onScreenId()).toBe('c-general');
+    setPage('resume');
+    announceOpenDocument({ id: 'd1', name: 'Classic resume', kind: 'resume' });
+    expect(onScreenId()).toBe('document:d1');
     setPage('postings');
-    announceOpenPosting(null);
+    expect(onScreenId()).toBe('c-general');
+  });
+
+  it('keeps the chat it had on leaving the page with the pin on', () => {
+    announceOpenPosting(A);
+    setPinned(true);
+    setPage('profile');
     expect(onScreenId()).toBe('job:pA');
+    setPinned(false);
   });
 
   it('follows the open document on the Resume page, and a job only on the feed', () => {

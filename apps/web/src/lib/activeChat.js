@@ -56,14 +56,18 @@ function opened(type, item) {
 onOpenPostingChange((posting) => opened('job', posting));
 onOpenDocumentChange((doc) => opened('document', doc));
 
-// Leaving a page lets go of what it followed, so the chat stays as it was;
-// arriving forgets what that page showed last, so it is followed again.
+// Leaving a page lets go of what it followed and puts back the chat on
+// screen before it followed anything, as closing the pane does: a job or a
+// document the person is no longer looking at is no longer what the chat is
+// about. Kept, it stayed on every page after ("Classic resume" on the feed
+// with nothing open), and in the next session too. With the pin on, nothing
+// moves. Arriving forgets what that page showed last, so it is followed again.
 export function setPage(page) {
   if (state.page === page) return;
   const type = followsOn(page);
   const seen = type ? Object.fromEntries(Object.entries(state.seen).filter(([key]) => key !== type)) : state.seen;
   const release = state.follow && state.follow.type !== type;
-  set({ page, seen, ...(release ? { base: chatIdOf(state), follow: null, before: null } : {}) });
+  set({ page, seen, ...(release ? { base: state.before ?? state.base, follow: null, before: null } : {}) });
 }
 
 // The person chose a chat. The one already on screen, followed or not, stays

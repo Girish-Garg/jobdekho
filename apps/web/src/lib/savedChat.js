@@ -6,11 +6,16 @@ const KEY = 'jobdekho-chat-on-screen';
 
 // The app only ever saves a chat's id here, but anything on this computer
 // can change it: a name every plain object answers to ("constructor") would
-// find a function among the chats and blank the page on every load.
+// find a function among the chats and blank the page on every load. A job's
+// or a document's chat followed from what was open ("job:...",
+// "document:...") is not brought back either: nothing is open in a new
+// session, so the chat starts general (see activeChat.js).
+const FOLLOWED = /^(?:job|document):/;
+
 export function readSavedChat() {
   try {
     const id = globalThis.localStorage?.getItem(KEY) || null;
-    return id && !(id in Object.prototype) ? id : null;
+    return id && !(id in Object.prototype) && !FOLLOWED.test(id) ? id : null;
   } catch {
     return null;
   }

@@ -7,7 +7,8 @@ import DocumentDelete from './DocumentDelete.jsx';
 import DocumentToolButton from './DocumentToolButton.jsx';
 import SlidingPill from './SlidingPill.jsx';
 import { useSlidingPill } from '../lib/useSlidingPill.js';
-import { CodeIcon, DocumentIcon, DownloadIcon } from './Icon.jsx';
+import IconButton from './ui/IconButton.jsx';
+import { CloseIcon, CodeIcon, DocumentIcon, DownloadIcon } from './Icon.jsx';
 
 // Preview or source, as one control with two sides, so which one is
 // showing is never a guess. A dot on Source says it holds unsaved edits,
@@ -41,9 +42,10 @@ function ViewToggle({ view, onView, dirty }) {
 }
 
 // The thin bar over the open document: its name (renamed in place), the
-// view, its history, the two ways out, and delete. The .tex download is
-// the saved source, never needing LaTeX; the PDF is the one on screen.
-export default function DocumentToolbar({ doc, pdf, view, onView, dirty, onRename, onRestore, onDelete }) {
+// view, its history, the two ways out, delete, and close, which leaves no
+// document open (and the chat beside the page general). The .tex download
+// is the saved source, never needing LaTeX; the PDF is the one on screen.
+export default function DocumentToolbar({ doc, pdf, view, onView, dirty, onRename, onRestore, onDelete, onClose }) {
   const slug = fileSlug(doc.name);
   return (
     <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-line bg-panel px-3 py-2.5">
@@ -59,6 +61,7 @@ export default function DocumentToolbar({ doc, pdf, view, onView, dirty, onRenam
         .tex
       </DocumentToolButton>
       <DocumentDelete name={doc.name} onDelete={onDelete} />
+      {onClose && <IconButton label="Close the document" onClick={onClose}><CloseIcon size={14} /></IconButton>}
     </div>
   );
 }

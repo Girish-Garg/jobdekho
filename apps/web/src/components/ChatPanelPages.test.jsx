@@ -47,14 +47,16 @@ describe('the chat on a page other than the feed', () => {
     ));
   });
 
-  it('keeps the job\'s chat on screen when the person moves on from the feed', async () => {
+  // A job no longer looked at is no longer what the chat is about (see
+  // lib/activeChat.js): moving on puts back the chat from before.
+  it('lets go of the job\'s chat when the person moves on from the feed', async () => {
     announceOpenPosting(POSTINGS.p9);
     const apply = { setView: vi.fn() };
     const { rerender } = render(panel('postings', apply));
     expect(await screen.findByText('Initech · this job\'s chat')).toBeInTheDocument();
     rerender(panel('profile', apply));
     announceOpenPosting(null);
-    expect(await screen.findByText('Initech · this job\'s chat')).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText('Initech · this job\'s chat')).not.toBeInTheDocument());
   });
 
   it('suggests document requests on the resume page', async () => {

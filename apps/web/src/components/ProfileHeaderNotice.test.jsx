@@ -41,9 +41,17 @@ beforeEach(() => {
 
 const notice = () => screen.findByRole('region', { name: 'Header from your profile' });
 
+// The page opens nothing on its own (see lib/useDocuments.js), so a test
+// opens the document, as the person would.
+async function openWorkspace() {
+  render(<ResumeWorkspace />);
+  const list = await screen.findByRole('navigation', { name: 'Your documents' });
+  fireEvent.click(within(list).getAllByRole('button')[0]);
+}
+
 describe('the header from the profile', () => {
   it('names what changed in the profile since the document was made', async () => {
-    render(<ResumeWorkspace />);
+    await openWorkspace();
     expect(await notice()).toHaveTextContent('Your profile has a different name and contact line from this document.');
     expect(screen.getByRole('button', { name: 'Update from profile' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Keep this one' })).toBeInTheDocument();
@@ -51,13 +59,13 @@ describe('the header from the profile', () => {
 
   it('shows nothing when the header matches the profile', async () => {
     getDocument.mockResolvedValue({ ...D1, profileHeader: null });
-    render(<ResumeWorkspace />);
+    await openWorkspace();
     expect(await screen.findByTitle('PDF preview')).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'Header from your profile' })).not.toBeInTheDocument();
   });
 
   it('keeps the document\'s header when asked, and the notice goes', async () => {
-    render(<ResumeWorkspace />);
+    await openWorkspace();
     await notice();
     documentProfileHeader.mockResolvedValue({ ...D1, profileHeader: null });
     fireEvent.click(screen.getByRole('button', { name: 'Keep this one' }));
@@ -67,7 +75,7 @@ describe('the header from the profile', () => {
   });
 
   it('shows the change as a diff first, and saves it only on Apply, recompiling what was saved', async () => {
-    render(<ResumeWorkspace />);
+    await openWorkspace();
     await notice();
     documentProfileHeader.mockResolvedValueOnce({ fields: ['Name', 'Contact line'], tex: NEW_TEX });
     fireEvent.click(screen.getByRole('button', { name: 'Update from profile' }));
@@ -88,7 +96,7 @@ describe('the header from the profile', () => {
   });
 
   it('never drops unsaved edits in the source: they turn stale, as after a chat change', async () => {
-    render(<ResumeWorkspace />);
+    await openWorkspace();
     await notice();
     fireEvent.click(screen.getByRole('button', { name: 'Source' }));
     fireEvent.change(screen.getByRole('textbox', { name: 'LaTeX source' }), { target: { value: `${TEX}% mine\n` } });
@@ -103,7 +111,7 @@ describe('the header from the profile', () => {
   });
 
   it('closes the diff on Cancel without saving anything', async () => {
-    render(<ResumeWorkspace />);
+    await openWorkspace();
     await notice();
     documentProfileHeader.mockResolvedValueOnce({ fields: ['Name'], tex: NEW_TEX });
     fireEvent.click(screen.getByRole('button', { name: 'Update from profile' }));
@@ -115,7 +123,7 @@ describe('the header from the profile', () => {
   });
 
   it('says why a call failed, and leaves the notice up', async () => {
-    render(<ResumeWorkspace />);
+    await openWorkspace();
     await notice();
     const refusal = new Error('Nothing to update: the header already matches your profile.');
     documentProfileHeader.mockRejectedValueOnce(refusal);

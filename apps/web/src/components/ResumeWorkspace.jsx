@@ -9,6 +9,16 @@ import NewDocumentMenu from './NewDocumentMenu.jsx';
 import DocumentPane from './DocumentPane.jsx';
 import ResumeEmptyState from './ResumeEmptyState.jsx';
 
+// No document open, which is how the page starts: nothing is put in the
+// chat beside it until the person opens one (see lib/useDocuments.js).
+function NothingOpen() {
+  return (
+    <div className="grid flex-1 place-items-center p-8">
+      <p className="max-w-sm text-center text-sm text-muted">Open a resume or cover letter from the list to see it here and work on it with the chat. With none open, the chat answers anything in general.</p>
+    </div>
+  );
+}
+
 // The Resume page: the person's resumes and cover letters as LaTeX sources
 // they own, listed on the left, the open one compiled beside it. There is
 // nothing here to pick entries or layouts with: a document starts from a
@@ -60,7 +70,9 @@ export default function ResumeWorkspace() {
         newMenu={<NewDocumentMenu templates={templates} busy={creating} onPick={create} />}
       />
       <div className="flex min-w-0 flex-1 flex-col">
-        {selected && <DocumentPane key={selected.id} id={selected.id} onChanged={() => docs.refresh()} onDelete={() => remove(selected.id)} />}
+        {selected
+          ? <DocumentPane key={selected.id} id={selected.id} onChanged={() => docs.refresh()} onDelete={() => remove(selected.id)} onClose={() => docs.select(null)} />
+          : <NothingOpen />}
       </div>
     </div>
   );

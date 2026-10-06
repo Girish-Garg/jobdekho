@@ -49,12 +49,25 @@ beforeEach(() => {
 
 const preview = () => screen.findByTitle('PDF preview');
 
+// The page opens nothing on its own (see lib/useDocuments.js), so a test
+// opens the newest document, as the person would.
+async function openWorkspace() {
+  render(<ResumeWorkspace />);
+  const list = await screen.findByRole('navigation', { name: 'Your documents' });
+  fireEvent.click(within(list).getByRole('button', { name: /Classic resume/ }));
+}
+
 describe('ResumeWorkspace', () => {
-  it('lists resumes and letters, opens the newest compiled, and tells the chat which is open', async () => {
+  it('lists resumes and letters, opens nothing until one is chosen, and tells the chat which is open', async () => {
     render(<ResumeWorkspace />);
     const list = await screen.findByRole('navigation', { name: 'Your documents' });
     expect(within(list).getByText('Resumes')).toBeInTheDocument();
     expect(within(list).getByText('Cover letters')).toBeInTheDocument();
+    // Nothing opens on its own, so nothing reaches the chat until chosen.
+    expect(screen.getByText(/With none open, the chat answers anything in general/)).toBeInTheDocument();
+    expect(currentOpenDocument()).toBeNull();
+    expect(compileDocument).not.toHaveBeenCalled();
+    fireEvent.click(within(list).getByRole('button', { name: /Classic resume/ }));
     expect(await preview()).toHaveAttribute('src', expect.stringMatching(/^blob:pdf#/));
     expect(within(list).getByRole('button', { name: /Classic resume/ })).toHaveAttribute('aria-current', 'true');
     expect(currentOpenDocument()).toEqual({ id: 'd1', name: 'Classic resume', kind: 'resume' });
@@ -63,8 +76,18 @@ describe('ResumeWorkspace', () => {
     expect(currentOpenDocument().id).toBe('d2');
   });
 
+  // The owner's ask: a way back to nothing open, so the chat is general.
+  it('closes the open document, leaving nothing open and the chat general', async () => {
+    await openWorkspace();
+    await preview();
+    expect(currentOpenDocument()?.id).toBe('d1');
+    fireEvent.click(screen.getByRole('button', { name: 'Close the document' }));
+    expect(await screen.findByText(/With none open, the chat answers anything in general/)).toBeInTheDocument();
+    expect(currentOpenDocument()).toBeNull();
+  });
+
   it('has no template radios, include boxes or move arrows anywhere', async () => {
-    render(<ResumeWorkspace />);
+    await openWorkspace();
     await preview();
     expect(screen.queryAllByRole('radio')).toHaveLength(0);
     expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
@@ -86,7 +109,7 @@ describe('ResumeWorkspace', () => {
   });
 
   it('starts a new document from the New menu', async () => {
-    render(<ResumeWorkspace />);
+    await openWorkspace();
     await preview();
     fireEvent.click(screen.getByRole('button', { name: 'New' }));
     const menu = screen.getByRole('dialog', { name: 'Start a new document' });
@@ -100,7 +123,7 @@ describe('ResumeWorkspace', () => {
 
   it('shows the guard\'s refusal with its lines, and takes the person to the source', async () => {
     compileDocument.mockRejectedValue(refusal('This document uses LaTeX that JobDekho does not allow.', 'unsafe', ['\\input is not allowed']));
-    render(<ResumeWorkspace />);
+    await openWorkspace();
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent('The LaTeX guard refused this source');
     expect(alert).toHaveTextContent('\\input is not allowed');
@@ -110,7 +133,7 @@ describe('ResumeWorkspace', () => {
 
   it('explains installing MiKTeX when there is no LaTeX, and tries again on request', async () => {
     compileDocument.mockRejectedValueOnce(refusal('No LaTeX installation was found on this computer.', 'not_found'));
-    render(<ResumeWorkspace />);
+    await openWorkspace();
     const card = await screen.findByRole('alert', { name: 'LaTeX is not installed on this computer' });
     expect(within(card).getByRole('link', { name: 'Get MiKTeX' })).toHaveAttribute('href', 'https://miktex.org/download');
     fireEvent.click(within(card).getByRole('button', { name: 'Try again' }));
@@ -119,12 +142,12 @@ describe('ResumeWorkspace', () => {
 
   it('says why a compile failed, in the server\'s words', async () => {
     compileDocument.mockRejectedValue(refusal('The document did not compile: line 12, Undefined control sequence.', 'compile_failed'));
-    render(<ResumeWorkspace />);
+    await openWorkspace();
     expect(await screen.findByRole('alert', { name: 'The document did not compile' })).toHaveTextContent('line 12, Undefined control sequence.');
   });
 
   it('saves a hand edit as a new version, recompiles, and shows what the guard refused in the source view', async () => {
-    render(<ResumeWorkspace />);
+    await openWorkspace();
     await preview();
     fireEvent.click(screen.getByRole('button', { name: 'Source' }));
     const box = screen.getByRole('textbox', { name: 'LaTeX source' });
@@ -140,7 +163,7 @@ describe('ResumeWorkspace', () => {
   });
 
   it('lists versions with who wrote them, and restores an older one', async () => {
-    render(<ResumeWorkspace />);
+    await openWorkspace();
     await preview();
     fireEvent.click(screen.getByRole('button', { name: /Versions/ }));
     const panel = screen.getByRole('dialog', { name: 'Versions' });
@@ -153,7 +176,7 @@ describe('ResumeWorkspace', () => {
   });
 
   it('renames in place and downloads the saved source', async () => {
-    render(<ResumeWorkspace />);
+    await openWorkspace();
     await preview();
     fireEvent.click(screen.getByRole('button', { name: 'Rename Classic resume' }));
     const name = screen.getByRole('textbox', { name: 'Document name' });
@@ -167,8 +190,8 @@ describe('ResumeWorkspace', () => {
     expect(downloadText).toHaveBeenCalledWith('Backend-resume.tex', TEX);
   });
 
-  it('deletes only after asking, then opens the next document', async () => {
-    render(<ResumeWorkspace />);
+  it('deletes only after asking, then leaves nothing open', async () => {
+    await openWorkspace();
     await preview();
     fireEvent.click(screen.getByRole('button', { name: 'Delete this document' }));
     const ask = screen.getByRole('dialog', { name: 'Delete this document?' });
@@ -177,11 +200,13 @@ describe('ResumeWorkspace', () => {
     listDocuments.mockResolvedValue([summary(D2)]);
     fireEvent.click(within(ask).getByRole('button', { name: 'Delete it' }));
     await waitFor(() => expect(deleteDocument).toHaveBeenCalledWith('d1'));
-    await waitFor(() => expect(currentOpenDocument()?.id).toBe('d2'));
+    // Nothing opens on its own, a delete included (see lib/useDocuments.js).
+    expect(await screen.findByText(/With none open, the chat answers anything in general/)).toBeInTheDocument();
+    expect(currentOpenDocument()).toBeNull();
   });
 
   it('keeps unsaved source edits through opening another document, and marks the document in the list', async () => {
-    render(<ResumeWorkspace />);
+    await openWorkspace();
     await preview();
     fireEvent.click(screen.getByRole('button', { name: 'Source' }));
     const edited = TEX.replace('Hi', 'Hi there');
@@ -197,7 +222,7 @@ describe('ResumeWorkspace', () => {
   });
 
   it('asks before the page is left with unsaved edits, and forgets the edits of a deleted document', async () => {
-    render(<ResumeWorkspace />);
+    await openWorkspace();
     await preview();
     fireEvent.click(screen.getByRole('button', { name: 'Source' }));
     fireEvent.change(screen.getByRole('textbox', { name: 'LaTeX source' }), { target: { value: 'half typed' } });
@@ -211,12 +236,12 @@ describe('ResumeWorkspace', () => {
     deleteDocument.mockResolvedValue(null);
     listDocuments.mockResolvedValue([summary(D2)]);
     fireEvent.click(within(screen.getByRole('dialog', { name: 'Delete this document?' })).getByRole('button', { name: 'Delete it' }));
-    await waitFor(() => expect(currentOpenDocument()?.id).toBe('d2'));
+    await waitFor(() => expect(currentOpenDocument()).toBeNull());
     expect(leave()).toBe(false);
   });
 
   it('recompiles when a chat change is applied to the open document', async () => {
-    render(<ResumeWorkspace />);
+    await openWorkspace();
     await preview();
     expect(compileDocument).toHaveBeenCalledTimes(1);
     act(() => announceApplied({ kind: 'document', document: { ...D1, tex: `${TEX}% shorter\n` } }));

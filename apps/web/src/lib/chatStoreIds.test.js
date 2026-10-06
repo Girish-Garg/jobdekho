@@ -13,8 +13,17 @@ describe('a chat id named like a property every object has', () => {
       localStorage.setItem('jobdekho-chat-on-screen', id);
       expect(readSavedChat()).toBeNull();
     }
-    localStorage.setItem('jobdekho-chat-on-screen', 'job:p1');
-    expect(readSavedChat()).toBe('job:p1');
+    localStorage.setItem('jobdekho-chat-on-screen', '4b8e7c1a-2f3d-4e5f-8a9b-0c1d2e3f4a5b');
+    expect(readSavedChat()).toBe('4b8e7c1a-2f3d-4e5f-8a9b-0c1d2e3f4a5b');
+  });
+
+  // Nothing is open in a new session, so a chat that followed what was
+  // open is not brought back: the chat starts general.
+  it('does not bring back a job or document chat that followed what was open', () => {
+    for (const id of ['job:p1', 'document:d1']) {
+      localStorage.setItem('jobdekho-chat-on-screen', id);
+      expect(readSavedChat()).toBeNull();
+    }
   });
 
   it('finds no chat under it', () => {

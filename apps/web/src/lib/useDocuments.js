@@ -4,12 +4,13 @@ import { onApplied } from './proposalAppliedSignal.js';
 import { onOpenDocumentRequest, takeOpenRequest } from './openDocumentSignal.js';
 
 // The asked-for document if the list has it, else the one already open,
-// else the newest: the list comes newest first, which is the one a person
-// coming back to this page was most likely working on.
+// else none: the page opens nothing on its own. Opening the newest put it
+// in the chat beside the page (openDocumentSignal.js) before the person had
+// chosen anything, so a general question went out with a resume attached.
 function pick(list, wanted, open) {
   if (wanted && list.some((doc) => doc.id === wanted)) return wanted;
   if (open && list.some((doc) => doc.id === open)) return open;
-  return list[0]?.id ?? null;
+  return null;
 }
 
 // The Resume workspace's list and which document in it is open. Three

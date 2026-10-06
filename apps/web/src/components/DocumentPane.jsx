@@ -17,7 +17,7 @@ import ProfileHeaderNotice from './ProfileHeaderNotice.jsx';
 // draft waiting opens on its source, where the draft is. `onChanged` tells
 // the list a save, a restore or a header update moved this document to the
 // top.
-export default function DocumentPane({ id, onChanged, onDelete }) {
+export default function DocumentPane({ id, onChanged, onDelete, onClose }) {
   const { doc, save, restore, replace } = useDocument(id);
   const pdf = useDocumentPdf(doc);
   const draft = useSourceDraft(doc?.tex, id);
@@ -58,6 +58,7 @@ export default function DocumentPane({ id, onChanged, onDelete }) {
         onRename={(name) => saved({ tex: doc.tex, name })}
         onRestore={restoreVersion}
         onDelete={onDelete}
+        onClose={onClose}
       />
       {doc.profileHeader && <ProfileHeaderNotice doc={doc} onApplied={headerApplied} onKept={replace} />}
       {view === 'source'
