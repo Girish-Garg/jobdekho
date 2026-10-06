@@ -1,3 +1,4 @@
+import { heldItems } from '@jobdekho/store/chat-items.js'
 import { getChatMessages } from '@jobdekho/store/chat-messages.js'
 import { assembleThreadContext } from './thread-context.js'
 import { runChatTurn } from './run.js'
@@ -30,6 +31,6 @@ export async function askInChat(deps, { userId, chat, message, body = {}, emit =
   // found (see memory-turn.js). Saved now only when the message itself said
   // "remember"; the rest wait under the answer for the person's Save.
   const memory = await memoryOffers(deps.store, userId, { message, chatId: chat.id, memory: context.memory, offered: asked.memory })
-  const turn = { ...asked, memory, items: { jobs: [...chat.jobs], documents: [...chat.documents] } }
+  const turn = { ...asked, memory, items: heldItems(chat) }
   return { ...turn, chatId: await saveTurn(deps.store, userId, chat.id, turn) }
 }

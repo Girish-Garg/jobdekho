@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act, within } from '@testing-library/react';
 import AiChatPanel from './AiChatPanel.jsx';
 import { announceOpenPosting } from '../lib/openPostingSignal.js';
+import { announceOpenDocument } from '../lib/openDocumentSignal.js';
 import { onScreenId } from '../lib/activeChat.js';
 import { compareChat, fakeChats, generalChat, jobChat, turn, POSTINGS, DOCUMENTS } from '../test/fixtures/chats.js';
 
@@ -34,12 +35,57 @@ beforeEach(() => {
 });
 
 describe('what a chat holds', () => {
-  it('shows a job\'s chat with its job as a chip that cannot be taken out', async () => {
+  // The chat stays the job's own; only its answers stop reading the job,
+  // and the job's quick actions step aside until a dotted pill adds it back.
+  it('shows a job\'s chat with its job as a chip whose x leaves it out, and a dotted pill that puts it back', async () => {
+    server.chats.push(jobChat('pA'));
+    api.changeChatItems.mockImplementation(async (_id, change) => {
+      const next = jobChat('pA', { homeLeftOut: change.action === 'remove' });
+      server.chats = server.chats.map((chat) => (chat.id === 'c-pA' ? next : chat));
+      return next;
+    });
     announceOpenPosting(POSTINGS.pA);
     setup();
     await screen.findByText('AlphaCo · this job\'s chat');
     expect(chips().getByRole('button', { name: 'Job A Engineer · AlphaCo' })).toBeInTheDocument();
-    expect(chips().queryByRole('button', { name: /Take .* out of this chat/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Actions for this job' })).toBeInTheDocument();
+    fireEvent.click(chips().getByRole('button', { name: 'Leave Job A Engineer · AlphaCo out of this chat' }));
+    await waitFor(() => expect(api.changeChatItems).toHaveBeenLastCalledWith('c-pA', { action: 'remove', type: 'job', id: 'pA' }));
+    expect(await screen.findByText('AlphaCo · left out of this chat')).toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: 'Actions for this job' })).not.toBeInTheDocument();
+    fireEvent.click(chips().getByRole('button', { name: 'Add Job A Engineer · AlphaCo back to this chat' }));
+    await waitFor(() => expect(api.changeChatItems).toHaveBeenLastCalledWith('c-pA', { action: 'add', type: 'job', id: 'pA' }));
+    expect(await screen.findByText('AlphaCo · this job\'s chat')).toBeInTheDocument();
+  });
+
+  // What the person opened before is one click away, with no picker.
+  it('offers the jobs and documents opened lately as dotted pills, a job starting a comparison', async () => {
+    act(() => announceOpenDocument(DOCUMENTS.d1));
+    announceOpenPosting(POSTINGS.pB);
+    announceOpenPosting(POSTINGS.pA);
+    const comparison = compareChat('cmp', ['pA', 'pB']);
+    api.changeChatItems.mockImplementation(async () => {
+      server.chats.push(comparison);
+      return comparison;
+    });
+    setup();
+    await screen.findByText('AlphaCo · this job\'s chat');
+    expect(chips().getByRole('button', { name: 'Add Classic resume to this chat' })).toBeInTheDocument();
+    expect(chips().queryByRole('button', { name: /Compare this job with Job A/ })).not.toBeInTheDocument();
+    fireEvent.click(chips().getByRole('button', { name: 'Compare this job with Job B Analyst · BetaCo' }));
+    await waitFor(() => expect(onScreenId()).toBe('cmp'));
+    expect(api.changeChatItems).toHaveBeenCalledWith('job:pA', { action: 'add', type: 'job', id: 'pB' });
+    expect(await screen.findByText('Comparing 2 jobs')).toBeInTheDocument();
+  });
+
+  it('offers a general chat only the documents opened lately, since it holds no jobs', async () => {
+    act(() => announceOpenPosting(POSTINGS.pA));
+    act(() => announceOpenPosting(null));
+    act(() => announceOpenDocument(DOCUMENTS.d1));
+    setup();
+    await screen.findByText('hello');
+    expect(chips().queryByRole('button', { name: /Job A Engineer/ })).not.toBeInTheDocument();
+    expect(chips().getByRole('button', { name: 'Add Classic resume to this chat' })).toBeInTheDocument();
   });
 
   it('offers the jobs opened lately and the documents, and starts a comparison when a job is added to a job\'s chat', async () => {

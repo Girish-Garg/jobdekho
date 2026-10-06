@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { getPostingsPage, listDocuments } from '../api.js';
 import { feedQuery } from './feedQuery.js';
 import { useDebounced } from './useDebounced.js';
-import { recentJobs } from './recentJobs.js';
+import { recentJobs } from './openedLately.js';
 
 // What "+ Add" can offer, read while its picker is open: jobs, the ones
 // opened lately first and then the feed under its own filters searched by

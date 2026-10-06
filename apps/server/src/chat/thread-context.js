@@ -1,3 +1,4 @@
+import { heldItems } from '@jobdekho/store/chat-items.js'
 import { pageOf } from './page.js'
 import { assembleChatContext, chatBasics } from './context.js'
 import { profilePageContext, resumePageContext, settingsPageContext } from './context-pages.js'
@@ -9,18 +10,21 @@ import { chatItemsContext } from './chat-items-context.js'
 // since changing it is what they are for, and settings only what setting
 // up needs.
 //
-// Only a general chat is shown the feed. A job's chat, a document's and a
-// comparison are about what they hold, and a screenful of other jobs would
-// only crowd it.
+// Only a general chat is shown the feed, and a job's chat or a comparison
+// the person left holding no job, which answers as one. A job's chat, a
+// document's and a comparison are about what they hold, and a screenful of
+// other jobs would only crowd it.
 //
 // None of this ever reaches the web search, which is handed the question
 // alone and, in a job's own chat, that job's public fields (see run.js and
 // web-prompt.js).
+const answersGenerally = (chat) => chat.kind === 'general' || (chat.kind !== 'document' && !heldItems(chat).jobs.length)
+
 async function pagePart(page, { chat, dashboard, documents, detect, userId, body, question, locate }) {
   if (page === 'profile') return profilePageContext(dashboard, userId)
   if (page === 'resume') return resumePageContext(dashboard, documents, userId)
   if (page === 'settings') return settingsPageContext(dashboard, detect, userId, { locate })
-  if (chat.kind !== 'general') return chatBasics(dashboard, userId)
+  if (!answersGenerally(chat)) return chatBasics(dashboard, userId)
   return assembleChatContext(dashboard, userId, { filters: body.filters, sort: body.sort, question })
 }
 

@@ -1,6 +1,6 @@
 import { updateChat, touchChat, deleteChat } from '@jobdekho/store/chats.js'
 import { clearChatMessages, deleteChatMessages } from '@jobdekho/store/chat-messages.js'
-import { withItem, ITEM_TYPES } from '@jobdekho/store/chat-items.js'
+import { withItem, homeItem, ITEM_TYPES } from '@jobdekho/store/chat-items.js'
 import { compareTitle } from '@jobdekho/store/chat-titles.js'
 import { toIso } from '@jobdekho/store/timestamp.js'
 import { resolveChat, ensureChat, shapeOf, NO_CHAT } from '../chat/chat-lookup.js'
@@ -9,7 +9,7 @@ import { missingItem, companiesOf, openCompare } from '../chat/chat-items-check.
 import { forgetFailure } from '../chat/in-flight.js'
 import { clearFollowUp } from '../chat/follow-ups.js'
 
-const sameItems = (a, b) => a.jobs.join('\n') === b.jobs.join('\n') && a.documents.join('\n') === b.documents.join('\n')
+const sameItems = (a, b) => ['jobs', 'documents', 'homeLeftOut'].every((key) => String(a[key] ?? false) === String(b[key] ?? false))
 
 // Changing a chat. Each answers { chat } with its view (see chat/
 // chat-view.js), except a delete, 204, and each answers 404 for a chat that
@@ -33,8 +33,9 @@ export async function chatChangeRoutes(app) {
   // job's chat stays about its job alone. Anything else changes the chat in
   // place by the rules of its kind (see the store's chat-items.js), making a
   // job's or a document's chat first if it had none: 400 for what it may
-  // not hold or lose, 404 for an item the person does not have. Adding what
-  // is there or removing what is not changes nothing.
+  // not hold, 404 for an item the person does not have. Its own job or
+  // document is left out by its removal and put back by its adding, listed
+  // or not. Adding what is there or removing what is not changes nothing.
   app.post('/api/chats/:id/items', auth, async (request, reply) => {
     const deps = app.chats()
     const userId = request.user.sub
@@ -45,7 +46,9 @@ export async function chatChangeRoutes(app) {
     const lists = withItem(base, { action, type, id })
     const compares = action === 'add' && type === 'job' && base.kind === 'job' && typeof id === 'string' && id !== base.jobs[0]
     if (lists.error && !compares) return reply.code(400).send({ error: lists.error })
-    const missing = action === 'add' ? await missingItem(deps, userId, { [ITEM_TYPES[type]]: [id] }) : null
+    const home = homeItem(base)
+    const own = home?.type === type && home.id === id
+    const missing = action === 'add' && !own ? await missingItem(deps, userId, { [ITEM_TYPES[type]]: [id] }) : null
     if (missing) return reply.code(404).send({ error: missing })
     if (compares) {
       const { chat, created } = await openCompare(deps, userId, [base.jobs[0], id])
@@ -53,7 +56,8 @@ export async function chatChangeRoutes(app) {
     }
     if (sameItems(lists, base)) return { chat: (await chatPage(deps, userId, resolved)).chat }
     const chat = await ensureChat(deps, userId, resolved)
-    const title = chat.kind === 'compare' ? compareTitle(await companiesOf(deps, userId, lists.jobs)) : chat.title
+    const named = chat.kind === 'compare' && lists.jobs.length
+    const title = named ? compareTitle(await companiesOf(deps, userId, lists.jobs)) : chat.title
     return { chat: await viewOf(deps, userId, await updateChat(deps.store, userId, chat.id, { ...lists, title })) }
   })
 

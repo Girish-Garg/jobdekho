@@ -19,12 +19,14 @@ import { runGuarded } from './guarded.js'
 //                                     as each starts
 //
 // 404 for no such chat, 400 for a chat that is not a comparison, for one
-// whose jobs JobDekho no longer lists, or for a record the action cannot
-// work from yet, and 409 { error, busy } while any call runs.
+// the person left with too few jobs or whose jobs JobDekho no longer
+// lists, or for a record the action cannot work from yet, and 409
+// { error, busy } while any call runs.
 async function comparison(deps, userId, id, fewest) {
   const resolved = await resolveChat(deps, userId, id)
   if (!resolved) return { status: 404, body: { error: NO_CHAT } }
   if (resolved.chat?.kind !== 'compare') return { status: 400, body: { error: 'This works on a comparison of jobs.' } }
+  if (resolved.chat.jobs.length < fewest) return { status: 400, body: { error: `This needs ${fewest === 1 ? 'a job' : `${fewest} jobs`} in the comparison.` } }
   const postings = (await Promise.all(resolved.chat.jobs.map((job) => deps.dashboard.getPosting(userId, job)))).filter(Boolean)
   if (postings.length < fewest) {
     return { status: 400, body: { error: `Only ${postings.length} of these jobs ${postings.length === 1 ? 'is' : 'are'} still listed, which is too few for this.` } }

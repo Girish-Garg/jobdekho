@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { toIso } from '@jobdekho/store/timestamp.js'
 import { getChat, createChat, updateChat, touchChat } from '@jobdekho/store/chats.js'
 import { appendChatTurn } from '@jobdekho/store/chat-messages.js'
+import { heldItems } from '@jobdekho/store/chat-items.js'
 import { NEW_CHAT, questionTitle } from '@jobdekho/store/chat-titles.js'
 
 // Saves a finished turn in the chat it was asked in, and resolves which chat
@@ -18,7 +19,6 @@ export async function saveTurn(store, userId, chatId, turn) {
   return chat.id
 }
 
-const itemsOf = (chat) => ({ jobs: [...chat.jobs], documents: [...chat.documents] })
 const NONE = { actions: [], refs: [], proposals: [], memory: [] }
 
 // A combined action's card, kept as a turn of the comparison it was asked
@@ -26,7 +26,7 @@ const NONE = { actions: [], refs: [], proposals: [], memory: [] }
 // pressed, the answer a line saying what came of it, and `combined` what the
 // card lists (see tailor-all.js and letters-each.js).
 export function combinedTurn(chat, { question, answer, provider, combined }) {
-  return { id: randomUUID(), question, answer, ...NONE, provider, combined, createdAt: toIso(new Date()), items: itemsOf(chat) }
+  return { id: randomUUID(), question, answer, ...NONE, provider, combined, createdAt: toIso(new Date()), items: heldItems(chat) }
 }
 
 // What a comparison or a document's chat keeps when a job action pressed in
@@ -35,5 +35,5 @@ export function combinedTurn(chat, { question, answer, provider, combined }) {
 // of what the model reads.
 export function startedNote(chat, { action, label, postingId, jobChat }) {
   const note = { kind: 'started', action, label, postingId, chatId: jobChat.id, title: jobChat.title }
-  return { id: randomUUID(), note, createdAt: toIso(new Date()), items: itemsOf(chat) }
+  return { id: randomUUID(), note, createdAt: toIso(new Date()), items: heldItems(chat) }
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { busyText, chatHeading, chatPlace, readyTitle } from './chatNames.js';
+import { busyText, chatHeading, chatPlace, itemName, readyTitle } from './chatNames.js';
 import { compareChat, documentChat, generalChat, jobChat } from '../test/fixtures/chats.js';
 
 describe('chatPlace', () => {
@@ -43,5 +43,23 @@ describe('chatHeading', () => {
     expect(chatHeading(compareChat('cmp', ['pA', 'pB']))).toEqual({ title: 'AlphaCo vs BetaCo', about: 'Comparing 2 jobs' });
     expect(chatHeading(documentChat('d1', 'Classic resume')).about).toBe('Resume · this document\'s chat');
     expect(chatHeading(generalChat('g1')).about).toBe('General chat');
+  });
+
+  // The x on a chat's own job or document, and a comparison the person
+  // took jobs out of, say so where the kind of chat is said.
+  it('says when the chat\'s own job or document is left out, and how few jobs a comparison has left', () => {
+    expect(chatHeading(jobChat('pA', { homeLeftOut: true })).about).toBe('AlphaCo · left out of this chat');
+    expect(chatHeading(documentChat('d1', 'Classic resume', { homeLeftOut: true })).about).toBe('Resume · left out of this chat');
+    expect(chatHeading(compareChat('cmp', ['pA'])).about).toBe('1 job left in this comparison');
+    expect(chatHeading(compareChat('cmp', [])).about).toBe('0 jobs left in this comparison');
+  });
+});
+
+describe('itemName', () => {
+  it('names a job by its title and company, and a document by its name', () => {
+    expect(itemName('job', { title: 'Job A Engineer', company: 'AlphaCo' })).toBe('Job A Engineer · AlphaCo');
+    expect(itemName('job', { id: 'gone' })).toBe('A job no longer listed');
+    expect(itemName('document', { name: 'Classic resume' })).toBe('Classic resume');
+    expect(itemName('document', { id: 'gone' })).toBe('A document that was deleted');
   });
 });

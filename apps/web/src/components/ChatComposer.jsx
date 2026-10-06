@@ -1,6 +1,7 @@
 import { providerFor } from '../lib/providerFor.js';
 import { ACTION_KINDS, CHAT_INTRO, CHAT_POLICY } from '../lib/chatActionKinds.js';
 import { runCombined } from '../lib/chatAsk.js';
+import { heldJob } from '../lib/chatHolds.js';
 import InstallHint from './InstallHint.jsx';
 import ChatQuickActions from './ChatQuickActions.jsx';
 import ChatCompareActions from './ChatCompareActions.jsx';
@@ -30,7 +31,7 @@ export default function ChatComposer({ cli, view, results, box, job, target, onC
 
   const blocked = job.blocked ? ACTION_KINDS[job.blocked] : null;
   const changing = target ? ACTION_KINDS[target] : null;
-  const posting = view?.kind === 'job' ? view.jobs[0] : null;
+  const posting = heldJob(view);
 
   // The fade lets the conversation run under the box instead of stopping
   // at a hard edge, which is what says there is more above to scroll to.

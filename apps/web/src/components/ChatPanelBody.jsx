@@ -2,6 +2,7 @@ import { useChatLayout } from '../lib/useChatLayout.js';
 import { useChatPanel } from '../lib/useChatPanel.js';
 import { newGeneralChat } from '../lib/useChatView.js';
 import { buildConversation } from '../lib/conversation.js';
+import { heldJob } from '../lib/chatHolds.js';
 import ChatFrame from './ChatFrame.jsx';
 import ChatHeader from './ChatHeader.jsx';
 import ChatItems from './ChatItems.jsx';
@@ -22,7 +23,7 @@ export default function ChatPanelBody({ onClose, context, apply, request, draft 
   const panel = useChatPanel({ context, apply, request, draft });
   const { cli, page, active, store, chat, view, send, links } = panel;
   const layout = useChatLayout({ docked: page === 'resume' });
-  const posting = view?.kind === 'job' ? view.jobs[0] : null;
+  const posting = heldJob(view);
   const missed = send.missed && { ...send.missed, onRecheck: cli.refresh, checking: cli.checking };
   const empty = { page, posting, kind: view?.kind, loading: panel.loading, busy: Boolean(store.busy) || !active.id, onSend: send.box.onSend };
   const note = send.elsewhere && (

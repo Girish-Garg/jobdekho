@@ -25,7 +25,7 @@ export async function chatCreateRoutes(app) {
     if (!Array.isArray(jobs) || !Array.isArray(documents) || ![...jobs, ...documents].every(isId)) {
       return reply.code(400).send({ error: 'Name the jobs and documents by their ids.' })
     }
-    const problem = itemsProblem(kind, { jobs, documents })
+    const problem = itemsProblem(kind, { jobs, documents }, { starting: true })
     if (problem) return reply.code(400).send({ error: problem })
     const missing = await missingItem(deps, userId, { jobs, documents })
     if (missing) return reply.code(404).send({ error: missing })

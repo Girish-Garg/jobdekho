@@ -6,7 +6,7 @@ import { openStore, FILES } from '@jobdekho/store/open.js'
 import {
   listChats, getChat, homeChat, createChat, updateChat, touchChat, deleteChat,
 } from '@jobdekho/store/chats.js'
-import { itemsProblem, homeItem, withItem, ITEM_LIMITS } from '@jobdekho/store/chat-items.js'
+import { itemsProblem, homeItem, heldItems, withItem, ITEM_LIMITS } from '@jobdekho/store/chat-items.js'
 import { questionTitle, jobTitle, compareTitle } from '@jobdekho/store/chat-titles.js'
 
 let dir
@@ -45,7 +45,7 @@ describe('making a chat', () => {
   })
 
   it('refuses what a kind may not hold, and a kind that does not exist', async () => {
-    expect(await createChat(store, 'me', { kind: 'compare', jobs: ['p1'], title: 't' })).toEqual({ error: 'A comparison holds two to five jobs.' })
+    expect(await createChat(store, 'me', { kind: 'compare', jobs: ['p1'], title: 't' })).toEqual({ error: 'A comparison starts with two to five jobs.' })
     expect(await createChat(store, 'me', { kind: 'general', jobs: ['p1'], title: 't' })).toEqual({ error: expect.stringMatching(/^A general chat holds no jobs/) })
     expect(await createChat(store, 'me', { kind: 'thread', title: 't' })).toEqual({ error: 'There is no such kind of chat.' })
     expect(await listChats(store, 'me')).toEqual([])
@@ -53,39 +53,57 @@ describe('making a chat', () => {
 })
 
 describe('what a chat may hold', () => {
-  it('holds a job\'s one job, a document and two more, two to five jobs to compare, and no job in a general chat', () => {
+  it('holds a job\'s one job, a document and two more, up to five jobs to compare, and no job in a general chat', () => {
     expect(ITEM_LIMITS).toEqual({
       job: { jobs: [1, 1], documents: [0, 3] }, document: { jobs: [0, 5], documents: [1, 3] },
-      compare: { jobs: [2, 5], documents: [0, 3] }, general: { jobs: [0, 0], documents: [0, 3] },
+      compare: { jobs: [0, 5], documents: [0, 3] }, general: { jobs: [0, 0], documents: [0, 3] },
     })
     const ids = (n, p) => Array.from({ length: n }, (_, i) => `${p}${i}`)
     expect(itemsProblem('job', { jobs: ['p1'], documents: ids(3, 'd') })).toBeNull()
     expect(itemsProblem('job', { jobs: ['p1'], documents: ids(4, 'd') })).toBe('A job\'s chat holds up to 3 documents.')
     expect(itemsProblem('document', { jobs: ids(5, 'p'), documents: ids(3, 'd') })).toBeNull()
     expect(itemsProblem('document', { jobs: ids(6, 'p'), documents: ['d0'] })).toBe('A document\'s chat holds up to 5 jobs.')
-    expect(itemsProblem('compare', { jobs: ids(6, 'p') })).toBe('A comparison holds two to five jobs.')
+    expect(itemsProblem('compare', { jobs: ids(6, 'p') })).toBe('A comparison holds up to five jobs.')
+    // One job is nothing to compare, so a comparison starts with two; the
+    // person may leave it with fewer as they take jobs out.
+    expect(itemsProblem('compare', { jobs: ['p1'] }, { starting: true })).toBe('A comparison starts with two to five jobs.')
+    expect(itemsProblem('compare', { jobs: [] })).toBeNull()
     expect(itemsProblem('general', { documents: ids(4, 'd') })).toBe('A general chat holds up to 3 documents.')
     expect(itemsProblem('compare', { jobs: ['p1', 'p1'] })).toBe('A chat holds each of its jobs once.')
   })
 
-  it('adds and removes one item, never the home one, and changes nothing for a repeat', () => {
+  it('adds and removes one item, leaving the home one out rather than taking it, and changes nothing for a repeat', () => {
     const job = { kind: 'job', jobs: ['p1'], documents: ['d1'] }
+    const kept = { homeLeftOut: false }
     expect(homeItem(job)).toEqual({ type: 'job', id: 'p1' })
-    expect(withItem(job, { action: 'add', type: 'document', id: 'd2' })).toEqual({ jobs: ['p1'], documents: ['d1', 'd2'] })
-    expect(withItem(job, { action: 'add', type: 'document', id: 'd1' })).toEqual({ jobs: ['p1'], documents: ['d1'] })
-    expect(withItem(job, { action: 'remove', type: 'document', id: 'd1' })).toEqual({ jobs: ['p1'], documents: [] })
-    expect(withItem(job, { action: 'remove', type: 'job', id: 'p1' })).toEqual({ error: 'The chat\'s own job stays in it.' })
+    expect(withItem(job, { action: 'add', type: 'document', id: 'd2' })).toEqual({ jobs: ['p1'], documents: ['d1', 'd2'], ...kept })
+    expect(withItem(job, { action: 'add', type: 'document', id: 'd1' })).toEqual({ jobs: ['p1'], documents: ['d1'], ...kept })
+    expect(withItem(job, { action: 'remove', type: 'document', id: 'd1' })).toEqual({ jobs: ['p1'], documents: [], ...kept })
     expect(withItem(job, { action: 'add', type: 'job', id: 'p2' })).toEqual({ error: expect.stringMatching(/starts a comparison/) })
-    const doc = { kind: 'document', jobs: [], documents: ['d1'] }
-    expect(withItem(doc, { action: 'remove', type: 'document', id: 'd1' })).toEqual({ error: 'The chat\'s own document stays in it.' })
+    // The chat stays the job's own: it is left out, and adding it puts it back.
+    const left = { ...job, ...withItem(job, { action: 'remove', type: 'job', id: 'p1' }) }
+    expect(left).toEqual({ kind: 'job', jobs: ['p1'], documents: ['d1'], homeLeftOut: true })
+    expect(withItem(left, { action: 'add', type: 'job', id: 'p1' })).toEqual({ jobs: ['p1'], documents: ['d1'], ...kept })
+    expect(withItem(left, { action: 'add', type: 'document', id: 'd2' })).toEqual({ jobs: ['p1'], documents: ['d1', 'd2'], homeLeftOut: true })
+    const doc = { kind: 'document', jobs: [], documents: ['d1', 'd2'] }
+    expect(withItem(doc, { action: 'remove', type: 'document', id: 'd1' })).toEqual({ jobs: [], documents: ['d1', 'd2'], homeLeftOut: true })
     const compare = { kind: 'compare', jobs: ['p1', 'p2'], documents: [] }
     expect(homeItem(compare)).toBeNull()
-    expect(withItem(compare, { action: 'remove', type: 'job', id: 'p2' })).toEqual({ error: 'A comparison holds two to five jobs.' })
+    expect(withItem(compare, { action: 'remove', type: 'job', id: 'p2' })).toEqual({ jobs: ['p1'], documents: [], ...kept })
+    expect(withItem({ ...compare, jobs: ['p1'] }, { action: 'remove', type: 'job', id: 'p1' })).toEqual({ jobs: [], documents: [], ...kept })
     expect(withItem(compare, { action: 'swap', type: 'job', id: 'p3' })).toEqual({ error: 'Say whether to add or remove it.' })
     expect(withItem(compare, { action: 'add', type: 'posting', id: 'p3' })).toEqual({ error: 'Say which job or document to add or remove.' })
     for (const type of ['constructor', 'toString', '__proto__']) {
       expect(withItem(compare, { action: 'add', type, id: 'p3' })).toEqual({ error: 'Say which job or document to add or remove.' })
     }
+  })
+
+  // What the answers read: all of it, less a home item the person left out.
+  it('holds for the answers everything but a home item left out', () => {
+    expect(heldItems({ kind: 'job', jobs: ['p1'], documents: ['d1'] })).toEqual({ jobs: ['p1'], documents: ['d1'] })
+    expect(heldItems({ kind: 'job', jobs: ['p1'], documents: ['d1'], homeLeftOut: true })).toEqual({ jobs: [], documents: ['d1'] })
+    expect(heldItems({ kind: 'document', jobs: ['p1'], documents: ['d1', 'd2'], homeLeftOut: true })).toEqual({ jobs: ['p1'], documents: ['d2'] })
+    expect(heldItems({ kind: 'compare', jobs: ['p1', 'p2'], documents: [], homeLeftOut: true })).toEqual({ jobs: ['p1', 'p2'], documents: [] })
   })
 })
 

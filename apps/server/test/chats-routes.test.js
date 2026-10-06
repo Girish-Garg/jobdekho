@@ -46,9 +46,9 @@ describe('reading the chats', () => {
       id: expect.any(String), kind: 'job', title: 'Frontend Intern \u00b7 Acme',
       jobs: [{ id: 'p1', title: 'Frontend Intern', company: 'Acme', listed: true }], documents: [],
       createdAt: expect.any(String), updatedAt: expect.any(String), seenAt: null,
-      listed: true, unseen: true, busy: false, waiting: false, failed: false, placeholder: false,
+      listed: true, unseen: true, busy: false, waiting: false, failed: false, placeholder: false, homeLeftOut: false,
     })
-    const seen = (await app.call('POST', `/api/chats/${list[1].id}/seen`)).json().chat
+    const seen =(await app.call('POST', `/api/chats/${list[1].id}/seen`)).json().chat
     expect(seen).toMatchObject({ unseen: false, seenAt: expect.any(String), updatedAt: list[1].updatedAt })
   })
 
@@ -108,7 +108,7 @@ describe('POST /api/chats', () => {
     const refused = async (body) => (await app.call('POST', '/api/chats', body)).json()
     expect(await refused({ kind: 'job', jobs: ['p1'] })).toEqual({ error: 'A job\'s or a document\'s own chat is made when it is first used.' })
     expect(await refused({ kind: 'thread' })).toEqual({ error: 'Say whether this is a general chat or a comparison of jobs.' })
-    expect(await refused({ kind: 'compare', jobs: ['p1'] })).toEqual({ error: 'A comparison holds two to five jobs.' })
+    expect(await refused({ kind: 'compare', jobs: ['p1'] })).toEqual({ error: 'A comparison starts with two to five jobs.' })
     expect(await refused({ kind: 'general', jobs: ['p1'] })).toEqual({ error: 'A general chat holds no jobs. Compare jobs in a chat of their own.' })
     expect(await refused({ kind: 'compare', jobs: ['p1', 7] })).toEqual({ error: 'Name the jobs and documents by their ids.' })
     expect((await app.call('POST', '/api/chats', { kind: 'compare', jobs: ['p1', 'gone'] })).statusCode).toBe(404)
@@ -136,25 +136,51 @@ describe('POST /api/chats/:id/items', () => {
     expect((await app.items(own.id, { action: 'add', type: 'job', id: 'p2' })).statusCode).toBe(200)
   })
 
-  it('changes a comparison in place and renames it, but never below two jobs', async () => {
+  // The person may take every job out: what is left is still their
+  // conversation, named for the last jobs it compared.
+  it('changes a comparison in place and renames it, down to no job at all', async () => {
     const app = await setup()
     const compare = await app.newChat({ kind: 'compare', jobs: ['p1', 'p2'] })
     expect((await app.items(compare.id, { action: 'add', type: 'job', id: 'p3' })).json().chat.title).toBe('Acme vs Writesonic +1')
     expect((await app.items(compare.id, { action: 'remove', type: 'job', id: 'p1' })).json().chat.title).toBe('Writesonic vs Zeta')
-    expect((await app.items(compare.id, { action: 'remove', type: 'job', id: 'p2' })).json()).toEqual({ error: 'A comparison holds two to five jobs.' })
-    expect((await app.items(compare.id, { action: 'add', type: 'job', id: 'p2' })).json().chat.jobs.map((j) => j.id)).toEqual(['p2', 'p3'])
+    expect((await app.items(compare.id, { action: 'remove', type: 'job', id: 'p2' })).json().chat).toMatchObject({ title: 'Zeta', jobs: [{ id: 'p3' }] })
+    expect((await app.items(compare.id, { action: 'remove', type: 'job', id: 'p3' })).json().chat).toMatchObject({ title: 'Zeta', jobs: [] })
+    expect((await app.items(compare.id, { action: 'add', type: 'job', id: 'p2' })).json().chat.jobs.map((j) => j.id)).toEqual(['p2'])
   })
 
-  it('refuses the home item\'s removal, what the kind may not hold, and items that are not there', async () => {
+  // The x on a chat's own job or document: the chat stays its own, found
+  // by it, but stops reading it until it is added back.
+  it('leaves the home item out and puts it back, and refuses what the kind may not hold and items that are not there', async () => {
     const app = await setup()
     const own = (await app.items('job:p1', { action: 'add', type: 'document', id: app.cv.id })).json().chat
-    expect((await app.items(own.id, { action: 'remove', type: 'job', id: 'p1' })).json()).toEqual({ error: 'The chat\'s own job stays in it.' })
+    const left = (await app.items(own.id, { action: 'remove', type: 'job', id: 'p1' })).json().chat
+    expect(left).toMatchObject({ id: own.id, kind: 'job', homeLeftOut: true, jobs: [{ id: 'p1' }] })
+    expect((await app.call('GET', '/api/chats/for-job/p1')).json().chat.id).toBe(own.id)
+    expect((await app.items(own.id, { action: 'add', type: 'job', id: 'p1' })).json().chat).toMatchObject({ homeLeftOut: false })
     expect((await app.items(own.id, { action: 'add', type: 'document', id: 'nope' })).json()).toEqual({ error: 'That document is not there any more.' })
     expect((await app.items(own.id, { action: 'swap', type: 'job', id: 'p2' })).statusCode).toBe(400)
     const general = await app.newChat()
     expect((await app.items(general.id, { action: 'add', type: 'job', id: 'p1' })).statusCode).toBe(400)
-    expect((await app.items(`document:${app.cv.id}`, { action: 'remove', type: 'document', id: app.cv.id })).json()).toEqual({ error: 'The chat\'s own document stays in it.' })
+    const cv = (await app.items(`document:${app.cv.id}`, { action: 'remove', type: 'document', id: app.cv.id })).json().chat
+    expect(cv).toMatchObject({ kind: 'document', homeLeftOut: true, documents: [{ id: app.cv.id }] })
     expect((await app.items('nope', { action: 'add', type: 'job', id: 'p1' })).statusCode).toBe(404)
+  })
+
+  // Left out, the job is no longer what the answers read, and the chat,
+  // holding no job, is answered as a general chat is: with the feed.
+  it('asks without the job once it is left out, the way a general chat asks', async () => {
+    const app = await setup()
+    await app.ask('job:p1', 'is it remote?')
+    const own = (await app.call('GET', '/api/chats/for-job/p1')).json().chat
+    const before = app.prompts().at(-1).input
+    expect(before).toContain('"chatJobs":[{"id":"p1"')
+    expect(before).not.toContain('"matchingCount":')
+    await app.items(own.id, { action: 'remove', type: 'job', id: 'p1' })
+    await app.ask(own.id, 'what pays best?')
+    const after = app.prompts().at(-1).input
+    expect(after).toContain('"chatJobs":[]')
+    expect(after).toContain('"matchingCount":')
+    expect((await app.page(own.id)).turns.map((t) => t.items.jobs)).toEqual([['p1'], []])
   })
 })
 

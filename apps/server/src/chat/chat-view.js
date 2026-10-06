@@ -12,7 +12,7 @@ import { chatActivity } from './chat-results.js'
 //
 //   { id, kind, title, jobs: [{ id, title, company, listed }],
 //     documents: [{ id, name, kind, exists }], createdAt, updatedAt, seenAt,
-//     listed, unseen, busy, waiting, failed, placeholder }
+//     listed, unseen, busy, waiting, failed, placeholder, homeLeftOut }
 //
 // A job's chat is named for its job and a document's for its document as
 // they are now, the stored title standing in once they are gone. `listed`
@@ -21,6 +21,8 @@ import { chatActivity } from './chat-results.js'
 // says an answer landed after the person last looked; `busy`, `waiting` and
 // `failed` that its call is running, that a follow-up waits, or that its
 // last call failed (see GET /api/chats/pending for each one's detail).
+// `homeLeftOut` that its answers no longer read its own job or document
+// (see heldItems in the store's chat-items.js).
 
 // Every name and state one request shows, read once: a list of fifty chats
 // would otherwise read the corpus fifty times.
@@ -63,7 +65,7 @@ export function chatView(chat, kit, lastAt = null) {
     listed: chat.kind !== 'job' || jobs[0].listed,
     unseen: Boolean(lastAt && (!chat.seenAt || lastAt > chat.seenAt)),
     busy: kit.busy?.chatId === chat.id, waiting: Boolean(kit.waiting[chat.id]), failed: Boolean(kit.failed[chat.id]),
-    placeholder: false,
+    placeholder: false, homeLeftOut: Boolean(chat.homeLeftOut),
   }
 }
 

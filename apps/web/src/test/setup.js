@@ -3,7 +3,7 @@ import { beforeEach } from 'vitest';
 import { resetChatStore } from '../lib/chatStore.js';
 import { resetActiveChat } from '../lib/activeChat.js';
 import { resetChatDrafts } from '../lib/chatDrafts.js';
-import { resetRecentJobs } from '../lib/recentJobs.js';
+import { resetOpenedLately } from '../lib/openedLately.js';
 import { resetSourceDrafts } from '../lib/sourceDrafts.js';
 
 // The chats' state outlives any one component on purpose (see
@@ -15,6 +15,6 @@ beforeEach(() => {
   resetChatStore();
   resetActiveChat();
   resetChatDrafts();
-  resetRecentJobs();
+  resetOpenedLately();
   resetSourceDrafts();
 });

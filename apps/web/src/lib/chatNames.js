@@ -62,13 +62,25 @@ export function chatHeading(view) {
   if (!view) return { title: 'Ask AI', about: 'Opening the chat...' };
   if (view.kind === 'job') {
     const gone = view.listed === false ? ' · no longer listed' : '';
-    return { title: view.jobs[0]?.title || view.title, about: `${view.jobs[0]?.company || 'A job'} · this job's chat${gone}` };
+    const what = view.homeLeftOut ? 'left out of this chat' : 'this job\'s chat';
+    return { title: view.jobs[0]?.title || view.title, about: `${view.jobs[0]?.company || 'A job'} · ${what}${gone}` };
   }
   if (view.kind === 'document') {
     const word = view.documents[0]?.kind === 'cover-letter' ? 'Cover letter' : 'Resume';
-    return { title: view.documents[0]?.name || view.title, about: `${word} · this document's chat` };
+    const what = view.homeLeftOut ? 'left out of this chat' : 'this document\'s chat';
+    return { title: view.documents[0]?.name || view.title, about: `${word} · ${what}` };
   }
-  if (view.kind === 'compare') return { title: view.title, about: `Comparing ${plural(view.jobs.length, 'job')}` };
+  if (view.kind === 'compare') {
+    const n = view.jobs.length;
+    return { title: view.title, about: n < 2 ? `${plural(n, 'job')} left in this comparison` : `Comparing ${plural(n, 'job')}` };
+  }
   const docs = view.documents.length ? ` · ${plural(view.documents.length, 'document')}` : '';
   return { title: view.title || 'New chat', about: `General chat${docs}` };
+}
+
+// What a job or a document is called on its chip and its dotted pill:
+// "Frontend Engineer · Razorpay", or the document's own name.
+export function itemName(type, item) {
+  if (type === 'job') return [item.title, item.company].filter(Boolean).join(' · ') || 'A job no longer listed';
+  return item.name || 'A document that was deleted';
 }

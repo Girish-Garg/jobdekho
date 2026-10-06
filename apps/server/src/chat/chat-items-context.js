@@ -1,5 +1,6 @@
 import { compactKey } from '@jobdekho/core/company-key.js'
 import { listDocuments } from '@jobdekho/store/documents.js'
+import { heldItems } from '@jobdekho/store/chat-items.js'
 import { textChangedAt } from '@jobdekho/store/document-versions.js'
 import { readDocument } from '../documents/read.js'
 import { trimOpenPosting } from './postings-summary.js'
@@ -58,12 +59,14 @@ async function itemNames({ history, chatJobs, docs, dashboard, documents, userId
 }
 
 // A document's chat is also shown the job its document was made for, so
-// "fit this more to the job" has the job to fit it to.
+// "fit this more to the job" has the job to fit it to. A job or a document
+// the person left out of its own chat is not read (see heldItems).
 export async function chatItemsContext({ chat, history = [], dashboard, documents, userId }) {
   const { keys: blocked } = await blockedCompanies(dashboard, userId)
-  const docs = (await Promise.all(chat.documents.map((id) => readDocument(documents, userId, id)))).filter(Boolean)
+  const held = heldItems(chat)
+  const docs = (await Promise.all(held.documents.map((id) => readDocument(documents, userId, id)))).filter(Boolean)
   const madeFor = chat.kind === 'document' ? docs.map((doc) => doc.postingId).filter(Boolean) : []
-  const ids = [...new Set([...chat.jobs, ...madeFor])]
+  const ids = [...new Set([...held.jobs, ...madeFor])]
   const chatJobs = await Promise.all(ids.map((id) => chatJob(dashboard, userId, id, blocked)))
   const names = await itemNames({ history, chatJobs, docs, dashboard, documents, userId })
   return { chatJobs, chatDocuments: docs.map(openDocument), itemNames: names }

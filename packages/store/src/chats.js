@@ -6,12 +6,15 @@ import { itemsProblem } from './chat-items.js'
 // job results asked for in it, which carry its id (see ai-results.js). One
 // record per user, { chats: [...] }, each
 //
-//   { id, kind, jobs: [postingId], documents: [documentId], title, createdAt, updatedAt, seenAt }
+//   { id, kind, jobs: [postingId], documents: [documentId], title, createdAt, updatedAt, seenAt,
+//     homeLeftOut }
 //
 // `kind` is 'job', 'document', 'compare' or 'general', and what each may
 // hold is in chat-items.js. A job or a document has at most one chat of its
 // own. `seenAt` is when the person last looked at the chat, null before
 // they ever did: an answer newer than it is one they have not seen.
+// `homeLeftOut` is set once the person takes a job's or a document's own
+// item out of its chat (see heldItems in chat-items.js).
 export const CHAT_KINDS = ['job', 'document', 'compare', 'general']
 
 const all = (store, userId) => store.chats.get(userId)?.chats ?? []
@@ -42,7 +45,7 @@ export async function homeChat(store, userId, type, itemId) {
 // one job arriving together cannot each make it a chat.
 export async function createChat(store, userId, { kind, jobs = [], documents = [], title }, now = new Date()) {
   if (!CHAT_KINDS.includes(kind)) return { error: 'There is no such kind of chat.' }
-  const problem = itemsProblem(kind, { jobs, documents })
+  const problem = itemsProblem(kind, { jobs, documents }, { starting: true })
   if (problem) return { error: problem }
   if (kind === 'job' || kind === 'document') {
     const existing = homeOf(all(store, userId), kind, kind === 'job' ? jobs[0] : documents[0])
