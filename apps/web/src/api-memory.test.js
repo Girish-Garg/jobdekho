@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { getMemory, saveMemory, editMemory, deleteMemory, forgetMemory, setMemoryEnabled } from './api.js';
+import { getMemory, saveMemory, editMemory, deleteMemory, forgetMemory, setMemoryEnabled, dismissMemoryOffer } from './api.js';
 
 function mockFetch({ body, status = 200 } = {}) {
   const fn = vi.fn().mockResolvedValue({ ok: status >= 200 && status < 300, status, json: async () => body });
@@ -21,7 +21,13 @@ describe('memory api calls', () => {
     expect(call(fetchMock)).toEqual({ url: '/api/memory', method: 'GET', body: undefined });
     fetchMock = mockFetch({ status: 201, body: { item: { id: 'm1' }, replaced: null } });
     await saveMemory({ text: 'Be brief', scope: 'everywhere' });
-    expect(call(fetchMock)).toEqual({ url: '/api/memory', method: 'POST', body: { text: 'Be brief', scope: 'everywhere', quote: null, replaces: null } });
+    expect(call(fetchMock)).toEqual({ url: '/api/memory', method: 'POST', body: { text: 'Be brief', scope: 'everywhere', quote: null, replaces: null, source: null, topic: null, offered: null } });
+  });
+
+  it('notes a Not now with where the offer came from', async () => {
+    const fetchMock = mockFetch({ status: 204 });
+    await dismissMemoryOffer({ text: 'Always tell me the pay', source: 'habit', topic: 'pay' });
+    expect(call(fetchMock)).toEqual({ url: '/api/memory/feedback', method: 'POST', body: { text: 'Always tell me the pay', source: 'habit', topic: 'pay' } });
   });
 
   it('edits, restores and deletes one by its encoded id', async () => {

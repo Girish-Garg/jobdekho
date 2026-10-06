@@ -12,9 +12,16 @@ export function getMemory() {
 
 // A chip's Save or a line written by hand: { item, replaced }, `replaced`
 // the { id, text } this one took the place of. The same words saved again
-// answer with the item already kept.
-export function saveMemory({ text, scope, quote = null, replaces = null }) {
-  return req('/api/memory', { method: 'POST', body: JSON.stringify({ text, scope, quote, replaces }) });
+// answer with the item already kept. A chip also says where its offer came
+// from (`source`, `topic`) and what it offered, for the feedback log.
+export function saveMemory({ text, scope, quote = null, replaces = null, source = null, topic = null, offered = null }) {
+  return req('/api/memory', { method: 'POST', body: JSON.stringify({ text, scope, quote, replaces, source, topic, offered }) });
+}
+
+// "Not now" on an offer, noted on this computer so a habit offer waits
+// before it comes back. Nothing is saved.
+export function dismissMemoryOffer({ text, source = null, topic = null }) {
+  return req('/api/memory/feedback', { method: 'POST', body: JSON.stringify({ text, source, topic }) });
 }
 
 // { text }, { scope } or both; { restore: true } brings back a replaced one.

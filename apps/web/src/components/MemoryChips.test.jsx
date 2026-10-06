@@ -8,9 +8,10 @@ vi.mock('../api.js', () => ({
   saveMemory: vi.fn(),
   editMemory: vi.fn(),
   deleteMemory: vi.fn(),
+  dismissMemoryOffer: vi.fn(async () => null),
 }));
 
-import { saveMemory, editMemory, deleteMemory } from '../api.js';
+import { saveMemory, editMemory, deleteMemory, dismissMemoryOffer } from '../api.js';
 
 const ONE_PAGE = { text: 'Keep my resume to one page', scope: 'resume', quote: 'keep my resume to one page' };
 const ITEM = { id: 'm1', ...ONE_PAGE, replaces: null, archived: false };
@@ -35,7 +36,7 @@ describe('a suggested memory', () => {
     expect(saveMemory).not.toHaveBeenCalled();
     press('Save');
     expect(await screen.findByText("Remembered: 'Keep my resume to one page'")).toBeInTheDocument();
-    expect(saveMemory).toHaveBeenCalledWith({ ...ONE_PAGE, replaces: null });
+    expect(saveMemory).toHaveBeenCalledWith({ ...ONE_PAGE, replaces: null, source: null, topic: null, offered: ONE_PAGE.text });
     expect(within(chip()).getByRole('button', { name: 'Undo' })).toBeInTheDocument();
     expect(heard).toHaveBeenCalledTimes(1);
     stop();
@@ -48,7 +49,7 @@ describe('a suggested memory', () => {
     expect(box).toHaveValue(ONE_PAGE.text);
     fireEvent.change(box, { target: { value: 'Keep my resume to one page, always' } });
     press('Save');
-    await waitFor(() => expect(saveMemory).toHaveBeenCalledWith({ ...ONE_PAGE, text: 'Keep my resume to one page, always', replaces: null }));
+    await waitFor(() => expect(saveMemory).toHaveBeenCalledWith({ ...ONE_PAGE, text: 'Keep my resume to one page, always', replaces: null, source: null, topic: null, offered: ONE_PAGE.text }));
   });
 
   it('goes quiet on Not now, and saves nothing', () => {
@@ -57,6 +58,22 @@ describe('a suggested memory', () => {
     expect(chip()).toHaveTextContent("Not saved: 'Keep my resume to one page'");
     expect(within(chip()).queryAllByRole('button')).toHaveLength(0);
     expect(saveMemory).not.toHaveBeenCalled();
+    expect(dismissMemoryOffer).toHaveBeenCalledWith({ text: ONE_PAGE.text, source: null, topic: null });
+  });
+
+  // A habit offer is something the person never said, so it shows why it
+  // is offered, and its Save and Not now say where it came from.
+  it('shows a habit offer with its reason, and sends where it came from', async () => {
+    const habit = { status: 'suggested', text: 'Always tell me the pay when we talk about a job', scope: 'jobs', quote: 'What is the stipend?', source: 'habit', topic: 'pay', why: "You've asked about pay 4 times lately." };
+    const { unmount } = render(<MemoryChips items={[habit]} />);
+    expect(chip()).toHaveTextContent("You've asked about pay 4 times lately.");
+    press('Save');
+    await waitFor(() => expect(saveMemory).toHaveBeenCalledWith(expect.objectContaining({ source: 'habit', topic: 'pay', offered: habit.text })));
+    unmount();
+    render(<MemoryChips items={[habit]} />);
+    press('Not now');
+    expect(dismissMemoryOffer).toHaveBeenCalledWith({ text: habit.text, source: 'habit', topic: 'pay' });
+    expect(chip()).not.toHaveTextContent('times lately');
   });
 
   it('says what it would replace, and once saved, what it replaced', async () => {
@@ -65,7 +82,7 @@ describe('a suggested memory', () => {
     expect(chip()).toHaveTextContent("Replaces: 'Two pages are fine'");
     press('Save');
     expect(await screen.findByText("Replaced: 'Two pages are fine'")).toBeInTheDocument();
-    expect(saveMemory).toHaveBeenCalledWith({ ...ONE_PAGE, replaces: 'm0' });
+    expect(saveMemory).toHaveBeenCalledWith({ ...ONE_PAGE, replaces: 'm0', source: null, topic: null, offered: ONE_PAGE.text });
   });
 
   it('keeps the suggestion, and says why, when the server will not keep it', async () => {

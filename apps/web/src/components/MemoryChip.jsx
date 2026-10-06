@@ -1,8 +1,8 @@
 import { useMemoryChip } from '../lib/useMemoryChip.js';
 import { MAX_MEMORY_TEXT } from '../lib/memoryScopes.js';
-import Button from './ui/Button.jsx';
 import Card from './ui/Card.jsx';
 import TextInput from './ui/TextInput.jsx';
+import MemoryChipButtons from './MemoryChipButtons.jsx';
 import { NoteIcon } from './IconMemory.jsx';
 import { CheckIcon } from './Icon.jsx';
 
@@ -29,39 +29,11 @@ const WORDS = {
   dismissed: (text) => `Not saved: '${text}'`,
 };
 
-function Buttons({ chip }) {
-  const busy = Boolean(chip.busy);
-  if (chip.draft !== null) {
-    return (
-      <>
-        <Button variant="primary" size="sm" onClick={chip.save} disabled={busy || !chip.draft.trim()}>
-          {chip.busy === 'save' ? 'Saving...' : 'Save'}
-        </Button>
-        <Button variant="ghost" size="sm" onClick={chip.cancel} disabled={busy}>Cancel</Button>
-      </>
-    );
-  }
-  if (chip.status === 'saved') {
-    return (
-      <>
-        <Button size="sm" onClick={chip.undo} disabled={busy}>{chip.busy === 'undo' ? 'Undoing...' : 'Undo'}</Button>
-        <Button variant="ghost" size="sm" onClick={chip.edit} disabled={busy}>Edit</Button>
-      </>
-    );
-  }
-  if (chip.status === 'dismissed') return null;
-  return (
-    <>
-      <Button variant="primary" size="sm" onClick={chip.save} disabled={busy}>{chip.busy === 'save' ? 'Saving...' : 'Save'}</Button>
-      <Button size="sm" onClick={chip.edit} disabled={busy}>Edit</Button>
-      <Button variant="ghost" size="sm" onClick={chip.dismiss} disabled={busy}>Not now</Button>
-    </>
-  );
-}
-
-// One thing the chat offered to remember from the person's message: Save,
-// Edit or Not now while it waits; Undo or Edit once kept, whether by that
-// Save or because the message itself said "remember".
+// One thing the chat offered to remember: from the person's message, or
+// from a habit across chats, whose reason it shows while it waits ("You've
+// asked about pay 4 times lately"), since they never said it. Save, Edit or
+// Not now while it waits; Undo or Edit once kept, whether by that Save or
+// because the message itself said "remember".
 export default function MemoryChip({ memory }) {
   const chip = useMemoryChip(memory);
   const editing = chip.draft !== null;
@@ -89,9 +61,10 @@ export default function MemoryChip({ memory }) {
           <p className="min-w-0 flex-1 text-sm text-ink">{WORDS[chip.status](chip.text)}</p>
         )}
         <div className="flex shrink-0 flex-wrap items-center gap-1.5">
-          <Buttons chip={chip} />
+          <MemoryChipButtons chip={chip} />
         </div>
       </div>
+      {chip.why && chip.status === 'suggested' && <p className="pl-8 text-xs text-muted">{chip.why}</p>}
       {replaced && <p className="pl-8 text-xs text-muted">{`${chip.status === 'saved' ? 'Replaced' : 'Replaces'}: '${chip.replacedText}'`}</p>}
       {chip.error && <p role="alert" className="pl-8 text-xs text-ember">{chip.error}</p>}
     </Card>

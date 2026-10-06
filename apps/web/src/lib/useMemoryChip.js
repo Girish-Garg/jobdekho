@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { saveMemory, editMemory, deleteMemory } from '../api.js';
+import { saveMemory, editMemory, deleteMemory, dismissMemoryOffer } from '../api.js';
 import { announceMemoryChanged } from './memorySignal.js';
 
 // A 404 from a delete or a restore means the item is gone already, and a 409
@@ -14,8 +14,10 @@ const unless = (...statuses) => (err) => {
 // a Save of words already kept answers with that item (see the server's
 // api/memory.js), so an old chip pressed again never keeps a second copy.
 //
-//   status   'suggested', 'saved' or 'dismissed' (Not now, never sent anywhere)
+//   status   'suggested', 'saved' or 'dismissed' (Not now, noted only in the
+//            feedback log on this computer, see the server's api/memory.js)
 //   draft    the words being edited, or null
+//   why      a habit offer's reason ("You've asked about pay 4 times lately")
 export function useMemoryChip(memory) {
   const [chip, setChip] = useState(() => ({
     status: memory.status === 'saved' ? 'saved' : 'suggested',
@@ -25,7 +27,13 @@ export function useMemoryChip(memory) {
     quote: memory.quote ?? null,
     replaces: memory.replaces ?? null,
     replacedText: memory.replacedText ?? null,
+    source: memory.source ?? null,
+    topic: memory.topic ?? null,
+    why: typeof memory.why === 'string' ? memory.why : null,
   }));
+  // Where the offer came from and what it said, sent with a Save or a Not
+  // now so the feedback log can tell a save from an edit.
+  const offer = { source: chip.source, topic: chip.topic, offered: memory.text };
   const [draft, setDraft] = useState(null);
   const [busy, setBusy] = useState(null);
   const [error, setError] = useState(null);
@@ -53,7 +61,7 @@ export function useMemoryChip(memory) {
       const { item } = await editMemory(chip.id, { text });
       patch({ text: item.text });
     } else {
-      const { item, replaced } = await saveMemory({ text, scope: chip.scope, quote: chip.quote, replaces: chip.replaces });
+      const { item, replaced } = await saveMemory({ text, scope: chip.scope, quote: chip.quote, replaces: chip.replaces, ...offer });
       patch({ status: 'saved', id: item.id, text: item.text, replaces: replaced?.id ?? null, replacedText: replaced?.text ?? null });
     }
     setDraft(null);
@@ -77,6 +85,11 @@ export function useMemoryChip(memory) {
     setDraft,
     edit: () => setDraft(chip.text),
     cancel: () => setDraft(null),
-    dismiss: () => patch({ status: 'dismissed' }),
+    // Not now is the person's answer whether or not the note lands: a
+    // failed note only means a habit offer may come back sooner.
+    dismiss: () => {
+      patch({ status: 'dismissed' });
+      dismissMemoryOffer({ text: memory.text, source: chip.source, topic: chip.topic }).catch(() => {});
+    },
   };
 }
