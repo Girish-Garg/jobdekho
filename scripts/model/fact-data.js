@@ -4,17 +4,15 @@ import { factLines } from '@jobdekho/core/model/fact-estimate.js'
 import { FACT_VALUES } from '@jobdekho/core/fact-values.js'
 import { foldOf, seeded, shuffled, SEED } from './random.js'
 import { fingerprint, isCandidate, readLabels, readWritten } from './fact-lines.js'
-import { readArchive } from './fact-archive.js'
 
 export { CANDIDATE, fingerprint, isCandidate, readLabels, readWritten } from './fact-lines.js'
 
 // What the facts model learns from. Nothing in a posting labels these
 // facts, so they were read by hand: every line a candidate word picks out
 // (fact-lines.js) was labelled with the fact it states, or none, the label
-// kept in labels/facts.json under the line's fingerprint and the line in
-// the archive (fact-archive.js), which keeps it after the app deletes its
-// posting. Lines no candidate word picks out are taken as stating none of
-// them, a sample of PLAIN of them from the corpus as it is now.
+// kept in labels/facts.json under the line's fingerprint, and found again
+// in the corpus (corpusLines below). Lines no candidate word picks out are
+// taken as stating none of them, a sample of PLAIN of them.
 // labels/facts-written.json adds sentences written by hand for wordings the
 // corpus has too few of; they are trained on and never measured
 // (train-facts.js).
@@ -29,13 +27,31 @@ function example(text, label, companyKey) {
   return { text, companyKey, fold: foldOf(companyKey), y: FACT_KINDS.indexOf(kind), features: factFeatures(text) }
 }
 
-// { examples, unlabelled, gone }: every labelled line the archive keeps,
-// under the company it was first seen at, whether or not its posting is
-// still in the corpus; the corpus's plain lines, a seeded sample, as none;
-// the written examples, marked `written`. `unlabelled` are the archive's
+// The lines training reads its labels from: the corpus's own candidate and
+// labelled lines, each once, under the company it was first seen at. A
+// posting the app deletes takes its lines with it. Keeping them in the
+// archive (fact-archive.js, passed as `archive` to factExamples) is off
+// for now, the owner's call on 2026-10-07: the app runs from npx, where
+// the archive's command does not, and that waits for another day.
+export function corpusLines(postings, labels = readLabels()) {
+  const lines = new Map()
+  for (const p of postings) {
+    for (const line of linesOf(p.description)) {
+      const fp = fingerprint(line)
+      if (lines.has(fp) || line.length > 600 || !(isCandidate(line) || labels[fp])) continue
+      lines.set(fp, { fp, text: line, company: p.company, companyKey: p.companyKey, source: p.source })
+    }
+  }
+  return lines
+}
+
+// { examples, unlabelled, gone }: every labelled line in `archive`, the
+// corpus's own by default; the corpus's plain lines, a seeded sample, as
+// none; the written examples, marked `written`. `unlabelled` are the
 // candidate lines no label covers yet, for the next pass of hand reading;
-// `gone` counts the labelled lines whose posting the app has deleted.
-export function factExamples(postings, { labels = readLabels(), written = readWritten(), archive = readArchive() } = {}) {
+// `gone` counts labelled lines whose posting the app has deleted, which
+// only an archive can hold.
+export function factExamples(postings, { labels = readLabels(), written = readWritten(), archive = corpusLines(postings, labels) } = {}) {
   const examples = []
   const unlabelled = []
   for (const entry of archive.values()) {

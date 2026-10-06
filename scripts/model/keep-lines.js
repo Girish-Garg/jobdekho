@@ -7,7 +7,10 @@ import { readLabels } from './fact-lines.js'
 // maintainer, between training runs (see fact-archive.js): the app deletes
 // a posting once it closes, and its lines would leave with it.
 //
-//   npm run keep:lines [postings.ndjson ...]
+//   node scripts/model/keep-lines.js [postings.ndjson ...]
+//
+// Off for now, with the archive (fact-data.js corpusLines says why): no
+// npm script runs it and training does not read what it keeps.
 //
 // With no file named it reads the corpus the app keeps on this computer.
 // Read only: the corpus is never written.

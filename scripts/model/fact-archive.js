@@ -13,12 +13,12 @@ import { fingerprint, isCandidate } from './fact-lines.js'
 // and each retraining would learn from less than the last.
 //
 // So every candidate line a corpus holds, every line the weights would show
-// and every labelled line is copied here as it is seen, and never taken
-// out: training reads its labelled lines from here, whatever the corpus
-// still holds. Each training run adds what it sees, and `npm run
-// keep:lines` does it alone, in seconds, between runs. It is one file on
-// the maintainer's computer: git ignores it (scripts/model/data), since it
-// holds posting text, recruiters' addresses included.
+// and every labelled line can be copied here as it is seen, and never taken
+// out, for training to read its labelled lines from whatever the corpus
+// still holds. It is one file on the maintainer's computer: git ignores it
+// (scripts/model/data), since it holds posting text, recruiters' addresses
+// included. Off for now: training reads the corpus alone (fact-data.js
+// corpusLines says why, and train-facts.js how to turn it back on).
 //
 //   { fp, text, company, companyKey, source, seen: 'YYYY-MM-DD' } per line
 export const ARCHIVE = join(ROOT, 'scripts', 'model', 'data', 'facts', 'lines.ndjson')

@@ -17,7 +17,8 @@ function factRows(byKind) {
   ])
 }
 
-// The facts model's part of the model card, from its metrics.
+// The facts model's part of the model card, from its metrics. It says
+// nothing of the archive of lines (fact-archive.js) while that is off.
 export function factsCard(m, record) {
   const c = m.chosen
   const a = m.alternative
@@ -31,7 +32,6 @@ export function factsCard(m, record) {
 - Version: ${m.version}
 - Weights: ${count(m.training.kept)} features, ${(m.weightsBytes / 1024).toFixed(0)} KB.
 - Labels: no posting labels these facts, so the maintainer's corpus was read by hand. Every line a candidate word picks out (scripts/model/fact-data.js) was labelled with the fact it states or none, kept in scripts/model/labels/facts.json by the line's fingerprint, never its text. Labelled: ${Object.entries(d.lines).map(([k, v]) => `${k} ${count(v)}`).join(', ')}, from ${count(d.postings)} postings at ${count(d.companies)} companies (${filesLine(d.files)}); the none count includes a sample of the lines no candidate word picks out. Candidate lines still unlabelled: ${count(d.unlabelled)}. Lines the weights would show in the app that no one has read: ${count(d.unreviewedShown)}.
-- Archive: the app deletes a posting once it closes, or two months after it was posted or last listed, and a fingerprint alone cannot find a line it no longer holds. So every candidate line, labelled line and line the weights show is kept as text in scripts/model/data/facts/lines.ndjson on the maintainer's computer (git ignores it: it holds posting text), and training reads its labelled lines from there. It holds ${count(d.archived)} lines; ${count(d.labelledGone)} labelled lines are trained on from it alone, their postings gone. Each training run adds what the corpus holds, and \`npm run keep:lines\` does it between runs.
 - Written examples: ${Object.entries(d.written).map(([k, v]) => `${k} ${count(v)}`).join(', ')}, sentences written by hand (scripts/model/labels/facts-written.json) for wordings the corpus has too few of. They are trained on in every fold and never measured.
 - Openings and bonds are stated in too few lines to learn, and stay the plain readers' alone.
 - Features: the line's words and word pairs and its first word, with an email address as the kind of address it is (an applying desk, a help desk, a personal mailbox, any other), a clock time, a round-the-clock and a link as one word each.

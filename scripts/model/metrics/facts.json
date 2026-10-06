@@ -33,8 +33,6 @@
       "none": 38
     },
     "unlabelled": 0,
-    "archived": 1641,
-    "labelledGone": 0,
     "unreviewedShown": 0
   },
   "split": {
@@ -50,9 +48,9 @@
     "minCount": 5,
     "pruneBelow": 0.02,
     "vocabulary": 4900,
-    "kept": 4899
+    "kept": 4898
   },
-  "temperature": 1.0585,
+  "temperature": 1.0627,
   "minSupport": 15,
   "heldOut": {
     "lines": 9641
@@ -66,14 +64,14 @@
       "email": null
     },
     "heldOut": {
-      "covered": 102,
-      "right": 102,
+      "covered": 103,
+      "right": 103,
       "precision": 1
     },
     "thresholdsChosenWithoutTheTestFold": {
-      "covered": 108,
-      "right": 107,
-      "precision": 0.9907407407407407
+      "covered": 107,
+      "right": 106,
+      "precision": 0.9906542056074766
     },
     "byKind": {
       "ppo": {
@@ -88,13 +86,13 @@
       },
       "shift": {
         "threshold": 0.93,
-        "covered": 72,
-        "right": 72,
+        "covered": 73,
+        "right": 73,
         "precision": 1,
         "stated": 253,
         "rules": 0.1897,
-        "model": 0.2846,
-        "either": 0.3953
+        "model": 0.2885,
+        "either": 0.3992
       },
       "start": {
         "threshold": null,
@@ -128,8 +126,8 @@
     },
     "heldOut": {
       "covered": 159,
-      "right": 156,
-      "precision": 0.9811
+      "right": 154,
+      "precision": 0.9686
     },
     "thresholdsChosenWithoutTheTestFold": {
       "covered": 166,
@@ -150,12 +148,12 @@
       "shift": {
         "threshold": 0.6,
         "covered": 129,
-        "right": 126,
-        "precision": 0.9767,
+        "right": 124,
+        "precision": 0.9612,
         "stated": 253,
         "rules": 0.1897,
-        "model": 0.498,
-        "either": 0.5534
+        "model": 0.4901,
+        "either": 0.5455
       },
       "start": {
         "threshold": null,
@@ -182,14 +180,14 @@
   "globalThresholds": [
     {
       "threshold": 0.8,
-      "covered": 128,
-      "precision": 0.9844,
+      "covered": 129,
+      "precision": 0.9845,
       "wrong": 2
     },
     {
       "threshold": 0.9,
-      "covered": 107,
-      "precision": 0.9813,
+      "covered": 106,
+      "precision": 0.9811,
       "wrong": 2
     },
     {
@@ -200,7 +198,7 @@
     },
     {
       "threshold": 0.99,
-      "covered": 39,
+      "covered": 41,
       "precision": 1,
       "wrong": 0
     }
@@ -209,44 +207,44 @@
     {
       "from": 0.5,
       "to": 0.7,
-      "n": 36,
-      "right": 30
+      "n": 38,
+      "right": 32
     },
     {
       "from": 0.7,
       "to": 0.8,
-      "n": 24,
-      "right": 23
+      "n": 23,
+      "right": 22
     },
     {
       "from": 0.8,
       "to": 0.9,
-      "n": 21,
-      "right": 21
+      "n": 23,
+      "right": 23
     },
     {
       "from": 0.9,
       "to": 0.95,
-      "n": 26,
-      "right": 25
+      "n": 25,
+      "right": 24
     },
     {
       "from": 0.95,
       "to": 0.98,
-      "n": 20,
-      "right": 20
+      "n": 22,
+      "right": 22
     },
     {
       "from": 0.98,
       "to": 0.99,
-      "n": 22,
-      "right": 21
+      "n": 18,
+      "right": 17
     },
     {
       "from": 0.99,
       "to": 0.995,
-      "n": 14,
-      "right": 14
+      "n": 16,
+      "right": 16
     },
     {
       "from": 0.995,
@@ -256,5 +254,5 @@
     }
   ],
   "shipped": true,
-  "weightsBytes": 199744
+  "weightsBytes": 199673
 }
