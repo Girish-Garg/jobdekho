@@ -23,7 +23,7 @@ export async function askInChat(deps, { userId, chat, message, body = {}, emit =
   })
   // What the person asked the chat to remember, unless they switched memory
   // off (see memory-turn.js).
-  context.memory = await chatMemory(deps.store, userId)
+  context.memory = await chatMemory(deps.store, userId, { page: context.page, message })
   const watch = (event) => { noteEvent(userId, event); emit(event) }
   const asked = await runChatTurn({ message, context, history, select: deps.select, emit: watch, signal: stopSignal(userId), ...deps.cli })
   // Saved now only when the message itself said "remember"; the rest wait

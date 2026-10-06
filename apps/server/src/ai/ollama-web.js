@@ -19,9 +19,10 @@ import { keepSeenSources } from './ollama-web-sources.js'
 //
 // What leaves the machine is only what the model puts in a search query or
 // a page address. The web callers build the prompt from the question and a
-// posting's public fields alone (chat/web-prompt.js, actions/fake-check-
+// posting's public fields (chat/web-prompt.js, actions/fake-check-
 // prompt.js), the same rule every CLI's web call keeps, so nothing personal
-// is there to put in one.
+// is there to put in one beyond the check's saved preferences about
+// checking jobs, which it is told to search for, never to search with.
 //
 // Bounded, so a model that keeps searching cannot run the call to its
 // timeout: after MAX_TOOL_CALLS tools or MAX_TURNS turns it is asked once

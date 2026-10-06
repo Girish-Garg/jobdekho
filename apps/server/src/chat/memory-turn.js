@@ -1,13 +1,17 @@
 import { listMemory } from '@jobdekho/store/memory.js'
 import { addMemory } from '@jobdekho/store/memory-items.js'
 import { isMemoryCommand } from './memory-command.js'
+import { memoriesForChat } from '../memory/picker.js'
 
-// The memory a chat question is asked with: { items }, every preference in
-// force whatever its scope, or null when the person switched memory off,
-// which leaves memory out of the prompt and the turn entirely.
-export async function chatMemory(store, userId) {
+// The memory a chat question is asked with: { items, saved }, `items` the
+// preferences that bear on this question on this page (see memory/
+// picker.js), `saved` every one in force, which a suggestion is checked
+// against so it never repeats one the question did not bring along. Null
+// when the person switched memory off, which leaves memory out of the
+// prompt and the turn entirely.
+export async function chatMemory(store, userId, { page, message } = {}) {
   const { enabled, items } = await listMemory(store, userId)
-  return enabled ? { items } : null
+  return enabled ? { items: memoriesForChat(items, { page, message }), saved: items } : null
 }
 
 const savedChip = ({ item, replaced }, quote) => ({

@@ -7,7 +7,7 @@ import { addMemory } from '@jobdekho/store/memory-items.js'
 import { listMemory, setMemoryEnabled, MAX_MEMORIES } from '@jobdekho/store/memory.js'
 import { isMemoryCommand } from '@jobdekho/server/chat/memory-command.js'
 import { memorySuggestions } from '@jobdekho/server/chat/memory-suggest.js'
-import { memoryPrompt, memoryLines } from '@jobdekho/server/chat/memory-prompt.js'
+import { memoryRules, savedPreferences, memoryLines } from '@jobdekho/server/chat/memory-prompt.js'
 import { chatMemory, settleMemory } from '@jobdekho/server/chat/memory-turn.js'
 import { buildChatPrompt } from '@jobdekho/server/chat/prompt.js'
 
@@ -93,16 +93,26 @@ describe('what the chat is told', () => {
     expect(feed({ items: [] })).toContain('This person has no saved preferences yet.')
   })
 
+  // Models follow a preference far more often when it sits next to what
+  // they answer (PrefEval, ICLR 2025), so the saved lines close the prompt.
+  it('puts the saved lines right before the question, after the feed', () => {
+    for (const prompt of [feed({ items: SAVED }), page({ items: SAVED })]) {
+      expect(prompt).toMatch(/Keep answers short\n\nQuestion: q\n$/)
+      expect(prompt.indexOf('Background only')).toBeGreaterThan(prompt.indexOf('Your JSON object may also carry "memory"'))
+    }
+  })
+
   it('leaves memory out entirely when it is switched off', () => {
     for (const prompt of [feed(null), page(null), feed(undefined)]) {
       expect(prompt).not.toContain('"memory"')
       expect(prompt).not.toContain('saved preferences')
     }
-    expect(memoryPrompt(null)).toBe('')
+    expect(memoryRules(null)).toBe('')
+    expect(savedPreferences(null)).toBe('')
   })
 
   it('names the examples, the one-off requests and the sensitive topics', () => {
-    const prompt = memoryPrompt({ items: [] })
+    const prompt = memoryRules({ items: [] })
     expect(prompt).toContain('Always suggest what they explicitly ask you to remember.')
     expect(prompt).toContain('"Show me remote jobs at Razorpay" gives nothing: a one-off request.')
     expect(prompt).toContain('{"text":"Keep my resume to one page","scope":"resume","quote":"keep my resume to one page"}')
@@ -142,9 +152,14 @@ describe('saving what a turn offered', () => {
     expect(await settleMemory(store, 'u1', 'remember to keep my resume to one page', [offer])).toEqual([{ status: 'suggested', ...offer }])
   })
 
-  it('asks the chat with every item in force, or with no memory when it is switched off', async () => {
+  // Every item in force is what a suggestion is checked against; only the
+  // ones that bear on the question go in the prompt (see memory/picker.js).
+  it('asks the chat with the items that bear on the question, or with none when memory is off', async () => {
     await addMemory(store, 'u1', { text: 'Keep answers short', scope: 'everywhere' })
-    expect(await chatMemory(store, 'u1')).toEqual({ items: [expect.objectContaining({ text: 'Keep answers short' })] })
+    await addMemory(store, 'u1', { text: 'Keep my resume to one page', scope: 'resume' })
+    const memory = await chatMemory(store, 'u1', { page: 'postings', message: 'Any remote roles?' })
+    expect(memory.items.map((item) => item.text)).toEqual(['Keep answers short'])
+    expect(memory.saved).toHaveLength(2)
     await setMemoryEnabled(store, 'u1', false)
     expect(await chatMemory(store, 'u1')).toBeNull()
   })

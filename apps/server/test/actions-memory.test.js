@@ -13,6 +13,8 @@ const ITEMS = [
   { id: 'b2', text: 'Keep my resume to one page', scope: 'resume' },
   { id: 'c3', text: 'Keep my cover letters short', scope: 'letters' },
   { id: 'd4', text: 'Only show me remote roles', scope: 'jobs' },
+  { id: 'e5', text: 'When I ask if a job is real, also check salary for both intern and full-time roles', scope: 'jobs' },
+  { id: 'f6', text: 'I am on an H1B visa, so check the sponsorship', scope: 'jobs' },
 ]
 const POSTING = { id: 'p1', title: 'Backend Engineer', company: 'Acme', location: 'Pune', descriptionText: JD, tags: [] }
 const NOTE = 'This person\'s saved preferences, each written or approved by them.'
@@ -104,9 +106,16 @@ describe('the posting AI route', () => {
     expect(input).not.toContain('Keep my cover letters short')
   })
 
-  it('gives the fake check, which searches the web, none at all', async () => {
+  // The one call that searches the web gets only what is about checking a
+  // job (see memory/picker.js): never a sensitive line, never one kept for
+  // documents, and none of the rest.
+  it('gives the fake check, which searches the web, only the preferences about checking a job', async () => {
     const input = await prompted('fake-check')
-    expect(input).not.toContain('Use Indian English')
-    expect(input).not.toContain('saved preferences')
+    expect(input).toContain("This person's saved preferences about checking jobs")
+    expect(input).toContain('- [jobs] When I ask if a job is real, also check salary for both intern and full-time roles')
+    expect(input.indexOf('check salary')).toBeGreaterThan(input.indexOf('POSTING>>>'))
+    for (const left of ['Use Indian English', 'H1B', 'Keep my resume to one page', 'Keep my cover letters short', 'Only show me remote roles']) {
+      expect(input).not.toContain(left)
+    }
   })
 })

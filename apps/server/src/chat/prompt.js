@@ -3,7 +3,7 @@ import { profileBlock } from './prompt-profile.js'
 import { historyBlock } from './prompt-history.js'
 import { buildPagePrompt } from './prompt-pages.js'
 import { documentsPrompt } from './prompt-items.js'
-import { memoryPrompt } from './memory-prompt.js'
+import { memoryRules, savedPreferences } from './memory-prompt.js'
 import { GRADE_BANDS } from '@jobdekho/core/grade.js'
 
 // The Fit floors as the model may offer them, from the bands themselves, so a
@@ -35,9 +35,10 @@ A "block" action, {"type":"block","companies":["..."]}, hides every job from tho
 
 // The feed's prompt is this one; every other page has its own (see
 // prompt-pages.js), built from what that page's context holds. A chat that
-// holds documents is also told how to change them.
+// holds documents is also told how to change them. The saved preferences
+// come last before the question, where they are followed (memory-prompt.js).
 export function buildChatPrompt({ message, context, history }) {
   if (context.page && context.page !== 'postings') return buildPagePrompt({ message, context, history })
-  return `${INSTRUCTION}${documentsPrompt(context.chatDocuments)}${memoryPrompt(context.memory)}${historyBlock(history, context.itemNames)}`
-    + `${profileBlock(context.profile)}${fencedFeed(context)}Question: ${message}\n`
+  return `${INSTRUCTION}${documentsPrompt(context.chatDocuments)}${memoryRules(context.memory)}${historyBlock(history, context.itemNames)}`
+    + `${profileBlock(context.profile)}${fencedFeed(context)}${savedPreferences(context.memory)}Question: ${message}\n`
 }

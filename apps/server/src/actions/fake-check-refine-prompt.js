@@ -6,6 +6,6 @@ import { buildRefineSection } from './refine-section.js'
 // the person's instruction can call for more browsing ("check whether the
 // recruiter email domain matches the company"), not only a reworded summary
 // of what was already found.
-export function buildFakeCheckRefinePrompt(posting, previous, instruction) {
-  return buildFakeCheckPrompt(posting) + buildRefineSection(JSON.stringify(previous), instruction)
+export function buildFakeCheckRefinePrompt(posting, previous, instruction, memory = []) {
+  return buildFakeCheckPrompt(posting, memory) + buildRefineSection(JSON.stringify(previous), instruction)
 }

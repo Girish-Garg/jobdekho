@@ -12,7 +12,7 @@ import MemoryForget from './MemoryForget.jsx';
 import { NoteIcon } from './IconMemory.jsx';
 
 const EMPTY = 'The chat will suggest things to remember as you talk, and nothing is saved without your click.';
-const SWITCH_HINT = 'The chat, resume tailoring and cover letters read what is saved here. Off, nothing is suggested or used.';
+const SWITCH_HINT = 'The chat, resume tailoring and cover letters read what is saved here, and the real-job check reads only what is about checking jobs. Off, nothing is suggested or used.';
 
 // What the chat remembers of the person (see the server's api/memory.js),
 // as text they can read, change and delete. It is not part of the record

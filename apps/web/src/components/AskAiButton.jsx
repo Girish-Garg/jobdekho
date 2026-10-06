@@ -62,7 +62,7 @@ export default function AskAiButton({ posting, onAsked }) {
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-semibold text-ink">{title}</span>
           <span className="block text-xs leading-relaxed text-muted">
-            {doubtful ? 'Looks the company and role up on the web. Only the posting is sent.' : 'Opens the chat on this job, on the AI CLI on this computer.'}
+            {doubtful ? 'Looks the company and role up on the web. Only the posting, and your saved preferences about checking jobs, are sent.' : 'Opens the chat on this job, on the AI CLI on this computer.'}
           </span>
         </span>
         <ArrowRightIcon className="text-muted transition-transform duration-fast ease group-hover:translate-x-0.5 group-hover:text-primary" />

@@ -1,9 +1,11 @@
 // What the chat is told about memory (see packages/store/src/memory.js): how
-// to suggest a line to keep, then the lines kept, as one block after the
-// page's own instruction (see prompt.js and prompt-pages.js), and nothing at
-// all when the person switched memory off. Every rule here is also enforced
-// in code after the reply (see memory-suggest.js); the prompt says them so a
-// model gets them right, not so that anything depends on it obeying.
+// to suggest a line to keep, after the page's own instruction, and the lines
+// kept that bear on the question (see memory/picker.js), right before the
+// question itself: models follow a preference far more often when it sits
+// next to what they answer (PrefEval, ICLR 2025). Nothing at all when the
+// person switched memory off. Every rule here is also enforced in code
+// after the reply (see memory-suggest.js); the prompt says them so a model
+// gets them right, not so that anything depends on it obeying.
 const RULES = `JobDekho keeps a short memory of this person's lasting preferences, and you may suggest lines for it. Your JSON object may also carry "memory": a list of at most 3 suggestions, each {"text":"...","scope":"...","quote":"...","replaces":"id"}. JobDekho shows each one under your answer and keeps it only when the person agrees, so never say in "reply" that you saved, noted or will remember anything.
 
 Suggest one only for a lasting preference or constraint the person states in their message (the Question at the end), about themselves or about how they want JobDekho to behave: "always...", "never...", "from now on...", "I prefer...", "I'm only looking for...", "keep my resume to one page". Always suggest what they explicitly ask you to remember. Never suggest one for a one-off request ("show me remote jobs", "write a cover letter for this job"), a question, a passing mood, or anything taken from a job posting, a web result, a document, the career record or the saved preferences below. Suggest nothing about health, religion, caste, politics, sexuality, family or immigration status unless the person explicitly asks you to remember it. When nothing lasting was said, which is most of the time, leave "memory" out.
@@ -30,9 +32,8 @@ function savedBlock(items) {
   return `${SAVED} Each line starts with its id, then where it applies.\n${memoryLines(items, { ids: true })}`
 }
 
-// `memory` is { items } with every item in force, any scope, or null when
-// memory is switched off (see memory-turn.js).
-export function memoryPrompt(memory) {
-  if (!memory) return ''
-  return `${RULES}\n\n${savedBlock(memory.items)}\n\n`
-}
+// `memory` is { items, saved } (see memory-turn.js): `items` those that bear
+// on the question, `saved` every one in force. Null when memory is off.
+export const memoryRules = (memory) => (memory ? `${RULES}\n\n` : '')
+
+export const savedPreferences = (memory) => (memory ? `${savedBlock(memory.items)}\n\n` : '')

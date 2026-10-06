@@ -10,8 +10,9 @@ const hasEntries = (profile) => ENTRY_SECTIONS.some((key) => (profile?.[key]?.le
 // the names it needs and the route loads exactly those, so the resume is
 // never in the room for a call that has no use for it. That is what lets the
 // one tool-enabled action (the fake check, which searches the web) promise
-// it carries no personal data: the guarantee is structural, not a matter of
-// the prompt leaving a field out.
+// it carries no resume and no profile: the guarantee is structural, not a
+// matter of the prompt leaving a field out. Its only words of the person's
+// own are their saved preferences about checking jobs (memory/picker.js).
 //
 //   load     (dashboard, userId) -> the value, or null when the person has not
 //            supplied it yet

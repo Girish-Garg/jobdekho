@@ -398,7 +398,9 @@ What leaves this computer, and only when you ask for it:
   chat question what the page shows (the feed, your profile, the open
   document). With Ollama the prompt stays on this computer.
 - **Web searches, with the question only.** Is it real? gets no resume and
-  no profile, only the posting's public fields. The search step of a chat
+  no profile: only the posting's public fields, and those of your saved
+  preferences that are about checking jobs ("also check the pay"), never the
+  rest of what you saved. The search step of a chat
   question gets your question, up to three earlier questions from the same
   conversation in your own words, and the open job's public fields; never
   your profile, your documents, or the earlier answers. On Claude Code the

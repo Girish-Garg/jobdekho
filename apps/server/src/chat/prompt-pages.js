@@ -1,7 +1,7 @@
 import { historyBlock } from './prompt-history.js'
 import { profileView } from './profile-view.js'
 import { PROFILE_RULES, DOCUMENT_RULES, PROPOSAL_REPLY } from './prompt-proposal-rules.js'
-import { memoryPrompt } from './memory-prompt.js'
+import { memoryRules, savedPreferences } from './memory-prompt.js'
 import { fence } from './prompt-fence.js'
 import { documentBlocks, documentsPrompt, jobsBlock } from './prompt-items.js'
 
@@ -53,5 +53,5 @@ function settingsPrompt({ context }) {
 const BUILDERS = { profile: profilePrompt, resume: resumePrompt, settings: settingsPrompt }
 
 export function buildPagePrompt({ message, context, history }) {
-  return `${BUILDERS[context.page]({ context })}${memoryPrompt(context.memory)}${historyBlock(history, context.itemNames)}Question: ${message}\n`
+  return `${BUILDERS[context.page]({ context })}${memoryRules(context.memory)}${historyBlock(history, context.itemNames)}${savedPreferences(context.memory)}Question: ${message}\n`
 }

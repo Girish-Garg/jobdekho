@@ -1,6 +1,10 @@
-// The whole prompt is public posting data and nothing else: no resume, no
+import { checkNote } from './memory-note.js'
+
+// The prompt is public posting data and nothing personal: no resume, no
 // profile, no name. This is the one call that hands the model web search, so
-// it is the one call that must have nothing worth exfiltrating.
+// it is the one call that must have nothing worth exfiltrating. The only
+// words of the person's own are their saved preferences about checking jobs
+// ("also check the pay"), after the posting (see memory-note.js).
 //
 // It names no tool: Claude Code searches and opens pages, Antigravity only
 // searches (see ai/agy-agent.js), and the same prompt has to work on both.
@@ -44,7 +48,7 @@ const FIELDS = [
   ['experience', 'experience'],
 ]
 
-export function buildFakeCheckPrompt(posting) {
+export function buildFakeCheckPrompt(posting, memory = []) {
   // A description, or a title or company, that contained the closing marker
   // could end the fence early and put its own words outside it, so the
   // marker cannot appear in anything scraped.
@@ -53,5 +57,5 @@ export function buildFakeCheckPrompt(posting) {
   const description = String(posting.descriptionText || posting.descriptionSnippet || '')
     .slice(0, MAX_DESCRIPTION).split(CLOSE).join('')
   const signals = posting.ghostSignals?.length ? posting.ghostSignals.join('; ') : 'none'
-  return `${INSTRUCTION}${OPEN}\n${lines.join('\n')}\n\ndescription:\n${description}\n${CLOSE}\n\nJobDekho signals: ${signals}\n`
+  return `${INSTRUCTION}${OPEN}\n${lines.join('\n')}\n\ndescription:\n${description}\n${CLOSE}\n\nJobDekho signals: ${signals}\n${checkNote(memory)}`
 }

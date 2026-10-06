@@ -54,7 +54,7 @@ export async function runChatTurn({ message, context, history, select, emit, sig
   const { reply, actions, refs, proposals, web } = parsed
   const turn = {
     id: randomUUID(), page: context.page ?? 'postings', question: message, answer: reply, actions, refs, proposals, provider: provider.id,
-    memory: context.memory ? memorySuggestions(text, { message, items: context.memory.items }) : [],
+    memory: context.memory ? memorySuggestions(text, { message, items: context.memory.saved ?? context.memory.items }) : [],
   }
   const open = context.chatKind === 'job' ? context.chatJobs?.find((job) => job.title) ?? null : null
   const searched = web ? await searchFor({ message, history, open, select, emit, signal, seams }) : {}
