@@ -4,6 +4,7 @@ import { filtersRoutes } from './filters.js'
 import { aiProviderRoutes } from './ai-provider.js'
 import { profileRoutes } from './profile.js'
 import { postingAiRoutes } from './posting-ai.js'
+import { tailorChoicesRoutes } from './tailor-choices.js'
 import { resumeRoutes } from './resume.js'
 import { chatRoutes } from './chats.js'
 import { chatProposalRoutes } from './chat-proposals.js'
@@ -65,6 +66,7 @@ export async function apiRoutes(app) {
   await app.register(aiProviderRoutes)
   await app.register(profileRoutes)
   await app.register(postingAiRoutes)
+  await app.register(tailorChoicesRoutes)
   await app.register(resumeRoutes)
   await app.register(chatRoutes)
   await app.register(chatProposalRoutes)

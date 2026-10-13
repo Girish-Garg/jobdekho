@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync, readFileSync, existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { openStore, FILES } from '@jobdekho/store/open.js'
-import { getAiResult, setAiResult, listAiResults, listAllAiResults } from '@jobdekho/store/ai-results.js'
+import { getAiResult, setAiResult, replaceAiResult, listAiResults, listAllAiResults } from '@jobdekho/store/ai-results.js'
 
 let dir
 let store
@@ -120,5 +120,23 @@ describe('ai results', () => {
     expect(all.map((r) => `${r.postingId}:${r.kind}`)).toEqual(['p2:cover-letter', 'p1:fake-check', 'p0:fake-check'])
     expect(all[2].versions).toHaveLength(1)
     expect(await listAllAiResults(store, 'someone-else')).toEqual([])
+  })
+
+  // What the person did to an answer, not what the AI said: no call was made.
+  it('changes the newest answer in place, adding no version and keeping its date', async () => {
+    await setAiResult(store, 'me', { ...CHECK, result: { verdict: 'unclear' } })
+    const second = await setAiResult(store, 'me', { ...CHECK, instruction: 'check again' })
+    const changed = await replaceAiResult(store, 'me', { postingId: 'p1', kind: 'fake-check', result: { verdict: 'genuine', noted: true } })
+    expect(changed.result).toEqual({ verdict: 'genuine', noted: true })
+    expect(changed.createdAt).toBe(second.createdAt)
+    expect(changed.versions).toHaveLength(2)
+    expect(changed.versions[0].result).toEqual({ verdict: 'unclear' })
+    expect(changed.versions[1]).toMatchObject({ instruction: 'check again', result: { verdict: 'genuine', noted: true } })
+    expect(await getAiResult(store, 'me', 'p1', 'fake-check')).toEqual(changed)
+  })
+
+  it('changes nothing when there is no answer to change', async () => {
+    expect(await replaceAiResult(store, 'me', { postingId: 'p1', kind: 'fake-check', result: {} })).toBeNull()
+    expect(existsSync(join(dir, FILES.aiResults))).toBe(false)
   })
 })

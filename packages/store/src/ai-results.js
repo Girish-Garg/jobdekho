@@ -58,6 +58,22 @@ export async function setAiResult(store, userId, { postingId, kind, provider, re
   return record
 }
 
+// The newest answer changed in place, for what the person did to it rather
+// than what the AI said (the choices on a tailoring plan, say): no call was
+// made, so no version is added and its date stays. Null when there is no
+// answer to change.
+export async function replaceAiResult(store, userId, { postingId, kind, result }) {
+  const mine = store.aiResults.get(userId) ?? {}
+  const key = keyOf(postingId, kind)
+  const existing = withVersions(mine[key])
+  if (!existing) return null
+  const last = existing.versions.length - 1
+  const versions = existing.versions.map((version, at) => (at === last ? { ...version, result } : version))
+  const record = { ...existing, result, versions }
+  store.aiResults.set(userId, { ...mine, [key]: record })
+  return record
+}
+
 export async function listAiResults(store, userId, postingId) {
   return Object.values(store.aiResults.get(userId) ?? {}).filter((r) => r.postingId === postingId).map(withVersions)
 }

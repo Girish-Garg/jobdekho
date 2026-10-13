@@ -1,7 +1,6 @@
 import { renderTex } from '../resume/render.js'
 import { renderLetter, placeholderLetter } from '../resume/render-letter.js'
-import { applyPlanBullets } from '../resume/apply-plan.js'
-import { tailoredSections } from '../resume/tailored-sections.js'
+import { renderPlan } from '../resume/render-plan.js'
 import { isKnownTemplate, isLetterTemplate, templateById } from '../resume/templates/registry.js'
 
 // A new document's first text, made without any AI call: the same
@@ -23,11 +22,9 @@ async function resumeDraft(dashboard, userId, { templateId, posting, fromPlan, p
   if (!posting) return { status: 400, error: 'A tailored resume needs the job it was tailored for.' }
   const plan = (await dashboard.getAiResult(userId, posting.id, 'resume-tailor'))?.result
   if (!plan?.sections) return { status: 400, error: 'Tailor your resume for this job first.' }
-  // The plan leads and rewords; the rest of the record still follows (see
-  // tailored-sections.js), and the skills the posting names come first.
-  const lead = plan.keywords?.used ?? []
-  const tex = renderTex(templateId, applyPlanBullets(profile, plan), tailoredSections(profile, plan), { lead })
-  return { tex, name: forJob('Resume', posting), templateId }
+  // The plan leads, rewords and leaves out what this job has no use for,
+  // as the person last left it (see resume/render-plan.js).
+  return { tex: renderPlan(templateId, profile, plan), name: forJob('Resume', posting), templateId }
 }
 
 // The letter as the person last had it in the chat's card (`text`, their

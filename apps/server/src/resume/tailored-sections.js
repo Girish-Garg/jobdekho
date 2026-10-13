@@ -11,7 +11,9 @@ import { ENTRY_SECTIONS } from '@jobdekho/store/profile-sections.js'
 // apply-plan.js); every other entry of the record follows as the person
 // wrote it. The one exception is projects, where a long list of unrelated
 // side projects does crowd a page: the picked ones, topped up from the rest
-// to at least MIN_PROJECTS when the record has that many.
+// to at least MIN_PROJECTS when the record has that many. The person has
+// the last word on the ones the plan did not pick: a project in the plan's
+// choices is flipped, a top-up left out or a left-out one put back.
 const MIN_PROJECTS = 3
 
 export function tailoredSections(profile, plan) {
@@ -21,6 +23,9 @@ export function tailoredSections(profile, plan) {
     const rest = all.filter((id) => !picked.includes(id))
     if (key !== 'projects') return [key, [...picked, ...rest]]
     const topUp = Math.max(0, Math.min(MIN_PROJECTS, all.length) - picked.length)
-    return [key, [...picked, ...rest.slice(0, topUp)]]
+    const flipped = new Set(plan?.choices?.projects ?? [])
+    const fill = rest.slice(0, topUp).filter((id) => !flipped.has(id))
+    const back = rest.slice(topUp).filter((id) => flipped.has(id))
+    return [key, [...picked, ...fill, ...back]]
   }))
 }

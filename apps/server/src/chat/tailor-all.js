@@ -6,9 +6,7 @@ import { resumeTailor } from '../actions/resume-tailor.js'
 import { parseResumeTailor } from '../actions/resume-tailor-parse.js'
 import { actionMemory } from '../actions/memory-note.js'
 import { sharedPosting, buildSharedTailorPrompt } from '../actions/resume-tailor-shared.js'
-import { renderTex } from '../resume/render.js'
-import { applyPlanBullets } from '../resume/apply-plan.js'
-import { tailoredSections } from '../resume/tailored-sections.js'
+import { renderPlan } from '../resume/render-plan.js'
 import { isKnownTemplate } from '../resume/templates/registry.js'
 import { noteEvent, stopSignal } from './in-flight.js'
 import { saveTurn, combinedTurn } from './save-turn.js'
@@ -38,7 +36,7 @@ export async function tailorForAll(deps, { userId, chat, postings, profile, emit
   const plan = parseResumeTailor(text, { posting: sharedPosting(postings), context: { profile } })
   if (!plan) throw new ProviderError('unreadable', provider)
   const templateId = await templateFor(deps.store, userId)
-  const tex = renderTex(templateId, applyPlanBullets(profile, plan), tailoredSections(profile, plan), { lead: plan.keywords.used })
+  const tex = renderPlan(templateId, profile, plan)
   const name = `Tailored for ${postings.map((p) => p.company).join(' + ')}`
   const doc = await createDocument(deps.documents, userId, { name, kind: 'resume', templateId, postingId: null, tex, by: 'ai' })
   const turn = combinedTurn(chat, {

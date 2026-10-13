@@ -37,6 +37,12 @@ export function runPostingAction(id, kind, opts) {
   return streamedPost(`/api/postings/${id}/ai/${kind}`, { ...opts, label: ACTION_LABEL[kind] || kind });
 }
 
+// What the person put back on this job's tailoring (see lib/tailorReview.js).
+// Resolves with the saved record, its plan now carrying the choices.
+export function putTailorChoices(id, choices) {
+  return req(`/api/postings/${id}/ai/resume-tailor/choices`, { method: 'PUT', body: JSON.stringify(choices) });
+}
+
 export function getPostingAiResults(id) {
   return announced(req(`/api/postings/${id}/ai`), 'Saved AI results').then((d) => d.results);
 }

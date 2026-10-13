@@ -22,6 +22,6 @@ export function parseResumeTailor(raw, { posting = {}, context = {} } = {}) {
   const profile = context.profile ?? {}
   const validated = validatePlan(obj, profile, posting, [...keywords.used, ...keywords.missing])
   if (!validated) return null
-  const { sections, flags, coverage } = validated
-  return { sections, keywords, factCheck: { flags, ok: flags.length === 0 }, coverage }
+  const { sections, leftOut, flags, coverage } = validated
+  return { sections, leftOut, keywords, factCheck: { flags, ok: flags.length === 0 }, coverage }
 }

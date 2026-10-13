@@ -382,8 +382,15 @@ next message as a change to that result rather than a new question.
   "1,00,000" and "100000" are the same figure. Below that, skill coverage
   against the posting before and after ("Matches 9 of 14 skills this job
   names, up from 6"), where a gain only counts if your record already showed
-  that skill. "Make a resume from this" makes a Classic resume document from
-  it, with the picked entries first and the rest of your record after them.
+  that skill. Then what was left out for this job: the skills the posting
+  has no use for (an Android toolkit on a resume for a web job, say) and the
+  projects that do not help, each one click from being put back. A skill the
+  posting asks for is never left out, at least six skills stay, and every
+  role and degree stays. Last, each bullet the AI reworded or dropped, one
+  at a time beside your own: "Use mine" keeps your wording, "Put back"
+  returns a dropped bullet. "Make a resume from this" makes a Classic resume
+  document that follows all of it, with the picked entries first and the
+  rest of your record after them.
 
 Every document made this way opens on the Resume page, tied to the job.
 

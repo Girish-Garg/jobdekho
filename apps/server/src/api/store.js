@@ -3,7 +3,7 @@ import { listCompanies, listCompanyCounts } from '@jobdekho/store/companies.js'
 import { getUserFilters, upsertUserFilters } from '@jobdekho/store/dashboard-prefs.js'
 import { getProfile, getResumeText, upsertProfile, deleteProfile } from '@jobdekho/store/profiles.js'
 import { getPosting, postingCards } from '@jobdekho/store/posting-lookup.js'
-import { getAiResult, setAiResult, listAiResults } from '@jobdekho/store/ai-results.js'
+import { getAiResult, setAiResult, replaceAiResult, listAiResults } from '@jobdekho/store/ai-results.js'
 import { getProviderPref, upsertProviderPref } from '@jobdekho/store/ai-provider-pref.js'
 import { listBlockedCompanies, blockCompany, unblockCompany } from '@jobdekho/store/blocked-companies.js'
 import { listMemory } from '@jobdekho/store/memory.js'
@@ -44,6 +44,7 @@ export function createDashboardStore(db, { describe = null } = {}) {
     upsertUserFilters: (userId, f) => upsertUserFilters(db, userId, f),
     getAiResult: (userId, postingId, kind) => getAiResult(db, userId, postingId, kind),
     setAiResult: (userId, record) => setAiResult(db, userId, record),
+    replaceAiResult: (userId, record) => replaceAiResult(db, userId, record),
     listAiResults: (userId, postingId) => listAiResults(db, userId, postingId),
     getProviderPref: (userId) => getProviderPref(db, userId),
     upsertProviderPref: (userId, p) => upsertProviderPref(db, userId, p),
