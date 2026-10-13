@@ -1,61 +1,59 @@
-// What a tailoring plan changed, as things the person can take back one at a
-// time, and their choices about it (the server's
-// actions/resume-tailor-choices.js names the shape and checks it).
-const SECTIONS = ['experience', 'projects', 'education', 'certifications', 'achievements'];
+// A tailoring as the person reviews it: what each skill, entry and bullet
+// will do in the resume, worked out here from what the plan did (the review
+// the server lays out, see its actions/resume-tailor-view.js) and their own
+// choices (checked by its actions/resume-tailor-choices.js), so a click
+// redraws at once and only the choices travel back.
+export const NO_CHOICES = { skills: [], skillsOut: [], flipped: [], mine: {}, back: {}, cut: {}, compact: false };
 
-export const NO_CHOICES = { skills: [], projects: [], mine: {}, back: {} };
+export const choicesOf = (review) => ({ ...NO_CHOICES, ...(review?.choices ?? {}) });
 
-export const choicesOf = (result) => ({ ...NO_CHOICES, ...(result?.choices ?? {}) });
+const without = (list, value) => list.filter((one) => one !== value);
+const listed = (list = [], value, on) => (on ? [...without(list, value), value] : without(list, value));
 
-// Case, spacing and a closing full stop apart: a bullet kept as written is
-// not a rewording, and is not listed as one.
-const plain = (text) => String(text).toLowerCase().replace(/\s+/g, ' ').replace(/[.\s]+$/, '').trim();
-
-const headingOf = (entry) => [entry.title || 'Untitled', entry.organisation].filter(Boolean).join(' at ');
-
-// Every bullet the plan reworded that has the person's own beside it, then
-// every bullet it left out, entry by entry in the resume's order.
-//
-//   { type: 'reworded', id, at, heading, yours, now }
-//   { type: 'dropped',  id, at, heading, yours }
-//
-// `id` and `at` are the entry and the place in its `bullets` or `dropped`,
-// which is how a choice names it.
-export function tailorItems(sections) {
-  return SECTIONS.flatMap((key) => (sections?.[key] ?? []).flatMap((entry) => {
-    const heading = headingOf(entry);
-    const reworded = (entry.bullets ?? [])
-      .map((now, at) => ({ type: 'reworded', id: entry.id, at, heading, yours: (entry.was?.[at] ?? []).join(' '), now }))
-      .filter((item) => item.yours && plain(item.yours) !== plain(item.now));
-    const dropped = (entry.dropped ?? []).map((yours, at) => ({ type: 'dropped', id: entry.id, at, heading, yours }));
-    return [...reworded, ...dropped];
-  }));
+// A skill the plan left out is out until put back; any other is in until
+// the person takes it out.
+export function skillOut(choices, skill) {
+  return skill.leftOut ? !choices.skills.includes(skill.name) : choices.skillsOut.includes(skill.name);
 }
+
+export function withSkill(choices, skill, out) {
+  if (skill.leftOut) return { ...choices, skills: listed(choices.skills, skill.name, !out) };
+  return { ...choices, skillsOut: listed(choices.skillsOut, skill.name, out) };
+}
+
+// An entry is flipped from what the plan did with it, or not.
+const shownByPlan = (entry) => entry.state !== 'out';
+
+export const entryShown = (choices, entry) => shownByPlan(entry) !== choices.flipped.includes(entry.id);
+
+export const withEntry = (choices, entry, shown) => ({ ...choices, flipped: listed(choices.flipped, entry.id, shown !== shownByPlan(entry)) });
 
 // Own lists only, so an entry id named like an object property finds none.
 const listOf = (map, id) => (map && Object.hasOwn(map, id) ? map[id] : []);
 
-// Whether the person took this one back: their own words for a rewording,
-// a left-out bullet printed after all.
-export function takenBack(choices, item) {
-  return listOf(item.type === 'reworded' ? choices.mine : choices.back, item.id).includes(item.at);
+// `field` is 'mine' (a rewording printed as the person's own), 'cut' (a
+// rewording they removed) or 'back' (a dropped bullet printed after all).
+export const bulletIs = (choices, field, id, at) => listOf(choices[field], id).includes(at);
+
+export function withBullet(choices, field, id, at, on) {
+  const next = listed(listOf(choices[field], id), at, on).sort((a, b) => a - b);
+  return { ...choices, [field]: { ...choices[field], [id]: next } };
 }
 
-const without = (list, value) => list.filter((one) => one !== value);
-const flip = (list, value, on) => (on ? [...without(list, value), value] : without(list, value));
+const count = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 
-export function withItem(choices, item, on) {
-  const field = item.type === 'reworded' ? 'mine' : 'back';
-  const next = flip(listOf(choices[field], item.id), item.at, on).sort((a, b) => a - b);
-  return { ...choices, [field]: { ...choices[field], [item.id]: next } };
-}
-
-// `field` is 'skills' (a left-out skill put back) or 'projects' (a project
-// flipped from what the plan did with it).
-export const withListed = (choices, field, value, on) => ({ ...choices, [field]: flip(choices[field] ?? [], value, on) });
-
-export function summary(items) {
-  const reworded = items.filter((item) => item.type === 'reworded').length;
-  const dropped = items.length - reworded;
-  return [reworded && `${reworded} reworded`, dropped && `${dropped} left out`].filter(Boolean).join(', ');
+// One line for the chat's card, off the saved plan: what there is to look
+// at on the review screen, in the order the screen shows it.
+export function planSummary(result) {
+  const entries = Object.values(result?.sections ?? {}).flat();
+  const skills = result?.leftOut?.skills?.length ?? 0;
+  const projects = result?.leftOut?.projects?.length ?? 0;
+  const reworded = entries.reduce((sum, entry) => sum + (entry.was ?? []).filter((was) => was.length).length, 0);
+  const dropped = entries.reduce((sum, entry) => sum + (entry.dropped?.length ?? 0), 0);
+  return [
+    skills && `${count(skills, 'skill', 'skills')} left out`,
+    projects && `${count(projects, 'project', 'projects')} left out`,
+    reworded && `${count(reworded, 'bullet', 'bullets')} reworded`,
+    dropped && `${count(dropped, 'bullet', 'bullets')} dropped`,
+  ].filter(Boolean).join(', ');
 }

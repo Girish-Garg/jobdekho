@@ -27,11 +27,11 @@ const key = (text) => String(text).trim().toLowerCase()
 
 // Asked for by the posting under any spelling core's skill table knows, so
 // "Postgres" is not left out of a resume for a job that says "PostgreSQL".
-const askedFor = (skill, jd) => spellingsOf(skill).some((spelling) => skillRegex(spelling).test(jd))
+export const askedFor = (skill, jd) => spellingsOf(skill).some((spelling) => skillRegex(spelling).test(jd))
 
 // Every skill the person lists, by lowercased name, in the spelling the
 // Skills section prints where it has one.
-function ownSkills(profile, printed) {
+export function ownSkills(profile, printed = skillRows(profile).flatMap((row) => row.items)) {
   const tech = ENTRY_SECTIONS.flatMap((section) => profile[section] ?? []).flatMap((entry) => entry.tech ?? [])
   return new Map([...tech, ...printed].map((skill) => [key(skill), String(skill).trim()]))
 }

@@ -1,6 +1,7 @@
 import { renderTex } from '../resume/render.js'
 import { renderLetter, placeholderLetter } from '../resume/render-letter.js'
 import { renderPlan } from '../resume/render-plan.js'
+import { templateFor } from '../resume/plan-choices.js'
 import { isKnownTemplate, isLetterTemplate, templateById } from '../resume/templates/registry.js'
 
 // A new document's first text, made without any AI call: the same
@@ -23,8 +24,9 @@ async function resumeDraft(dashboard, userId, { templateId, posting, fromPlan, p
   const plan = (await dashboard.getAiResult(userId, posting.id, 'resume-tailor'))?.result
   if (!plan?.sections) return { status: 400, error: 'Tailor your resume for this job first.' }
   // The plan leads, rewords and leaves out what this job has no use for,
-  // as the person last left it (see resume/render-plan.js).
-  return { tex: renderPlan(templateId, profile, plan), name: forJob('Resume', posting), templateId }
+  // as the person last left it, in the layout they left it in (see
+  // resume/render-plan.js).
+  return { tex: renderPlan(templateId, profile, plan), name: forJob('Resume', posting), templateId: templateFor(plan, templateId) }
 }
 
 // The letter as the person last had it in the chat's card (`text`, their

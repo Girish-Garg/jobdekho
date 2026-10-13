@@ -23,14 +23,23 @@ function sentence(err) {
 // { error, kind, problems? }; kind is 'unsafe' for the guard, else one of
 // LatexError's kinds (see resume/errors.js).
 export async function documentPdf({ tex, store, userId, compile }) {
+  const key = cacheKey('document', tex)
+  const made = await compileGuarded({ tex, compile, cached: () => readCachedPdf(store, userId, key) })
+  if (made.pdf && !made.cached) writeCachedPdf(store, userId, key, made.pdf)
+  return made
+}
+
+// The same guard and the same sentences for a text that is not a saved
+// document: the page a tailoring's review screen shows (see
+// resume/plan-preview.js), which keeps its own PDFs. `cached` is asked
+// only once the guard has passed the text.
+export async function compileGuarded({ tex, compile, cached = () => null }) {
   const verdict = checkTex(tex)
   if (!verdict.ok) return { failure: { status: 422, body: { error: UNSAFE, kind: 'unsafe', problems: verdict.problems } } }
-  const key = cacheKey('document', tex)
-  const cached = readCachedPdf(store, userId, key)
-  if (cached) return { pdf: cached }
+  const kept = cached()
+  if (kept) return { pdf: kept, cached: true }
   try {
     const { pdf } = await compile(tex)
-    writeCachedPdf(store, userId, key, pdf)
     return { pdf }
   } catch (err) {
     if (err.name !== 'LatexError') throw err

@@ -9,10 +9,10 @@ const SECTIONS = [
 ];
 
 // Which of the person's own entries the plan puts first, per section, in its
-// order. The bullets it reworded are read one at a time further down the
-// card (see TailorBullets.jsx). The plan leads the resume rather than being
-// all of it (see the server's resume/tailored-sections.js), so the card
-// says the rest follows.
+// order. The bullets it reworded are read on the review screen, which has
+// the room for them (see TailorReview.jsx). The plan leads the resume
+// rather than being all of it (see the server's resume/tailored-sections.js),
+// so the card says the rest follows.
 export default function TailoredPicks({ sections }) {
   const used = SECTIONS.filter(([key]) => (sections?.[key] ?? []).length > 0);
   if (!used.length) {

@@ -2,8 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import AiChatPanel from './AiChatPanel.jsx';
 import { announceOpenPosting } from '../lib/openPostingSignal.js';
-import { onNotice } from '../lib/toast.js';
-import { takeOpenRequest } from '../lib/openDocumentSignal.js';
+import { takeReviewRequest } from '../lib/openReviewSignal.js';
 import { fakeChats, jobChat, result, version, POSTINGS } from '../test/fixtures/chats.js';
 
 vi.mock('../api.js', () => ({
@@ -85,32 +84,19 @@ describe('quick actions in a job\'s chat', () => {
     expect(within(card).getByRole('button', { name: 'Copy' })).toBeInTheDocument();
   });
 
-  it('tailors the resume, leads the card with the fact check, and makes a resume document from it on request', async () => {
+  // The chat is too narrow to read a tailoring through, so the card leads
+  // to the review on the Resume page, where the resume is then made.
+  it('tailors the resume, leads the card with the fact check, and opens its review on the Resume page', async () => {
     answers('resume-tailor', PLAN);
-    api.createDocument.mockResolvedValue({ id: 'd7', name: 'Resume for Staff Engineer at Initech' });
     const apply = { setView: vi.fn() };
     setup({ apply });
     fireEvent.click(await screen.findByRole('button', { name: 'Tailor my resume' }));
     const card = await screen.findByRole('region', { name: 'Tailored resume' });
     expect(within(card).getByText('Check these before using it')).toBeInTheDocument();
+    fireEvent.click(within(card).getByRole('button', { name: 'Review and make the resume' }));
+    expect(apply.setView).toHaveBeenCalledWith('resume');
+    expect(takeReviewRequest()).toMatchObject({ id: 'p9' });
     expect(api.createDocument).not.toHaveBeenCalled();
-    fireEvent.click(within(card).getByRole('button', { name: 'Make a resume from this' }));
-    await waitFor(() => expect(apply.setView).toHaveBeenCalledWith('resume'));
-    expect(api.createDocument).toHaveBeenCalledWith({ kind: 'resume', templateId: 'classic', postingId: 'p9', fromPlan: true });
-    expect(takeOpenRequest()).toBe('d7');
-  });
-
-  it('stays put and says why when the resume cannot be made', async () => {
-    saved('resume-tailor', PLAN);
-    api.createDocument.mockRejectedValue(new Error('Tailor your resume for this job first.'));
-    const apply = { setView: vi.fn() };
-    const heard = vi.fn();
-    const stop = onNotice(heard);
-    setup({ apply });
-    fireEvent.click(within(await screen.findByRole('region', { name: 'Tailored resume' })).getByRole('button', { name: 'Make a resume from this' }));
-    await waitFor(() => expect(heard).toHaveBeenCalledWith(expect.objectContaining({ detail: 'Tailor your resume for this job first.' })));
-    stop();
-    expect(apply.setView).not.toHaveBeenCalled();
   });
 
   it('shows the answers already saved in the job\'s chat as soon as it opens, without asking again', async () => {

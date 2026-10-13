@@ -4,18 +4,19 @@ import { CloseIcon, PlusIcon } from './Icon.jsx';
 const OUT = 'border border-dotted border-edge bg-transparent text-muted hover:border-primary/50 hover:bg-primary/5 hover:text-ink';
 const IN = 'border border-transparent hover:border-edge';
 
-// One skill or project a tailoring can do without. Left out, it is drawn
-// dotted with a plus, the way the chat draws anything one click would add
-// (see ChatOfferChip.jsx); in the resume, as a plain chip with a cross. The
-// label says what the click does, since the mark alone is only a mark.
-export default function TailorOutChip({ name, out, onToggle }) {
+// One skill a tailored resume can carry or do without. Left out, it is
+// drawn dotted with a plus, the way the chat draws anything one click would
+// add (see ChatOfferChip.jsx); in the resume, as a plain chip with a cross,
+// in saffron when it is one the job asks for (`lead`). The label says what
+// the click does, since the mark alone is only a mark.
+export default function TailorOutChip({ name, out, lead = false, onToggle }) {
   const label = out ? `Put ${name} back` : `Leave ${name} out`;
   return (
     <li className="flex max-w-full">
       <Chip
         as="button"
         type="button"
-        tone={out ? 'quiet' : 'line'}
+        tone={out ? 'quiet' : lead ? 'primary' : 'line'}
         aria-pressed={!out}
         aria-label={label}
         title={label}

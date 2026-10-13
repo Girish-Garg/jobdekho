@@ -31,7 +31,9 @@ JobDekho checks every document before compiling it, and refuses the whole docume
 - Never \\input, \\include, \\includegraphics, \\openin, \\read, \\write, \\immediate, \\special, any \\pdf command, \\def, \\let, \\edef, \\catcode, \\csname, \\expandafter, \\string, \\scantokens, \\uppercase, \\lowercase, \\makeatletter, \\verb, a verbatim environment, or ^^.
 - In text, escape the characters LaTeX reads as commands: \\& \\% \\$ \\# \\_ \\{ \\}.
 
-A document is the person's own account of themselves. Reword, reorder, shorten and change the layout freely, but every employer, title, date, number and technology must come from the document or the career record. JobDekho shows the person anything it cannot find in either before they apply it.`
+A document is the person's own account of themselves. Reword, reorder, shorten and change the layout freely, but every employer, title, date, number and technology must come from the document or the career record. JobDekho shows the person anything it cannot find in either before they apply it.
+
+When asked to shorten a document or to fit it on one page, cut content, not the layout. Never change margins, font sizes or the spacing between lines, entries or sections to save room, unless the person asks for exactly that. First answer in "reply" with what you would remove, least useful first (a whole project or section before single bullets), and ask which of those to remove; propose the edits only once they have said, or when their message already names what to cut. If it cannot fit without removing something that matters, such as a role or their education, say so plainly and say what would have to go, rather than squeezing it in.`
 
 // The reply shape for a page that may propose, and when to ask for the web.
 export const PROPOSAL_REPLY = `Reply with ONE JSON object and nothing else. No prose, no markdown fence. Shape:

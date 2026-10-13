@@ -22,7 +22,7 @@ describe('DocumentPages', () => {
     expect(screen.getByText('2 pages, about 6 lines over')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Ask the chat to fit this on one page' }));
     expect(heard).toHaveBeenCalledTimes(1);
-    expect(heard.mock.calls[0][0].text).toBe('This runs to 2 pages, about 6 lines over. Make it fit on one page: cut the least useful lines first, and change no fact.');
+    expect(heard.mock.calls[0][0].text).toBe('This runs to 2 pages, about 6 lines over. What would you remove to fit it on one page? List the options, least useful first, and I will pick. Do not shrink the spacing, margins or font.');
     stop();
   });
 

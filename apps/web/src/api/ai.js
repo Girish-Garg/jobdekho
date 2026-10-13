@@ -1,5 +1,7 @@
 import { req, announced } from './request.js';
 import { streamedPost } from '../lib/aiCall.js';
+import { send } from '../lib/request.js';
+import { notePdfLength } from '../lib/pdfLength.js';
 
 // What a failed run of each kind is called in the notice that reports it,
 // so the toast names the action rather than a route. Falls back to the raw
@@ -37,10 +39,25 @@ export function runPostingAction(id, kind, opts) {
   return streamedPost(`/api/postings/${id}/ai/${kind}`, { ...opts, label: ACTION_LABEL[kind] || kind });
 }
 
-// What the person put back on this job's tailoring (see lib/tailorReview.js).
-// Resolves with the saved record, its plan now carrying the choices.
+// The review screen of this job's tailoring (see lib/tailorReview.js and the
+// server's api/tailor-review.js); none of these calls the AI. The review is
+// what the plan did with everything the resume could carry; the choices are
+// the person's, saved on the plan, answering with its record; the preview is
+// the page the plan now makes, its length noted beside it (lib/pdfLength.js);
+// the fit is what could go to bring it to one page, with the lines each saves.
+const tailoring = (id, part) => `/api/postings/${id}/ai/resume-tailor/${part}`;
+
+export const getTailorReview = (id) => req(tailoring(id, 'review'));
+
+export const getTailorFit = (id) => req(tailoring(id, 'fit'));
+
 export function putTailorChoices(id, choices) {
-  return req(`/api/postings/${id}/ai/resume-tailor/choices`, { method: 'PUT', body: JSON.stringify(choices) });
+  return req(tailoring(id, 'choices'), { method: 'PUT', body: JSON.stringify(choices) });
+}
+
+export async function tailorPreview(id) {
+  const res = await send(tailoring(id, 'preview'), { method: 'POST' });
+  return notePdfLength(await res.blob(), res.headers);
 }
 
 export function getPostingAiResults(id) {

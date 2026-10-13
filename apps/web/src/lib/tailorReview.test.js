@@ -1,72 +1,82 @@
 import { describe, it, expect } from 'vitest';
-import { NO_CHOICES, choicesOf, summary, tailorItems, takenBack, withItem, withListed } from './tailorReview.js';
+import { NO_CHOICES, bulletIs, choicesOf, entryShown, planSummary, skillOut, withBullet, withEntry, withSkill } from './tailorReview.js';
 
-const SECTIONS = {
-  experience: [{
-    id: 'e1', title: 'Software Developer Intern', organisation: 'Zensar Technologies',
-    bullets: ['Designed REST APIs in Express.', 'Mentored 2 interns.', 'No source for this one.'],
-    was: [['Built REST APIs in Express for an internal tool.'], ['Mentored 2 interns'], []],
-    dropped: ['Migrated 15 legacy jQuery pages to ReactJS.'],
-  }],
-  projects: [{ id: 'p1', title: '', organisation: '', bullets: ['Two made one.'], was: [['First half.', 'Second half.']], dropped: [] }],
-};
+const KOTLIN = { name: 'Kotlin', leftOut: true, asked: false };
+const REDIS = { name: 'Redis', leftOut: false, asked: true };
 
-describe('tailorItems', () => {
-  const items = tailorItems(SECTIONS);
-
-  it('lists each rewording that has the person\'s own beside it, then what was left out, entry by entry', () => {
-    expect(items).toEqual([
-      { type: 'reworded', id: 'e1', at: 0, heading: 'Software Developer Intern at Zensar Technologies', yours: 'Built REST APIs in Express for an internal tool.', now: 'Designed REST APIs in Express.' },
-      { type: 'dropped', id: 'e1', at: 0, heading: 'Software Developer Intern at Zensar Technologies', yours: 'Migrated 15 legacy jQuery pages to ReactJS.' },
-      { type: 'reworded', id: 'p1', at: 0, heading: 'Untitled', yours: 'First half. Second half.', now: 'Two made one.' },
-    ]);
-  });
-
-  // "Mentored 2 interns." differs from the original by a full stop alone,
-  // and the third bullet has nothing beside it to take back.
-  it('leaves out a bullet kept as written, and one with no source', () => {
-    expect(items.some((item) => item.now === 'Mentored 2 interns.')).toBe(false);
-    expect(items.some((item) => item.now === 'No source for this one.')).toBe(false);
-  });
-
-  it('is empty for a plan from before bullets were paired', () => {
-    expect(tailorItems({ experience: [{ id: 'e1', title: 'Dev', bullets: ['A.'] }] })).toEqual([]);
-    expect(tailorItems(undefined)).toEqual([]);
-  });
-
-  it('says how many of each', () => {
-    expect(summary(items)).toBe('2 reworded, 1 left out');
-    expect(summary(items.slice(1, 2))).toBe('1 left out');
+describe('choices', () => {
+  it('start from the review, or from none', () => {
+    expect(choicesOf(null)).toEqual(NO_CHOICES);
+    expect(choicesOf({ choices: { skills: ['Kotlin'], compact: true } })).toEqual({ ...NO_CHOICES, skills: ['Kotlin'], compact: true });
   });
 });
 
-describe('choices', () => {
-  const [reworded, dropped] = tailorItems(SECTIONS);
-
-  it('starts from the plan\'s own, or from none', () => {
-    expect(choicesOf({})).toEqual(NO_CHOICES);
-    expect(choicesOf({ choices: { skills: ['Kotlin'] } })).toEqual({ ...NO_CHOICES, skills: ['Kotlin'] });
-  });
-
-  it('takes a rewording back, and a dropped bullet, each under its own name', () => {
-    const one = withItem(NO_CHOICES, reworded, true);
-    expect(one.mine).toEqual({ e1: [0] });
-    expect(takenBack(one, reworded)).toBe(true);
-    expect(takenBack(one, dropped)).toBe(false);
-    const both = withItem(one, dropped, true);
-    expect(both).toEqual({ skills: [], projects: [], mine: { e1: [0] }, back: { e1: [0] } });
-    expect(withItem(both, reworded, false).mine).toEqual({ e1: [] });
-    expect(NO_CHOICES.mine).toEqual({});
-  });
-
-  it('finds nothing taken back for an entry named like an object property', () => {
-    expect(takenBack(NO_CHOICES, { type: 'reworded', id: 'constructor', at: 0 })).toBe(false);
-  });
-
-  it('puts a skill back and takes it out again, once', () => {
-    const back = withListed(withListed(NO_CHOICES, 'skills', 'Kotlin', true), 'skills', 'Kotlin', true);
+describe('a skill', () => {
+  it('the plan left out is out until put back, and any other is in until taken out', () => {
+    expect(skillOut(NO_CHOICES, KOTLIN)).toBe(true);
+    expect(skillOut(NO_CHOICES, REDIS)).toBe(false);
+    const back = withSkill(NO_CHOICES, KOTLIN, false);
     expect(back.skills).toEqual(['Kotlin']);
-    expect(withListed(back, 'skills', 'Kotlin', false).skills).toEqual([]);
-    expect(withListed(NO_CHOICES, 'projects', 'p9', true).projects).toEqual(['p9']);
+    expect(skillOut(back, KOTLIN)).toBe(false);
+    const gone = withSkill(back, REDIS, true);
+    expect(gone).toMatchObject({ skills: ['Kotlin'], skillsOut: ['Redis'] });
+    expect(skillOut(gone, REDIS)).toBe(true);
+  });
+
+  it('goes back to where the plan had it without leaving a trace', () => {
+    const there = withSkill(withSkill(NO_CHOICES, KOTLIN, false), REDIS, true);
+    expect(withSkill(withSkill(there, KOTLIN, true), REDIS, false)).toEqual(NO_CHOICES);
+  });
+});
+
+describe('an entry', () => {
+  const picked = { id: 'e1', state: 'picked' };
+  const out = { id: 'p9', state: 'out' };
+
+  it('is flipped from what the plan did with it, either way, and back', () => {
+    expect(entryShown(NO_CHOICES, picked)).toBe(true);
+    expect(entryShown(NO_CHOICES, out)).toBe(false);
+    const flipped = withEntry(withEntry(NO_CHOICES, picked, false), out, true);
+    expect(flipped.flipped).toEqual(['e1', 'p9']);
+    expect(entryShown(flipped, picked)).toBe(false);
+    expect(entryShown(flipped, out)).toBe(true);
+    expect(withEntry(withEntry(flipped, picked, true), out, false)).toEqual(NO_CHOICES);
+    expect(withEntry(NO_CHOICES, picked, true)).toEqual(NO_CHOICES);
+  });
+});
+
+describe('a bullet', () => {
+  it('is cut, taken back in the original words or put back, each under its own name', () => {
+    const cut = withBullet(NO_CHOICES, 'cut', 'e1', 2, true);
+    const more = withBullet(withBullet(cut, 'cut', 'e1', 0, true), 'mine', 'e1', 1, true);
+    expect(more).toMatchObject({ cut: { e1: [0, 2] }, mine: { e1: [1] }, back: {} });
+    expect(bulletIs(more, 'cut', 'e1', 2)).toBe(true);
+    expect(bulletIs(more, 'cut', 'e1', 1)).toBe(false);
+    expect(bulletIs(more, 'back', 'e1', 0)).toBe(false);
+    expect(withBullet(more, 'cut', 'e1', 2, false).cut).toEqual({ e1: [0] });
+    expect(NO_CHOICES.cut).toEqual({});
+  });
+
+  it('finds nothing chosen for an entry named like an object property', () => {
+    expect(bulletIs(NO_CHOICES, 'mine', 'constructor', 0)).toBe(false);
+  });
+});
+
+describe('planSummary', () => {
+  const plan = {
+    sections: {
+      experience: [{ id: 'e1', bullets: ['A.', 'B.', 'C.'], was: [['a'], [], ['c', 'd']], dropped: ['x'] }],
+      projects: [{ id: 'p1', bullets: ['P.'], dropped: [] }],
+    },
+    leftOut: { skills: ['Kotlin'], projects: [{ id: 'p8' }, { id: 'p9' }], fill: [{ id: 'p7' }] },
+  };
+
+  it('counts what there is to look at, in the order the review shows it', () => {
+    expect(planSummary(plan)).toBe('1 skill left out, 2 projects left out, 2 bullets reworded, 1 bullet dropped');
+  });
+
+  it('is empty for a plan with nothing left out and nothing it can pair', () => {
+    expect(planSummary({ sections: { experience: [{ id: 'e1', bullets: ['A.'] }] } })).toBe('');
+    expect(planSummary(undefined)).toBe('');
   });
 });

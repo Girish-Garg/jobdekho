@@ -4,8 +4,10 @@ import Chip from './ui/Chip.jsx';
 import DocumentToolButton from './DocumentToolButton.jsx';
 import { SparkleIcon } from './Icon.jsx';
 
-// What the person will ask the chat beside the document.
-const request = (length) => `This runs to ${length.pages} pages${overBy(length)}. Make it fit on one page: cut the least useful lines first, and change no fact.`;
+// What the person will ask the chat beside the document: for a list to pick
+// from, not for a squeeze. Asked to "make it fit", a model shrinks margins
+// and spacing until it does, which fits and reads badly.
+const request = (length) => `This runs to ${length.pages} pages${overBy(length)}. What would you remove to fit it on one page? List the options, least useful first, and I will pick. Do not shrink the spacing, margins or font.`;
 
 // How long the compiled document runs, in the bar above it: a resume or a
 // letter that spills onto a second page says so, and by about how much. The

@@ -1,46 +1,38 @@
-import { useState } from 'react';
 import { relativeDay } from '../lib/time.js';
-import { choicesOf } from '../lib/tailorReview.js';
+import { planSummary } from '../lib/tailorReview.js';
 import Button from './ui/Button.jsx';
 import ResumeFactCheck from './ResumeFactCheck.jsx';
 import ResumeCoverage from './ResumeCoverage.jsx';
 import TailoredPicks from './TailoredPicks.jsx';
-import TailorLeftOut from './TailorLeftOut.jsx';
-import TailorBullets from './TailorBullets.jsx';
 import { DocumentIcon } from './Icon.jsx';
 
 // The fact check leads, then coverage, then which entries the plan picked:
 // the person should know what to fix and how well it matches before they see
-// what got chosen. After those, what the plan left out and every bullet it
-// reworded, each one click from being taken back. The actual resume is a
-// document made from this job's plan on request and opened on the Resume
-// page (see lib/openTailoredResume.js); the chat is too narrow for a PDF.
+// what got chosen. What it left out and reworded is only counted here, in
+// one line: reading through it and changing it needs more room than the
+// chat has, so the button opens the review screen on the Resume page (see
+// TailorReview.jsx), where the resume is then made.
 //
-// `onChoices` saves what the person took back, and is given only to the
-// newest tailoring, the one a resume is made from: an older one shows what
-// it picked and nothing to change.
-export default function ResumeTailorResult({ record, providers, onMakeResume, onChoices }) {
+// `onReview` is given only to the newest tailoring, the one a resume is
+// made from: an older one shows what it picked and nothing to open.
+export default function ResumeTailorResult({ record, providers, onReview }) {
   const { result, createdAt, provider } = record;
   const label = providers.find((p) => p.id === provider)?.label ?? provider;
-  const [choices, setChoices] = useState(() => choicesOf(result));
-
-  function change(next) {
-    setChoices(next);
-    onChoices(next);
-  }
+  const summary = planSummary(result);
 
   return (
     <div className="flex flex-col gap-3">
       <ResumeFactCheck factCheck={result.factCheck} />
       <ResumeCoverage coverage={result.coverage} />
       <TailoredPicks sections={result.sections} />
-      {onChoices && <TailorLeftOut leftOut={result.leftOut} choices={choices} onChange={change} />}
-      {onChoices && <TailorBullets sections={result.sections} choices={choices} onChange={change} />}
+      {summary && <p className="text-sm text-ink/80">For this job: {summary}.</p>}
 
-      <Button variant="primary" className="self-start" onClick={onMakeResume}>
-        <DocumentIcon size={14} />
-        Make a resume from this
-      </Button>
+      {onReview && (
+        <Button variant="primary" className="self-start" onClick={onReview}>
+          <DocumentIcon size={14} />
+          Review and make the resume
+        </Button>
+      )}
 
       <p className="font-mono text-xs text-muted">Tailored {relativeDay(createdAt)} by {label}</p>
     </div>

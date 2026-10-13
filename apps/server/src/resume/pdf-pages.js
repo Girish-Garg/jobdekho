@@ -23,15 +23,19 @@ export function countLines(items = []) {
   return lines
 }
 
-// { pages, lastLines } for a PDF's bytes. A copy goes in, since pdf.js may
-// take ownership of the buffer it is given, and the caller still has the
-// bytes to send.
+// { pages, lastLines, lines } for a PDF's bytes, `lines` being every page's
+// together: what two versions of one resume are compared by, to say how
+// much a cut saves. A copy goes in, since pdf.js may take ownership of the
+// buffer it is given, and the caller still has the bytes to send.
 export async function pdfPages(bytes) {
   const pdf = await getDocumentProxy(new Uint8Array(bytes), { verbosity: 0 })
   try {
-    const page = await pdf.getPage(pdf.numPages)
-    const { items } = await page.getTextContent()
-    return { pages: pdf.numPages, lastLines: countLines(items) }
+    const perPage = []
+    for (let n = 1; n <= pdf.numPages; n += 1) {
+      const page = await pdf.getPage(n)
+      perPage.push(countLines((await page.getTextContent()).items))
+    }
+    return { pages: pdf.numPages, lastLines: perPage.at(-1) ?? 0, lines: perPage.reduce((sum, n) => sum + n, 0) }
   } finally {
     await pdf.loadingTask.destroy()
   }

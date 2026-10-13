@@ -36,7 +36,7 @@ const TARGETED = 'border-primary ring-4 ring-primary/15';
 // an older one folds to a line, since the answer after it is the one to
 // read, and cannot be targeted, since a refine always starts from the newest.
 // `docs` is the panel's card object: the buttons that make documents from an
-// answer, and the saving of what the person put back on the newest tailoring.
+// answer, and the one that opens the newest tailoring's review.
 export default function ChatResultCard({ entry, providers, targeted, onTarget, docs = {} }) {
   const { kind, record, latest } = entry;
   const [open, setOpen] = useState(latest);
@@ -86,8 +86,7 @@ export default function ChatResultCard({ entry, providers, targeted, onTarget, d
           <Body
             record={record}
             providers={providers ?? []}
-            onMakeResume={docs.onMakeResume}
-            onChoices={latest ? docs.onChoices : undefined}
+            onReview={latest ? docs.onReview : undefined}
             onMakeLetter={docs.onMakeLetter}
             onMakeBoth={docs.onMakeBoth}
             tailored={docs.tailored}

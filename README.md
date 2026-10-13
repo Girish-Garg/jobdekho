@@ -339,7 +339,9 @@ profile without an AI call. "Source" shows the LaTeX to edit (`Ctrl` + `S`
 saves); "Preview" shows the PDF, recompiled whenever the source changes.
 "PDF" and ".tex" download either. The bar above says how long the PDF runs:
 "1 page", or "2 pages, about 6 lines over" with "Fit on one page", which
-puts that request in the chat's box for you to send.
+puts a request in the chat's box for you to send: the chat is asked what
+it would remove, for you to pick from, and told not to shrink the spacing,
+margins or font to get there.
 
 Every save, applied chat change, header update and restore is a version;
 the last 20 are kept, under "Versions", and "Restore" brings an old one back
@@ -384,15 +386,22 @@ next message as a change to that result rather than a new question.
   "1,00,000" and "100000" are the same figure. Below that, skill coverage
   against the posting before and after ("Matches 9 of 14 skills this job
   names, up from 6"), where a gain only counts if your record already showed
-  that skill. Then what was left out for this job: the skills the posting
-  has no use for (an Android toolkit on a resume for a web job, say) and the
-  projects that do not help, each one click from being put back. A skill the
-  posting asks for is never left out, at least six skills stay, and every
-  role and degree stays. Last, each bullet the AI reworded or dropped, one
-  at a time beside your own: "Use mine" keeps your wording, "Put back"
-  returns a dropped bullet. "Make a resume from this" makes a Classic resume
-  document that follows all of it, with the picked entries first and the
-  rest of your record after them.
+  that skill. The tailoring also leaves out what the posting has no use for
+  (an Android toolkit on a resume for a web job, say); a skill the posting
+  asks for is never left out by it, and at least six skills stay.
+  "Review and make the resume" opens the review on the Resume page, where
+  there is room to read it: the page the tailoring makes on the right, and
+  on the left every skill (one click takes it out or puts it back), every
+  role, project and degree with a switch, and each bullet with your own
+  wording under the reworded one ("Use mine", "Cut", "Put back"). The page
+  is redrawn as you choose, and nothing there asks the AI for anything.
+  When it runs past one page, "Fit on one page" lists what could go, least
+  useful for this job first, with the lines each cut saves counted on the
+  real page: a project that was not picked, a small section, a bullet that
+  names nothing the job asks for, and last the Compact layout, which
+  tightens the spacing and removes nothing. You tick what goes; nothing is
+  cut for you, and it says so when every cut together is still not enough.
+  "Make the resume" saves the page as a document of yours.
 
 Every document made this way opens on the Resume page, tied to the job.
 
