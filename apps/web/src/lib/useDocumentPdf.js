@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { compileDocument } from '../api.js';
+import { pdfLength } from './pdfLength.js';
 
 // The open document compiled, again whenever its source changes: a save, a
 // restore, an applied proposal. The server guards and caches every compile
 // (see its documents/pdf.js), so asking again for a source it has seen is
 // cheap. `failure` is the Error it refused with, carrying `kind` ('unsafe'
 // for the guard, else why LaTeX could not build it) and, for the guard,
-// `problems`.
+// `problems`. `length` is how long the PDF on screen runs, { pages,
+// lastLines }, or null when the server could not say.
 //
 // A failed compile clears the old PDF rather than leaving it up: a preview
 // that no longer matches the source beside it would read as the new one.
@@ -56,5 +58,5 @@ export function useDocumentPdf(doc) {
 
   useEffect(() => () => urlRef.current && URL.revokeObjectURL(urlRef.current), []);
 
-  return { url: pdf.url, blob: pdf.blob, busy, failure, retry: () => setAttempt((n) => n + 1) };
+  return { url: pdf.url, blob: pdf.blob, length: pdfLength(pdf.blob), busy, failure, retry: () => setAttempt((n) => n + 1) };
 }

@@ -5,6 +5,7 @@ import DocumentName from './DocumentName.jsx';
 import DocumentVersions from './DocumentVersions.jsx';
 import DocumentDelete from './DocumentDelete.jsx';
 import DocumentToolButton from './DocumentToolButton.jsx';
+import DocumentPages from './DocumentPages.jsx';
 import SlidingPill from './SlidingPill.jsx';
 import { useSlidingPill } from '../lib/useSlidingPill.js';
 import IconButton from './ui/IconButton.jsx';
@@ -42,8 +43,9 @@ function ViewToggle({ view, onView, dirty }) {
 }
 
 // The thin bar over the open document: its name (renamed in place), the
-// view, its history, the two ways out, delete, and close, which leaves no
-// document open (and the chat beside the page general). The .tex download
+// view, how many pages it runs to, its history, the two ways out, delete,
+// and close, which leaves no document open (and the chat beside the page
+// general). The .tex download
 // is the saved source, never needing LaTeX; the PDF is the one on screen.
 export default function DocumentToolbar({ doc, pdf, view, onView, dirty, onRename, onRestore, onDelete, onClose }) {
   const slug = fileSlug(doc.name);
@@ -51,6 +53,7 @@ export default function DocumentToolbar({ doc, pdf, view, onView, dirty, onRenam
     <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-line bg-panel px-3 py-2.5">
       <DocumentName key={doc.name} name={doc.name} onRename={onRename} />
       <ViewToggle view={view} onView={onView} dirty={dirty} />
+      <DocumentPages length={pdf.length} />
       <DocumentVersions versions={doc.versions} onRestore={onRestore} />
       <DocumentToolButton label="Download PDF" disabled={!pdf.blob} onClick={() => downloadBlob(`${slug}.pdf`, pdf.blob)}>
         <DownloadIcon size={13} />

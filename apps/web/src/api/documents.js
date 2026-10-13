@@ -1,4 +1,5 @@
 import { send } from '../lib/request.js';
+import { notePdfLength } from '../lib/pdfLength.js';
 import { req, announced } from './request.js';
 
 // The person's resumes and cover letters, each a LaTeX source they own (see
@@ -50,8 +51,9 @@ export function deleteDocument(id) {
 }
 
 // The PDF, or an Error carrying the server's sentence, its `kind` and, for
-// a source the guard refused, its `problems`.
+// a source the guard refused, its `problems`. How long it runs is noted
+// beside it (see lib/pdfLength.js).
 export async function compileDocument(id) {
   const res = await send(path(id, '/pdf'), { method: 'POST' });
-  return res.blob();
+  return notePdfLength(await res.blob(), res.headers);
 }

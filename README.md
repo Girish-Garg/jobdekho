@@ -337,7 +337,9 @@ that is yours to edit. "New" starts one from a template (Classic, Compact or
 Academic for a resume, Letter for a cover letter), filled in from your
 profile without an AI call. "Source" shows the LaTeX to edit (`Ctrl` + `S`
 saves); "Preview" shows the PDF, recompiled whenever the source changes.
-"PDF" and ".tex" download either.
+"PDF" and ".tex" download either. The bar above says how long the PDF runs:
+"1 page", or "2 pages, about 6 lines over" with "Fit on one page", which
+puts that request in the chat's box for you to send.
 
 Every save, applied chat change, header update and restore is a version;
 the last 20 are kept, under "Versions", and "Restore" brings an old one back
