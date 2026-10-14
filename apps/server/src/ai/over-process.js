@@ -15,16 +15,25 @@ import { textFeed } from './text-feed.js'
 // end. `signal` stops the CLI where it is (see spawn.js). A CLI with
 // variables of its own (Claude Code's, see claude.js) gets them on top of
 // the server's environment.
+//
+// A CLI that writes as it goes (`streams`) is held to how long it may go
+// quiet, the call's time, inside an outer limit of OUTER times that (see
+// run-limits.js), and one that says when its answer is whole (`answered`)
+// ends the run there (see spawn.js).
+const OUTER = 3
+
 export async function overProcess({ file, args, provider, prompt, tools, timeoutMs, run, scratch, signal = null, onText = null }) {
   const staged = provider.stage ? { files: provider.stage(tools), collect: provider.collect } : {}
   const live = onText && provider.textOf ? { onStdout: textFeed(provider.textOf, onText) } : {}
   const stop = signal ? { signal } : {}
   const env = provider.env ? { env: provider.env } : {}
+  const limits = provider.streams ? { timeoutMs: timeoutMs * OUTER, quietMs: timeoutMs } : { timeoutMs }
+  const answered = provider.answered ? { answered: provider.answered } : {}
   let result
   try {
-    result = await scratch((cwd) => run({ file, args, input: provider.encodeInput(prompt), timeoutMs, cwd, ...stop, ...live, ...staged, ...env }))
+    result = await scratch((cwd) => run({ file, args, input: provider.encodeInput(prompt), ...limits, cwd, ...stop, ...live, ...staged, ...env, ...answered }))
   } catch (err) {
-    throw notRun(err, provider, timeoutMs)
+    throw notRun(err, provider, limits)
   }
   if (result.code !== 0) throw exited(result, provider)
   const text = provider.unwrap(result.stdout, provider)
@@ -32,8 +41,8 @@ export async function overProcess({ file, args, provider, prompt, tools, timeout
   return text
 }
 
-function notRun(err, provider, timeoutMs) {
-  if (err.code === 'ETIMEDOUT') return timedOut(provider, timeoutMs)
+function notRun(err, provider, { timeoutMs, quietMs }) {
+  if (err.code === 'ETIMEDOUT') return err.how === 'quiet' ? timedOut(provider, quietMs, 'quiet') : timedOut(provider, timeoutMs)
   if (err.code === 'EABORTED') return stoppedBy(provider)
   if (err.code === 'ENOENT') return new ProviderError('not_found', provider)
   return err

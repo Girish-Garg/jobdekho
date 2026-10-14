@@ -44,7 +44,7 @@ const MESSAGE = {
     `${p.label} is busy refreshing its sign-in, usually because another ${p.label} window is doing the same `
     + `(${trimStop(detail)}). JobDekho tried again and it was still busy. Wait a minute and try again.`,
   timeout: (p, detail) =>
-    `${p.label} did not answer within ${detail}. `
+    `${p.label} ${detail}. `
     + `Try again; if it keeps happening, check that "${p.binary}" answers from a terminal.`,
   failed: (p, detail) =>
     `${p.label} could not finish: ${trimStop(detail)}. `
@@ -76,7 +76,12 @@ export function classify(provider, detail) {
 }
 
 // Both ways of calling (a process, a local API) run out of time the same way.
-export const timedOut = (provider, ms) => new ProviderError('timeout', provider, `${Math.round(ms / 1000)} seconds`)
+// `how` is 'quiet' for a CLI that stopped writing partway (see run-limits.js),
+// else it ran out of time altogether.
+export function timedOut(provider, ms, how = 'cap') {
+  const time = ms >= 120000 && ms % 60000 === 0 ? `${ms / 60000} minutes` : `${Math.round(ms / 1000)} seconds`
+  return new ProviderError('timeout', provider, how === 'quiet' ? `stopped answering for ${time}` : `did not answer within ${time}`)
+}
 
 // And are stopped the same way, from the chat's Stop (see chat/in-flight.js).
 export const stoppedBy = (provider) => new ProviderError('stopped', provider)

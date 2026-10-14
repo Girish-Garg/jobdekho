@@ -129,7 +129,11 @@ describe('callProvider with Antigravity', () => {
       file: HERE(),
       args: [...AGY_ONE_SHOT, ...AGENT('none')],
       input: '{"event":"user","message":{"role":"user","content":[{"type":"text","text":"RESUME:\\nJane \\"Doe\\""}]}}\n',
-      timeoutMs: 120000,
+      // It writes as it goes: held to how long it goes quiet, inside three
+      // times that, and its result line ends the run.
+      timeoutMs: 360000,
+      quietMs: 120000,
+      answered: expect.any(Function),
       cwd: '/scratch',
       files: agentFiles('none'),
       collect: ['jobdekho-agy.log'],

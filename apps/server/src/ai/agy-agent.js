@@ -72,3 +72,7 @@ function parse(line) {
     return null
   }
 }
+
+// What the registry entry takes from this (see providers.js): the agent
+// written before each call, and the check of its log after.
+export const AGY_AGENT = { stage: agentFiles, collect: [AGENT_LOG], verify: checkAgentRun }

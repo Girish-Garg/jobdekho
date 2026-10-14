@@ -30,7 +30,7 @@ export function encodeAgyInput(prompt) {
   return JSON.stringify({ event: 'user', message: { role: 'user', content: [{ type: 'text', text: prompt }] } }) + '\n'
 }
 
-const parseLine = (line) => {
+export const parseLine = (line) => {
   try {
     return JSON.parse(line)
   } catch {
@@ -53,7 +53,7 @@ export const AGY_STREAM = { textOf: agyText, streamArgs: (args) => args }
 // A stream line is an event with the outcome under `result`; with
 // --output-format json the same outcome object is printed bare, and its
 // `status` is what marks it as one.
-const asResult = (obj) => (obj?.event === 'result' ? obj.result : obj?.status ? obj : null)
+export const asResult = (obj) => (obj?.event === 'result' ? obj.result : obj?.status ? obj : null)
 
 // The stream is an init event, step_update deltas, then one result event;
 // the last result wins should a CLI ever print more than one. A bare object

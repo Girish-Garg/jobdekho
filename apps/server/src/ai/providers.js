@@ -1,6 +1,7 @@
 import { CLAUDE_ARGS, CLAUDE_STREAM, unwrapClaude } from './claude.js'
 import { AGY_ARGS, AGY_STREAM, encodeAgyInput, unwrapAgy } from './agy.js'
-import { AGENT_LOG, agentFiles, checkAgentRun } from './agy-agent.js'
+import { AGY_ENDS } from './agy-answered.js'
+import { AGY_AGENT } from './agy-agent.js'
 import { agyUnusable } from './agy-settings.js'
 import { TOOL_POLICIES, underPolicies } from './policies.js'
 import { CLAUDE_MODELS, modelFlag } from './cli-models.js'
@@ -16,7 +17,7 @@ export { TOOL_POLICIES, OLLAMA }
 // is an entry plus an adapter for that CLI's envelope, and its login wording.
 //
 //   binary        name looked up on PATH, never a path of its own
-//   versionArgs   a probe that proves the binary runs without costing a model call
+//   versionArgs   a probe proving the binary runs, with no model call
 //   policies      the tool policies this CLI can honour (see policies.js)
 //   supports      (tools) -> whether it honours that policy
 //   promptArgs    (tools) -> one-shot mode reading the prompt from stdin,
@@ -38,6 +39,8 @@ export { TOOL_POLICIES, OLLAMA }
 //   textOf, streamArgs  optional: (line) -> the piece of the model's text one
 //                 line of output carries, and (args) -> the arguments that
 //                 print it so, for an answer shown as it is written
+//   streams, answered  optional: it always writes as it goes, and (stdout) ->
+//                 its answer is whole, so the run can end (see over-process.js)
 // Ollama, which is not a process, has more (see ollama.js). select.js binds
 // `model`, one of the listed models, onto the provider it hands back.
 //
@@ -54,9 +57,8 @@ export const CLAUDE = {
   ...underPolicies(CLAUDE_ARGS),
   encodeInput: (prompt) => prompt,
   loginPattern: /authenticat|oauth|logged in|\/login|api key|credential/i,
-  // Measured on 2.1.281, while this very session held the token: "Failed to
-  // refresh OAuth token: another Claude Code process is refreshing it or
-  // exited mid-refresh. This is usually transient".
+  // Measured on 2.1.281, another session holding the token: "Failed to refresh
+  // OAuth token: another Claude Code process is refreshing it or exited mid-refresh".
   busyPattern: /is refreshing it|mid-refresh/i,
   unwrap: unwrapClaude,
   ...CLAUDE_STREAM,
@@ -69,10 +71,9 @@ export const CLAUDE = {
 // the answer is used (see agy-agent.js). Under 'web' it searches but does not
 // open pages. Its sign-in wording, measured: "Please sign in to view
 // available models" in the result, "not authenticated" in the print-mode log.
-// The log itself says "You are not logged into Antigravity" on runs that
-// succeed, which is why it is never read for the sign-in state. --model
-// leaves the agent alone: measured on 1.2.14, the log still names the agent
-// the call set up (see agy-models.js for the list it is picked from).
+// The log says "You are not logged into Antigravity" on runs that succeed,
+// so it is never read for sign-in. --model leaves the agent alone (1.2.14:
+// the log still names the call's agent; agy-models.js lists the models).
 export const AGY = {
   id: 'agy',
   label: 'Antigravity',
@@ -84,9 +85,8 @@ export const AGY = {
   loginPattern: /sign in|authenticat/i,
   unwrap: unwrapAgy,
   ...AGY_STREAM,
-  stage: agentFiles,
-  collect: [AGENT_LOG],
-  verify: checkAgentRun,
+  ...AGY_ENDS,
+  ...AGY_AGENT,
   unusable: agyUnusable,
   listModels: listAgyModels,
   modelArgs: modelFlag,
