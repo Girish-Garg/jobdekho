@@ -46,8 +46,10 @@ export default function SetupNotice({ onOpenSettings }) {
     setDismissed(ids);
   }
 
+  // Spaced from whatever comes next, the profile notice or the list itself,
+  // by the same gap the profile notice keeps above the list.
   return (
-    <section aria-label="Setup" className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-primary/25 bg-primary/5 px-4 py-3">
+    <section aria-label="Setup" className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-primary/25 bg-primary/5 px-4 py-3">
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1.5 text-sm text-ink/85">
         <WarningIcon size={15} className="text-primary" />
         <span>Not set up yet:</span>
