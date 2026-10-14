@@ -4,11 +4,11 @@ import { planEntries } from '../resume/tailored-sections.js'
 import { askedFor } from './resume-tailor-left-out.js'
 import { jdText } from './resume-tailor-prompt.js'
 
-// A tailoring plan laid out for the review screen: everything the resume
+// A tailoring plan laid out for going through it with the person, a
+// question at a time (the web's lib/tailorAsk.js): everything the resume
 // could carry, and what the plan did with each thing, before any choice of
-// the person's. The screen works out the rest from their choices itself
-// (apps/web/src/lib/tailorReview.js), so flipping a skill redraws at once
-// and only the choices travel back.
+// the person's. The web app works out the rest from their choices itself
+// (lib/tailorReview.js), so only the choices travel back.
 //
 //   skills    [{ name, leftOut, asked }]: every skill the resume could print;
 //             `leftOut` by the plan, `asked` for by the posting

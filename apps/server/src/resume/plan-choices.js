@@ -1,5 +1,5 @@
 // A tailoring plan as the person left it: what it leaves out and how it
-// words each bullet, after whatever they changed on the review screen (the
+// words each bullet, after whatever they changed while going through it (the
 // plan's `choices`, see actions/resume-tailor-choices.js). The one place
 // that reads choices, so the page they are shown, the resume made from the
 // plan and a refine of that plan all agree on it.

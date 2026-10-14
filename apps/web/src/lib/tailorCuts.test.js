@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { cutMade, savedBy, withCut } from './tailorCuts.js';
+import { cutMade, withCut } from './tailorCuts.js';
 import { NO_CHOICES } from './tailorReview.js';
 
 const PROJECT = { key: 'entry:p9', saves: 4, patch: { flipped: ['p9'] } };
@@ -27,10 +27,5 @@ describe('a cut', () => {
 
   it('leaves the layout alone unless it is the layout cut', () => {
     expect(withCut({ ...NO_CHOICES, compact: true }, PROJECT.patch, false).compact).toBe(true);
-  });
-
-  it('adds up what the ticked ones save', () => {
-    const choices = withCut(withCut(NO_CHOICES, PROJECT.patch, true), COMPACT.patch, true);
-    expect(savedBy(choices, [PROJECT, BULLETS, COMPACT, { key: 'x', saves: null, patch: { flipped: ['p9'] } }])).toBe(9);
   });
 });

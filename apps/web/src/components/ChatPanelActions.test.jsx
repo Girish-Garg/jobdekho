@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import AiChatPanel from './AiChatPanel.jsx';
 import { announceOpenPosting } from '../lib/openPostingSignal.js';
-import { takeReviewRequest } from '../lib/openReviewSignal.js';
 import { fakeChats, jobChat, result, version, POSTINGS } from '../test/fixtures/chats.js';
 
 vi.mock('../api.js', () => ({
@@ -12,6 +11,7 @@ vi.mock('../api.js', () => ({
   clearChat: vi.fn(), deleteChat: vi.fn(), stopChat: vi.fn(), queueChatMessage: vi.fn(), changeChatItems: vi.fn(),
   sendChatMessage: vi.fn(), runPostingAction: vi.fn(), tailorForAll: vi.fn(), lettersForEach: vi.fn(),
   getPostingsPage: vi.fn(async () => ({ postings: [] })), listDocuments: vi.fn(async () => []), createDocument: vi.fn(),
+  getTailorReview: vi.fn(), getTailorFit: vi.fn(), tailorPreview: vi.fn(), putTailorChoices: vi.fn(),
 }));
 
 import * as api from '../api.js';
@@ -84,18 +84,19 @@ describe('quick actions in a job\'s chat', () => {
     expect(within(card).getByRole('button', { name: 'Copy' })).toBeInTheDocument();
   });
 
-  // The chat is too narrow to read a tailoring through, so the card leads
-  // to the review on the Resume page, where the resume is then made.
-  it('tailors the resume, leads the card with the fact check, and opens its review on the Resume page', async () => {
+  // What the tailoring changed is gone through a question at a time above
+  // the box, the way Claude Code asks, not laid out all at once.
+  it('tailors the resume, leads the card with the fact check, and goes through it above the box', async () => {
     answers('resume-tailor', PLAN);
-    const apply = { setView: vi.fn() };
-    setup({ apply });
+    api.getTailorReview.mockResolvedValue({ posting: POSTINGS.p9, choices: {}, skills: [{ name: 'Kotlin', leftOut: true }], sections: [] });
+    setup();
     fireEvent.click(await screen.findByRole('button', { name: 'Tailor my resume' }));
     const card = await screen.findByRole('region', { name: 'Tailored resume' });
     expect(within(card).getByText('Check these before using it')).toBeInTheDocument();
-    fireEvent.click(within(card).getByRole('button', { name: 'Review and make the resume' }));
-    expect(apply.setView).toHaveBeenCalledWith('resume');
-    expect(takeReviewRequest()).toMatchObject({ id: 'p9' });
+    fireEvent.click(within(card).getByRole('button', { name: 'Go through it' }));
+    const dock = await screen.findByRole('region', { name: 'Your tailored resume' });
+    expect(within(dock).getByText('This job does not ask for these. Leave them out?')).toBeInTheDocument();
+    expect(within(dock).getByRole('button', { name: 'Kotlin' })).toHaveAttribute('aria-pressed', 'true');
     expect(api.createDocument).not.toHaveBeenCalled();
   });
 

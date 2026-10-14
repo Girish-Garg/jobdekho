@@ -3,7 +3,7 @@ import { compileGuarded } from '../documents/pdf.js'
 import { renderPlan } from './render-plan.js'
 import { patched, patchedAll } from './plan-patch.js'
 
-// The page a tailoring plan makes, compiled for the review screen before
+// The page a tailoring plan makes, compiled while it is gone through before
 // any document exists, and how much each cut on offer would save. Kept in
 // memory and only the last few: every flip of a choice is another PDF, and
 // the documents' cache on disk is never cleared (see resume/cache.js).

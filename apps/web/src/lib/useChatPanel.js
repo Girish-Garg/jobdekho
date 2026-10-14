@@ -46,7 +46,7 @@ export function useChatPanel({ context, apply, request, draft }) {
   const busyView = store.busy ? pageOf(store.busy.chatId, store)?.chat ?? null : null;
   const cliName = cli.providers?.find?.((p) => p.id === store.busy?.provider)?.label ?? answerer?.label ?? '';
   const waitReason = store.busy ? busyText(store.busy, busyView, cliName) : null;
-  const card = chatCard({ job: view?.jobs?.[0], results: chat?.results, providers: cli.providers, target, setTarget, apply, start: job.start, waitReason });
+  const card = chatCard({ job: view?.jobs?.[0], chatId: view?.id, results: chat?.results, providers: cli.providers, target, setTarget, apply, start: job.start, waitReason });
 
   return {
     cli, answerer, page, active, store, chat, view, loading, job, target, setTarget, send, card, waitReason, busyView, cliName,

@@ -8,8 +8,9 @@ import { pdfPages } from '../resume/pdf-pages.js'
 const KIND = 'resume-tailor'
 const NO_PLAN = 'Tailor your resume for this job first.'
 
-// The review screen of a tailoring (the Resume page, see the web's
-// TailorReview.jsx): what the plan did with everything the resume could
+// Going through a tailoring with the person, a question at a time above
+// the chat's box (see the web's lib/tailorAsk.js): what the plan did with
+// everything the resume could
 // carry, the page it makes, what could go to fit that page on one, and the
 // person's choices about all of it. None of these calls the AI. Choices are
 // saved on the newest plan in place, with no new version, and the resume

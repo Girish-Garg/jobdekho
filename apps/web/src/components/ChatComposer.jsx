@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { providerFor } from '../lib/providerFor.js';
 import { ACTION_KINDS, CHAT_INTRO, CHAT_POLICY } from '../lib/chatActionKinds.js';
 import { runCombined } from '../lib/chatAsk.js';
@@ -7,10 +8,12 @@ import ChatQuickActions from './ChatQuickActions.jsx';
 import ChatCompareActions from './ChatCompareActions.jsx';
 import ChatReplyTarget from './ChatReplyTarget.jsx';
 import ChatInput from './ChatInput.jsx';
+import ChatDock from './ChatDock.jsx';
 
 // Everything under the conversation: the actions this kind of chat has (a
 // job's three, a comparison's two), the reply target, why Send waits when
-// another chat's answer runs (`note`), and the box. It never scrolls away:
+// another chat's answer runs (`note`), any questions waiting for the person
+// (see ChatDock.jsx), and the box. It never scrolls away:
 // the conversation above it does.
 //
 // The provider gate lives here. With no CLI that can take a no-tools call,
@@ -19,8 +22,10 @@ import ChatInput from './ChatInput.jsx';
 // works except the fake check, and asking for that shows its own hint
 // instead of a call that could only fail; the server makes the same choice
 // (ai/select.js).
-export default function ChatComposer({ cli, view, results, box, job, target, onClearTarget, waitReason = null, note = null }) {
+export default function ChatComposer({ cli, view, turns, results, box, job, target, onClearTarget, waitReason = null, note = null }) {
   const { providers, checking, refresh } = cli;
+  // Bumped by "Type something else", which moves focus into the box.
+  const [typing, setTyping] = useState(0);
   const known = Array.isArray(providers);
   const hint = (intro, policy) => (
     <InstallHint intro={intro} policies={[policy]} providers={providers} checking={checking} onRecheck={refresh} />
@@ -43,7 +48,8 @@ export default function ChatComposer({ cli, view, results, box, job, target, onC
       {view?.kind === 'compare' && <ChatCompareActions view={view} waitReason={waitReason} onRun={(which) => runCombined(view.id, which)} />}
       {changing && <ChatReplyTarget name={changing.name} onClear={onClearTarget} />}
       {note}
-      <ChatInput {...box} placeholder={changing?.ask} submitLabel={changing ? 'Change' : 'Ask'} focusKey={target} />
+      <ChatDock chatId={view?.id} turns={turns} box={box} onType={() => setTyping((n) => n + 1)} />
+      <ChatInput {...box} placeholder={changing?.ask} submitLabel={changing ? 'Change' : 'Ask'} focusKey={target ?? (typing ? `type:${typing}` : null)} />
     </div>
   );
 }

@@ -21,13 +21,15 @@ const LONG_REPLY_MS = 5 * 60 * 1000
 // One turn of a chat, from prompt to the record the store keeps (see
 // packages/store/src/chat-messages.js, which adds what the chat held):
 //
-//   { id, page, question, answer, actions, refs, proposals, memory, provider, createdAt, web?, webError? }
+//   { id, page, question, answer, actions, refs, proposals, questions, memory, provider, createdAt, web?, webError? }
 //
 // Fails the way every other AI action here does: an absent or signed-out
 // CLI as the ProviderError callProvider raised, or a reply parse() cannot
 // read as 'unreadable'. Proposals are validated here and stored pending;
 // nothing they describe happens until the person applies one (see
-// apply-proposal.js). `memory` is what the model offered to remember that
+// apply-proposal.js). `questions` are what it asks back, shown above the
+// box and answered by the person's next message (see questions.js).
+// `memory` is what the model offered to remember that
 // traces back to the question (see memory-suggest.js), empty when memory is
 // off; the route decides which of it is saved (see memory-turn.js).
 //
@@ -51,9 +53,9 @@ export async function runChatTurn({ message, context, history, select, emit, sig
   onText.flush()
   const parsed = parseChatReply(text, context)
   if (!parsed) throw new ProviderError('unreadable', provider)
-  const { reply, actions, refs, proposals, web } = parsed
+  const { reply, actions, refs, proposals, questions, web } = parsed
   const turn = {
-    id: randomUUID(), page: context.page ?? 'postings', question: message, answer: reply, actions, refs, proposals, provider: provider.id,
+    id: randomUUID(), page: context.page ?? 'postings', question: message, answer: reply, actions, refs, proposals, questions, provider: provider.id,
     memory: context.memory ? memorySuggestions(text, { message, items: context.memory.saved ?? context.memory.items }) : [],
   }
   const open = context.chatKind === 'job' ? context.chatJobs?.find((job) => job.title) ?? null : null

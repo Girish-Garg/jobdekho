@@ -39,8 +39,9 @@ export function runPostingAction(id, kind, opts) {
   return streamedPost(`/api/postings/${id}/ai/${kind}`, { ...opts, label: ACTION_LABEL[kind] || kind });
 }
 
-// The review screen of this job's tailoring (see lib/tailorReview.js and the
-// server's api/tailor-review.js); none of these calls the AI. The review is
+// Going through this job's tailoring, question by question (see
+// lib/tailorAsk.js and the server's api/tailor-review.js); none of these
+// calls the AI. The review is
 // what the plan did with everything the resume could carry; the choices are
 // the person's, saved on the plan, answering with its record; the preview is
 // the page the plan now makes, its length noted beside it (lib/pdfLength.js);

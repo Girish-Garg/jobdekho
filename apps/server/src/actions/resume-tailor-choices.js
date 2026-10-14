@@ -1,7 +1,7 @@
 import { ENTRY_SECTIONS } from '@jobdekho/store/profile-sections.js'
 import { ownSkills } from './resume-tailor-left-out.js'
 
-// What the person changed about a plan on the review screen, read against
+// What the person changed about a plan while going through it, read against
 // the plan and their record: the browser sends it, so nothing in it is
 // trusted further than those two can vouch for.
 //

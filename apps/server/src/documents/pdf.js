@@ -30,7 +30,7 @@ export async function documentPdf({ tex, store, userId, compile }) {
 }
 
 // The same guard and the same sentences for a text that is not a saved
-// document: the page a tailoring's review screen shows (see
+// document: the page a tailoring makes while it is gone through (see
 // resume/plan-preview.js), which keeps its own PDFs. `cached` is asked
 // only once the guard has passed the text.
 export async function compileGuarded({ tex, compile, cached = () => null }) {

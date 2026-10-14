@@ -316,6 +316,14 @@ that open them, and offer buttons that change the feed. The panel floats
 over the page or can be pinned to the side, and an answer still arrives if
 you close it meanwhile. The conversation is saved in the data folder.
 
+When the answer depends on a choice that is yours (what to cut to fit a
+page, which of two jobs to start with), the AI can ask back instead of
+guessing: up to three short questions appear above the box with options to
+press, one at a time. Numbers pick, Esc puts them aside, and "Type something
+else" lets you answer in your own words. Your picks go back as your next
+message. JobDekho asks the same way when it has something to go through with
+you, such as a tailored resume.
+
 A question that needs the web (news about a company, what people say about
 working there, whether it is hiring) is answered in two steps: the call that
 reads your data, with no tools, only says a search is needed, and a second
@@ -389,19 +397,20 @@ next message as a change to that result rather than a new question.
   that skill. The tailoring also leaves out what the posting has no use for
   (an Android toolkit on a resume for a web job, say); a skill the posting
   asks for is never left out by it, and at least six skills stay.
-  "Review and make the resume" opens the review on the Resume page, where
-  there is room to read it: the page the tailoring makes on the right, and
-  on the left every skill (one click takes it out or puts it back), every
-  role, project and degree with a switch, and each bullet with your own
-  wording under the reworded one ("Use mine", "Cut", "Put back"). The page
-  is redrawn as you choose, and nothing there asks the AI for anything.
-  When it runs past one page, "Fit on one page" lists what could go, least
-  useful for this job first, with the lines each cut saves counted on the
-  real page: a project that was not picked, a small section, a bullet that
-  names nothing the job asks for, and last the Compact layout, which
-  tightens the spacing and removes nothing. You tick what goes; nothing is
-  cut for you, and it says so when every cut together is still not enough.
-  "Make the resume" saves the page as a document of yours.
+  A tailoring that just arrived is then gone through with you, a question
+  at a time above the chat's box, the way Claude Code asks: the skills it
+  left out (untick any to keep), the projects it did not pick, and for each
+  role its new wording (keep it, use yours, or go through it bullet by
+  bullet, with the bullets it dropped to put back). When the page runs past
+  one, it asks what should go, least useful for this job first, with the
+  lines each cut saves counted on the real page: a project that was not
+  picked, a small section, a bullet that names nothing the job asks for,
+  and last the Compact layout, which tightens the spacing and removes
+  nothing. Nothing is cut for you, and it says so when every cut together is
+  still not enough. Numbers pick an option and Esc stops; every answer is
+  saved as you go, and none of it asks the AI for anything. "Go through it"
+  on the card asks again any time, and "Make the resume as it is" skips the
+  questions.
 
 Every document made this way opens on the Resume page, tied to the job.
 

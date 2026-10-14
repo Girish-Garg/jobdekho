@@ -3,6 +3,7 @@ import { profileView } from './profile-view.js'
 import { PROFILE_RULES, DOCUMENT_RULES, PROPOSAL_REPLY } from './prompt-proposal-rules.js'
 import { memoryRules, savedPreferences } from './memory-prompt.js'
 import { fence } from './prompt-fence.js'
+import { ASK_RULE } from './prompt-ask.js'
 import { documentBlocks, documentsPrompt, jobsBlock } from './prompt-items.js'
 
 // The prompts for the pages other than the feed (the feed's own is in
@@ -53,5 +54,5 @@ function settingsPrompt({ context }) {
 const BUILDERS = { profile: profilePrompt, resume: resumePrompt, settings: settingsPrompt }
 
 export function buildPagePrompt({ message, context, history }) {
-  return `${BUILDERS[context.page]({ context })}${memoryRules(context.memory)}${historyBlock(history, context.itemNames)}${savedPreferences(context.memory)}Question: ${message}\n`
+  return `${BUILDERS[context.page]({ context })}${ASK_RULE}${memoryRules(context.memory)}${historyBlock(history, context.itemNames)}${savedPreferences(context.memory)}Question: ${message}\n`
 }

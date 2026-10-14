@@ -65,6 +65,7 @@ export default function ChatPanelBody({ onClose, context, apply, request, draft 
       <ChatComposer
         cli={cli}
         view={view}
+        turns={chat?.turns}
         results={chat?.results}
         box={send.box}
         job={panel.job}

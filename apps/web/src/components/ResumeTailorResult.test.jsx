@@ -23,12 +23,13 @@ const record = (over = {}) => ({
   kind: 'resume-tailor', postingId: 'p1', provider: 'claude', createdAt: new Date().toISOString(), result: { ...RESULT, ...over },
 });
 const flagged = () => record({ factCheck: { flags: FLAGS, ok: false } });
+const old = () => ({ ...record(), createdAt: '2026-01-01T00:00:00.000Z' });
 
 const before = (a, b) => Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
 
 describe('ResumeTailorResult with flags', () => {
   it('leads with the notice, each flag with what it is and the line it sits in', () => {
-    render(<ResumeTailorResult record={flagged()} providers={PROVIDERS} onReview={() => {}} />);
+    render(<ResumeTailorResult record={flagged()} providers={PROVIDERS} />);
     const notice = screen.getByText('Check these before using it');
     expect(screen.getByText(/3 things in the rewrite that your original resume does not have/)).toBeInTheDocument();
     expect(screen.getByText('40%')).toBeInTheDocument();
@@ -42,27 +43,27 @@ describe('ResumeTailorResult with flags', () => {
 
   // Ember is "new today" and errors; a rewrite to check is neither.
   it('never uses the ember accent for the notice', () => {
-    const { container } = render(<ResumeTailorResult record={flagged()} providers={PROVIDERS} onReview={() => {}} />);
+    const { container } = render(<ResumeTailorResult record={flagged()} providers={PROVIDERS} />);
     expect(container.innerHTML).not.toMatch(/ember/);
   });
 });
 
 describe('ResumeTailorResult without flags', () => {
   it('says so quietly, before the coverage', () => {
-    render(<ResumeTailorResult record={record()} providers={PROVIDERS} onReview={() => {}} />);
+    render(<ResumeTailorResult record={record()} providers={PROVIDERS} />);
     const quiet = screen.getByText('Nothing in the rewrite is missing from your original resume.');
     expect(screen.queryByText('Check these before using it')).not.toBeInTheDocument();
     expect(before(quiet, screen.getByText(/Matches 9 of 14/))).toBe(true);
   });
 
   it('gives coverage before and after, what was gained and what is still missing', () => {
-    render(<ResumeTailorResult record={record()} providers={PROVIDERS} onReview={() => {}} />);
+    render(<ResumeTailorResult record={record()} providers={PROVIDERS} />);
     expect(screen.getByText('Matches 9 of 14 skills this job names, up from 6.')).toBeInTheDocument();
     expect(screen.getByText('node.js, postgresql')).toBeInTheDocument();
   });
 
   it('lists which entries the plan picked, per section, after the coverage', () => {
-    render(<ResumeTailorResult record={record()} providers={PROVIDERS} onReview={() => {}} />);
+    render(<ResumeTailorResult record={record()} providers={PROVIDERS} />);
     const coverage = screen.getByText(/Matches 9 of 14/);
     const picks = screen.getByText('Leads the resume for this job');
     expect(before(coverage, picks)).toBe(true);
@@ -73,21 +74,42 @@ describe('ResumeTailorResult without flags', () => {
     expect(screen.queryByText('Education')).not.toBeInTheDocument();
   });
 
-  it('opens the review on click, where the resume is made', () => {
-    const onReview = vi.fn();
-    render(<ResumeTailorResult record={record()} providers={PROVIDERS} onReview={onReview} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Review and make the resume' }));
-    expect(onReview).toHaveBeenCalledTimes(1);
+  it('goes through it on click, or makes the resume as it is', () => {
+    const onGoThrough = vi.fn();
+    const onMakeResume = vi.fn();
+    render(<ResumeTailorResult record={old()} providers={PROVIDERS} onGoThrough={onGoThrough} onMakeResume={onMakeResume} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Go through it' }));
+    expect(onGoThrough).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Make the resume as it is' }));
+    expect(onMakeResume).toHaveBeenCalledTimes(1);
+  });
+
+  // A tailoring that just arrived is gone through as it lands, once.
+  it('starts going through a tailoring made since the page opened, and only once', () => {
+    const onGoThrough = vi.fn();
+    const fresh = { ...record(), createdAt: new Date(Date.now() + 60000).toISOString() };
+    const { rerender, unmount } = render(<ResumeTailorResult record={fresh} providers={PROVIDERS} onGoThrough={onGoThrough} onMakeResume={() => {}} />);
+    rerender(<ResumeTailorResult record={fresh} providers={PROVIDERS} onGoThrough={onGoThrough} onMakeResume={() => {}} />);
+    unmount();
+    render(<ResumeTailorResult record={fresh} providers={PROVIDERS} onGoThrough={onGoThrough} onMakeResume={() => {}} />);
+    expect(onGoThrough).toHaveBeenCalledTimes(1);
+  });
+
+  it('leaves an older tailoring alone until asked', () => {
+    const onGoThrough = vi.fn();
+    render(<ResumeTailorResult record={old()} providers={PROVIDERS} onGoThrough={onGoThrough} onMakeResume={() => {}} />);
+    expect(onGoThrough).not.toHaveBeenCalled();
   });
 
   // Only the newest tailoring is what a resume is made from.
-  it('offers nothing to open on an older tailoring', () => {
+  it('offers nothing to do on a tailoring that is not the newest', () => {
     render(<ResumeTailorResult record={record()} providers={PROVIDERS} />);
-    expect(screen.queryByRole('button', { name: 'Review and make the resume' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Go through it' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Make the resume as it is' })).not.toBeInTheDocument();
   });
 
   it('says when and by which CLI', () => {
-    render(<ResumeTailorResult record={record()} providers={PROVIDERS} onReview={() => {}} />);
+    render(<ResumeTailorResult record={record()} providers={PROVIDERS} />);
     expect(screen.getByText('Tailored today by Claude Code')).toBeInTheDocument();
   });
 });
@@ -106,14 +128,14 @@ describe('ResumeTailorResult, what there is to review', () => {
   };
 
   it('counts what the tailoring left out and reworded in one line, and leaves the reading to the review', () => {
-    render(<ResumeTailorResult record={record(PRUNED)} providers={PROVIDERS} onReview={() => {}} />);
+    render(<ResumeTailorResult record={record(PRUNED)} providers={PROVIDERS} />);
     expect(screen.getByText('For this job: 2 skills left out, 1 project left out, 1 bullet reworded, 1 bullet dropped.')).toBeInTheDocument();
     expect(screen.queryByText('Built REST APIs in Express for an internal tool.')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Kotlin/ })).not.toBeInTheDocument();
   });
 
   it('says nothing of it for a plan that left nothing out and reworded nothing it can pair', () => {
-    render(<ResumeTailorResult record={record()} providers={PROVIDERS} onReview={() => {}} />);
+    render(<ResumeTailorResult record={record()} providers={PROVIDERS} />);
     expect(screen.queryByText(/^For this job:/)).not.toBeInTheDocument();
   });
 });

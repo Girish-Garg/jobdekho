@@ -31,9 +31,17 @@ function labelOf(turn, names) {
   return known.length ? `[${known.join(', ')}] ` : ''
 }
 
+// What a turn asked back (see questions.js), so the person's picks in the
+// next turn read as answers to it.
+function asked(turn) {
+  const questions = turn.questions ?? []
+  if (!questions.length) return ''
+  return `\n(Asked: ${questions.map((q) => `"${q.question}" [${q.options.map((o) => o.label).join(' / ')}]`).join('; ')})`
+}
+
 export function historyBlock(history = [], names = new Map()) {
   const recent = history.slice(-MAX_HISTORY)
   if (!recent.length) return ''
-  const lines = recent.map((turn) => `${labelOf(turn, names)}Q: ${turn.question}\nA: ${turn.answer}${offered(turn)}`)
+  const lines = recent.map((turn) => `${labelOf(turn, names)}Q: ${turn.question}\nA: ${turn.answer}${asked(turn)}${offered(turn)}`)
   return `Earlier in this conversation:\n${lines.join('\n')}\n\n`
 }

@@ -2,6 +2,7 @@ import { parseJsonObject } from '../ai/loose-json.js'
 import { validateActions } from './actions.js'
 import { validateRefs } from './refs.js'
 import { validateProposals } from './proposals.js'
+import { validateQuestions } from './questions.js'
 import { withoutPostingIds } from './reply-ids.js'
 
 // The reply is shown straight in the panel, so it is clamped to a size the
@@ -13,15 +14,17 @@ const MAX_REPLY = 4000
 // one whose only proposal could not be made must not say there is a change.
 const PROPOSAL_ONLY = 'Here is a change you can apply.'
 const REFUSED_ONLY = 'The change could not be made. The card below says why.'
+const ASK_ONLY = 'Pick below.'
 
-function fallbackReply(proposals) {
+function fallbackReply(proposals, questions) {
   if (proposals.some((p) => p.status === 'pending')) return PROPOSAL_ONLY
-  return proposals.length ? REFUSED_ONLY : ''
+  if (proposals.length) return REFUSED_ONLY
+  return questions.length ? ASK_ONLY : ''
 }
 
 // Null when there is nothing to show, which the caller reports as an
-// unreadable reply (see run.js); actions, refs and proposals always come
-// back as validated lists, empty when the model offered nothing or offered
+// unreadable reply (see run.js); actions, refs, proposals and the questions
+// it asks back (questions.js) always come back as validated lists, empty when the model offered nothing or offered
 // only junk. `web` is true only for a literal true: anything else is no
 // search. `context` is what the prompt carried, the only source a ref may
 // point into and the record a proposal is checked against.
@@ -33,14 +36,16 @@ export function parseChatReply(raw, context) {
   if (!obj) return null
   const onFeed = !context?.page || context.page === 'postings'
   const proposals = validateProposals(obj.proposals, context)
+  const questions = validateQuestions(obj.ask)
   const given = typeof obj.reply === 'string' ? withoutPostingIds(obj.reply, context).trim().slice(0, MAX_REPLY) : ''
-  const reply = given || fallbackReply(proposals)
+  const reply = given || fallbackReply(proposals, questions)
   if (!reply) return null
   return {
     reply,
     actions: onFeed ? validateActions(obj.actions) : [],
     refs: validateRefs(obj.refs, context),
     proposals,
+    questions,
     web: obj.web === true,
   }
 }

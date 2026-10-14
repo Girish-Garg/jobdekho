@@ -2,14 +2,12 @@ import { useEffect, useState } from 'react';
 import { useDocuments } from '../lib/useDocuments.js';
 import { useTemplates } from '../lib/useTemplates.js';
 import { announceOpenDocument } from '../lib/openDocumentSignal.js';
-import { onReviewRequest, takeReviewRequest, waitingReview } from '../lib/openReviewSignal.js';
 import { dropDraft, useUnsavedDocuments } from '../lib/sourceDrafts.js';
 import { notifyError } from '../lib/toast.js';
 import DocumentList from './DocumentList.jsx';
 import NewDocumentMenu from './NewDocumentMenu.jsx';
 import DocumentPane from './DocumentPane.jsx';
 import ResumeEmptyState from './ResumeEmptyState.jsx';
-import TailorReviewPage from './TailorReviewPage.jsx';
 
 // No document open, which is how the page starts: nothing is put in the
 // chat beside it until the person opens one (see lib/useDocuments.js).
@@ -28,28 +26,16 @@ function NothingOpen() {
 // it (which sees the open document, see openDocumentSignal.js) or by hand
 // in the source. Hand edits not saved yet are kept per document while the
 // page is open (see lib/sourceDrafts.js), and marked in the list.
-//
-// One thing takes the whole page over: a tailoring's review, asked for by
-// its card in the chat (see lib/openReviewSignal.js), which needs the room.
-// The resume made there is opened here like any other document.
 export default function ResumeWorkspace() {
   const docs = useDocuments();
   const templates = useTemplates();
   const [creating, setCreating] = useState(false);
   const unsaved = useUnsavedDocuments();
-  const [review, setReview] = useState(waitingReview);
   const selected = docs.selected;
 
-  // Taken once the page is up, so coming back here later opens no review.
   useEffect(() => {
-    takeReviewRequest();
-    return onReviewRequest(() => setReview(takeReviewRequest()));
-  }, []);
-
-  // No document is open to the chat while a review covers it.
-  useEffect(() => {
-    if (docs.documents !== undefined) announceOpenDocument(review ? null : selected);
-  }, [docs.documents === undefined, selected?.id, selected?.name, Boolean(review)]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (docs.documents !== undefined) announceOpenDocument(selected);
+  }, [docs.documents === undefined, selected?.id, selected?.name]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function create(template) {
     setCreating(true);
@@ -71,12 +57,6 @@ export default function ResumeWorkspace() {
     }
   }
 
-  function made(doc) {
-    setReview(null);
-    docs.refresh(doc.id);
-  }
-
-  if (review) return <TailorReviewPage key={review.id} job={review} onClose={() => setReview(null)} onMade={made} />;
   if (docs.documents === undefined) return <p className="p-8 text-sm text-muted">Loading your documents...</p>;
   if (!docs.documents.length) return <ResumeEmptyState templates={templates} busy={creating} onPick={create} />;
 

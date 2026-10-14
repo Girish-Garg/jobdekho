@@ -27,6 +27,3 @@ export function cutMade(choices, patch) {
   const bullets = Object.entries(patch.cut ?? {}).every(([id, ats]) => ats.every((at) => listOf(choices.cut, id).includes(at)));
   return flipped && bullets && (!patch.compact || choices.compact);
 }
-
-// What the ticked cuts save together, for the line under the list.
-export const savedBy = (choices, cuts) => cuts.filter((cut) => cutMade(choices, cut.patch)).reduce((sum, cut) => sum + (cut.saves ?? 0), 0);
