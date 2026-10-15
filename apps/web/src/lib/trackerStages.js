@@ -1,24 +1,12 @@
 import { shortDay } from './time.js';
 
-// How the Tracker page groups and words what the server keeps (see its
-// store's tracker-entry.js). "Waiting" is applied or emailed with no word
-// back yet, the tab a person opens to see who to chase.
+// How the Tracker page words what the server keeps (see its store's
+// tracker-entry.js); the board's columns are in trackerBoard.js.
 export const STAGES = ['applied', 'emailed', 'replied', 'assessment', 'interview', 'offer', 'closed'];
 
 export const STAGE_WORD = {
   applied: 'Applied', emailed: 'Emailed', replied: 'Replied', assessment: 'Assessment', interview: 'Interview', offer: 'Offer', closed: 'Closed',
 };
-
-const WAITING = new Set(['applied', 'emailed']);
-const one = (stage) => ({ key: stage, label: STAGE_WORD[stage], has: (entry) => entry.stage === stage });
-
-export const TABS = [
-  { key: 'all', label: 'All', has: () => true },
-  { key: 'waiting', label: 'Waiting', has: (entry) => WAITING.has(entry.stage) },
-  ...['replied', 'assessment', 'interview', 'offer', 'closed'].map(one),
-];
-
-export const tabCount = (entries, key) => entries.filter(TABS.find((tab) => tab.key === key).has).length;
 
 // The newest line of an entry's history that says something, else its stage.
 export function latestLine(entry) {

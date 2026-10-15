@@ -35,7 +35,23 @@ export function useTracker() {
     entries,
     error,
     add: async (fields) => put((await addTrackerEntry(fields)).entry),
-    update: async (id, patch) => put((await updateTrackerEntry(id, patch)).entry),
+    // A stage moves on screen at once, the way a dragged card lands, and
+    // goes back if the server refuses it.
+    update: async (id, patch) => {
+      let before = null;
+      if (patch.stage) {
+        setEntries((list) => {
+          before = list;
+          return (list ?? []).map((one) => (one.id === id ? { ...one, stage: patch.stage } : one));
+        });
+      }
+      try {
+        put((await updateTrackerEntry(id, patch)).entry);
+      } catch (err) {
+        if (before) setEntries(before);
+        throw err;
+      }
+    },
     remove: async (id) => {
       await removeTrackerEntry(id);
       setEntries((list) => (list ?? []).filter((one) => one.id !== id));
