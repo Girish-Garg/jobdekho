@@ -28,6 +28,7 @@ vi.mock('../api.js', () => ({
   putScrapeSettings: vi.fn(async () => null),
   getSetup: vi.fn(async () => []),
   getAdzunaKey: vi.fn(async () => ({ configured: false, from: null, appId: null, keyEnd: null, lastRun: null })),
+  getMail: vi.fn(async () => ({ connected: false, address: null, keptIn: null, savedAt: null, sentToday: 0, cap: 20 })),
   saveAdzunaKey: vi.fn(async () => null),
   removeAdzunaKey: vi.fn(async () => null),
   checkAdzunaKey: vi.fn(async () => ({ ok: true })),
@@ -52,10 +53,10 @@ async function mount() {
 }
 
 describe('SettingsView structure', () => {
-  it('renders the cards in order: the setup check and the AI, then postings and the companies blocked from them, appearance and data, and About last', async () => {
+  it('renders the cards in order: the setup check and the AI, then postings, the companies blocked from them and the sources, Gmail, appearance and data, and About last', async () => {
     await mount();
     const headings = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent);
-    expect(headings).toEqual(['Setup check', 'AI CLI', 'Postings', 'Blocked companies', 'Adzuna', 'Appearance', 'Your data', 'About JobDekho']);
+    expect(headings).toEqual(['Setup check', 'AI CLI', 'Postings', 'Blocked companies', 'Adzuna', 'Gmail', 'Appearance', 'Your data', 'About JobDekho']);
   });
 
   it('puts the theme choice under Appearance', async () => {

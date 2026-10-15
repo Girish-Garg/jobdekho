@@ -28,6 +28,14 @@ function diffOf(diff) {
   return diff.filter((row) => row && typeof row === 'object' && (text(row.before) || text(row.after))).map(diffRow);
 }
 
+// A mail the chat drafted (see the server's chat/mail-draft.js): what it
+// says, which resume goes with it, and once sent, when and from where.
+const mailOf = (p) => ({
+  to: text(p.to), name: text(p.name), company: text(p.company), role: text(p.role),
+  subject: text(p.subject), body: text(p.body), attach: text(p.attach) || null, attachName: text(p.attachName) || null,
+  mailedBefore: text(p.mailedBefore) || null, sentAt: text(p.sentAt) || null, from: text(p.from) || null, reason: text(p.reason),
+});
+
 function shape(proposal) {
   const base = {
     id: proposal.id,
@@ -37,6 +45,7 @@ function shape(proposal) {
     appliedAt: text(proposal.appliedAt) || null,
   };
   if (proposal.kind === 'profile') return { ...base, diff: diffOf(proposal.diff) };
+  if (proposal.kind === 'mail') return { ...base, ...mailOf(proposal) };
   return {
     ...base,
     documentId: text(proposal.documentId) || null,
@@ -54,6 +63,6 @@ function shape(proposal) {
 export function proposalsOf(turn) {
   if (!Array.isArray(turn?.proposals)) return [];
   return turn.proposals
-    .filter((p) => p && typeof p.id === 'string' && p.id && (p.kind === 'profile' || p.kind === 'document'))
+    .filter((p) => p && typeof p.id === 'string' && p.id && ['profile', 'document', 'mail'].includes(p.kind))
     .map(shape);
 }

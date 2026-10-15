@@ -13,6 +13,10 @@ import { notifyError } from './toast.js';
 export function chatCard({ job, chatId, results, providers, target, setTarget, apply, start, waitReason = null }) {
   const toResume = () => apply.setView?.('resume');
   return {
+    chatId,
+    // A mail card's way to Settings, to connect Gmail, and to the Tracker.
+    onOpenSettings: () => apply.setView?.('settings'),
+    onOpenTracker: () => apply.setView?.('tracker'),
     providers,
     target,
     onTarget: setTarget,

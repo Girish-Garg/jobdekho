@@ -24,6 +24,7 @@ export default function Topbar({ view, setView, q = '', onSearch, searchRef, cha
           <NavItem value="postings" active={view === 'postings'} onClick={() => setView?.('postings')}>Postings</NavItem>
           <NavItem value="profile" active={view === 'profile'} onClick={() => setView?.('profile')}>Profile</NavItem>
           <NavItem value="resume" active={view === 'resume'} onClick={() => setView?.('resume')}>Resume</NavItem>
+          <NavItem value="tracker" active={view === 'tracker'} onClick={() => setView?.('tracker')}>Tracker</NavItem>
           <NavItem value="settings" active={view === 'settings'} onClick={() => setView?.('settings')}>Settings</NavItem>
         </nav>
       </div>

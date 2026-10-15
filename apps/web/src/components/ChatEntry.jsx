@@ -12,5 +12,5 @@ export default function ChatEntry({ entry, jobs, card, links }) {
   const { turn } = entry;
   if (turn.note) return <ChatNoteTurn note={turn.note} jobs={jobs} onOpenChat={links.onOpenChat} />;
   if (turn.combined) return <ChatCombinedTurn turn={turn} jobs={jobs} providers={card.providers} links={links} />;
-  return <ChatTurn turn={turn} providers={card.providers} onApply={links.onApply} onOpenRef={links.onOpenRef} />;
+  return <ChatTurn turn={turn} providers={card.providers} onApply={links.onApply} onOpenRef={links.onOpenRef} card={card} />;
 }

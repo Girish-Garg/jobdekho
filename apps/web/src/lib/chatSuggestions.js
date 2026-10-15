@@ -22,6 +22,11 @@ const PAGES = {
     intro: 'Ask for a change to the open document, or for a new one. Every change comes back as a card you apply.',
     questions: ['Make it fit one page', 'Tailor it for a job I saved', 'Write a cover letter'],
   },
+  tracker: {
+    title: 'Mail someone',
+    intro: 'Give an address, who they are and what you are after, and it writes the mail. You see it before it goes.',
+    questions: ['Write a mail to a founder', 'Write a follow-up to someone I mailed', 'Ask someone for a referral'],
+  },
   settings: {
     title: 'Ask about JobDekho',
     intro: 'Ask how JobDekho works, or what a setting here does.',

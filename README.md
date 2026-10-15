@@ -247,7 +247,8 @@ floor ("grade B or better"). "Save as my default" keeps those filters for
 the next time you open JobDekho; the search, the companies, the status and
 the fit floor last for the session.
 
-Every posting can be marked **Saved**, **Applied**, or **Dismissed**.
+Every posting can be marked **Saved**, **Applied**, or **Dismissed**, and one
+marked Applied joins your [Tracker](#tracker-and-mail).
 Postings that look like a ghost or evergreen listing (no pay stated, a very
 short description, posted a long time ago, no specific tools named, or the
 same listing spread across many boards) list what raised the doubt under
@@ -337,6 +338,42 @@ nothing changes until you apply. A document change also lists anything in it
 that is not in your profile, to check before applying, and the LaTeX guard
 checks it again when you do. "Add with AI" on the Profile page opens the
 chat with the start of a request already typed ("Add a project: ").
+
+## Tracker and mail
+
+**Tracker** in the top bar lists every application and conversation you keep
+track of, from JobDekho or not: what happened last and when, and its stage
+(Applied, Emailed, Replied, Assessment, Interview, Offer, Closed), changed in
+place. "Waiting" shows everything with no word back yet. A posting you mark
+Applied joins it, the first time you open it brings in the ones marked before
+(with no date, since none was kept), and **Add one** takes an application
+from anywhere else. Each entry keeps its history, with room for notes of your
+own.
+
+The chat can write and send mail from your own Gmail. Ask it on any page,
+with the address and what you are after ("Email priya@acme.example, she
+founded Acme; backend internship, I saw her post about the payments
+rewrite"). The mail arrives as a card, written as you from your profile.
+JobDekho asks above the box which resume to attach, then the card counts down
+twenty seconds before it sends, with **Stop**, **Edit** and **Send now**. A
+mail to an address you mailed before waits for you to press Send, and one
+from an earlier visit never sends by itself. Once sent, it lands in your
+Gmail Sent folder and in the Tracker. JobDekho does not read your inbox yet,
+so mark an entry Replied when they answer; one still at Emailed after five
+days offers to write a follow-up.
+
+JobDekho only mails an address you typed in the chat: it never guesses,
+builds or looks one up, and a draft to any other address says so instead of
+offering Send. At most 20 mails go out in 24 hours.
+
+To connect Gmail, turn on 2-Step Verification in your Google account, create
+an app password at myaccount.google.com/apppasswords, and paste it with your
+address into **Settings > Gmail**. Connect signs in once to check the pair
+and sends nothing. App passwords work for personal Gmail; Google does not
+offer them for most work or school accounts, and calls them less safe than
+signing in with Google, which a program on your own computer cannot do
+without being registered with Google. Disconnect forgets the password here;
+revoke it in your Google account to end it for good.
 
 ## Documents
 
@@ -437,6 +474,12 @@ What leaves this computer, and only when you ask for it:
 - **Scraping requests to job boards.** A scrape asks each source for its
   public listings, with nothing about you in the request (beyond your own
   Adzuna key, if you turn that source on).
+- **Mail you send, through your Gmail.** Only a mail you saw in the chat,
+  when its countdown ends or you press Send, with the resume you picked.
+  Connecting signs in to Gmail once without sending anything. The app
+  password is kept in this computer's protected storage (Windows' DPAPI,
+  the Mac's Keychain, or the Linux keyring, else a file only your account
+  can read), never in a data file, a log or a prompt.
 - **Fonts.** The web page loads its typefaces from Google Fonts.
 
 What never leaves: the data folder itself. Your profile, resume text,
@@ -508,6 +551,10 @@ names, and `JOBDEKHO_DATA_DIR` (`./data` by default) when running from source. T
 | `chat-history.json`, `chat-archive.json`, `*.pre-threads.json` | The chat files from before chats, read once when they moved into `chats.json`, with copies of them and of `ai-results.json` as they were then. | Yes. |
 | `scrape-settings.json` | Whether the running server refreshes postings on its own once a day, and whether refreshes read LinkedIn. | Yes; it falls back to the defaults (the daily refresh on, LinkedIn off). |
 | `blocked-companies.json` | The companies you blocked, when, and whether their own careers pages are still read. | Yes, if you want every one of them back. |
+| `tracker.json` | Your Tracker: every application and conversation, its stage and history. | No. |
+| `mail-account.json` | The Gmail address you connected, and where its app password is kept. Never the password. | Yes; you then connect Gmail again. |
+| `mail-sent.json` | When each mail went and to whom, for the daily limit and the "mailed before" note. | Yes. |
+| `mail-secret.bin` | On Windows, the app password as DPAPI protected it: only your Windows account on this computer can read it back. | Yes; you then connect Gmail again. |
 | `resume-selection.json` | Which template and entries the older resume builder renders. | No. |
 | `resumes/` | Compiled PDFs, cached by their source. | Yes, they are rebuilt when needed. |
 

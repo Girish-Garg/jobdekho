@@ -11,3 +11,5 @@ export * from './api/memory.js';
 export * from './api/setup.js';
 export * from './api/scrape.js';
 export * from './api/adzuna.js';
+export * from './api/mail.js';
+export * from './api/tracker.js';

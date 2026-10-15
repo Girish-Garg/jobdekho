@@ -8,6 +8,8 @@ import ChatRefs from './ChatRefs.jsx';
 import ChatActions from './ChatActions.jsx';
 import ChatWebCard from './ChatWebCard.jsx';
 import ProposalCard from './ProposalCard.jsx';
+import MailCard from './MailCard.jsx';
+import { isFresh } from '../lib/mailStart.js';
 import MemoryChips from './MemoryChips.jsx';
 import { WarningIcon } from './Icon.jsx';
 
@@ -21,14 +23,26 @@ import { WarningIcon } from './Icon.jsx';
 //
 // A search that failed left the answer from the person's own data standing,
 // and says why in a quiet line rather than an alarm.
-export default function ChatTurn({ turn: saved, providers, onApply, onOpenRef }) {
+export default function ChatTurn({ turn: saved, providers, onApply, onOpenRef, card = null }) {
   const turn = turnShape(saved);
+  // A mail is a card of its own (see MailCard.jsx): one that just arrived
+  // gets going by itself, in the chat on screen.
+  const mailCard = (proposal) => (
+    <MailCard
+      key={proposal.id}
+      proposal={proposal}
+      fresh={isFresh(turn.createdAt)}
+      chatId={card?.chatId ?? null}
+      onOpenSettings={card?.onOpenSettings}
+      onOpenTracker={card?.onOpenTracker}
+    />
+  );
   return (
     <div className="flex flex-col gap-4">
       <ChatBubble>{turn.question}</ChatBubble>
       <ChatAssistant name={providerLabel(providers, turn.provider)} when={relativeDay(turn.createdAt)}>
         {turn.answer && <ChatText text={turn.answer} />}
-        {turn.proposals.map((proposal) => <ProposalCard key={proposal.id} proposal={proposal} />)}
+        {turn.proposals.map((proposal) => (proposal.kind === 'mail' ? mailCard(proposal) : <ProposalCard key={proposal.id} proposal={proposal} />))}
         {turn.memory.length > 0 && <MemoryChips items={turn.memory} />}
         {turn.refs.length > 0 && <ChatRefs refs={turn.refs} onOpen={onOpenRef} />}
         {turn.actions.length > 0 && <ChatActions actions={turn.actions} onApply={onApply} />}

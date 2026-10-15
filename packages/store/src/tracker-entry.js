@@ -70,8 +70,10 @@ export function withEvent(entry, event) {
   return { ...entry, events: [...entry.events, event].slice(-MAX_EVENTS) }
 }
 
-// When the entry last moved: the newest dated event, else when it was made.
+// When the entry last moved: its newest dated event. One with no date at
+// all (a posting marked Applied before the Tracker kept dates) reads as
+// the oldest, so it never sits above what happened this week.
 export function lastActivity(entry) {
   const dated = entry.events.map((event) => event.at).filter(Boolean).sort()
-  return dated.at(-1) ?? entry.createdAt
+  return dated.at(-1) ?? entry.stageAt ?? ''
 }

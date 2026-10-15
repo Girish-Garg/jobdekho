@@ -28,6 +28,8 @@ describe('the first read', () => {
     expect(entry.events).toEqual([expect.objectContaining({ at: null, stage: 'applied' })])
     store.statuses.set('u1', { p1: 'applied', p2: 'applied' })
     expect(listTracker(store, 'u1')).toHaveLength(1)
+    addTrackerEntry(store, 'u1', { company: 'Northwind' }, DAY1)
+    expect(listTracker(store, 'u1').map((e) => e.company)).toEqual(['Northwind', 'Globex'])
   })
 })
 

@@ -38,8 +38,9 @@ export function senderView(profile, account) {
   }
 }
 
-export async function chatMail({ store, dashboard, userId, page, message, history = [] }) {
-  if (page === 'settings' || !aboutMail(message, history)) return null
+// Asked on any page: a person may think of a mail wherever they are.
+export async function chatMail({ store, dashboard, userId, message, history = [] }) {
+  if (!aboutMail(message, history)) return null
   const account = getMailAccount(store, userId)
   return {
     said: [message, ...history.map((turn) => turn.question)].filter((text) => typeof text === 'string'),

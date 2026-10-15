@@ -7,6 +7,7 @@ import { DEFAULT_SORT, SORTS } from './sorts.js';
 const VIEWS = [
   ['postings', 'Postings'],
   ['profile', 'Profile'],
+  ['tracker', 'Tracker'],
   ['settings', 'Settings'],
 ];
 

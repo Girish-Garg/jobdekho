@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import PostingsView from './PostingsView.jsx';
 import ProfileView from './ProfileView.jsx';
 import SettingsView from './SettingsView.jsx';
+import TrackerView from './TrackerView.jsx';
 import ErrorBoundary from './ErrorBoundary.jsx';
 import BrokenScreen from './BrokenScreen.jsx';
 
@@ -11,7 +12,7 @@ import BrokenScreen from './BrokenScreen.jsx';
 // script past the size the build warns at.
 const ResumeWorkspace = lazy(() => import('./ResumeWorkspace.jsx'));
 
-// Which of the four surfaces the nav is pointing at. Split out of Shell so
+// Which of the five surfaces the nav is pointing at. Split out of Shell so
 // that file stays about the frame: the chrome, the panels either side of it,
 // and the state those share. A page eases in as it replaces the last one,
 // keyed by the view so it plays once per switch and never on a re-render.
@@ -46,6 +47,7 @@ const brokenPage = ({ error, report }) => (
 function surface(view, setView, feed) {
   if (view === 'postings') return <PostingsView {...feed} onOpenProfile={() => setView('profile')} onOpenSettings={() => setView('settings')} />;
   if (view === 'profile') return <ProfileView />;
+  if (view === 'tracker') return <TrackerView />;
   if (view === 'resume') {
     return (
       <Suspense fallback={<p className="p-8 text-sm text-muted">Loading your documents...</p>}>

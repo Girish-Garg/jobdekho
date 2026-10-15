@@ -7,6 +7,7 @@ import SetupCard from './SetupCard.jsx';
 import RefreshSettingsCard from './RefreshSettingsCard.jsx';
 import BlockedCompaniesCard from './BlockedCompaniesCard.jsx';
 import AdzunaCard from './AdzunaCard.jsx';
+import GmailCard from './GmailCard.jsx';
 import YourDataCard from './YourDataCard.jsx';
 import AboutCard from './AboutCard.jsx';
 import ProfileIndex from './ProfileIndex.jsx';
@@ -22,6 +23,7 @@ const SECTIONS = [
   { id: 'settings-postings', label: 'Postings' },
   { id: 'settings-blocked', label: 'Blocked companies' },
   { id: 'settings-adzuna', label: 'Adzuna' },
+  { id: 'settings-gmail', label: 'Gmail' },
   { id: 'settings-appearance', label: 'Appearance' },
   { id: 'settings-data', label: 'Your data' },
   { id: 'settings-about', label: 'About' },
@@ -54,6 +56,7 @@ export default function SettingsView() {
             <SettingsSection {...section('settings-postings')}><RefreshSettingsCard /></SettingsSection>
             <SettingsSection {...section('settings-blocked')}><BlockedCompaniesCard /></SettingsSection>
             <SettingsSection {...section('settings-adzuna')}><AdzunaCard /></SettingsSection>
+            <SettingsSection {...section('settings-gmail')}><GmailCard /></SettingsSection>
             <SettingsSection {...section('settings-appearance')}>
               <SettingsCard icon={<PaletteIcon size={18} />} title="Appearance" hint="How JobDekho looks on this computer.">
                 <ThemeChoice />
