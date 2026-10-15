@@ -43,8 +43,13 @@ export function contactOf(raw) {
   return name || email ? { name, email } : null
 }
 
-export function eventOf({ at, stage = null, text = '' }) {
-  return { id: shortId(), at: toIso(at), stage: STAGES.includes(stage) ? stage : null, text: line(text, MAX_TEXT) }
+// `from` names where a line came from ("Greenhouse mail"), `mailId` the
+// mail it was read from, so a second scan never adds it twice.
+export function eventOf({ at, stage = null, text = '', from = '', mailId = '' }) {
+  const event = { id: shortId(), at: toIso(at), stage: STAGES.includes(stage) ? stage : null, text: line(text, MAX_TEXT) }
+  if (line(from)) event.from = line(from, 80)
+  if (line(mailId)) event.mailId = line(mailId, 300)
+  return event
 }
 
 // What a person typed into "Add one", or a refusal as a word the route says

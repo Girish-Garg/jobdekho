@@ -42,6 +42,13 @@ export function sentInLastDay(store, userId, now = new Date()) {
   return sentList(store, userId).filter((mail) => mail.at > since).length
 }
 
+// The subjects of the mails sent lately, for the scan to find the replies
+// to them (see the server's mail-scan/query.js).
+export function recentSubjects(store, userId, now = new Date(), days = 120) {
+  const since = toIso(now.getTime() - days * DAY_MS)
+  return sentList(store, userId).filter((mail) => mail.at > since).map((mail) => mail.subject).filter(Boolean)
+}
+
 // When each address was last mailed, newest wins.
 export function lastMailed(store, userId) {
   const out = new Map()

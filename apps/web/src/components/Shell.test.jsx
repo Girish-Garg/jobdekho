@@ -13,6 +13,7 @@ vi.mock('../api.js', () => ({
   getAdzunaKey: vi.fn(async () => ({ configured: false, from: null, appId: null, keyEnd: null, lastRun: null })),
   getMail: vi.fn(async () => ({ connected: false, address: null, keptIn: null, savedAt: null, sentToday: 0 })),
   getTracker: vi.fn(async () => ({ entries: [], stages: [] })),
+  getMailScan: vi.fn(async () => ({ connected: false })),
   saveAdzunaKey: vi.fn(async () => null),
   removeAdzunaKey: vi.fn(async () => null),
   checkAdzunaKey: vi.fn(async () => ({ ok: true })),

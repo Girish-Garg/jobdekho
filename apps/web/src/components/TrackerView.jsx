@@ -10,6 +10,7 @@ import SearchField from './ui/SearchField.jsx';
 import TrackerBoard from './TrackerBoard.jsx';
 import TrackerDetail from './TrackerDetail.jsx';
 import TrackerAddForm from './TrackerAddForm.jsx';
+import MailScanLine from './MailScanLine.jsx';
 import { MailIcon, PlusIcon } from './Icon.jsx';
 
 const EMPTY = 'Nothing tracked yet. Mark a posting Applied, add one you applied to elsewhere, or mail someone from the chat.';
@@ -44,6 +45,7 @@ export default function TrackerView() {
               {entries ? `${entries.length} ${entries.length === 1 ? 'application' : 'applications'}, ${waiting} waiting on you` : 'Everything you applied to, in JobDekho or anywhere else.'}
             </p>
           </div>
+          <div className="w-full sm:order-last"><MailScanLine /></div>
           <div className="ml-auto flex flex-wrap gap-2">
             <Button onClick={() => setAdding(true)} disabled={adding}><PlusIcon size={14} />Add one</Button>
             <Button variant="primary" onClick={() => startChatDraft('Email ')}><MailIcon size={14} />Email someone</Button>

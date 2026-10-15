@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import GmailCard from './GmailCard.jsx';
 import { getMail, connectMail, disconnectMail } from '../api.js';
 
-vi.mock('../api.js', () => ({ getMail: vi.fn(), connectMail: vi.fn(), disconnectMail: vi.fn() }));
+vi.mock('../api.js', () => ({ getMail: vi.fn(), connectMail: vi.fn(), disconnectMail: vi.fn(), getMailScan: vi.fn(async () => ({ connected: false })) }));
 
 // Made-up values only.
 const NONE = { connected: false, address: null, keptIn: null, savedAt: null, sentToday: 0 };

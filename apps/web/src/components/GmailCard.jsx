@@ -2,6 +2,7 @@ import Button from './ui/Button.jsx';
 import { useMailAccount, KEPT_IN } from '../lib/useMailAccount.js';
 import SettingsCard from './SettingsCard.jsx';
 import GmailFields from './GmailFields.jsx';
+import GmailScanPanel from './GmailScanPanel.jsx';
 import { CheckIcon, MailIcon } from './Icon.jsx';
 
 const TONE = { ok: 'text-applied', error: 'text-ember', muted: 'text-muted' };
@@ -30,7 +31,7 @@ export default function GmailCard() {
   const typed = Boolean(address.trim() && password.trim());
 
   return (
-    <SettingsCard icon={<MailIcon size={18} />} title="Gmail" hint="Sends the mails you approve in the chat, from your own Gmail.">
+    <SettingsCard icon={<MailIcon size={18} />} title="Gmail" hint="Sends the mails you approve in the chat, and files your applications from your mail.">
       <p className="text-sm text-muted">
         A mail goes only after you have seen it in the chat, from your own account, and lands in your Sent folder like any
         other. JobDekho talks to Gmail alone, keeps the app password in this computer&apos;s protected storage, and you can
@@ -46,6 +47,7 @@ export default function GmailCard() {
       </ol>
 
       <div className="mt-4">{view?.connected ? <Connected view={view} /> : <p className="text-sm font-semibold text-muted">Not connected.</p>}</div>
+      {view?.connected && <GmailScanPanel />}
 
       <form
         className="mt-4"

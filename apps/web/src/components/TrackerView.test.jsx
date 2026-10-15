@@ -5,7 +5,10 @@ import { getTracker, addTrackerEntry, updateTrackerEntry, removeTrackerEntry } f
 import { onChatDraft } from '../lib/chatDraftSignal.js';
 import { trackerChanged } from '../lib/trackerSignal.js';
 
-vi.mock('../api.js', () => ({ getTracker: vi.fn(), addTrackerEntry: vi.fn(), updateTrackerEntry: vi.fn(), removeTrackerEntry: vi.fn() }));
+vi.mock('../api.js', () => ({
+  getTracker: vi.fn(), addTrackerEntry: vi.fn(), updateTrackerEntry: vi.fn(), removeTrackerEntry: vi.fn(),
+  getMailScan: vi.fn(async () => ({ connected: false })), startMailScan: vi.fn(), undoMailScan: vi.fn(), getMail: vi.fn(async () => ({ connected: false })),
+}));
 
 const daysAgo = (days) => new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 const ev = (stage, text, at, from) => ({ id: `${stage}-${text}`, stage, text, at, ...(from ? { from } : {}) });

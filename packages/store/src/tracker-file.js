@@ -1,11 +1,17 @@
 import { postingNames } from './posting-lookup.js'
 import { eventOf, newEntry } from './tracker-entry.js'
 
-// tracker.json, one record per user: { seeded, entries }. Read and written
-// only through these two, by tracker.js and tracker-mail.js.
+// tracker.json, one record per user: { seeded, entries, lastScan? }. Read
+// and written only through these, by tracker.js, tracker-mail.js and
+// tracker-scan.js. A write keeps the record's other fields (the last mail
+// scan's undo, see tracker-scan.js) unless `patch` replaces them.
 const MAX_ENTRIES = 1000
 
-export const write = (store, userId, entries) => store.tracker.set(userId, { seeded: true, entries: entries.slice(-MAX_ENTRIES) })
+export function write(store, userId, entries, patch = {}) {
+  store.tracker.set(userId, { ...(store.tracker.get(userId) ?? {}), seeded: true, entries: entries.slice(-MAX_ENTRIES), ...patch })
+}
+
+export const lastScanOf = (store, userId) => store.tracker.get(userId)?.lastScan ?? null
 
 // The first read makes an entry for each posting already marked Applied,
 // which the Tracker replaces as the place applications are kept. When each

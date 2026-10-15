@@ -5,6 +5,8 @@ import { buildApp } from './app.js'
 import { createScrapeService } from './scrape/service.js'
 import { startAutoRefresh } from './scrape/auto.js'
 import { createLogoService } from './logos/service.js'
+import { mailWatchFor } from './mail-scan/watch.js'
+import { mailDeps } from './mail/deps.js'
 
 // Starts the server, for the repo's `npm start` (server.js) and for the
 // published `jobdekho` command (cli/main.js). `envFile` reads a .env from the
@@ -33,5 +35,8 @@ export async function startServer({ envFile = true, logger = true } = {}) {
 
   const address = await app.listen({ port: config.port, host: config.host })
   startAutoRefresh({ scrape, userId: config.devUserId, log: app.log })
+  // The mail scan's own checks: a catch-up soon after start, then every 15
+  // minutes, once the person has scanned their mail at least once.
+  if (config.devUserId) mailWatchFor({ deps: mailDeps(app), dashboard: app.dashboard, userId: config.devUserId, log: app.log }).start()
   return { app, address }
 }

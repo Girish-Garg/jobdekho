@@ -6,6 +6,16 @@ const NO_REACH = new Set(['ECONNECTION', 'ETIMEDOUT', 'ESOCKET', 'EDNS', 'ENOTFO
 
 const said = (err) => String(err?.response ?? '').replace(/\s+/g, ' ').slice(0, 160)
 
+// The same for reading mail (IMAP, see mail-scan/mailbox.js), whose client
+// marks a refused sign-in on the error itself.
+export function imapSentence(err) {
+  if (err?.authenticationFailed || /invalid credentials|authenticat/i.test(String(err?.responseText ?? err?.message ?? ''))) {
+    return 'Gmail did not accept this address and app password for reading mail. Connect Gmail again in Settings.'
+  }
+  if (NO_REACH.has(err?.code)) return 'JobDekho could not reach Gmail. Check your internet connection and try again.'
+  return `Gmail did not let JobDekho read your mail${err?.responseText ? `: ${String(err.responseText).slice(0, 160)}` : '.'}`
+}
+
 export function mailSentence(err, to = '') {
   const reply = said(err)
   if (/application-specific password/i.test(reply)) {

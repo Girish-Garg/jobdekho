@@ -341,14 +341,32 @@ chat with the start of a request already typed ("Add a project: ").
 
 ## Tracker and mail
 
-**Tracker** in the top bar lists every application and conversation you keep
-track of, from JobDekho or not: what happened last and when, and its stage
-(Applied, Emailed, Replied, Assessment, Interview, Offer, Closed), changed in
-place. "Waiting" shows everything with no word back yet. A posting you mark
-Applied joins it, the first time you open it brings in the ones marked before
-(with no date, since none was kept), and **Add one** takes an application
-from anywhere else. Each entry keeps its history, with room for notes of your
-own.
+**Tracker** in the top bar is a board of every application and conversation
+you keep track of, from JobDekho or not, in four lanes (Applied, Emailed, In
+process, Offer) with Closed folded to a strip. Lanes keep one height and
+scroll on their own, cards are all one size, and a long lane splits into
+this week, the last two weeks, this month and earlier, so sixty applications
+fit the space six do. Drag a card to move it. Opening one lays it over the
+board's edge: the next step when one waits on you (a test, an offer, a
+follow-up), a stage bar, its history and a note. **Needs you** narrows the
+board to what waits on you, and search finds a company or role. A posting
+you mark Applied joins it, the first time you open it brings in the ones
+marked before (with no date, since none was kept), and **Add one** takes an
+application from anywhere else.
+
+**Scan my mail** (on the Tracker, and in Settings > Gmail) files every
+application your Gmail shows, from any site: confirmations from hiring
+systems and boards (Greenhouse, Lever, Workday, Naukri, LinkedIn,
+Internshala and more), tests, interviews, offers, rejections, your own
+applications by mail and the replies to them. Gmail's own search picks the
+job mail, so the rest of your mailbox is never downloaded, and the scan only
+reads: nothing is marked read, moved or deleted. The first scan reads the
+whole mailbox; after it, JobDekho checks every 15 minutes while it runs and,
+when it starts, catches up on the days it was closed. Mails about one
+application become one entry, its history saying where each line came from
+with a link to open the mail in Gmail, and its stage following the newest
+mail (a rejection closes it). What the scan is not sure about is left out
+rather than filed wrong. **Undo last scan** puts the Tracker back as it was.
 
 The chat can write and send mail from your own Gmail. Ask it on any page,
 with the address and what you are after ("Email priya@acme.example, she
@@ -358,9 +376,8 @@ JobDekho asks above the box which resume to attach, then the card counts down
 twenty seconds before it sends, with **Stop**, **Edit** and **Send now**. A
 mail to an address you mailed before waits for you to press Send, and one
 from an earlier visit never sends by itself. Once sent, it lands in your
-Gmail Sent folder and in the Tracker. JobDekho does not read your inbox yet,
-so mark an entry Replied when they answer; one still at Emailed after five
-days offers to write a follow-up.
+Gmail Sent folder and in the Tracker, where a reply is filed by the next mail
+scan; one still at Emailed after five days offers to write a follow-up.
 
 JobDekho only mails an address you typed in the chat: it never guesses,
 builds or looks one up, and a draft to any other address says so instead of
@@ -475,6 +492,11 @@ What leaves this computer, and only when you ask for it:
 - **Scraping requests to job boards.** A scrape asks each source for its
   public listings, with nothing about you in the request (beyond your own
   Adzuna key, if you turn that source on).
+- **Reading your Gmail, only from Gmail.** Once you press Scan my mail, the
+  job mail Gmail's search finds is read on this computer, its first part
+  only. What is kept of each mail is its id, date, where it came from, its
+  subject and what it said in a word (received, test, interview); never the
+  rest of its text.
 - **Mail you send, through your Gmail.** Only a mail you saw in the chat,
   when its countdown ends or you press Send, with the resume you picked.
   Connecting signs in to Gmail once without sending anything. The app
@@ -556,6 +578,7 @@ names, and `JOBDEKHO_DATA_DIR` (`./data` by default) when running from source. T
 | `mail-account.json` | The Gmail address you connected, and where its app password is kept. Never the password. | Yes; you then connect Gmail again. |
 | `mail-sent.json` | When each mail went and to whom, for the daily limit and the "mailed before" note. | Yes. |
 | `mail-secret.bin` | On Windows, the app password as DPAPI protected it: only your Windows account on this computer can read it back. | Yes; you then connect Gmail again. |
+| `mail-scan.json` | When the mail scan last looked, and the ids of the mails it read (ids only). | Yes; the next scan reads the whole mailbox again, and adds nothing twice. |
 | `resume-selection.json` | Which template and entries the older resume builder renders. | No. |
 | `resumes/` | Compiled PDFs, cached by their source. | Yes, they are rebuilt when needed. |
 

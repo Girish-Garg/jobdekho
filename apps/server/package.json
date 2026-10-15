@@ -16,8 +16,10 @@
     "@jobdekho/scraper": "*",
     "@jobdekho/store": "*",
     "fastify": "^5.1.0",
+    "imapflow": "2.1.2",
     "nodemailer": "10.0.13",
     "playwright-core": "^1.63.0",
+    "postal-mime": "4.0.2",
     "unpdf": "^1.8.1"
   }
 }

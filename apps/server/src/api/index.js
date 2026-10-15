@@ -22,6 +22,7 @@ import { logoRoutes } from './logos.js'
 import { applyRoutes } from './apply.js'
 import { mailRoutes } from './mail.js'
 import { trackerRoutes } from './tracker.js'
+import { mailScanRoutes } from './mail-scan.js'
 import { mailDeps } from '../mail/deps.js'
 import { createDetector } from '../ai/detect.js'
 import { createSelector } from '../ai/select.js'
@@ -88,5 +89,6 @@ export async function apiRoutes(app) {
   await app.register(logoRoutes)
   await app.register(mailRoutes)
   await app.register(trackerRoutes)
+  await app.register(mailScanRoutes)
   if (app.applyAssist) await app.register(applyRoutes)
 }

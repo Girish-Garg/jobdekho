@@ -29,6 +29,7 @@ vi.mock('../api.js', () => ({
   getSetup: vi.fn(async () => []),
   getAdzunaKey: vi.fn(async () => ({ configured: false, from: null, appId: null, keyEnd: null, lastRun: null })),
   getMail: vi.fn(async () => ({ connected: false, address: null, keptIn: null, savedAt: null, sentToday: 0 })),
+  getMailScan: vi.fn(async () => ({ connected: false })),
   saveAdzunaKey: vi.fn(async () => null),
   removeAdzunaKey: vi.fn(async () => null),
   checkAdzunaKey: vi.fn(async () => ({ ok: true })),

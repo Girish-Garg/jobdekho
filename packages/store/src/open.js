@@ -48,6 +48,7 @@ export function openStore(dir) {
     tracker: userFile(at('tracker')),
     mailAccount: userFile(at('mailAccount')),
     mailSent: userFile(at('mailSent')),
+    mailScan: userFile(at('mailScan')),
     linkedinGuard: recordFile(at('linkedinGuard')),
     sourceMemo: recordFile(at('sourceMemo')),
     sourceHealth: recordFile(at('sourceHealth')),

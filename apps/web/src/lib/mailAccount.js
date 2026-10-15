@@ -35,6 +35,14 @@ export function useMailConnected() {
   return view === undefined ? undefined : Boolean(view?.connected);
 }
 
+// The connected address, for a link that opens a mail in the right Gmail
+// account; '' while unread or with none connected.
+export function useMailAddress() {
+  const view = useSyncExternalStore(subscribe, () => known);
+  useEffect(() => { mailAccount(); }, []);
+  return view?.connected ? view.address ?? '' : '';
+}
+
 // Tests start each case with nothing read.
 export function resetMailAccount() {
   asked = null;

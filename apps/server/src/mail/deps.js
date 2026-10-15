@@ -14,8 +14,9 @@ export function mailStore() {
 
 // What sending and Settings work with, made on first use. Tests decorate
 // `mailStore` (a store in a temporary folder), `mailSecrets` (a keeper in
-// memory) and `mailTransport` (a fake nodemailer createTransport) before
-// ready(), so no test reaches Gmail, a keyring or the real data folder.
+// memory), `mailTransport` (a fake nodemailer createTransport) and
+// `mailOpen` (a fake mailbox, see mail-scan/mailbox.js) before ready(), so
+// no test reaches Gmail, a keyring or the real data folder.
 export function mailDeps(app) {
   let deps = null
   const pick = (name, fallback) => (app.hasDecorator(name) ? app[name] : fallback())
@@ -26,6 +27,7 @@ export function mailDeps(app) {
       store,
       secrets: pick('mailSecrets', () => createSecrets({ dir: store.dir })),
       make: pick('mailTransport', () => null),
+      open: pick('mailOpen', () => null),
     }
     return deps
   }

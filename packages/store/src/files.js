@@ -67,6 +67,9 @@ export const FILES = {
   mailAccount: 'mail-account.json',
   mailSent: 'mail-sent.json',
   mailSecret: 'mail-secret.bin',
+  // How far the scan of the person's mail has got, and the ids of the mails
+  // it read (ids only). See mail-scan-state.js.
+  mailScan: 'mail-scan.json',
 }
 
 // Where the move into chats keeps a file exactly as it found it, beside the

@@ -9,6 +9,8 @@ import { listBlockedCompanies, blockCompany, unblockCompany } from '@jobdekho/st
 import { listMemory } from '@jobdekho/store/memory.js'
 import { postingNames } from '@jobdekho/store/posting-lookup.js'
 import { listTracker, addTrackerEntry, updateTrackerEntry, removeTrackerEntry, trackApplied, trackMail } from '@jobdekho/store/tracker.js'
+import { applyMailScan, undoMailScan } from '@jobdekho/store/tracker-scan.js'
+import { lastScanOf } from '@jobdekho/store/tracker-file.js'
 import { createDescriber } from '@jobdekho/scraper/describe-turn.js'
 import { join } from 'node:path'
 import { saveOriginal, deleteOriginal, findOriginal } from '../resume/original.js'
@@ -41,6 +43,10 @@ export function createDashboardStore(db, { describe = null } = {}) {
     updateTrackerEntry: (userId, id, patch) => updateTrackerEntry(db, userId, id, patch),
     removeTrackerEntry: (userId, id) => removeTrackerEntry(db, userId, id),
     trackMail: (userId, mail) => trackMail(db, userId, mail),
+    // A mail scan's applications, and its one Undo (see the store's tracker-scan.js).
+    applyMailScan: (userId, groups) => applyMailScan(db, userId, groups),
+    undoMailScan: (userId) => undoMailScan(db, userId),
+    lastMailScan: (userId) => lastScanOf(db, userId),
     listSources: () => listSources(db),
     listCompanies: () => listCompanies(db),
     listCompanyCounts: (userId, opts) => listCompanyCounts(db, userId, opts),
