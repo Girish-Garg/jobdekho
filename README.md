@@ -364,7 +364,8 @@ days offers to write a follow-up.
 
 JobDekho only mails an address you typed in the chat: it never guesses,
 builds or looks one up, and a draft to any other address says so instead of
-offering Send. At most 20 mails go out in 24 hours.
+offering Send. JobDekho sets no limit of its own on how many you send;
+Gmail's own daily limit applies, and its message shows if you reach it.
 
 To connect Gmail, turn on 2-Step Verification in your Google account, create
 an app password at myaccount.google.com/apppasswords, and paste it with your

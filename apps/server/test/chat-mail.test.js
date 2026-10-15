@@ -114,12 +114,17 @@ describe('sending it', () => {
     expect(transport.make).not.toHaveBeenCalled()
   })
 
-  it('stops at twenty in a day', async () => {
+  it('sets no daily limit of its own, and says so when Gmail says its own is reached', async () => {
     const { draft, send, store, userId, transport } = await setup()
-    for (let i = 0; i < 20; i += 1) logSentMail(store, userId, { to: `p${i}@x.example`, subject: 'Hi' })
-    const res = await send(await draft())
-    expect(res.statusCode).toBe(429)
-    expect(transport.make).not.toHaveBeenCalled()
+    for (let i = 0; i < 40; i += 1) logSentMail(store, userId, { to: `p${i}@x.example`, subject: 'Hi' })
+    expect((await send(await draft())).statusCode).toBe(200)
+    transport.make.mockImplementation(() => ({
+      sendMail: async () => { throw Object.assign(new Error('limit'), { responseCode: 550, response: '550 5.4.5 Daily user sending limit exceeded' }) },
+      close: () => {},
+    }))
+    const res = await send(await draft('Email priya@acmelabs.example again'))
+    expect(res.statusCode).toBe(502)
+    expect(res.json().error).toMatch(/Gmail says your account has sent as many mails as it allows for today/)
   })
 
   it('takes the person own edits, and refuses what is not an address or a document', async () => {

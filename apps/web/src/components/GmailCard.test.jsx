@@ -6,8 +6,8 @@ import { getMail, connectMail, disconnectMail } from '../api.js';
 vi.mock('../api.js', () => ({ getMail: vi.fn(), connectMail: vi.fn(), disconnectMail: vi.fn() }));
 
 // Made-up values only.
-const NONE = { connected: false, address: null, keptIn: null, savedAt: null, sentToday: 0, cap: 20 };
-const ON = { connected: true, address: 'me@example.com', keptIn: 'windows', savedAt: '2026-10-15T00:00:00.000Z', sentToday: 3, cap: 20 };
+const NONE = { connected: false, address: null, keptIn: null, savedAt: null, sentToday: 0 };
+const ON = { connected: true, address: 'me@example.com', keptIn: 'windows', savedAt: '2026-10-15T00:00:00.000Z', sentToday: 3 };
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -37,7 +37,7 @@ describe('GmailCard', () => {
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Connect' })));
     expect(connectMail).toHaveBeenCalledWith({ address: 'me@example.com', password: 'abcd efgh ijkl mnop' });
     expect(screen.getByText('Connected as me@example.com')).toBeInTheDocument();
-    expect(screen.getByText(/protected storage\. 3 of 20 mails/)).toBeInTheDocument();
+    expect(screen.getByText(/protected storage\. 3 mails sent in the last 24 hours/)).toBeInTheDocument();
     expect(screen.getByLabelText('App password')).toHaveValue('');
   });
 

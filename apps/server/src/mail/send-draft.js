@@ -1,10 +1,9 @@
-import { getMailAccount, sentInLastDay, logSentMail } from '@jobdekho/store/mail-log.js'
+import { getMailAccount, logSentMail } from '@jobdekho/store/mail-log.js'
 import { toIso } from '@jobdekho/store/timestamp.js'
 import { readDocument } from '../documents/read.js'
 import { documentPdf } from '../documents/pdf.js'
 import { downloadName } from '../api/document-files.js'
 import { sendGmail } from './gmail.js'
-import { DAILY_CAP } from './account.js'
 
 // Sending a mail the chat drafted, the one way a mail leaves JobDekho: the
 // card's countdown ran out or the person pressed Send (see the web's
@@ -19,7 +18,6 @@ const refuse = (status, error) => ({ status, body: { error } })
 
 const NOT_CONNECTED = 'Connect Gmail in Settings first. Nothing was sent.'
 const LOST = 'JobDekho could not read the saved app password. Connect Gmail again in Settings; nothing was sent.'
-const CAPPED = `JobDekho has sent ${DAILY_CAP} mails in the last 24 hours, as many as it sends in a day. Nothing was sent; try again later.`
 const NO_DOCUMENT = 'The resume picked to attach was deleted. Pick another one; nothing was sent.'
 
 // The attachment is compiled now, from the document as it is now, through
@@ -37,7 +35,6 @@ export async function sendDraft({ mail, documents, dashboard, userId, proposal, 
   const { store, secrets, make } = mail()
   const account = getMailAccount(store, userId)
   if (!account) return refuse(409, NOT_CONNECTED)
-  if (sentInLastDay(store, userId, now()) >= DAILY_CAP) return refuse(429, CAPPED)
   const made = await attachmentFor({ documents, userId, attach: proposal.attach, compile })
   if (made.failure) return made.failure
   const password = await secrets.read(account.address, account.keptIn)

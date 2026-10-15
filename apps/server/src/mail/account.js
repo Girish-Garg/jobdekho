@@ -6,7 +6,10 @@ import { checkGmail } from './gmail.js'
 // password is checked against Gmail before it is kept, so a typo is found
 // while the person is still looking at the field, and it is never sent back:
 // the view says which address is connected and where its password is kept.
-export const DAILY_CAP = 20
+//
+// There is no cap of JobDekho's own on how many go out: every mail is one
+// the person saw in the chat, and Gmail's own daily limit, when reached,
+// comes back as Gmail's own sentence (see errors.js).
 
 // Google shows an app password as four groups of four letters; spaces and
 // line breaks copied with it are not part of it.
@@ -23,7 +26,6 @@ export function mailView(store, userId, now = new Date()) {
     keptIn: account?.keptIn ?? null,
     savedAt: account?.savedAt ?? null,
     sentToday: sentInLastDay(store, userId, now),
-    cap: DAILY_CAP,
   }
 }
 

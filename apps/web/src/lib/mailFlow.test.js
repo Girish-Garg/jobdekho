@@ -9,7 +9,7 @@ vi.mock('../api.js', () => ({
   applyProposal: vi.fn(), discardProposal: vi.fn(), editMailDraft: vi.fn(), getMail: vi.fn(), listDocuments: vi.fn(),
 }));
 
-const CONNECTED = { connected: true, address: 'jane@example.com', keptIn: 'windows', sentToday: 0, cap: 20 };
+const CONNECTED = { connected: true, address: 'jane@example.com', keptIn: 'windows', sentToday: 0 };
 const RESUMES = [
   { id: 'd1', name: 'Jane Doe Resume', kind: 'resume', updatedAt: '2026-10-13T10:00:00.000Z' },
   { id: 'd2', name: 'Cover letter', kind: 'cover-letter', updatedAt: '2026-10-12T10:00:00.000Z' },

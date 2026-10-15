@@ -16,7 +16,7 @@ function Connected({ view }) {
         Connected as {view.address}
       </p>
       <p className="mt-0.5 text-sm text-muted">
-        The app password is kept in {KEPT_IN[view.keptIn] ?? 'protected storage'}. {view.sentToday} of {view.cap} mails sent in the last 24 hours.
+        The app password is kept in {KEPT_IN[view.keptIn] ?? 'protected storage'}. {view.sentToday} {view.sentToday === 1 ? 'mail' : 'mails'} sent in the last 24 hours.
       </p>
     </>
   );
@@ -71,7 +71,7 @@ export default function GmailCard() {
       <p aria-live="polite" className={`mt-3 min-h-[1.25rem] text-sm ${TONE[note?.tone] ?? ''}`}>{note?.text ?? ''}</p>
       <p className="text-xs text-muted">
         App passwords work for personal Gmail with 2-Step Verification on; Google does not offer them for most work or school
-        accounts. At most {view?.cap ?? 20} mails go out in a day. Disconnecting forgets the password here; revoke it at Google
+        accounts. Gmail's own daily sending limit applies. Disconnecting forgets the password here; revoke it at Google
         to end it for good.
       </p>
     </SettingsCard>

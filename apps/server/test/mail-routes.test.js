@@ -39,7 +39,7 @@ describe('the Gmail card', () => {
 
   it('connects after Gmail takes the pair, keeps the password out of every file and every answer', async () => {
     const { call, secrets, transport } = await makeApp()
-    expect((await call('GET', '/api/mail')).json()).toMatchObject({ connected: false, address: null, sentToday: 0, cap: 20 })
+    expect((await call('GET', '/api/mail')).json()).toMatchObject({ connected: false, address: null, sentToday: 0 })
     const res = await call('PUT', '/api/mail', { address: ' Me@Example.com ', password: PASSWORD })
     expect(res.statusCode).toBe(200)
     expect(res.json()).toMatchObject({ connected: true, address: ADDRESS, keptIn: 'windows' })
