@@ -20,6 +20,9 @@ import { scrapeRoutes } from './scrape.js'
 import { adzunaRoutes } from './adzuna.js'
 import { logoRoutes } from './logos.js'
 import { applyRoutes } from './apply.js'
+import { mailRoutes } from './mail.js'
+import { trackerRoutes } from './tracker.js'
+import { mailDeps } from '../mail/deps.js'
 import { createDetector } from '../ai/detect.js'
 import { createSelector } from '../ai/select.js'
 import { chatDeps } from '../chat/deps.js'
@@ -59,6 +62,8 @@ export async function apiRoutes(app) {
   app.decorate('ai', { detect, select: selector(app, detect) })
   // What the chats and the posting actions share (see chat/deps.js).
   app.decorate('chats', chatDeps(app))
+  // Gmail's connection and the mails sent through it (see mail/deps.js).
+  app.decorate('mail', mailDeps(app))
 
   await app.register(postingsRoutes)
   await app.register(blockedCompanyRoutes)
@@ -81,5 +86,7 @@ export async function apiRoutes(app) {
   await app.register(scrapeRoutes)
   await app.register(adzunaRoutes)
   await app.register(logoRoutes)
+  await app.register(mailRoutes)
+  await app.register(trackerRoutes)
   if (app.applyAssist) await app.register(applyRoutes)
 }

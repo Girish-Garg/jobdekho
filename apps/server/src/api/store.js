@@ -7,6 +7,8 @@ import { getAiResult, setAiResult, replaceAiResult, listAiResults } from '@jobde
 import { getProviderPref, upsertProviderPref } from '@jobdekho/store/ai-provider-pref.js'
 import { listBlockedCompanies, blockCompany, unblockCompany } from '@jobdekho/store/blocked-companies.js'
 import { listMemory } from '@jobdekho/store/memory.js'
+import { postingNames } from '@jobdekho/store/posting-lookup.js'
+import { listTracker, addTrackerEntry, updateTrackerEntry, removeTrackerEntry, trackApplied, trackMail } from '@jobdekho/store/tracker.js'
 import { createDescriber } from '@jobdekho/scraper/describe-turn.js'
 import { join } from 'node:path'
 import { saveOriginal, deleteOriginal, findOriginal } from '../resume/original.js'
@@ -26,7 +28,19 @@ export function createDashboardStore(db, { describe = null } = {}) {
     postingCards: (_userId, ids) => postingCards(db, ids),
     // Fetches a posting's missing description once (see describe-posting.js).
     describePosting: (userId, id) => describeAndSave(db, describer ??= createDescriber(db), userId, id),
-    setPostingStatus: (userId, id, status) => setPostingStatus(db, userId, id, status),
+    // Marking a posting Applied also starts tracking it (see the store's tracker.js).
+    setPostingStatus: async (userId, id, status) => {
+      await setPostingStatus(db, userId, id, status)
+      const names = status === 'applied' ? postingNames(db, [id]) : null
+      if (names?.has(id)) trackApplied(db, userId, { id, ...names.get(id) })
+    },
+    // The Tracker, on this one handle, so the Applied mark above, the page
+    // and a sent mail never write it from two.
+    listTracker: (userId) => listTracker(db, userId),
+    addTrackerEntry: (userId, input) => addTrackerEntry(db, userId, input),
+    updateTrackerEntry: (userId, id, patch) => updateTrackerEntry(db, userId, id, patch),
+    removeTrackerEntry: (userId, id) => removeTrackerEntry(db, userId, id),
+    trackMail: (userId, mail) => trackMail(db, userId, mail),
     listSources: () => listSources(db),
     listCompanies: () => listCompanies(db),
     listCompanyCounts: (userId, opts) => listCompanyCounts(db, userId, opts),

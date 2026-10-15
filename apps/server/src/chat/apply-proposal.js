@@ -5,6 +5,7 @@ import { textChangedAt } from '@jobdekho/store/document-versions.js'
 import { checkTex } from '../resume/guard/check.js'
 import { documentViewFor } from '../documents/view.js'
 import { applyProfileOps } from './profile-proposal.js'
+import { sendDraft } from '../mail/send-draft.js'
 
 // The one place a chat proposal changes anything, and only because the
 // person pressed Apply. The proposal is read by id from the saved chats,
@@ -55,22 +56,26 @@ async function applyDocument({ dashboard, documents, userId, proposal }) {
   return { document: documentViewFor(doc, await dashboard.getProfile(userId)) }
 }
 
-export async function applyProposal({ chat, documents, dashboard, userId, proposalId }) {
+// A mail is sent rather than applied (see mail/send-draft.js), and says so.
+const APPLY = { profile: applyProfile, document: applyDocument, mail: sendDraft }
+
+export async function applyProposal({ chat, documents, dashboard, userId, proposalId, mail = null, compile = null }) {
   const found = await findProposal(chat, userId, proposalId)
   if (!found) return refuse(404, 'That change is no longer in any chat.')
   const { proposal } = found
-  if (proposal.status === 'applied') return refuse(409, 'This change was already applied.')
+  if (proposal.status === 'applied') return refuse(409, proposal.kind === 'mail' ? 'This mail was already sent.' : 'This change was already applied.')
   if (proposal.status === 'discarded') return refuse(409, 'This change was discarded. Ask again for a fresh one.')
   if (proposal.status === 'refused') return refuse(409, proposal.reason ?? CANNOT)
   const key = `${userId}:${proposalId}`
   if (inFlight.has(key)) return refuse(409, 'This change is already being applied.')
   inFlight.add(key)
   try {
-    const apply = proposal.kind === 'profile' ? applyProfile : applyDocument
-    const outcome = await apply({ dashboard, documents, userId, proposal })
+    const apply = APPLY[proposal.kind] ?? applyDocument
+    const outcome = await apply({ dashboard, documents, userId, proposal, mail, compile })
     if (outcome.status) return outcome
-    const marked = await updateProposal(chat, userId, proposalId, { status: 'applied', appliedAt: toIso(new Date()) })
-    return { status: 200, body: { proposal: marked, ...outcome } }
+    const { mark = {}, ...rest } = outcome
+    const marked = await updateProposal(chat, userId, proposalId, { status: 'applied', appliedAt: toIso(new Date()), ...mark })
+    return { status: 200, body: { proposal: marked, ...rest } }
   } finally {
     inFlight.delete(key)
   }
@@ -81,7 +86,7 @@ export async function applyProposal({ chat, documents, dashboard, userId, propos
 export async function discardProposal({ chat, userId, proposalId }) {
   const found = await findProposal(chat, userId, proposalId)
   if (!found) return refuse(404, 'That change is no longer in any chat.')
-  if (found.proposal.status === 'applied') return refuse(409, 'This change was already applied, so it cannot be discarded.')
+  if (found.proposal.status === 'applied') return refuse(409, found.proposal.kind === 'mail' ? 'This mail was already sent.' : 'This change was already applied, so it cannot be discarded.')
   if (found.proposal.status === 'refused') return refuse(409, CANNOT)
   await updateProposal(chat, userId, proposalId, { status: 'discarded' })
   return { status: 204 }

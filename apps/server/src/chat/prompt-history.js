@@ -12,8 +12,9 @@ export const MAX_HISTORY = 6
 // change that could not be made carries its reason, so "why is there no
 // card?" gets the true answer and the next attempt can avoid the mistake.
 const STATUS = { pending: 'not applied yet', applied: 'applied', discarded: 'discarded', refused: 'could not be made' }
+const MAIL_STATUS = { pending: 'not sent yet', applied: 'sent', discarded: 'discarded', refused: 'not sendable' }
 
-const outcome = (p) => `${STATUS[p.status] ?? p.status}${p.status === 'refused' && p.reason ? ` (${p.reason})` : ''}`
+const outcome = (p) => `${(p.kind === 'mail' ? MAIL_STATUS : STATUS)[p.status] ?? p.status}${p.status === 'refused' && p.reason ? ` (${p.reason})` : ''}`
 
 function offered(turn) {
   const proposals = turn.proposals ?? []

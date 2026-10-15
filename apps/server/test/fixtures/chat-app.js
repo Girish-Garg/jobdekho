@@ -59,8 +59,9 @@ let people = 0
 
 // The app on a real store in a temporary folder, as a person no other test
 // shares the one call slot with. `postings` go into the corpus first;
-// `seed(store, userId)` adds anything else.
-export async function chatApp({ cli = heldCli().cli, postings = [], seed } = {}) {
+// `seed(store, userId)` adds anything else; `decorate(app, store)` adds
+// the seams a test needs before the app is ready.
+export async function chatApp({ cli = heldCli().cli, postings = [], seed, decorate } = {}) {
   const dir = mkdtempSync(join(tmpdir(), 'jobdekho-chat-app-'))
   dirs.push(dir)
   const store = openStore(dir)
@@ -71,6 +72,7 @@ export async function chatApp({ cli = heldCli().cli, postings = [], seed } = {})
   app.decorate('cli', cli)
   app.decorate('chatStore', store)
   app.decorate('documentStore', store)
+  decorate?.(app, store)
   await app.ready()
   const cookie = `session=${app.jwt.sign({ sub: userId, email: 'a@b.c', name: 'A', avatarUrl: null })}`
   const call = (method, url, body, headers = {}) => app.inject({

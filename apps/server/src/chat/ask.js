@@ -5,6 +5,7 @@ import { runChatTurn } from './run.js'
 import { chatMemory, memoryOffers } from './memory-turn.js'
 import { noteEvent, stopSignal } from './in-flight.js'
 import { saveTurn } from './save-turn.js'
+import { chatMail } from './mail-context.js'
 
 // The turns a question is asked with: every one that asked something, which
 // leaves out the notes a job action started elsewhere leaves behind.
@@ -25,6 +26,9 @@ export async function askInChat(deps, { userId, chat, message, body = {}, emit =
   // What the person asked the chat to remember, unless they switched memory
   // off (see memory-turn.js).
   context.memory = await chatMemory(deps.store, userId, { page: context.page, message })
+  // A question about a mail gets the mail rule and who the person is to
+  // write as (see mail-context.js); every other question, nothing more.
+  context.mail = await chatMail({ store: deps.store, dashboard: deps.dashboard, userId, page: context.page, message, history })
   const watch = (event) => { noteEvent(userId, event); emit(event) }
   const asked = await runChatTurn({ message, context, history, select: deps.select, emit: watch, signal: stopSignal(userId), ...deps.cli })
   // What to offer to remember: the AI's offers and what the local spotters

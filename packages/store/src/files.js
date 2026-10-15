@@ -57,6 +57,16 @@ export const FILES = {
   // scraper's source-memo.js and source-guard.js.
   sourceMemo: 'source-memo.json',
   sourceHealth: 'source-health.json',
+  // Every application and conversation the person keeps track of, from
+  // JobDekho or not. See tracker.js.
+  tracker: 'tracker.json',
+  // The Gmail address connected in Settings and the mails sent through it
+  // (see mail-log.js). The app password is in neither: the server keeps it
+  // in the computer's protected storage, and on Windows that is this
+  // file, readable only by the same Windows account (see its mail/secret.js).
+  mailAccount: 'mail-account.json',
+  mailSent: 'mail-sent.json',
+  mailSecret: 'mail-secret.bin',
 }
 
 // Where the move into chats keeps a file exactly as it found it, beside the

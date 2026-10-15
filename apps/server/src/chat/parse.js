@@ -3,6 +3,7 @@ import { validateActions } from './actions.js'
 import { validateRefs } from './refs.js'
 import { validateProposals } from './proposals.js'
 import { validateQuestions } from './questions.js'
+import { validateMailDraft } from './mail-draft.js'
 import { withoutPostingIds } from './reply-ids.js'
 
 // The reply is shown straight in the panel, so it is clamped to a size the
@@ -15,8 +16,10 @@ const MAX_REPLY = 4000
 const PROPOSAL_ONLY = 'Here is a change you can apply.'
 const REFUSED_ONLY = 'The change could not be made. The card below says why.'
 const ASK_ONLY = 'Pick below.'
+const MAIL_ONLY = 'The mail is below.'
 
 function fallbackReply(proposals, questions) {
+  if (proposals.some((p) => p.kind === 'mail')) return MAIL_ONLY
   if (proposals.some((p) => p.status === 'pending')) return PROPOSAL_ONLY
   if (proposals.length) return REFUSED_ONLY
   return questions.length ? ASK_ONLY : ''
@@ -35,7 +38,9 @@ export function parseChatReply(raw, context) {
   const obj = parseJsonObject(raw)
   if (!obj) return null
   const onFeed = !context?.page || context.page === 'postings'
-  const proposals = validateProposals(obj.proposals, context)
+  // A mail is offered like a change (see mail-draft.js), one per turn.
+  const mail = validateMailDraft(obj.mail, context)
+  const proposals = [...validateProposals(obj.proposals, context), ...(mail ? [mail] : [])]
   const questions = validateQuestions(obj.ask)
   const given = typeof obj.reply === 'string' ? withoutPostingIds(obj.reply, context).trim().slice(0, MAX_REPLY) : ''
   const reply = given || fallbackReply(proposals, questions)
