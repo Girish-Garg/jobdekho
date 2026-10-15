@@ -63,6 +63,11 @@ describe('a mail the chat drafts', () => {
     expect(mail).toMatchObject({ status: 'refused', reason: expect.stringMatching(/only mails an address you typed/) })
   })
 
+  it('is refused for a shorter address inside the one typed', async () => {
+    const { draft } = await setup({ answer: mailReply({ ...DRAFT, to: 'priya@acmelabs.example' }) })
+    expect((await draft('Email priya@acmelabs.example.com about the internship')).status).toBe('refused')
+  })
+
   it('tells a question that is not about a mail nothing about mail', async () => {
     const { ask, chat, cli } = await setup({ answer: () => ({ reply: 'Two are remote.' }) })
     await ask(chat.id, 'which of these are remote?')

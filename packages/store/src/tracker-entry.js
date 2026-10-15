@@ -27,6 +27,12 @@ export function cleanEmail(value) {
   return EMAIL.test(text) ? text : ''
 }
 
+// Every address written in a piece of text, each matched whole (the longest
+// run the pattern allows), so a shorter one inside it, priya@acme.example
+// inside priya@acme.example.com, is never taken for one that was written.
+const ANY_EMAIL = /[^\s@<>"',;:()[\]\\]+@[^\s@<>"',;:()[\]\\]+\.[A-Za-z]{2,}/g
+export const emailsIn = (text) => (String(text ?? '').match(ANY_EMAIL) ?? []).map(cleanEmail).filter(Boolean)
+
 export const shortId = () => randomBytes(5).toString('hex')
 
 export const isLater = (stage, than) => STAGES.indexOf(stage) > STAGES.indexOf(than)

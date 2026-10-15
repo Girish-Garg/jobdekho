@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { cleanEmail, line } from '@jobdekho/store/tracker-entry.js'
+import { cleanEmail, emailsIn, line } from '@jobdekho/store/tracker-entry.js'
 
 // The mail a chat reply offers (see prompt-mail.js), as a proposal the card
 // shows and the person sends (see mail/send-draft.js):
@@ -29,7 +29,7 @@ export function bodyOf(value) {
     .replace(/\n{3,}/g, '\n\n').trim().slice(0, MAX_BODY)
 }
 
-const typedBy = (said, address) => said.some((text) => text.toLowerCase().includes(address))
+const typedBy = (said, address) => said.some((text) => emailsIn(text).includes(address))
 
 export function validateMailDraft(raw, context) {
   if (!raw || typeof raw !== 'object' || !context?.mail) return null

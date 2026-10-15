@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { openStore, FILES } from '@jobdekho/store/open.js'
 import { listTracker, addTrackerEntry, updateTrackerEntry, removeTrackerEntry, trackApplied, trackMail } from '@jobdekho/store/tracker.js'
-import { cleanEmail } from '@jobdekho/store/tracker-entry.js'
+import { cleanEmail, emailsIn } from '@jobdekho/store/tracker-entry.js'
 
 let dir
 let store
@@ -97,6 +97,14 @@ describe('a mail sent from the chat', () => {
     const after = trackMail(store, 'u1', MAIL, DAY2)
     expect(after).toMatchObject({ id: entry.id, stage: 'interview', stageAt: DAY1.toISOString() })
     expect(after.events.at(-1)).toMatchObject({ stage: null })
+  })
+})
+
+describe('emailsIn', () => {
+  it('finds each address whole, without the punctuation around it', () => {
+    expect(emailsIn('Email Priya@Acme.example, or hr@acme.example.com.')).toEqual(['priya@acme.example', 'hr@acme.example.com'])
+    expect(emailsIn('mail hr@acme.example.com')).not.toContain('hr@acme.example')
+    expect(emailsIn('no address here')).toEqual([])
   })
 })
 
