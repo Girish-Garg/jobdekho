@@ -27,9 +27,15 @@ const GENERIC = /^(us|our|our team|you|your|the|the team|the company|this|this r
 
 const titled = (slug) => slug.split(/[-_]+/).filter(Boolean).map((part) => part[0].toUpperCase() + part.slice(1)).join(' ')
 
+// A name, not a slogan: it starts with a capital or a digit ("build your
+// interview-ready profile" does not), runs to five words at most, and says
+// nothing a promotion says.
+const SLOGAN = /\b(your|you|our|profile|skills?|learn|build|prep|course|interview|jobs?|career|opportunit\w*|free|today|now)\b/i
+
 function clean(name) {
   const text = String(name ?? '').replace(/["'`]+$/g, '').replace(/\s+/g, ' ').trim()
   if (text.length < 2 || text.length > 60 || /@|https?:/.test(text) || GENERIC.test(text) || PLATFORMS.has(text.toLowerCase())) return ''
+  if (!/^[\p{Lu}\d]/u.test(text) || text.split(' ').length > 5 || SLOGAN.test(text)) return ''
   return text
 }
 

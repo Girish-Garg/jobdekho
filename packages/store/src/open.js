@@ -49,6 +49,7 @@ export function openStore(dir) {
     mailAccount: userFile(at('mailAccount')),
     mailSent: userFile(at('mailSent')),
     mailScan: userFile(at('mailScan')),
+    mailLabels: userFile(at('mailLabels')),
     linkedinGuard: recordFile(at('linkedinGuard')),
     sourceMemo: recordFile(at('sourceMemo')),
     sourceHealth: recordFile(at('sourceHealth')),

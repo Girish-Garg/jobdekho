@@ -1,13 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, act, within } from '@testing-library/react';
 import TrackerView from './TrackerView.jsx';
-import { getTracker, addTrackerEntry, updateTrackerEntry, removeTrackerEntry } from '../api.js';
+import { getTracker, addTrackerEntry, updateTrackerEntry, removeTrackerEntry, markNotAJob } from '../api.js';
 import { onChatDraft } from '../lib/chatDraftSignal.js';
 import { trackerChanged } from '../lib/trackerSignal.js';
 
 vi.mock('../api.js', () => ({
   getTracker: vi.fn(), addTrackerEntry: vi.fn(), updateTrackerEntry: vi.fn(), removeTrackerEntry: vi.fn(),
   getMailScan: vi.fn(async () => ({ connected: false })), startMailScan: vi.fn(), undoMailScan: vi.fn(), getMail: vi.fn(async () => ({ connected: false })),
+  markNotAJob: vi.fn(),
 }));
 
 const daysAgo = (days) => new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
@@ -17,6 +18,7 @@ const ENTRIES = [
   { id: 'e2', company: 'Acme Labs', role: 'Backend intern', postingId: null, contact: { name: 'Priya', email: 'priya@acme.example' }, stage: 'emailed', stageAt: daysAgo(6), events: [ev('emailed', 'Mailed Priya (priya@acme.example): Backend internship', daysAgo(6))] },
   { id: 'e3', company: 'Initech', role: '', postingId: null, contact: null, stage: 'applied', stageAt: null, events: [ev('applied', 'Marked Applied in JobDekho', null)] },
   { id: 'e4', company: 'Cyberdyne', role: 'ML intern', postingId: null, contact: null, stage: 'closed', stageAt: daysAgo(20), events: [ev('closed', 'Not moving forward', daysAgo(20))] },
+  { id: 'e5', company: 'PrepCo', role: '', postingId: null, contact: null, source: 'mail', stage: 'interview', stageAt: daysAgo(3), events: [{ ...ev('interview', 'Interview: crack it', daysAgo(3), 'Mail from prepco.example'), mailId: '<p1>', sender: 'prepco.example', via: 'company' }] },
 ];
 
 beforeEach(() => {
@@ -41,10 +43,10 @@ const card = (company) => screen.getByRole('button', { name: new RegExp(`^${comp
 describe('TrackerView, the board', () => {
   it('puts each application in its lane, Closed folded, and counts what waits on you', async () => {
     await mount();
-    expect(screen.getByText('4 applications, 1 waiting on you')).toBeInTheDocument();
+    expect(screen.getByText('5 applications, 1 waiting on you')).toBeInTheDocument();
     expect(cardsIn('Applied')).toEqual(['Initech']);
     expect(cardsIn('Emailed')).toEqual(['Acme Labs']);
-    expect(cardsIn('In process')).toEqual(['Globex']);
+    expect(cardsIn('In process')).toEqual(['Globex', 'PrepCo']);
     expect(card('Acme Labs')).toHaveAccessibleName('Acme Labs, Backend intern, Follow up');
     expect(within(lane('Emailed')).getByText('This week, 1')).toBeInTheDocument();
     expect(within(lane('Applied')).getByText('Earlier, 1')).toBeInTheDocument();
@@ -74,6 +76,23 @@ describe('TrackerView, the board', () => {
     await act(async () => fireEvent.click(within(panel).getByRole('button', { name: 'Mark it closed' })));
     expect(updateTrackerEntry).toHaveBeenCalledWith('e1', { stage: 'closed' });
     fireEvent.click(within(panel).getByRole('button', { name: 'Close' }));
+    expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
+  });
+
+  it('closes the sidebar on Esc, and offers Not a job only for what the mail scan filed', async () => {
+    await mount();
+    fireEvent.click(card('Globex'));
+    expect(screen.queryByRole('button', { name: 'Not a job' })).not.toBeInTheDocument();
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
+    fireEvent.click(card('PrepCo'));
+    fireEvent.click(screen.getByRole('button', { name: 'Not a job' }));
+    expect(screen.getByText(/every card from mail from prepco.example/)).toBeInTheDocument();
+    markNotAJob.mockResolvedValue({ removed: 1, domains: ['prepco.example'], companies: [] });
+    getTracker.mockResolvedValue({ entries: ENTRIES.filter((e) => e.id !== 'e5') });
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Yes, not a job' })));
+    expect(markNotAJob).toHaveBeenCalledWith('e5');
+    expect(cardsIn('In process')).toEqual(['Globex']);
     expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
   });
 

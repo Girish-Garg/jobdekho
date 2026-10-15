@@ -32,3 +32,16 @@ export const JOB_MAILS = [
   { id: 'cl1@club', from: 'Club <team@club.example>', subject: 'Your application for the photo walk', date: '2026-10-03T09:00:00Z', text: 'See you on Sunday at 7 am.' },
   { id: 'nk2@tips', from: 'Naukri <info@naukri.com>', subject: 'Interview tips for freshers', date: '2026-10-04T09:00:00Z', text: 'Ten interview questions every developer gets.' },
 ]
+
+// What a real first scan filed wrongly (2026-10-15), as look-alikes: a
+// board's news arm, course sites, a community digest, a prep newsletter and
+// a company's own newsletter. None of these is an application.
+export const PROMO_MAILS = [
+  { id: 'un1@news', from: 'Unstop <noreply@unstop.news>', subject: 'Offer: Crack Interviews, Land Offers', date: '2026-06-06T09:00:00Z', bulk: true,
+    text: 'Congratulations on taking the first step. Get the offer you deserve with our interview prep.' },
+  { id: 'un2@news', from: 'Unstop <noreply@unstop.news>', subject: 'Interviews standing between you and your dream role?', date: '2026-02-11T09:00:00Z', bulk: true, text: 'Join our mock interview sessions.' },
+  { id: 'ed1@course', from: 'Educative <hello@educative.io>', subject: 'Forward Deployed Engineer Interviews', date: '2026-10-15T09:00:00Z', bulk: true, text: 'Prepare for your interview with our new course.' },
+  { id: 'qu1@digest', from: 'Quora Digest <digest@quora.com>', subject: 'What is the best way to prepare for a software engineer interview?', date: '2026-09-01T09:00:00Z', bulk: true, text: 'Answer: practice every day.' },
+  { id: 'pr1@prep', from: 'PrepCo <team@prepco.example>', subject: 'build your interview-ready profile', date: '2026-08-23T09:00:00Z', bulk: true, text: 'Recruiters look for these skills in a developer profile.' },
+  { id: 'nl1@globex', from: 'Globex <news@globex.example>', subject: 'Interview with our CTO on hiring engineers', date: '2026-10-01T09:00:00Z', bulk: true, text: 'This month our CTO talks about how we hire engineers.' },
+]

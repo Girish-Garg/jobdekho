@@ -10,6 +10,7 @@ import { listMemory } from '@jobdekho/store/memory.js'
 import { postingNames } from '@jobdekho/store/posting-lookup.js'
 import { listTracker, addTrackerEntry, updateTrackerEntry, removeTrackerEntry, trackApplied, trackMail } from '@jobdekho/store/tracker.js'
 import { applyMailScan, undoMailScan } from '@jobdekho/store/tracker-scan.js'
+import { notAJob, noteStageCorrection } from '@jobdekho/store/tracker-learn.js'
 import { lastScanOf } from '@jobdekho/store/tracker-file.js'
 import { createDescriber } from '@jobdekho/scraper/describe-turn.js'
 import { join } from 'node:path'
@@ -40,7 +41,15 @@ export function createDashboardStore(db, { describe = null } = {}) {
     // and a sent mail never write it from two.
     listTracker: (userId) => listTracker(db, userId),
     addTrackerEntry: (userId, input) => addTrackerEntry(db, userId, input),
-    updateTrackerEntry: (userId, id, patch) => updateTrackerEntry(db, userId, id, patch),
+    // A stage moved by hand on a mail-found entry is also a lesson for the
+    // scan (see the store's tracker-learn.js).
+    updateTrackerEntry: (userId, id, patch) => {
+      const before = patch?.stage ? listTracker(db, userId).find((entry) => entry.id === id) : null
+      const result = updateTrackerEntry(db, userId, id, patch)
+      if (before && !result.error) noteStageCorrection(db, userId, before, patch.stage)
+      return result
+    },
+    notAJob: (userId, id) => notAJob(db, userId, id),
     removeTrackerEntry: (userId, id) => removeTrackerEntry(db, userId, id),
     trackMail: (userId, mail) => trackMail(db, userId, mail),
     // A mail scan's applications, and its one Undo (see the store's tracker-scan.js).

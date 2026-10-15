@@ -18,3 +18,10 @@ export function updateTrackerEntry(id, patch) {
 export function removeTrackerEntry(id) {
   return req(`/api/tracker/${encodeURIComponent(id)}`, { method: 'DELETE' });
 }
+
+// "Not a job" on an entry the mail scan made: it goes with every entry from
+// the same sender, and the scan skips that sender from now on. Answers
+// { removed, domains, companies }.
+export function markNotAJob(id) {
+  return req(`/api/tracker/${encodeURIComponent(id)}/not-job`, { method: 'POST' });
+}

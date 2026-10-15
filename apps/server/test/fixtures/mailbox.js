@@ -4,8 +4,9 @@
 // queries it was asked, for a test to read.
 let next = 0
 
-export function rawMail({ from, to = 'me@example.com', subject, date, id, inReplyTo = null, text = '', html = null }) {
+export function rawMail({ from, to = 'me@example.com', subject, date, id, inReplyTo = null, text = '', html = null, bulk = false }) {
   const head = [
+    ...(bulk ? ['List-Unsubscribe: <mailto:unsubscribe@example.com>'] : []),
     `From: ${from}`, `To: ${to}`, `Subject: ${subject}`, `Date: ${new Date(date).toUTCString()}`, `Message-ID: <${id}>`,
     ...(inReplyTo ? [`In-Reply-To: <${inReplyTo}>`] : []), 'MIME-Version: 1.0',
   ]
@@ -32,6 +33,8 @@ export function message(mail) {
       from: [parseAddress(mail.from)],
       to: [parseAddress(mail.to ?? 'me@example.com')],
     },
+    // Only the headers the scan asks for, the way imapflow hands them over.
+    headers: Buffer.from(mail.bulk ? `List-Unsubscribe: <mailto:unsubscribe@example.com>${String.fromCharCode(13, 10)}` : ''),
     source: Buffer.from(rawMail(mail)),
   }
 }
@@ -51,7 +54,7 @@ export function fakeMailbox(mails) {
         queries.push(query)
         return messages.map((one) => one.uid)
       },
-      envelopes: (uids) => each(uids, ({ uid, threadId, envelope }) => ({ uid, threadId, envelope })),
+      envelopes: (uids) => each(uids, ({ uid, threadId, envelope, headers }) => ({ uid, threadId, envelope, headers })),
       bodies: (uids) => each(uids, ({ uid, source }) => ({ uid, source })),
       close: async () => {},
     }

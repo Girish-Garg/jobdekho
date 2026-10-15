@@ -44,11 +44,15 @@ export function contactOf(raw) {
 }
 
 // `from` names where a line came from ("Greenhouse mail"), `mailId` the
-// mail it was read from, so a second scan never adds it twice.
-export function eventOf({ at, stage = null, text = '', from = '', mailId = '' }) {
+// mail it was read from, so a second scan never adds it twice. `sender` is
+// that mail's domain and `via` what kind of sender it is (a hiring system,
+// a board, the company itself), which is what "Not a job" learns from.
+export function eventOf({ at, stage = null, text = '', from = '', mailId = '', sender = '', via = '' }) {
   const event = { id: shortId(), at: toIso(at), stage: STAGES.includes(stage) ? stage : null, text: line(text, MAX_TEXT) }
   if (line(from)) event.from = line(from, 80)
   if (line(mailId)) event.mailId = line(mailId, 300)
+  if (line(sender)) event.sender = line(sender, 120)
+  if (line(via)) event.via = line(via, 20)
   return event
 }
 

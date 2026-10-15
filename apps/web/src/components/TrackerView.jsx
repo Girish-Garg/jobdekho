@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTracker } from '../lib/useTracker.js';
 import { needsYou } from '../lib/trackerBoard.js';
 import { startChatDraft } from '../lib/chatDraftSignal.js';
-import { notifyError } from '../lib/toast.js';
+import { notify, notifyError } from '../lib/toast.js';
 import PageTitle from './ui/PageTitle.jsx';
 import Button from './ui/Button.jsx';
 import Card from './ui/Card.jsx';
@@ -23,7 +23,7 @@ const matches = (entry, q) => !q || `${entry.company} ${entry.role}`.toLowerCase
 // and "Needs you" narrow the board; "Email someone" starts the request in
 // the chat, where the mail is written and seen before it goes.
 export default function TrackerView() {
-  const { entries, error, add, update, remove } = useTracker();
+  const { entries, error, add, update, remove, notJob } = useTracker();
   const [openId, setOpenId] = useState(null);
   const [adding, setAdding] = useState(false);
   const [q, setQ] = useState('');
@@ -33,7 +33,14 @@ export default function TrackerView() {
   const shown = (entries ?? []).filter((entry) => matches(entry, q) && (!needOnly || needsYou(entry)));
   const change = (id, patch) => update(id, patch).catch((err) => notifyError(err, 'Could not change it'));
   const drop = (id) => remove(id).then(() => setOpenId(null), (err) => notifyError(err, 'Could not remove it'));
-  const panel = open && <TrackerDetail key={open.id} entry={open} onClose={() => setOpenId(null)} onUpdate={change} onRemove={drop} />;
+  const notAJob = (id) => notJob(id).then(
+    (outcome) => {
+      setOpenId(null);
+      notify({ title: outcome.removed > 1 ? `Removed ${outcome.removed} that were not jobs` : 'Removed. Not a job', detail: 'Mail scans skip it from now on.', kind: 'done' });
+    },
+    (err) => notifyError(err, 'Could not remove it'),
+  );
+  const panel = open && <TrackerDetail key={open.id} entry={open} onClose={() => setOpenId(null)} onUpdate={change} onRemove={drop} onNotJob={notAJob} />;
 
   return (
     <section className="px-4 pb-10 pt-8">

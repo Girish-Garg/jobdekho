@@ -28,8 +28,23 @@ export const BOARDS = new Map([
 export const TESTS = new Map([
   ['hackerrank.com', 'HackerRank'], ['hackerearth.com', 'HackerEarth'], ['codility.com', 'Codility'], ['mettl.com', 'Mercer Mettl'],
   ['codesignal.com', 'CodeSignal'], ['testgorilla.com', 'TestGorilla'], ['imocha.io', 'iMocha'], ['hirepro.in', 'HirePro'],
-  ['talview.com', 'Talview'], ['coderbyte.com', 'Coderbyte'], ['interviewbit.com', 'InterviewBit'], ['codeforces.com', 'Codeforces'],
+  ['talview.com', 'Talview'], ['coderbyte.com', 'Coderbyte'],
 ])
+
+// Senders whose mail is never an application: course and prep sites,
+// communities and newsletters, and the marketing arms of boards (Unstop's
+// news and events). "Interview" and "offer" fill their subjects ("Crack
+// interviews, land offers"), which is why they are named here rather than
+// left to the words.
+export const MARKETING = new Set([
+  'unstop.news', 'unstop.events', 'quora.com', 'quoramail.com', 'educative.io', 'datacamp.com', 'coursera.org', 'udemy.com',
+  'udacity.com', 'edx.org', 'medium.com', 'substack.com', 'beehiiv.com', 'geeksforgeeks.org', 'leetcode.com', 'scaler.com',
+  'simplilearn.com', 'upgrad.com', 'unacademy.com', 'codingninjas.com', 'interviewbit.com', 'topmate.io', 'skillshare.com',
+  'pluralsight.com', 'kaggle.com', 'devpost.com', 'mlh.io', 'newsletter.linkedin.com', 'e.linkedin.com', 'naukri360.com',
+  'shine.com', 'timesjobs.com', 'freecodecamp.org', 'hashnode.com', 'dev.to', 'producthunt.com', 'meetup.com', 'eventbrite.com',
+])
+
+const MARKETING_BY_DOMAIN = new Map([...MARKETING].map((domain) => [domain, true]))
 
 // Mail services that carry a person's own address, never a company's.
 export const PERSONAL = new Set(['gmail.com', 'googlemail.com', 'outlook.com', 'hotmail.com', 'live.com', 'yahoo.com', 'yahoo.co.in', 'icloud.com', 'me.com', 'proton.me', 'protonmail.com', 'rediffmail.com', 'zoho.com', 'aol.com'])
@@ -41,7 +56,8 @@ function find(table, domain) {
 
 export const domainOf = (address) => String(address ?? '').toLowerCase().split('@')[1] ?? ''
 
-// { kind: 'ats' | 'board' | 'test' | 'personal' | 'company', label } for a From address.
+// { kind: 'ats' | 'board' | 'test' | 'marketing' | 'personal' | 'company', label }
+// for a From address.
 export function senderOf(address) {
   const domain = domainOf(address)
   const ats = find(ATS, domain)
@@ -50,6 +66,7 @@ export function senderOf(address) {
   if (board) return { kind: 'board', label: board, domain }
   const test = find(TESTS, domain)
   if (test) return { kind: 'test', label: test, domain }
+  if (find(MARKETING_BY_DOMAIN, domain)) return { kind: 'marketing', label: null, domain }
   if (PERSONAL.has(domain)) return { kind: 'personal', label: null, domain }
   return { kind: 'company', label: null, domain }
 }

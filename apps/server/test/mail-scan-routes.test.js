@@ -54,7 +54,7 @@ describe('scanning the mail into the Tracker', () => {
     expect(initech.events.map((e) => e.from)).toEqual(['Lever mail', 'HackerRank mail', 'Lever mail'])
     expect(initech.events.every((e) => e.mailId)).toBe(true)
     expect((await app.tracker()).find((e) => e.company === 'Acmelabs').contact).toEqual({ name: 'Priya', email: 'priya@acmelabs.example' })
-    expect(await app.status()).toMatchObject({ running: false, canUndo: true, last: { ok: true, added: 5, updated: 0, found: 5, unsure: 1 } })
+    expect(await app.status()).toMatchObject({ running: false, canUndo: true, last: { ok: true, added: 5, updated: 0, found: 5, unsure: 0 } })
   })
 
   it('catches up from two days before the last scan, and adds nothing twice', async () => {
@@ -86,6 +86,27 @@ describe('scanning the mail into the Tracker', () => {
     expect(await app.tracker()).toEqual([])
     await app.scan()
     expect(await app.tracker()).toEqual([])
+  })
+
+  it('learns from Not a job: the entry goes, and a full rescan never files that sender again', async () => {
+    const app = await setup()
+    await app.scan()
+    const acme = (await app.tracker()).find((e) => e.company === 'Acmelabs')
+    const res = (await app.call('POST', `/api/tracker/${acme.id}/not-job`)).json()
+    expect(res).toMatchObject({ removed: 1, domains: ['acmelabs.example'], companies: ['acmelabs'] })
+    await app.scan({ full: true })
+    expect((await app.tracker()).map((e) => e.company)).not.toContain('Acmelabs')
+    const lessons = app.store.mailLabels.get(app.userId)
+    expect(lessons.labels.map((l) => [l.mailId, l.label])).toEqual([['<me1@acme>', 'not-job'], ['<pr1@acme>', 'not-job']])
+    expect(lessons.domains).not.toContain('example.com')
+  })
+
+  it('keeps a stage moved by hand on a mail-found entry as a lesson', async () => {
+    const app = await setup()
+    await app.scan()
+    const globex = (await app.tracker()).find((e) => e.company === 'Globex')
+    await app.call('PATCH', `/api/tracker/${globex.id}`, { stage: 'offer' })
+    expect(app.store.mailLabels.get(app.userId).labels).toEqual([expect.objectContaining({ mailId: '<iv1@globex>', label: 'offer', sender: 'globex.example' })])
   })
 
   it('scans nothing without Gmail connected, and checks on its own only after a first scan', async () => {

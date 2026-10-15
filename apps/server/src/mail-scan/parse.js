@@ -23,6 +23,13 @@ const tidy = (text) => text.replace(/\r/g, '').replace(/[ \t ]+/g, ' ').replace
 
 const address = (value) => String(value ?? '').trim().toLowerCase()
 
+// Sent to a list rather than to the person: an unsubscribe link, a list id,
+// or bulk precedence. A hiring system's "we got your application" carries
+// one too at times, so this narrows what such mail may be taken for (see
+// kinds.js) and never drops it alone.
+const BULK = /^(list-unsubscribe|list-id):|^precedence:\s*(bulk|list|junk)/im
+export const isBulk = (headers) => BULK.test(String(headers ?? ''))
+
 // From imapflow's fetch of the headers (envelope, Gmail's thread id). `me`
 // is the connected address, so a mail the person sent is known as theirs.
 export function mailFromEnvelope(message, me) {
@@ -38,6 +45,7 @@ export function mailFromEnvelope(message, me) {
     to: (envelope.to ?? []).map((one) => address(one.address)).filter(Boolean),
     subject: String(envelope.subject ?? '').replace(/\s+/g, ' ').trim(),
     mine: address(from.address) === address(me),
+    bulk: isBulk(message.headers),
     text: '',
   }
 }

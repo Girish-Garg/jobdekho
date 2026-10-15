@@ -36,6 +36,11 @@ export async function trackerRoutes(app) {
     answer(reply, await app.dashboard.updateTrackerEntry(request.user.sub, request.params.id, request.body))
   ))
 
+  // "Not a job" on an entry the mail scan made: it goes, with every entry
+  // from the same sender, and the scan never files that sender again (see
+  // the store's tracker-learn.js).
+  app.post('/api/tracker/:id/not-job', auth, async (request, reply) => answer(reply, await app.dashboard.notAJob(request.user.sub, request.params.id)))
+
   app.delete('/api/tracker/:id', auth, async (request, reply) => {
     const gone = await app.dashboard.removeTrackerEntry(request.user.sub, request.params.id)
     return gone ? reply.code(204).send() : reply.code(404).send({ error: SAYS.missing })

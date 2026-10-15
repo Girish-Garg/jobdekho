@@ -70,6 +70,9 @@ export const FILES = {
   // How far the scan of the person's mail has got, and the ids of the mails
   // it read (ids only). See mail-scan-state.js.
   mailScan: 'mail-scan.json',
+  // What the person taught the scan: senders and companies it never files
+  // again, and their corrections as examples to learn from. See mail-labels.js.
+  mailLabels: 'mail-labels.json',
 }
 
 // Where the move into chats keeps a file exactly as it found it, beside the

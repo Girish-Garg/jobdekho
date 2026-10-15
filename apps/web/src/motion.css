@@ -87,3 +87,20 @@ html[data-effects='off'] *::after {
   animation-iteration-count: 1 !important;
   transition-duration: 0.01ms !important;
 }
+
+/* A side panel coming in from the right edge (the Tracker's open
+   application): a short slide and a fade, once, as it opens. */
+@keyframes drawer-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+
+.drawer-in {
+  animation: drawer-in 220ms var(--ease-out) both;
+}
+
+html[data-effects='off'] .drawer-in {
+  animation: none;
+}

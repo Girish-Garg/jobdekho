@@ -11,7 +11,7 @@ import { line, contactOf, eventOf, newEntry, isLater, shortId } from './tracker-
 // twice changes nothing. The stage follows the newest mail, forward only,
 // except a rejection, which closes it from any stage.
 //
-//   group: { company, role, contact, mails: [{ id, date, kind, text, from, subject }] }
+//   group: { company, role, contact, mails: [{ id, date, kind, text, from, sender, via }] }
 const STAGE = { applied: 'applied', replied: 'replied', assessment: 'assessment', interview: 'interview', offer: 'offer', rejected: 'closed' }
 
 const roleKey = (role) => words(role).join(' ')
@@ -29,7 +29,7 @@ function merged(entry, group) {
   const known = new Set(entry.events.map((event) => event.mailId).filter(Boolean))
   const fresh = group.mails.filter((mail) => !known.has(mail.id))
   if (!fresh.length) return null
-  const events = fresh.map((mail) => eventOf({ at: mail.date, stage: STAGE[mail.kind], text: mail.text, from: mail.from, mailId: mail.id }))
+  const events = fresh.map((mail) => eventOf({ at: mail.date, stage: STAGE[mail.kind], text: mail.text, from: mail.from, mailId: mail.id, sender: mail.sender, via: mail.via }))
   const newest = fresh.at(-1)
   const stage = STAGE[newest.kind]
   const isNew = !entry.events.length

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getTracker, addTrackerEntry, updateTrackerEntry, removeTrackerEntry } from '../api.js';
+import { getTracker, addTrackerEntry, updateTrackerEntry, removeTrackerEntry, markNotAJob } from '../api.js';
 import { onTrackerChanged } from './trackerSignal.js';
 
 // The Tracker's entries as the page shows them: undefined while loading,
@@ -55,6 +55,12 @@ export function useTracker() {
     remove: async (id) => {
       await removeTrackerEntry(id);
       setEntries((list) => (list ?? []).filter((one) => one.id !== id));
+    },
+    // Takes others from the same sender with it, so the list is read again.
+    notJob: async (id) => {
+      const outcome = await markNotAJob(id);
+      setEntries((await getTracker()).entries ?? []);
+      return outcome;
     },
   };
 }

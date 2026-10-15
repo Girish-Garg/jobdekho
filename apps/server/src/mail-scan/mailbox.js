@@ -15,6 +15,9 @@ import { imapSentence } from '../mail/errors.js'
 // Gmail.
 export const GMAIL_IMAP = { host: 'imap.gmail.com', port: 993, secure: true }
 const BODY_BYTES = 48 * 1024
+// The headers that say a mail went to a list, not to one person: a
+// newsletter, an alert, a course's promotion (see parse.js).
+const BULK_HEADERS = ['list-unsubscribe', 'list-id', 'precedence']
 const BATCH = 100
 
 const chunks = (list, size) => Array.from({ length: Math.ceil(list.length / size) }, (_, i) => list.slice(i * size, (i + 1) * size))
@@ -52,7 +55,7 @@ export async function openGmail({ address, password, make = (options) => new Ima
     async search(query) {
       return [...((await client.search({ gmraw: query }, { uid: true })) || [])].sort((a, b) => a - b)
     },
-    envelopes: (uids) => fetchAll(uids, { envelope: true, threadId: true, internalDate: true }),
+    envelopes: (uids) => fetchAll(uids, { envelope: true, threadId: true, internalDate: true, headers: BULK_HEADERS }),
     bodies: (uids) => fetchAll(uids, { source: { start: 0, maxLength: BODY_BYTES } }),
     async close() {
       lock.release()

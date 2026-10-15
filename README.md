@@ -365,8 +365,14 @@ whole mailbox; after it, JobDekho checks every 15 minutes while it runs and,
 when it starts, catches up on the days it was closed. Mails about one
 application become one entry, its history saying where each line came from
 with a link to open the mail in Gmail, and its stage following the newest
-mail (a rejection closes it). What the scan is not sure about is left out
-rather than filed wrong. **Undo last scan** puts the Tracker back as it was.
+mail (a rejection closes it). Course sites, prep newsletters, community
+digests and anything mailed to a list are not filed unless a hiring system
+sent them, and what the scan is not sure about is left out rather than filed
+wrong. **Undo last scan** puts the Tracker back as it was. When something
+slips through, **Not a job** on its card removes it and every card from the
+same sender, and later scans skip that sender; moving a card the scan made
+to another stage is kept as a correction too. Both stay on this computer, in
+`mail-labels.json`.
 
 The chat can write and send mail from your own Gmail. Ask it on any page,
 with the address and what you are after ("Email priya@acme.example, she
@@ -579,6 +585,7 @@ names, and `JOBDEKHO_DATA_DIR` (`./data` by default) when running from source. T
 | `mail-sent.json` | When each mail went and to whom, for the daily limit and the "mailed before" note. | Yes. |
 | `mail-secret.bin` | On Windows, the app password as DPAPI protected it: only your Windows account on this computer can read it back. | Yes; you then connect Gmail again. |
 | `mail-scan.json` | When the mail scan last looked, and the ids of the mails it read (ids only). | Yes; the next scan reads the whole mailbox again, and adds nothing twice. |
+| `mail-labels.json` | What you taught the mail scan: senders and companies it never files again, and your corrections (a mail's id, subject line and what it really was). | Yes; the scan forgets what you taught it. |
 | `resume-selection.json` | Which template and entries the older resume builder renders. | No. |
 | `resumes/` | Compiled PDFs, cached by their source. | Yes, they are rebuilt when needed. |
 

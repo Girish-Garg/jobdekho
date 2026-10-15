@@ -6,7 +6,7 @@ import { companyOf, roleOf } from '@jobdekho/server/mail-scan/company.js'
 import { groupMails } from '@jobdekho/server/mail-scan/group.js'
 import { jobMailQuery } from '@jobdekho/server/mail-scan/query.js'
 import { message } from './fixtures/mailbox.js'
-import { JOB_MAILS, ME } from './fixtures/job-mails.js'
+import { JOB_MAILS, PROMO_MAILS, ME } from './fixtures/job-mails.js'
 
 const read = async (mail) => {
   const raw = message(mail)
@@ -53,11 +53,26 @@ describe('what a job mail says', () => {
     expect(companyOf(mail, found.sender)).toBe('Acmelabs')
   })
 
-  it('leaves the noise out: alerts and bank mail on the subject, a club with no job in it, a board tips mail as unsure', async () => {
+  it('leaves the noise out: alerts and bank mail on the subject, a club with no job in it, a board tips mail', async () => {
     expect(worthReading(await read(byId('nk1@alert')))).toBe(false)
     expect(worthReading(await read(byId('bk1@bank')))).toBe(false)
     expect(readKind(await read(byId('cl1@club')))).toBeNull()
-    expect(readKind(await read(byId('nk2@tips')))).toMatchObject({ kind: 'interview', sure: false })
+    expect(readKind(await read(byId('nk2@tips')))).toBeNull()
+    const boardNews = await read({ id: 'x0', from: 'Naukri <info@naukri.com>', subject: 'Your interview schedule this week', date: '2026-10-01', text: 'Your interview is scheduled.' })
+    expect(readKind(boardNews)).toMatchObject({ kind: 'interview', sure: false })
+  })
+
+  it('files none of what a real first scan took wrongly: news, courses, digests, prep and newsletters', async () => {
+    for (const raw of PROMO_MAILS) {
+      const mail = await read(raw)
+      const found = readKind(mail)
+      expect([raw.id, found?.sure ?? false]).toEqual([raw.id, false])
+    }
+  })
+
+  it('knows mail sent to a list by its headers', async () => {
+    expect((await read(PROMO_MAILS[0])).bulk).toBe(true)
+    expect((await read(byId('gh1@globex'))).bulk).toBe(false)
   })
 
   it('does not take a rescheduled interview for a rejection, nor a promise of one for an invite', async () => {
